@@ -139,7 +139,7 @@ $configData = Helper::appClasses();
     <div class="card">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="card-title m-0">Modelo de Integridad — Estado de Componentes</h5>
-        <a href="{{ route('modelo-integridad') }}" class="btn btn-sm btn-primary">Ver módulo completo</a>
+        <a href="{{ route('sci-modelo-integridad') }}" class="btn btn-sm btn-primary">Ver módulo completo</a>
       </div>
       <div class="card-body">
         <div class="table-responsive">

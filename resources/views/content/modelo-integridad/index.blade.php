@@ -24,7 +24,7 @@ $componentes = [
     <h4 class="mb-1">Modelo de Integridad</h4>
     <p class="mb-0 text-muted">9 Componentes del Sistema de Integridad Institucional</p>
   </div>
-  <a href="{{ route('semaforo') }}" class="btn btn-outline-secondary">
+  <a href="{{ route('mon-semaforo') }}" class="btn btn-outline-secondary">
     <i class="ti tabler-traffic-lights me-1"></i> Ver Semáforo
   </a>
 </div>
