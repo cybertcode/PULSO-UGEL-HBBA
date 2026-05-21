@@ -1,7 +1,3 @@
-@php
-use Illuminate\Support\Facades\Auth;
-@endphp
-
 @extends('layouts.layoutMaster')
 
 @php
@@ -32,7 +28,7 @@ $breadcrumbs = [
 @endsection
 
 @section('page-script')
-@vite(['resources/assets/js/pages-account-settings-account.js'])
+@vite(['resources/assets/js/pages-profile-account.js'])
 @endsection
 
 @section('content')
@@ -80,39 +76,6 @@ $breadcrumbs = [
             <small class="text-muted">Actualiza tu foto, nombre y correo electrónico</small>
           </div>
           <div class="card-body">
-            <div class="d-flex align-items-start align-items-sm-center gap-6 mb-6" x-data="{ photoPreview: null }">
-              <!-- Foto actual -->
-              <div x-show="!photoPreview">
-                <img src="{{ Auth::user()->profile_photo_url }}"
-                  alt="foto-perfil" class="d-block rounded" width="100" height="100"
-                  id="uploadedAvatar" style="object-fit:cover;" />
-              </div>
-              <!-- Preview de nueva foto -->
-              <div x-show="photoPreview">
-                <img x-bind:src="photoPreview" class="d-block rounded" width="100" height="100" style="object-fit:cover;" />
-              </div>
-              <div class="button-wrapper">
-                <label for="upload" class="btn btn-primary me-3 mb-4" tabindex="0">
-                  <span class="d-none d-sm-block">
-                    <i class="icon-base ti tabler-upload me-1"></i>Subir foto
-                  </span>
-                  <i class="icon-base ti tabler-upload d-block d-sm-none"></i>
-                  <input type="file" id="upload" class="account-file-input" hidden accept="image/png, image/jpeg"
-                    x-on:change="
-                      const reader = new FileReader();
-                      reader.onload = (e) => { photoPreview = e.target.result; };
-                      reader.readAsDataURL($event.target.files[0]);
-                    " />
-                </label>
-                <button type="button" class="btn btn-label-secondary account-image-reset mb-4"
-                  x-on:click="photoPreview = null; document.getElementById('upload').value = ''">
-                  <i class="icon-base ti tabler-reset d-block d-sm-none"></i>
-                  <span class="d-none d-sm-block">Restablecer</span>
-                </button>
-                <div class="text-muted small">Formatos permitidos: JPG, PNG. Máximo 800KB</div>
-              </div>
-            </div>
-
             <!-- Livewire: información de perfil -->
             @livewire('profile.update-profile-information-form')
           </div>

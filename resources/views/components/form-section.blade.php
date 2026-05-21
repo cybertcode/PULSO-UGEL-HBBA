@@ -9,7 +9,7 @@
     <form wire:submit.prevent="{{ $submit }}">
       {{ $form }}
       @if (isset($actions))
-        <div class="d-flex justify-content-end">
+        <div class="d-flex justify-content-end align-items-center gap-3 mt-4">
           {{ $actions }}
         </div>
       @endif

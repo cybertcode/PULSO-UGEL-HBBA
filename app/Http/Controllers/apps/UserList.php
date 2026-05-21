@@ -14,8 +14,6 @@ class UserList extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize('usuarios.ver');
-
         $stats = [
             'total'        => User::count(),
             'admins'       => User::whereHas('roles', fn($q) => $q->where('name', 'Administrador'))->count(),
@@ -37,8 +35,6 @@ class UserList extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('usuarios.crear');
-
         $data = $request->validate([
             'name'               => 'required|string|max:255',
             'email'              => 'required|email|unique:users,email',
@@ -68,8 +64,6 @@ class UserList extends Controller
 
     public function update(Request $request, User $usuario)
     {
-        $this->authorize('usuarios.editar');
-
         $data = $request->validate([
             'name'               => 'required|string|max:255',
             'email'              => 'required|email|unique:users,email,' . $usuario->id,
@@ -101,8 +95,6 @@ class UserList extends Controller
 
     public function destroy(User $usuario)
     {
-        $this->authorize('usuarios.eliminar');
-
         if ($usuario->id === auth()->id()) {
             return redirect()->route('adm-usuarios')->with('error', 'No puedes eliminar tu propia cuenta.');
         }
@@ -114,8 +106,6 @@ class UserList extends Controller
 
     public function toggleEstado(User $usuario)
     {
-        $this->authorize('usuarios.editar');
-
         $usuario->update([
             'estado' => $usuario->estado === 'activo' ? 'inactivo' : 'activo',
         ]);

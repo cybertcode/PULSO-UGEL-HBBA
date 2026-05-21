@@ -12,13 +12,6 @@
 @section('content')
 
 {{-- Alertas flash --}}
-@if(session('success'))
-<div class="alert alert-success alert-dismissible mb-4" role="alert">
-  <i class="ti tabler-check me-2"></i>{{ session('success') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
 {{-- KPIs --}}
 <div class="row g-4 mb-4">
   <div class="col-6 col-xl-3">
@@ -226,3 +219,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endsection
+

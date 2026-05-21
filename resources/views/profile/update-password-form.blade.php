@@ -55,9 +55,7 @@
   </x-slot>
 
   <x-slot name="actions">
-    <x-action-message class="me-3" on="saved">
-      {{ __('Guardado.') }}
-    </x-action-message>
+    <x-action-message on="saved">{{ __('Guardado.') }}</x-action-message>
     <x-button class="btn btn-primary">
       <i class="icon-base ti tabler-device-floppy me-1"></i>{{ __('Actualizar contraseña') }}
     </x-button>
