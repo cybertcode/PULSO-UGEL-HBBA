@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/diag', fn() => view('content.dashboard.diag'))->name('diag');
 
     // --- Control y Seguimiento (permisos: control-interno.*, integridad.*, evidencias.*) ---
     Route::middleware('can:control-interno.ver')->group(function () {

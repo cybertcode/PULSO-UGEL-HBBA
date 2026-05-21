@@ -1744,6 +1744,8 @@ const initializeColorPicker = () => {
 }
 
 window.onload = () => {
+  if (!window.templateCustomizer) return
+
   initializeColorPicker()
 
   // Get the saved color from the cookie or use default
