@@ -30,17 +30,75 @@ use Illuminate\Support\Facades\Route;
 </div>
 @endif
 
-<div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-  @if ($configData['hasCustomizer'] == true)
-  <!-- Style Switcher -->
+<div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
+
+  @if (!isset($menuHorizontal))
+  <!-- Search -->
   <div class="navbar-nav align-items-center">
-    <li class="nav-item dropdown me-2 me-xl-0">
-      <a class="nav-link dropdown-toggle hide-arrow" id="nav-theme" href="javascript:void(0);"
-        data-bs-toggle="dropdown">
-        <i class="icon-base ti tabler-sun icon-md theme-icon-active"></i>
+    <div class="nav-item navbar-search-wrapper px-md-0 px-2 mb-0">
+      <a class="nav-item nav-link search-toggler d-flex align-items-center px-0" href="javascript:void(0);">
+        <span class="d-inline-block text-body-secondary fw-normal" id="autocomplete"></span>
+      </a>
+    </div>
+  </div>
+  <!-- /Search -->
+  @endif
+
+  <ul class="navbar-nav flex-row align-items-center ms-md-auto">
+    @if (isset($menuHorizontal))
+    <!-- Search -->
+    <li class="nav-item navbar-search-wrapper btn btn-text-secondary btn-icon rounded-pill">
+      <a class="nav-item nav-link search-toggler px-0" href="javascript:void(0);">
+        <span class="d-inline-block text-body-secondary fw-normal" id="autocomplete"></span>
+      </a>
+    </li>
+    <!-- /Search -->
+    @endif
+
+    <!-- Language -->
+    <li class="nav-item dropdown-language dropdown">
+      <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill"
+        href="javascript:void(0);" data-bs-toggle="dropdown">
+        <i class="icon-base ti tabler-language icon-22px text-heading"></i>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item {{ app()->getLocale() === 'en' ? 'active' : '' }}" href="{{ url('lang/en') }}"
+            data-language="en" data-text-direction="ltr">
+            <span>English</span>
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item {{ app()->getLocale() === 'fr' ? 'active' : '' }}" href="{{ url('lang/fr') }}"
+            data-language="fr" data-text-direction="ltr">
+            <span>French</span>
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item {{ app()->getLocale() === 'ar' ? 'active' : '' }}" href="{{ url('lang/ar') }}"
+            data-language="ar" data-text-direction="rtl">
+            <span>Arabic</span>
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item {{ app()->getLocale() === 'de' ? 'active' : '' }}" href="{{ url('lang/de') }}"
+            data-language="de" data-text-direction="ltr">
+            <span>German</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+    <!--/ Language -->
+
+    @if ($configData['hasCustomizer'] == true)
+    <!-- Style Switcher -->
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill" id="nav-theme"
+        href="javascript:void(0);" data-bs-toggle="dropdown">
+        <i class="icon-base ti tabler-sun icon-22px theme-icon-active text-heading"></i>
         <span class="d-none ms-2" id="nav-theme-text">Toggle theme</span>
       </a>
-      <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="nav-theme-text">
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-theme-text">
         <li>
           <button type="button" class="dropdown-item align-items-center active" data-bs-theme-value="light"
             aria-pressed="false">
@@ -61,10 +119,119 @@ use Illuminate\Support\Facades\Route;
         </li>
       </ul>
     </li>
-  </div>
-  <!-- / Style Switcher-->
-  @endif
-  <ul class="navbar-nav flex-row align-items-center ms-auto">
+    <!-- / Style Switcher-->
+    @endif
+
+    <!-- Quick links  -->
+    <li class="nav-item dropdown-shortcuts navbar-dropdown dropdown">
+      <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill"
+        href="javascript:void(0);" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+        <i class="icon-base ti tabler-layout-grid-add icon-22px text-heading"></i>
+      </a>
+      <div class="dropdown-menu dropdown-menu-end p-0">
+        <div class="dropdown-menu-header border-bottom">
+          <div class="dropdown-header d-flex align-items-center py-3">
+            <h6 class="mb-0 me-auto">Shortcuts</h6>
+            <a href="javascript:void(0)"
+              class="dropdown-shortcuts-add py-2 btn btn-text-secondary rounded-pill btn-icon" data-bs-toggle="tooltip"
+              data-bs-placement="top" title="Add shortcuts"><i
+                class="icon-base ti tabler-plus icon-20px text-heading"></i></a>
+          </div>
+        </div>
+        <div class="dropdown-shortcuts-list scrollable-container">
+          <div class="row row-bordered overflow-visible g-0">
+            <div class="dropdown-shortcuts-item col">
+              <span class="dropdown-shortcuts-icon rounded-circle mb-3">
+                <i class="icon-base ti tabler-calendar icon-26px text-heading"></i>
+              </span>
+              <a href="{{ url('/') }}" class="stretched-link">Dashboard</a>
+              <small>Panel principal</small>
+            </div>
+            <div class="dropdown-shortcuts-item col">
+              <span class="dropdown-shortcuts-icon rounded-circle mb-3">
+                <i class="icon-base ti tabler-settings icon-26px text-heading"></i>
+              </span>
+              <a href="javascript:void(0)" class="stretched-link">Configuración</a>
+              <small>Ajustes del sistema</small>
+            </div>
+          </div>
+          <div class="row row-bordered overflow-visible g-0">
+            <div class="dropdown-shortcuts-item col">
+              <span class="dropdown-shortcuts-icon rounded-circle mb-3">
+                <i class="icon-base ti tabler-users icon-26px text-heading"></i>
+              </span>
+              <a href="javascript:void(0)" class="stretched-link">Usuarios</a>
+              <small>Gestión de usuarios</small>
+            </div>
+            <div class="dropdown-shortcuts-item col">
+              <span class="dropdown-shortcuts-icon rounded-circle mb-3">
+                <i class="icon-base ti tabler-help-circle icon-26px text-heading"></i>
+              </span>
+              <a href="javascript:void(0)" class="stretched-link">Ayuda</a>
+              <small>Soporte y guías</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </li>
+    <!-- Quick links -->
+
+    <!-- Notification -->
+    <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
+      <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill"
+        href="javascript:void(0);" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+        <span class="position-relative">
+          <i class="icon-base ti tabler-bell icon-22px text-heading"></i>
+          <span class="badge rounded-pill bg-danger badge-dot badge-notifications border"></span>
+        </span>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end p-0">
+        <li class="dropdown-menu-header border-bottom">
+          <div class="dropdown-header d-flex align-items-center py-3">
+            <h6 class="mb-0 me-auto">Notificaciones</h6>
+            <div class="d-flex align-items-center h6 mb-0">
+              <span class="badge bg-label-primary me-2">Nuevas</span>
+              <a href="javascript:void(0)" class="dropdown-notifications-all p-2 btn btn-icon" data-bs-toggle="tooltip"
+                data-bs-placement="top" title="Marcar todas como leídas"><i
+                  class="icon-base ti tabler-mail-opened text-heading"></i></a>
+            </div>
+          </div>
+        </li>
+        <li class="dropdown-notifications-list scrollable-container">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item list-group-item-action dropdown-notifications-item">
+              <div class="d-flex">
+                <div class="flex-shrink-0 me-3">
+                  <div class="avatar">
+                    <span class="avatar-initial rounded-circle bg-label-warning">
+                      <i class="icon-base ti tabler-alert-triangle"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="flex-grow-1">
+                  <h6 class="small mb-1">Actividad vencida</h6>
+                  <small class="mb-1 d-block text-body">Tienes actividades que requieren atención</small>
+                  <small class="text-body-secondary">Ahora</small>
+                </div>
+                <div class="flex-shrink-0 dropdown-notifications-actions">
+                  <a href="javascript:void(0)" class="dropdown-notifications-read"><span class="badge badge-dot"></span></a>
+                  <a href="javascript:void(0)" class="dropdown-notifications-archive"><span class="icon-base ti tabler-x"></span></a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <li class="border-top">
+          <div class="d-grid p-4">
+            <a class="btn btn-primary btn-sm d-flex" href="javascript:void(0);">
+              <small class="align-middle">Ver todas las notificaciones</small>
+            </a>
+          </div>
+        </li>
+      </ul>
+    </li>
+    <!--/ Notification -->
+
     <!-- User -->
     <li class="nav-item navbar-dropdown dropdown-user dropdown">
       <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
@@ -103,29 +270,22 @@ use Illuminate\Support\Facades\Route;
         <li>
           <a class="dropdown-item"
             href="{{ Route::has('profile.show') ? route('profile.show') : 'javascript:void(0);' }}">
-            <i class="icon-base ti tabler-user me-3 icon-md"></i><span class="align-middle">My Profile</span> </a>
+            <i class="icon-base ti tabler-user me-3 icon-md"></i><span class="align-middle">Mi Perfil</span>
+          </a>
         </li>
         @if (Auth::check() && Laravel\Jetstream\Jetstream::hasApiFeatures())
         <li>
           <a class="dropdown-item" href="{{ route('api-tokens.index') }}">
-            <i class="icon-base ti tabler-settings me-3 icon-md"></i><span class="align-middle">API Tokens</span> </a>
-        </li>
-        @endif
-        <li>
-          <a class="dropdown-item" href="javascript:void(0);">
-            <span class="d-flex align-items-center align-middle">
-              <i class="flex-shrink-0 icon-base ti tabler-file-dollar me-3 icon-md"></i><span
-                class="flex-grow-1 align-middle">Billing</span>
-              <span class="flex-shrink-0 badge bg-danger d-flex align-items-center justify-content-center">4</span>
-            </span>
+            <i class="icon-base ti tabler-settings me-3 icon-md"></i><span class="align-middle">API Tokens</span>
           </a>
         </li>
+        @endif
         @if (Auth::User() && Laravel\Jetstream\Jetstream::hasTeamFeatures())
         <li>
           <div class="dropdown-divider my-1 mx-n2"></div>
         </li>
         <li>
-          <h6 class="dropdown-header">Manage Team</h6>
+          <h6 class="dropdown-header">Gestionar Equipo</h6>
         </li>
         <li>
           <div class="dropdown-divider my-1"></div>
@@ -133,13 +293,13 @@ use Illuminate\Support\Facades\Route;
         <li>
           <a class="dropdown-item"
             href="{{ Auth::user() ? route('teams.show', Auth::user()->currentTeam->id) : 'javascript:void(0)' }}">
-            <i class="icon-base bx bx-cog icon-md me-3"></i><span>Team Settings</span>
+            <i class="icon-base bx bx-cog icon-md me-3"></i><span>Configuración del Equipo</span>
           </a>
         </li>
         @can('create', Laravel\Jetstream\Jetstream::newTeamModel())
         <li>
           <a class="dropdown-item" href="{{ route('teams.create') }}">
-            <i class="icon-base bx bx-user icon-md me-3"></i><span>Create New Team</span>
+            <i class="icon-base bx bx-user icon-md me-3"></i><span>Crear Nuevo Equipo</span>
           </a>
         </li>
         @endcan
@@ -148,7 +308,7 @@ use Illuminate\Support\Facades\Route;
           <div class="dropdown-divider my-1"></div>
         </li>
         <li>
-          <h6 class="dropdown-header">Switch Teams</h6>
+          <h6 class="dropdown-header">Cambiar Equipo</h6>
         </li>
         <li>
           <div class="dropdown-divider my-1"></div>
@@ -156,9 +316,7 @@ use Illuminate\Support\Facades\Route;
         @endif
         @if (Auth::user())
         @foreach (Auth::user()->allTeams() as $team)
-        {{-- Below commented code read by artisan command while installing jetstream. !! Do not remove if you want to use jetstream. --}}
-
-        <x-switchable-team :team="$team" />
+        {{-- <x-switchable-team :team="$team" /> --}}
         @endforeach
         @endif
         @endif
@@ -169,7 +327,7 @@ use Illuminate\Support\Facades\Route;
         <li>
           <a class="dropdown-item" href="{{ route('logout') }}"
             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-            <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Logout</span>
+            <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Cerrar Sesión</span>
           </a>
         </li>
         <form method="POST" id="logout-form" action="{{ route('logout') }}">

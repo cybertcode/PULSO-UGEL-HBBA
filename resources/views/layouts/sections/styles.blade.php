@@ -30,4 +30,3 @@
 @vite(['resources/css/app.css'])
 <!-- END: app CSS-->
 
-@livewireStyles
