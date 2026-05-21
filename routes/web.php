@@ -64,6 +64,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     // --- Administración: Usuarios ---
     Route::get('/usuarios',                   [UserList::class, 'index'])->name('adm-usuarios')->middleware('can:usuarios.ver');
+    Route::get('/usuarios/data',              [UserList::class, 'data'])->name('adm-usuarios.data')->middleware('can:usuarios.ver');
     Route::post('/usuarios',                  [UserList::class, 'store'])->name('adm-usuarios.store')->middleware('can:usuarios.crear');
     Route::put('/usuarios/{usuario}',         [UserList::class, 'update'])->name('adm-usuarios.update')->middleware('can:usuarios.editar');
     Route::delete('/usuarios/{usuario}',      [UserList::class, 'destroy'])->name('adm-usuarios.destroy')->middleware('can:usuarios.eliminar');
@@ -86,6 +87,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // --- Administración: Configuración ---
     Route::get('/configuracion',                   [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
     Route::put('/configuracion',                   [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
-    Route::post('/configuracion/unidades',         [ConfiguracionController::class, 'storeUnidad'])->name('adm-configuracion.unidades.store')->middleware('can:configuracion.editar');
-    Route::put('/configuracion/unidades/{unidad}', [ConfiguracionController::class, 'updateUnidad'])->name('adm-configuracion.unidades.update')->middleware('can:configuracion.editar');
+    Route::post('/configuracion/unidades',                   [ConfiguracionController::class, 'storeUnidad'])->name('adm-configuracion.unidades.store')->middleware('can:configuracion.editar');
+    Route::put('/configuracion/unidades/{unidad}',           [ConfiguracionController::class, 'updateUnidad'])->name('adm-configuracion.unidades.update')->middleware('can:configuracion.editar');
+    Route::patch('/configuracion/unidades/{unidad}/toggle',  [ConfiguracionController::class, 'toggleUnidad'])->name('adm-configuracion.unidades.toggle')->middleware('can:configuracion.editar');
+    Route::delete('/configuracion/unidades/{unidad}',        [ConfiguracionController::class, 'destroyUnidad'])->name('adm-configuracion.unidades.destroy')->middleware('can:configuracion.editar');
 });

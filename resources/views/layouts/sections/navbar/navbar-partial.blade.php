@@ -1,14 +1,24 @@
 @php
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 @endphp
 
 <!--  Brand demo (display only for navbar-full and hide on below xl) -->
 @if (isset($navbarFull))
 <div class="navbar-brand app-brand demo d-none d-xl-flex py-0 me-4 ms-0">
   <a href="{{ url('/') }}" class="app-brand-link">
-    <span class="app-brand-logo demo">@include('_partials.macros')</span>
-    <span class="app-brand-text demo menu-text fw-bold">{{ config('variables.templateName') }}</span>
+    @if(!empty($configInstitucional?->logo_ruta))
+      <span class="app-brand-logo demo">
+        <img src="{{ Storage::url($configInstitucional->logo_ruta) }}" height="28" alt="logo" class="rounded">
+      </span>
+      <span class="app-brand-text demo menu-text fw-bold" style="font-size:.85rem">
+        {{ $configInstitucional->sigla ?? $configInstitucional->nombre_institucion }}
+      </span>
+    @else
+      <span class="app-brand-logo demo">@include('_partials.macros')</span>
+      <span class="app-brand-text demo menu-text fw-bold">{{ config('variables.templateName') }}</span>
+    @endif
   </a>
 
   <!-- Display menu close icon only for horizontal-menu with navbar-full -->
