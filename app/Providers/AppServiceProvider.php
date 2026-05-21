@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\ConfiguracionInstitucional;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,6 +27,20 @@ class AppServiceProvider extends ServiceProvider
     {
         // Forzar español como locale de la aplicación
         App::setLocale('es');
+
+        // Compartir configuración institucional con todas las vistas
+        View::composer('*', function ($view) {
+            try {
+                $configInstitucional = \Illuminate\Support\Facades\Cache::remember(
+                    'config_institucional',
+                    now()->addMinutes(60),
+                    fn () => ConfiguracionInstitucional::first()
+                );
+            } catch (\Exception $e) {
+                $configInstitucional = null;
+            }
+            $view->with('configInstitucional', $configInstitucional);
+        });
 
         // Paginación con Bootstrap 5
         Paginator::useBootstrapFive();

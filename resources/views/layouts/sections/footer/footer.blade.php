@@ -1,4 +1,5 @@
 @php
+use Illuminate\Support\Facades\Storage;
 $containerFooter =
 isset($configData['contentLayout']) && $configData['contentLayout'] === 'compact'
 ? 'container-xxl'
@@ -9,18 +10,25 @@ isset($configData['contentLayout']) && $configData['contentLayout'] === 'compact
 <footer class="content-footer footer bg-footer-theme">
   <div class="{{ $containerFooter }}">
     <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
-      <div class="text-body">
-        &#169;
-        <script>
-          document.write(new Date().getFullYear());
-        </script>
-        , made with ❤️ by <a href="{{ !empty(config('variables.creatorUrl')) ? config('variables.creatorUrl') : '' }}" target="_blank" class="footer-link">{{ !empty(config('variables.creatorName')) ? config('variables.creatorName') : '' }}</a>
+      <div class="d-flex align-items-center gap-2 text-body">
+        @if(!empty($configInstitucional?->logo_ruta))
+          <img src="{{ Storage::url($configInstitucional->logo_ruta) }}" height="22" class="rounded" alt="logo">
+        @endif
+        <span>
+          &#169; {{ date('Y') }}
+          <strong>{{ $configInstitucional?->nombre_institucion ?? config('variables.creatorName') }}</strong>
+          @if($configInstitucional?->anio_gestion)
+            &mdash; Gestión {{ $configInstitucional->anio_gestion }}
+          @endif
+        </span>
       </div>
-      <div class="d-none d-lg-inline-block">
-        <a href="{{ config('variables.licenseUrl') ? config('variables.licenseUrl') : '#' }}" class="footer-link me-4" target="_blank">License</a>
-        <a href="{{ config('variables.moreThemes') ? config('variables.moreThemes') : '#' }}" target="_blank" class="footer-link me-4">More Themes</a>
-        <a href="{{ config('variables.documentation') ? config('variables.documentation') . '/laravel-introduction.html' : '#' }}" target="_blank" class="footer-link me-4">Documentation</a>
-        <a href="{{ config('variables.support') ? config('variables.support') : '#' }}" target="_blank" class="footer-link">Support</a>
+      <div class="d-none d-lg-inline-block text-muted small">
+        @if($configInstitucional?->sigla)
+          {{ $configInstitucional->sigla }}
+          @if($configInstitucional?->region)
+            &bull; {{ $configInstitucional->region }}
+          @endif
+        @endif
       </div>
     </div>
   </div>

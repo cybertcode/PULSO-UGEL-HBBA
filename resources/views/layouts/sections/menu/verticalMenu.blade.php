@@ -1,5 +1,6 @@
 @php
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 $configData = Helper::appClasses();
 @endphp
 
@@ -11,8 +12,17 @@ $configData = Helper::appClasses();
   @if (!isset($navbarFull))
   <div class="app-brand demo">
     <a href="{{ url('/') }}" class="app-brand-link">
-      <span class="app-brand-logo demo">@include('_partials.macros')</span>
-      <span class="app-brand-text demo menu-text fw-bold ms-3">{{ config('variables.templateName') }}</span>
+      @if(!empty($configInstitucional?->logo_ruta))
+        <span class="app-brand-logo demo">
+          <img src="{{ Storage::url($configInstitucional->logo_ruta) }}" height="28" alt="logo" class="rounded">
+        </span>
+        <span class="app-brand-text demo menu-text fw-bold ms-2" style="font-size:.85rem;line-height:1.2">
+          {{ $configInstitucional->sigla ?? $configInstitucional->nombre_institucion }}
+        </span>
+      @else
+        <span class="app-brand-logo demo">@include('_partials.macros')</span>
+        <span class="app-brand-text demo menu-text fw-bold ms-3">{{ config('variables.templateName') }}</span>
+      @endif
     </a>
 
     <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
