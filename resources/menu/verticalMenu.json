@@ -2,36 +2,109 @@
   "menu": [
     {
       "url": "/",
-      "name": "Home",
+      "name": "Panel Principal",
       "icon": "menu-icon icon-base ti tabler-smart-home",
-      "slug": "pages-home"
+      "slug": "dashboard"
     },
     {
-      "url": "/page-2",
-      "icon": "menu-icon icon-base ti tabler-file",
-      "name": "Page 2",
-      "slug": "pages-page-2"
+      "name": "Control y Seguimiento",
+      "icon": "menu-icon icon-base ti tabler-clipboard-list",
+      "slug": "control-seguimiento",
+      "submenu": [
+        {
+          "url": "/control-interno",
+          "name": "Control Interno",
+          "icon": "menu-icon icon-base ti tabler-clipboard-check",
+          "slug": "control-interno"
+        },
+        {
+          "url": "/modelo-integridad",
+          "name": "Modelo de Integridad",
+          "icon": "menu-icon icon-base ti tabler-shield-check",
+          "slug": "modelo-integridad"
+        },
+        {
+          "url": "/evidencias",
+          "name": "Evidencias",
+          "icon": "menu-icon icon-base ti tabler-file-upload",
+          "slug": "evidencias"
+        }
+      ]
     },
     {
-      "url": "/pages/misc-error",
-      "name": "Error",
-      "icon": "menu-icon icon-base ti tabler-alert-triangle",
-      "slug": "pages-misc-error",
-      "target": "_blank"
+      "name": "Monitoreo",
+      "icon": "menu-icon icon-base ti tabler-chart-line",
+      "slug": "monitoreo",
+      "submenu": [
+        {
+          "url": "/semaforo",
+          "name": "Semáforo Institucional",
+          "icon": "menu-icon icon-base ti tabler-traffic-lights",
+          "slug": "semaforo"
+        },
+        {
+          "url": "/alertas",
+          "name": "Alertas",
+          "icon": "menu-icon icon-base ti tabler-bell",
+          "slug": "alertas"
+        },
+        {
+          "url": "/ranking-unidades",
+          "name": "Ranking de Unidades",
+          "icon": "menu-icon icon-base ti tabler-award",
+          "slug": "ranking-unidades"
+        }
+      ]
     },
     {
-      "url": "/auth/login-basic",
-      "name": "Login",
-      "icon": "menu-icon icon-base ti tabler-login",
-      "slug": "auth-login-basic",
-      "target": "_blank"
+      "name": "Reportes",
+      "icon": "menu-icon icon-base ti tabler-chart-bar",
+      "slug": "reportes-grupo",
+      "submenu": [
+        {
+          "url": "/reportes",
+          "name": "Reportes",
+          "icon": "menu-icon icon-base ti tabler-chart-bar",
+          "slug": "reportes"
+        },
+        {
+          "url": "/reconocimientos",
+          "name": "Reconocimientos",
+          "icon": "menu-icon icon-base ti tabler-trophy",
+          "slug": "reconocimientos"
+        }
+      ]
     },
     {
-      "url": "/auth/register-basic",
-      "name": "Register",
-      "icon": "menu-icon icon-base ti tabler-user",
-      "slug": "auth-register-basic",
-      "target": "_blank"
+      "name": "Administración",
+      "icon": "menu-icon icon-base ti tabler-settings-2",
+      "slug": "administracion",
+      "submenu": [
+        {
+          "url": "/usuarios",
+          "name": "Usuarios",
+          "icon": "menu-icon icon-base ti tabler-users",
+          "slug": "usuarios"
+        },
+        {
+          "url": "/roles",
+          "name": "Roles",
+          "icon": "menu-icon icon-base ti tabler-user-check",
+          "slug": "roles"
+        },
+        {
+          "url": "/permisos",
+          "name": "Permisos",
+          "icon": "menu-icon icon-base ti tabler-lock",
+          "slug": "permisos"
+        },
+        {
+          "url": "/configuracion",
+          "name": "Configuración",
+          "icon": "menu-icon icon-base ti tabler-settings",
+          "slug": "configuracion"
+        }
+      ]
     }
   ]
 }
