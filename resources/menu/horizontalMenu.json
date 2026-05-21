@@ -9,100 +9,100 @@
     {
       "name": "Control y Seguimiento",
       "icon": "menu-icon icon-base ti tabler-clipboard-list",
-      "slug": "control-seguimiento",
+      "slug": "sci",
       "submenu": [
         {
           "url": "/control-interno",
           "name": "Control Interno",
           "icon": "menu-icon icon-base ti tabler-clipboard-check",
-          "slug": "control-interno"
+          "slug": "sci-control-interno"
         },
         {
           "url": "/modelo-integridad",
           "name": "Modelo de Integridad",
           "icon": "menu-icon icon-base ti tabler-shield-check",
-          "slug": "modelo-integridad"
+          "slug": "sci-modelo-integridad"
         },
         {
           "url": "/evidencias",
           "name": "Evidencias",
           "icon": "menu-icon icon-base ti tabler-file-upload",
-          "slug": "evidencias"
+          "slug": "sci-evidencias"
         }
       ]
     },
     {
       "name": "Monitoreo",
       "icon": "menu-icon icon-base ti tabler-chart-line",
-      "slug": "monitoreo",
+      "slug": "mon",
       "submenu": [
         {
           "url": "/semaforo",
           "name": "Semáforo Institucional",
           "icon": "menu-icon icon-base ti tabler-traffic-lights",
-          "slug": "semaforo"
+          "slug": "mon-semaforo"
         },
         {
           "url": "/alertas",
           "name": "Alertas",
           "icon": "menu-icon icon-base ti tabler-bell",
-          "slug": "alertas"
+          "slug": "mon-alertas"
         },
         {
           "url": "/ranking-unidades",
           "name": "Ranking de Unidades",
           "icon": "menu-icon icon-base ti tabler-award",
-          "slug": "ranking-unidades"
+          "slug": "mon-ranking-unidades"
         }
       ]
     },
     {
       "name": "Reportes",
       "icon": "menu-icon icon-base ti tabler-chart-bar",
-      "slug": "reportes-grupo",
+      "slug": "rep",
       "submenu": [
         {
           "url": "/reportes",
           "name": "Reportes",
           "icon": "menu-icon icon-base ti tabler-chart-bar",
-          "slug": "reportes"
+          "slug": "rep-reportes"
         },
         {
           "url": "/reconocimientos",
           "name": "Reconocimientos",
           "icon": "menu-icon icon-base ti tabler-trophy",
-          "slug": "reconocimientos"
+          "slug": "rep-reconocimientos"
         }
       ]
     },
     {
       "name": "Administración",
       "icon": "menu-icon icon-base ti tabler-settings-2",
-      "slug": "administracion",
+      "slug": "adm",
       "submenu": [
         {
           "url": "/usuarios",
           "name": "Usuarios",
           "icon": "menu-icon icon-base ti tabler-users",
-          "slug": "usuarios"
+          "slug": "adm-usuarios"
         },
         {
           "url": "/roles",
           "name": "Roles",
           "icon": "menu-icon icon-base ti tabler-user-check",
-          "slug": "roles"
+          "slug": "adm-roles"
         },
         {
           "url": "/permisos",
           "name": "Permisos",
           "icon": "menu-icon icon-base ti tabler-lock",
-          "slug": "permisos"
+          "slug": "adm-permisos"
         },
         {
           "url": "/configuracion",
           "name": "Configuración",
           "icon": "menu-icon icon-base ti tabler-settings",
-          "slug": "configuracion"
+          "slug": "adm-configuracion"
         }
       ]
     }

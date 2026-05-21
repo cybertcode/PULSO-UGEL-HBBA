@@ -102,13 +102,13 @@ $configData = Helper::appClasses();
       </div>
       <div class="card-body p-0">
         <div class="list-group list-group-flush">
-          <a href="{{ route('usuarios') }}" class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-4">
+          <a href="{{ route('adm-usuarios') }}" class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-4">
             <i class="ti tabler-users text-primary"></i> Gestionar Usuarios
           </a>
-          <a href="{{ route('roles') }}" class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-4">
+          <a href="{{ route('adm-roles') }}" class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-4">
             <i class="ti tabler-user-check text-info"></i> Gestionar Roles
           </a>
-          <a href="{{ route('permisos') }}" class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-4">
+          <a href="{{ route('adm-permisos') }}" class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-4">
             <i class="ti tabler-lock text-warning"></i> Gestionar Permisos
           </a>
         </div>
