@@ -20,6 +20,14 @@ $configData = Helper::appClasses();
 
 @section('content')
 
+{{-- Breadcrumb --}}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti tabler-home icon-14px me-1"></i>Inicio</a></li>
+    <li class="breadcrumb-item active">Evidencias / SGD</li>
+  </ol>
+</nav>
+
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
     <h4 class="mb-1">Gestión de Evidencias</h4>
@@ -30,15 +38,29 @@ $configData = Helper::appClasses();
   </button>
 </div>
 
-{{-- Stats --}}
-<div class="row g-3 mb-4">
-  @foreach([['total','Total','primary','tabler-files'],['validadas','Validadas','success','tabler-file-check'],['pendientes','Pendientes','warning','tabler-file-time'],['rechazadas','Rechazadas','danger','tabler-file-x']] as [$k,$label,$color,$icon])
+{{-- Stats (estilo cards-statistics full-version) --}}
+<div class="row g-6 mb-6">
+  @php
+  $kpis = [
+    ['k'=>'total',     'label'=>'Total SGD',   'sub'=>'Documentos cargados',  'color'=>'primary', 'icon'=>'tabler-files'],
+    ['k'=>'validadas', 'label'=>'Validadas',   'sub'=>'Aprobadas por revisión','color'=>'success', 'icon'=>'tabler-file-check'],
+    ['k'=>'pendientes','label'=>'Pendientes',  'sub'=>'En revisión',           'color'=>'warning', 'icon'=>'tabler-file-time'],
+    ['k'=>'rechazadas','label'=>'Rechazadas',  'sub'=>'Requieren corrección',  'color'=>'danger',  'icon'=>'tabler-file-x'],
+  ];
+  @endphp
+  @foreach($kpis as $kp)
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body py-3">
-        <div class="avatar mx-auto mb-2"><span class="avatar-initial rounded bg-label-{{ $color }}"><i class="ti {{ $icon }}"></i></span></div>
-        <h3 class="text-{{ $color }} mb-0">{{ $stats[$k] }}</h3>
-        <small class="text-muted">{{ $label }}</small>
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between mb-4">
+          <div class="badge rounded bg-label-{{ $kp['color'] }} p-2">
+            <i class="icon-base ti {{ $kp['icon'] }} icon-26px"></i>
+          </div>
+          <span class="badge bg-label-{{ $kp['color'] }} rounded-pill">SGD</span>
+        </div>
+        <h4 class="mb-1 text-{{ $kp['color'] }}">{{ $stats[$kp['k']] }}</h4>
+        <p class="mb-0 fw-medium">{{ $kp['label'] }}</p>
+        <small class="text-body-secondary">{{ $kp['sub'] }}</small>
       </div>
     </div>
   </div>

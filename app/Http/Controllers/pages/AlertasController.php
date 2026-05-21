@@ -5,25 +5,40 @@ namespace App\Http\Controllers\pages;
 use App\Http\Controllers\Controller;
 use App\Models\Alerta;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class AlertasController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $tab      = $request->input('tab', 'pendientes');
+        $prioridad = $request->input('prioridad');
+
         $stats = [
-            'total'  => Alerta::where('leida', false)->count(),
-            'alta'   => Alerta::where('leida', false)->where('prioridad', 'alta')->count(),
-            'media'  => Alerta::where('leida', false)->where('prioridad', 'media')->count(),
-            'baja'   => Alerta::where('leida', false)->where('prioridad', 'baja')->count(),
+            'total'    => Alerta::count(),
+            'pendientes'=> Alerta::where('leida', false)->count(),
+            'resueltas' => Alerta::where('leida', true)->count(),
+            'alta'     => Alerta::where('leida', false)->where('prioridad', 'alta')->count(),
+            'media'    => Alerta::where('leida', false)->where('prioridad', 'media')->count(),
+            'baja'     => Alerta::where('leida', false)->where('prioridad', 'baja')->count(),
         ];
 
-        $alertas = Alerta::with(['actividad.componente', 'unidadOrganica'])
+        $query = Alerta::with(['actividad.componente', 'actividad.responsable', 'unidadOrganica'])
             ->orderByRaw("FIELD(prioridad,'alta','media','baja')")
-            ->orderByDesc('created_at')
-            ->paginate(20);
+            ->orderByDesc('created_at');
 
-        return view('content.alertas.index', compact('stats', 'alertas'));
+        if ($tab === 'resueltas') {
+            $query->where('leida', true);
+        } else {
+            $query->where('leida', false);
+        }
+
+        if ($prioridad) {
+            $query->where('prioridad', $prioridad);
+        }
+
+        $alertas = $query->paginate(15)->withQueryString();
+
+        return view('content.alertas.index', compact('stats', 'alertas', 'tab', 'prioridad'));
     }
 
     public function marcarLeida(Alerta $alerta)

@@ -5,11 +5,11 @@ namespace App\Http\Controllers\pages;
 use App\Http\Controllers\Controller;
 use App\Models\UnidadOrganica;
 use App\Models\ConfiguracionInstitucional;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class RankingUnidadesController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         $config = ConfiguracionInstitucional::first();
         $umbral_verde    = $config->umbral_verde    ?? 75;
@@ -27,15 +27,33 @@ class RankingUnidadesController extends Controller
                   ? round(($u->completadas_count / $u->actividades_count) * 100) : 0;
               $u->color    = $u->porcentaje >= $umbral_verde    ? 'success'
                            : ($u->porcentaje >= $umbral_amarillo ? 'warning' : 'danger');
-              $u->semaforo = $u->porcentaje >= $umbral_verde    ? 'Verde'
-                           : ($u->porcentaje >= $umbral_amarillo ? 'Amarillo' : 'Rojo');
+              $u->semaforo = $u->porcentaje >= $umbral_verde    ? 'Cumplido'
+                           : ($u->porcentaje >= $umbral_amarillo ? 'En proceso' : 'En riesgo');
               return $u;
           })->sortByDesc('porcentaje')->values();
 
+        // Posición anterior (guardada en caché por 24h para mostrar variación)
+        $cacheKey = 'ranking_posiciones_anteriores';
+        $posicionesAnteriores = Cache::get($cacheKey, []);
+
+        // Asignar posición anterior a cada unidad
+        $unidades = $unidades->map(function ($u, $i) use (&$posicionesAnteriores) {
+            $posActual   = $i + 1;
+            $posAnterior = $posicionesAnteriores[$u->id] ?? $posActual;
+            $u->posicion_actual   = $posActual;
+            $u->posicion_anterior = $posAnterior;
+            $u->variacion         = $posAnterior - $posActual; // positivo = subió
+            return $u;
+        });
+
+        // Guardar posiciones actuales para la próxima visita
+        $nuevasPosiciones = $unidades->pluck('posicion_actual', 'id')->toArray();
+        Cache::put($cacheKey, $nuevasPosiciones, now()->addDay());
+
         // Datos para la gráfica de barras
-        $chart_labels  = $unidades->pluck('sigla')->toJson();
-        $chart_data    = $unidades->pluck('porcentaje')->toJson();
-        $chart_colors  = $unidades->map(fn($u) => match($u->color) {
+        $chart_labels = $unidades->pluck('sigla')->toJson();
+        $chart_data   = $unidades->pluck('porcentaje')->toJson();
+        $chart_colors = $unidades->map(fn($u) => match($u->color) {
             'success' => '#28c76f',
             'warning' => '#ff9f43',
             default   => '#ea5455',

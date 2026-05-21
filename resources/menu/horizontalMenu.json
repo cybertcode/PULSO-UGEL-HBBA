@@ -49,6 +49,12 @@
           "slug": "mon-alertas"
         },
         {
+          "url": "/avance-unidades",
+          "name": "Avance por Unidades",
+          "icon": "menu-icon icon-base ti tabler-building-community",
+          "slug": "mon-avance-unidades"
+        },
+        {
           "url": "/ranking-unidades",
           "name": "Ranking de Unidades",
           "icon": "menu-icon icon-base ti tabler-award",
