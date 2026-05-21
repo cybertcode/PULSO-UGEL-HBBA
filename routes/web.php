@@ -12,6 +12,7 @@ use App\Http\Controllers\pages\ReportesController;
 use App\Http\Controllers\pages\ReconocimientosController;
 use App\Http\Controllers\pages\SemaforoController;
 use App\Http\Controllers\pages\RankingUnidadesController;
+use App\Http\Controllers\pages\AvanceUnidadesController;
 use App\Http\Controllers\pages\ConfiguracionController;
 use App\Http\Controllers\apps\UserList;
 use App\Http\Controllers\apps\UserViewAccount;
@@ -58,6 +59,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::patch('/alertas/{alerta}/leer',   [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
     Route::patch('/alertas/leer-todas',      [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
     Route::get('/ranking-unidades', [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades');
+    Route::get('/avance-unidades',  [AvanceUnidadesController::class,  'index'])->name('mon-avance-unidades');
 
     // --- Reportes ---
     Route::get('/reportes',        [ReportesController::class,       'index'])->name('rep-reportes')->middleware('can:reportes.ver');
