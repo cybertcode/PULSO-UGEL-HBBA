@@ -1,15 +1,30 @@
 @php
-use Illuminate\Support\Facades\Route;
-$configData = Helper::appClasses();
 $customizerHidden = 'customizer-hide';
+$configData = Helper::appClasses();
 @endphp
 
-@extends('layouts/blankLayout')
+@extends('layouts/layoutMaster')
 
 @section('title', 'Restablecer Contraseña - PULSO UGEL')
 
+@section('vendor-style')
+@vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])
+@endsection
+
 @section('page-style')
 @vite(['resources/assets/vendor/scss/pages/page-auth.scss'])
+@endsection
+
+@section('vendor-script')
+@vite([
+  'resources/assets/vendor/libs/@form-validation/popular.js',
+  'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
+  'resources/assets/vendor/libs/@form-validation/auto-focus.js'
+])
+@endsection
+
+@section('page-script')
+@vite(['resources/assets/js/pages-auth.js'])
 @endsection
 
 @section('content')
@@ -41,64 +56,47 @@ $customizerHidden = 'customizer-hide';
         <p class="mb-6"><span class="fw-medium">Tu nueva contraseña debe ser diferente a las anteriores</span></p>
 
         @if ($errors->any())
-        <div class="alert alert-danger mb-4">
-          @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
-        </div>
+          <div class="alert alert-danger mb-4">
+            @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+          </div>
         @endif
 
         <form id="formAuthentication" class="mb-6" action="{{ route('password.update') }}" method="POST">
           @csrf
           <input type="hidden" name="token" value="{{ $request->route('token') }}" />
+          <input type="hidden" name="email" value="{{ $request->email }}" />
 
-          <div class="mb-6">
-            <label for="email" class="form-label">Correo electrónico</label>
-            <input type="email" class="form-control @error('email') is-invalid @enderror"
-              id="email" name="email" placeholder="tu.correo@ugel.gob.pe"
-              value="{{ Request()->email }}" readonly />
-            @error('email')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
-            @enderror
-          </div>
-
-          <div class="mb-6 form-password-toggle">
+          <div class="mb-6 form-password-toggle form-control-validation">
             <label class="form-label" for="password">Nueva Contraseña</label>
-            <div class="input-group input-group-merge @error('password') is-invalid @enderror">
+            <div class="input-group input-group-merge">
               <input type="password" id="password"
                 class="form-control @error('password') is-invalid @enderror"
                 name="password" placeholder="············" autofocus />
               <span class="input-group-text cursor-pointer">
                 <i class="icon-base ti tabler-eye-off"></i>
               </span>
+              @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            @error('password')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
-            @enderror
           </div>
 
-          <div class="mb-6 form-password-toggle">
+          <div class="mb-6 form-password-toggle form-control-validation">
             <label class="form-label" for="confirm-password">Confirmar Contraseña</label>
             <div class="input-group input-group-merge">
-              <input type="password" id="confirm-password" class="form-control"
-                name="password_confirmation" placeholder="············" />
+              <input type="password" id="confirm-password"
+                class="form-control" name="password_confirmation" placeholder="············" />
               <span class="input-group-text cursor-pointer">
                 <i class="icon-base ti tabler-eye-off"></i>
               </span>
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary d-grid w-100 mb-6">Establecer nueva contraseña</button>
+          <button class="btn btn-primary d-grid w-100 mb-6" type="submit">Establecer nueva contraseña</button>
 
           <div class="text-center">
-            @if (Route::has('login'))
             <a href="{{ route('login') }}" class="d-flex justify-content-center align-items-center">
               <i class="icon-base ti tabler-chevron-left scaleX-n1-rtl me-1_5"></i>
               Volver al inicio de sesión
             </a>
-            @endif
           </div>
         </form>
       </div>

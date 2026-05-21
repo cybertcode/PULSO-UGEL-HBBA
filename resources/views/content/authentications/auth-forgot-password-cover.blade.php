@@ -1,15 +1,30 @@
 @php
-use Illuminate\Support\Facades\Route;
-$configData = Helper::appClasses();
 $customizerHidden = 'customizer-hide';
+$configData = Helper::appClasses();
 @endphp
 
-@extends('layouts/blankLayout')
+@extends('layouts/layoutMaster')
 
 @section('title', 'Recuperar Contraseña - PULSO UGEL')
 
+@section('vendor-style')
+@vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])
+@endsection
+
 @section('page-style')
 @vite(['resources/assets/vendor/scss/pages/page-auth.scss'])
+@endsection
+
+@section('vendor-script')
+@vite([
+  'resources/assets/vendor/libs/@form-validation/popular.js',
+  'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
+  'resources/assets/vendor/libs/@form-validation/auto-focus.js'
+])
+@endsection
+
+@section('page-script')
+@vite(['resources/assets/js/pages-auth.js'])
 @endsection
 
 @section('content')
@@ -36,43 +51,37 @@ $customizerHidden = 'customizer-hide';
 
     <!-- Formulario -->
     <div class="d-flex col-12 col-xl-4 align-items-center authentication-bg p-sm-12 p-6">
-      <div class="w-px-400 mx-auto mt-12">
+      <div class="w-px-400 mx-auto mt-12 mt-5">
         <h4 class="mb-1">¿Olvidaste tu contraseña? 🔒</h4>
         <p class="mb-6">Ingresa tu correo y recibirás instrucciones para recuperar el acceso</p>
 
         @if (session('status'))
-        <div class="alert alert-success mb-4">{{ session('status') }}</div>
+          <div class="alert alert-success mb-4">{{ session('status') }}</div>
         @endif
 
         @if ($errors->any())
-        <div class="alert alert-danger mb-4">
-          @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
-        </div>
+          <div class="alert alert-danger mb-4">
+            @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+          </div>
         @endif
 
         <form id="formAuthentication" class="mb-6" action="{{ route('password.email') }}" method="POST">
           @csrf
-          <div class="mb-6">
+          <div class="mb-6 form-control-validation">
             <label for="email" class="form-label">Correo electrónico</label>
             <input type="email" class="form-control @error('email') is-invalid @enderror"
-              id="email" name="email" placeholder="tu.correo@ugel.gob.pe" autofocus
-              value="{{ old('email') }}" />
-            @error('email')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
-            @enderror
+              id="email" name="email" value="{{ old('email') }}"
+              placeholder="tu.correo@ugel.gob.pe" autofocus />
+            @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
           </div>
-          <button type="submit" class="btn btn-primary d-grid w-100">Enviar instrucciones</button>
+          <button class="btn btn-primary d-grid w-100" type="submit">Enviar instrucciones</button>
         </form>
 
         <div class="text-center">
-          @if (Route::has('login'))
           <a href="{{ route('login') }}" class="d-flex justify-content-center align-items-center">
             <i class="icon-base ti tabler-chevron-left scaleX-n1-rtl me-1_5"></i>
             Volver al inicio de sesión
           </a>
-          @endif
         </div>
       </div>
     </div>

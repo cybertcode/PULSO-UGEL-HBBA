@@ -1,15 +1,30 @@
 @php
-use Illuminate\Support\Facades\Route;
-$configData = Helper::appClasses();
 $customizerHidden = 'customizer-hide';
+$configData = Helper::appClasses();
 @endphp
 
-@extends('layouts/blankLayout')
+@extends('layouts/layoutMaster')
 
 @section('title', 'Registrarse - PULSO UGEL')
 
+@section('vendor-style')
+@vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])
+@endsection
+
 @section('page-style')
 @vite(['resources/assets/vendor/scss/pages/page-auth.scss'])
+@endsection
+
+@section('vendor-script')
+@vite([
+  'resources/assets/vendor/libs/@form-validation/popular.js',
+  'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
+  'resources/assets/vendor/libs/@form-validation/auto-focus.js'
+])
+@endsection
+
+@section('page-script')
+@vite(['resources/assets/js/pages-auth.js'])
 @endsection
 
 @section('content')
@@ -41,94 +56,71 @@ $customizerHidden = 'customizer-hide';
         <p class="mb-6 text-muted">Completa tus datos para acceder a PULSO UGEL</p>
 
         @if ($errors->any())
-        <div class="alert alert-danger mb-4">
-          <ul class="mb-0 ps-3">
-            @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
-          </ul>
-        </div>
+          <div class="alert alert-danger mb-4">
+            <ul class="mb-0 ps-3">
+              @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+            </ul>
+          </div>
         @endif
 
         <form id="formAuthentication" class="mb-6" action="{{ route('register') }}" method="POST">
           @csrf
 
-          <div class="mb-6">
+          <div class="mb-5 form-control-validation">
             <label for="name" class="form-label">Nombre completo</label>
             <input type="text" class="form-control @error('name') is-invalid @enderror"
-              id="name" name="name" placeholder="Ej: María García López"
-              autofocus value="{{ old('name') }}" />
-            @error('name')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
-            @enderror
+              id="name" name="name" value="{{ old('name') }}"
+              placeholder="Ej: María García López" autofocus />
+            @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
           </div>
 
-          <div class="mb-6">
+          <div class="mb-5 form-control-validation">
             <label for="email" class="form-label">Correo electrónico</label>
             <input type="email" class="form-control @error('email') is-invalid @enderror"
-              id="email" name="email" placeholder="tu.correo@ugel.gob.pe"
-              value="{{ old('email') }}" />
-            @error('email')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
-            @enderror
+              id="email" name="email" value="{{ old('email') }}"
+              placeholder="tu.correo@ugel.gob.pe" />
+            @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
           </div>
 
-          <div class="mb-6 form-password-toggle">
+          <div class="mb-5 form-password-toggle form-control-validation">
             <label class="form-label" for="password">Contraseña</label>
-            <div class="input-group input-group-merge @error('password') is-invalid @enderror">
+            <div class="input-group input-group-merge">
               <input type="password" id="password"
                 class="form-control @error('password') is-invalid @enderror"
-                name="password" placeholder="············" aria-describedby="password" />
+                name="password" placeholder="············" />
               <span class="input-group-text cursor-pointer">
                 <i class="icon-base ti tabler-eye-off"></i>
               </span>
+              @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            @error('password')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
-            @enderror
           </div>
 
-          <div class="mb-6 form-password-toggle">
-            <label class="form-label" for="password-confirm">Confirmar contraseña</label>
+          <div class="mb-5 form-password-toggle">
+            <label class="form-label" for="password_confirmation">Confirmar contraseña</label>
             <div class="input-group input-group-merge">
-              <input type="password" id="password-confirm" class="form-control"
-                name="password_confirmation" placeholder="············" />
+              <input type="password" id="password_confirmation"
+                class="form-control" name="password_confirmation" placeholder="············" />
               <span class="input-group-text cursor-pointer">
                 <i class="icon-base ti tabler-eye-off"></i>
               </span>
             </div>
           </div>
 
-          @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
-          <div class="mb-6 mt-8">
-            <div class="form-check mb-8 ms-2 @error('terms') is-invalid @enderror">
-              <input class="form-check-input @error('terms') is-invalid @enderror"
-                type="checkbox" id="terms" name="terms" />
-              <label class="form-check-label" for="terms">
-                Acepto la <a href="{{ route('policy.show') }}" target="_blank">política de privacidad</a>
-                y <a href="{{ route('terms.show') }}" target="_blank">términos de uso</a>
+          <div class="mb-6 mt-2">
+            <div class="form-check ms-2 form-control-validation">
+              <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" />
+              <label class="form-check-label" for="terms-conditions">
+                Acepto la <a href="javascript:void(0);">política de privacidad y términos de uso</a>
               </label>
             </div>
-            @error('terms')
-            <div class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </div>
-            @enderror
           </div>
-          @endif
 
-          <button type="submit" class="btn btn-primary d-grid w-100">Crear Cuenta</button>
+          <button class="btn btn-primary d-grid w-100" type="submit">Crear Cuenta</button>
         </form>
 
         <p class="text-center">
           <span>¿Ya tienes cuenta?</span>
-          @if (Route::has('login'))
           <a href="{{ route('login') }}"> Iniciar sesión</a>
-          @endif
         </p>
 
         <div class="divider my-6">

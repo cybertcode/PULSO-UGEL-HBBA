@@ -1,10 +1,9 @@
 @php
-use Illuminate\Support\Facades\Auth;
-$configData = Helper::appClasses();
 $customizerHidden = 'customizer-hide';
+$configData = Helper::appClasses();
 @endphp
 
-@extends('layouts/blankLayout')
+@extends('layouts/layoutMaster')
 
 @section('title', 'Verificar Correo - PULSO UGEL')
 
@@ -38,38 +37,32 @@ $customizerHidden = 'customizer-hide';
     <div class="d-flex col-12 col-xl-4 align-items-center authentication-bg p-6 p-sm-12">
       <div class="w-px-400 mx-auto mt-12 mt-5">
         <h4 class="mb-1">Verifica tu correo ✉️</h4>
-
-        @if (session('status') == 'verification-link-sent')
-        <div class="alert alert-success mb-4" role="alert">
-          Se envió un nuevo enlace de verificación a tu correo electrónico.
-        </div>
-        @endif
-
-        <p class="text-start mb-0">
+        <p class="mb-4">
           Se envió un enlace de activación a:<br/>
-          <span class="fw-medium text-heading">{{ Auth::user()->email }}</span><br/>
+          <span class="fw-medium">{{ auth()->user()->email ?? 'tu.correo@ugel.gob.pe' }}</span><br/>
           Sigue el enlace del mensaje para continuar.
         </p>
 
-        <div class="mt-6 d-flex flex-column gap-2">
-          <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
-            <button type="submit" class="w-100 btn btn-primary">Reenviar correo de verificación</button>
-          </form>
+        @if (session('status') == 'verification-link-sent')
+          <div class="alert alert-success mb-4">
+            Se envió un nuevo enlace de verificación a tu correo electrónico.
+          </div>
+        @endif
 
+        <div class="d-flex gap-3 mb-6">
+          <form method="POST" action="{{ route('verification.send') }}" class="flex-grow-1">
+            @csrf
+            <button type="submit" class="btn btn-primary w-100">Reenviar correo</button>
+          </form>
           <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="w-100 btn btn-label-secondary">Cerrar sesión</button>
+            <button type="submit" class="btn btn-label-secondary">Cerrar sesión</button>
           </form>
-        </div>
-
-        <div class="divider my-6">
-          <div class="divider-text">UGEL Huacaybamba · Huánuco</div>
         </div>
 
         <p class="text-center text-muted small mb-0">
           <i class="ti tabler-shield-check me-1 text-success"></i>
-          Sistema de Monitoreo de Control Interno e Integridad Institucional
+          UGEL Huacaybamba · Sistema de Control Interno
         </p>
       </div>
     </div>
