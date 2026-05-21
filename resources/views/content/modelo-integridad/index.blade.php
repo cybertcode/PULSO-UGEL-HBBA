@@ -1,20 +1,5 @@
-@php
-$configData = Helper::appClasses();
-$componentes = [
-  ['num' => 1, 'nombre' => 'Compromiso e Integridad', 'icon' => 'tabler-shield-check', 'total' => 15, 'completadas' => 12],
-  ['num' => 2, 'nombre' => 'Gestión de Riesgos', 'icon' => 'tabler-chart-pie', 'total' => 18, 'completadas' => 10],
-  ['num' => 3, 'nombre' => 'Actividades de Control', 'icon' => 'tabler-checklist', 'total' => 20, 'completadas' => 14],
-  ['num' => 4, 'nombre' => 'Información y Comunicación', 'icon' => 'tabler-messages', 'total' => 12, 'completadas' => 9],
-  ['num' => 5, 'nombre' => 'Supervisión', 'icon' => 'tabler-eye', 'total' => 10, 'completadas' => 8],
-  ['num' => 6, 'nombre' => 'Ambiente de Control', 'icon' => 'tabler-building', 'total' => 14, 'completadas' => 6],
-  ['num' => 7, 'nombre' => 'Evaluación de Riesgos', 'icon' => 'tabler-alert-circle', 'total' => 16, 'completadas' => 11],
-  ['num' => 8, 'nombre' => 'Respuesta al Riesgo', 'icon' => 'tabler-shield-bolt', 'total' => 13, 'completadas' => 7],
-  ['num' => 9, 'nombre' => 'Seguimiento', 'icon' => 'tabler-timeline', 'total' => 11, 'completadas' => 9],
-];
-@endphp
-
+@php $configData = Helper::appClasses(); @endphp
 @extends('layouts/layoutMaster')
-
 @section('title', 'Modelo de Integridad - PULSO UGEL')
 
 @section('content')
@@ -22,50 +7,86 @@ $componentes = [
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
     <h4 class="mb-1">Modelo de Integridad</h4>
-    <p class="mb-0 text-muted">9 Componentes del Sistema de Integridad Institucional</p>
+    <p class="mb-0 text-muted">9 Componentes del Sistema de Integridad Institucional — Avance global: <strong>{{ round($avance_global) }}%</strong></p>
   </div>
   <a href="{{ route('mon-semaforo') }}" class="btn btn-outline-secondary">
-    <i class="ti tabler-traffic-lights me-1"></i> Ver Semáforo
+    <i class="ti tabler-traffic-lights me-1"></i>Ver Semáforo
   </a>
 </div>
 
-<!-- Tarjetas de los 9 componentes -->
+{{-- Barra de avance global --}}
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <div class="d-flex justify-content-between mb-1">
+      <span class="fw-medium">Avance Global del Modelo</span>
+      <span class="fw-bold">{{ round($avance_global) }}%</span>
+    </div>
+    <div class="progress" style="height:12px">
+      @php $gc = round($avance_global) >= 75 ? 'success' : (round($avance_global) >= 50 ? 'warning' : 'danger'); @endphp
+      <div class="progress-bar bg-{{ $gc }}" style="width:{{ round($avance_global) }}%" role="progressbar"></div>
+    </div>
+    <div class="d-flex gap-4 mt-2">
+      <small class="text-success"><i class="ti tabler-circle-filled me-1"></i>Verde ≥ 75%</small>
+      <small class="text-warning"><i class="ti tabler-circle-filled me-1"></i>Amarillo 50-74%</small>
+      <small class="text-danger"><i class="ti tabler-circle-filled me-1"></i>Rojo &lt; 50%</small>
+    </div>
+  </div>
+</div>
+
+{{-- Tarjetas de componentes --}}
 <div class="row g-4">
-  @foreach($componentes as $c)
-  @php
-  $pct = round(($c['completadas'] / $c['total']) * 100);
-  $color = $pct >= 75 ? 'success' : ($pct >= 50 ? 'warning' : 'danger');
-  $semaforo = $pct >= 75 ? 'Verde' : ($pct >= 50 ? 'Amarillo' : 'Rojo');
-  @endphp
+  @forelse($componentes as $c)
   <div class="col-12 col-md-6 col-xl-4">
-    <div class="card h-100 border-{{ $color }} border-opacity-50">
+    <div class="card h-100 border-{{ $c->color }} border-opacity-50">
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between mb-3">
           <div class="d-flex align-items-center gap-2">
             <div class="avatar avatar-sm">
-              <span class="avatar-initial rounded bg-label-{{ $color }}">
-                <i class="ti {{ $c['icon'] }} icon-18px"></i>
+              <span class="avatar-initial rounded bg-label-{{ $c->color }}">
+                <i class="ti {{ $c->icono }} icon-18px"></i>
               </span>
             </div>
-            <span class="badge bg-label-secondary">Comp. {{ $c['num'] }}</span>
+            <span class="badge bg-label-secondary">Comp. {{ $c->numero }}</span>
           </div>
-          <span class="badge bg-{{ $color }}">{{ $semaforo }}</span>
+          <span class="badge bg-{{ $c->color }}">{{ $c->semaforo }}</span>
         </div>
-        <h6 class="mb-3">{{ $c['nombre'] }}</h6>
+        <h6 class="mb-3">{{ $c->nombre }}</h6>
         <div class="d-flex justify-content-between mb-1">
-          <small class="text-muted">{{ $c['completadas'] }} de {{ $c['total'] }} actividades</small>
-          <small class="fw-medium text-{{ $color }}">{{ $pct }}%</small>
+          <small class="text-muted">{{ $c->completadas_count }} de {{ $c->actividades_count }} actividades</small>
+          <small class="fw-bold text-{{ $c->color }}">{{ $c->porcentaje }}%</small>
         </div>
         <div class="progress mb-3" style="height:8px">
-          <div class="progress-bar bg-{{ $color }}" style="width:{{ $pct }}%"></div>
+          <div class="progress-bar bg-{{ $c->color }}" style="width:{{ $c->porcentaje }}%"></div>
         </div>
-        <a href="javascript:void(0)" class="btn btn-sm btn-label-{{ $color }} w-100">
-          Ver actividades
+        <div class="d-flex gap-2 text-center">
+          <div class="flex-fill bg-label-success rounded py-1">
+            <div class="fw-bold text-success">{{ $c->completadas_count }}</div>
+            <small class="text-muted">Completadas</small>
+          </div>
+          <div class="flex-fill bg-label-warning rounded py-1">
+            <div class="fw-bold text-warning">{{ $c->en_proceso_count }}</div>
+            <small class="text-muted">En Proceso</small>
+          </div>
+          <div class="flex-fill bg-label-danger rounded py-1">
+            <div class="fw-bold text-danger">{{ $c->vencidas_count }}</div>
+            <small class="text-muted">Vencidas</small>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer py-2">
+        <a href="{{ route('sci-control-interno') }}?componente_id={{ $c->id }}" class="btn btn-sm btn-outline-{{ $c->color }} w-100">
+          <i class="ti tabler-list-details me-1"></i>Ver actividades
         </a>
       </div>
     </div>
   </div>
-  @endforeach
+  @empty
+  <div class="col-12">
+    <div class="card"><div class="card-body text-center text-muted py-5">
+      <i class="ti tabler-components icon-32px d-block mb-2"></i>No hay componentes configurados.
+    </div></div>
+  </div>
+  @endforelse
 </div>
 
 @endsection
