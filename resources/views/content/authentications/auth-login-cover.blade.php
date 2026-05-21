@@ -1,15 +1,30 @@
 @php
-use Illuminate\Support\Facades\Route;
-$configData = Helper::appClasses();
 $customizerHidden = 'customizer-hide';
+$configData = Helper::appClasses();
 @endphp
 
-@extends('layouts/blankLayout')
+@extends('layouts/layoutMaster')
 
 @section('title', 'Iniciar Sesión - PULSO UGEL')
 
+@section('vendor-style')
+@vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])
+@endsection
+
 @section('page-style')
 @vite(['resources/assets/vendor/scss/pages/page-auth.scss'])
+@endsection
+
+@section('vendor-script')
+@vite([
+  'resources/assets/vendor/libs/@form-validation/popular.js',
+  'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
+  'resources/assets/vendor/libs/@form-validation/auto-focus.js'
+])
+@endsection
+
+@section('page-script')
+@vite(['resources/assets/js/pages-auth.js'])
 @endsection
 
 @section('content')
@@ -34,66 +49,56 @@ $customizerHidden = 'customizer-hide';
       </div>
     </div>
 
-    <!-- Formulario de inicio de sesión -->
+    <!-- Formulario -->
     <div class="d-flex col-12 col-xl-4 align-items-center authentication-bg p-sm-12 p-6">
       <div class="w-px-400 mx-auto mt-12 pt-5">
+
         <h4 class="mb-1">Bienvenido a PULSO UGEL 👋</h4>
         <p class="mb-6 text-muted">Ingresa tus credenciales para acceder al Sistema de Control Interno</p>
 
         @if (session('status'))
-        <div class="alert alert-success mb-4" role="alert">
-          {{ session('status') }}
-        </div>
+          <div class="alert alert-success mb-4">{{ session('status') }}</div>
         @endif
 
         @if ($errors->any())
-        <div class="alert alert-danger mb-4">
-          @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
-        </div>
+          <div class="alert alert-danger mb-4">
+            @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+          </div>
         @endif
 
         <form id="formAuthentication" class="mb-6" action="{{ route('login') }}" method="POST">
           @csrf
-          <div class="mb-6">
-            <label for="login-email" class="form-label">Correo electrónico</label>
+          <div class="mb-6 form-control-validation">
+            <label for="email" class="form-label">Correo electrónico</label>
             <input type="email" class="form-control @error('email') is-invalid @enderror"
-              id="login-email" name="email" placeholder="tu.correo@ugel.gob.pe"
-              autofocus value="{{ old('email') }}" />
-            @error('email')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
-            @enderror
+              id="email" name="email" value="{{ old('email') }}"
+              placeholder="tu.correo@ugel.gob.pe" autofocus />
+            @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
           </div>
 
-          <div class="mb-6 form-password-toggle">
+          <div class="mb-6 form-password-toggle form-control-validation">
             <div class="d-flex justify-content-between">
-              <label class="form-label" for="login-password">Contraseña</label>
+              <label class="form-label" for="password">Contraseña</label>
               @if (Route::has('password.request'))
-              <a href="{{ route('password.request') }}" class="text-sm">
-                <small>¿Olvidaste tu contraseña?</small>
-              </a>
+                <a href="{{ route('password.request') }}" class="text-sm">
+                  <small>¿Olvidaste tu contraseña?</small>
+                </a>
               @endif
             </div>
-            <div class="input-group input-group-merge @error('password') is-invalid @enderror">
-              <input type="password" id="login-password"
+            <div class="input-group input-group-merge">
+              <input type="password" id="password"
                 class="form-control @error('password') is-invalid @enderror"
-                name="password" placeholder="············" aria-describedby="password" />
+                name="password" placeholder="············" />
               <span class="input-group-text cursor-pointer">
                 <i class="icon-base ti tabler-eye-off"></i>
               </span>
+              @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            @error('password')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
-            @enderror
           </div>
 
           <div class="my-8">
             <div class="form-check mb-0 ms-2">
-              <input class="form-check-input" type="checkbox" id="remember-me" name="remember"
-                {{ old('remember') ? 'checked' : '' }} />
+              <input class="form-check-input" type="checkbox" id="remember-me" name="remember" />
               <label class="form-check-label" for="remember-me">Recordarme</label>
             </div>
           </div>
