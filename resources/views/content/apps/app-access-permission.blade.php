@@ -6,61 +6,73 @@ $configData = Helper::appClasses();
 
 @section('title', 'Permisos - PULSO UGEL')
 
-@section('vendor-style')
-@vite([
-  'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
-  'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss',
-  'resources/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.scss',
-  'resources/assets/vendor/libs/@form-validation/form-validation.scss'
-])
-@endsection
-
-@section('vendor-script')
-@vite([
-  'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js',
-  'resources/assets/vendor/libs/@form-validation/popular.js',
-  'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
-  'resources/assets/vendor/libs/@form-validation/auto-focus.js'
-])
-@endsection
-
-@section('page-script')
-@vite([
-  'resources/assets/js/app-access-permission.js',
-  'resources/assets/js/modal-add-permission.js',
-  'resources/assets/js/modal-edit-permission.js'
-])
-@endsection
-
 @section('content')
 
-<div class="d-flex align-items-center justify-content-between mb-4">
-  <div>
-    <h4 class="mb-1">Permisos del Sistema</h4>
-    <p class="mb-0 text-muted">Lista de permisos asignados a cada rol de PULSO UGEL</p>
-  </div>
+<div class="mb-4">
+  <h4 class="mb-1">Permisos del Sistema</h4>
+  <p class="mb-0 text-muted">Lista de todos los permisos disponibles agrupados por módulo. Los permisos se asignan a través de los <a href="{{ route('adm-roles') }}">Roles</a>.</p>
 </div>
 
-<!-- Tabla de Permisos -->
-<div class="card">
-  <div class="card-datatable table-responsive">
-    <table class="datatables-permissions table border-top">
-      <thead>
-        <tr>
-          <th></th>
-          <th></th>
-          <th>Permiso</th>
-          <th>Asignado a Roles</th>
-          <th>Fecha de Creación</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-    </table>
+<div class="row g-4">
+  @foreach($permisos as $modulo => $listaPermisos)
+  @php
+    $colorMap = [
+      'usuarios'        => 'primary',
+      'control-interno' => 'info',
+      'integridad'      => 'success',
+      'evidencias'      => 'warning',
+      'reportes'        => 'secondary',
+      'reconocimientos' => 'danger',
+      'alertas'         => 'primary',
+      'configuracion'   => 'dark',
+    ];
+    $iconMap = [
+      'usuarios'        => 'tabler-users',
+      'control-interno' => 'tabler-clipboard-list',
+      'integridad'      => 'tabler-shield-check',
+      'evidencias'      => 'tabler-file-upload',
+      'reportes'        => 'tabler-chart-bar',
+      'reconocimientos' => 'tabler-award',
+      'alertas'         => 'tabler-bell',
+      'configuracion'   => 'tabler-settings',
+    ];
+    $color = $colorMap[$modulo] ?? 'primary';
+    $icon  = $iconMap[$modulo]  ?? 'tabler-lock';
+  @endphp
+  <div class="col-xl-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center gap-2">
+        <div class="avatar avatar-sm">
+          <span class="avatar-initial rounded bg-label-{{ $color }}">
+            <i class="ti {{ $icon }}"></i>
+          </span>
+        </div>
+        <h6 class="mb-0 text-capitalize">{{ $modulo }}</h6>
+        <span class="badge bg-label-{{ $color }} ms-auto">{{ $listaPermisos->count() }}</span>
+      </div>
+      <div class="card-body">
+        <div class="list-group list-group-flush">
+          @foreach($listaPermisos as $permiso)
+          <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-medium small">{{ $permiso->name }}</div>
+              <small class="text-muted">{{ $permiso->roles_count }} rol(es) lo usan</small>
+            </div>
+            <span class="badge {{ $permiso->roles_count > 0 ? 'bg-label-success' : 'bg-label-secondary' }}">
+              {{ $permiso->roles_count > 0 ? 'En uso' : 'Sin asignar' }}
+            </span>
+          </div>
+          @endforeach
+        </div>
+      </div>
+    </div>
   </div>
+  @endforeach
 </div>
 
-<!-- Modales -->
-@include('_partials/_modals/modal-add-permission')
-@include('_partials/_modals/modal-edit-permission')
+<div class="alert alert-info mt-4">
+  <i class="ti tabler-info-circle me-2"></i>
+  <strong>¿Cómo funciona?</strong> Los permisos no se asignan directamente a usuarios. Se asignan a <strong>Roles</strong>, y los usuarios heredan los permisos del rol que tienen asignado. Para cambiar qué puede hacer un usuario, edita su rol o crea uno nuevo desde <a href="{{ route('adm-roles') }}" class="alert-link">Gestión de Roles</a>.
+</div>
 
 @endsection

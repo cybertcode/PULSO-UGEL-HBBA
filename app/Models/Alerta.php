@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Alerta extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'actividad_id', 'usuario_id', 'unidad_organica_id',
         'titulo', 'mensaje', 'tipo', 'prioridad',

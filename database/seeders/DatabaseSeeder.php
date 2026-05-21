@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,18 +13,8 @@ class DatabaseSeeder extends Seeder
             ComponentesSeeder::class,
             ConfiguracionInstitucionalSeeder::class,
             RolesPermisosSeeder::class,
+            UsuariosSeeder::class,
+            DatosSeeder::class,
         ]);
-
-        // Usuario administrador por defecto
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@ugel.gob.pe'],
-            [
-                'name'              => 'Administrador PULSO UGEL',
-                'password'          => Hash::make('Admin@2024'),
-                'email_verified_at' => now(),
-                'estado'            => 'activo',
-            ]
-        );
-        $admin->assignRole('Administrador');
     }
 }

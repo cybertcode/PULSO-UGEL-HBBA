@@ -20,7 +20,6 @@ use App\Http\Controllers\apps\AccessRoles;
 use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\authentications\LoginBasic;
 use App\Http\Controllers\authentications\RegisterBasic;
-use App\Models\UnidadOrganica;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
@@ -32,40 +31,61 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // --- Control y Seguimiento ---
-    Route::get('/control-interno',   [ControlInternoController::class, 'index'])->name('sci-control-interno');
-    Route::post('/control-interno',  [ControlInternoController::class, 'store'])->name('sci-control-interno.store');
-    Route::put('/control-interno/{actividad}',    [ControlInternoController::class, 'update'])->name('sci-control-interno.update');
-    Route::delete('/control-interno/{actividad}', [ControlInternoController::class, 'destroy'])->name('sci-control-interno.destroy');
-    Route::patch('/control-interno/{actividad}/avance', [ControlInternoController::class, 'updateAvance'])->name('sci-control-interno.avance');
+    // --- Control y Seguimiento (permisos: control-interno.*, integridad.*, evidencias.*) ---
+    Route::middleware('can:control-interno.ver')->group(function () {
+        Route::get('/control-interno', [ControlInternoController::class, 'index'])->name('sci-control-interno');
+    });
+    Route::post('/control-interno',                       [ControlInternoController::class, 'store'])->name('sci-control-interno.store')->middleware('can:control-interno.crear');
+    Route::put('/control-interno/{actividad}',            [ControlInternoController::class, 'update'])->name('sci-control-interno.update')->middleware('can:control-interno.editar');
+    Route::delete('/control-interno/{actividad}',         [ControlInternoController::class, 'destroy'])->name('sci-control-interno.destroy')->middleware('can:control-interno.editar');
+    Route::patch('/control-interno/{actividad}/avance',   [ControlInternoController::class, 'updateAvance'])->name('sci-control-interno.avance')->middleware('can:control-interno.editar');
 
-    Route::get('/modelo-integridad', [ModeloIntegridadController::class, 'index'])->name('sci-modelo-integridad');
+    Route::get('/modelo-integridad', [ModeloIntegridadController::class, 'index'])->name('sci-modelo-integridad')->middleware('can:integridad.ver');
 
-    Route::get('/evidencias',    [EvidenciasController::class, 'index'])->name('sci-evidencias');
-    Route::post('/evidencias',   [EvidenciasController::class, 'store'])->name('sci-evidencias.store');
-    Route::patch('/evidencias/{evidencia}/validar',  [EvidenciasController::class, 'validar'])->name('sci-evidencias.validar');
-    Route::delete('/evidencias/{evidencia}', [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy');
+    Route::middleware('can:evidencias.ver')->group(function () {
+        Route::get('/evidencias', [EvidenciasController::class, 'index'])->name('sci-evidencias');
+    });
+    Route::post('/evidencias',                        [EvidenciasController::class, 'store'])->name('sci-evidencias.store')->middleware('can:evidencias.subir');
+    Route::patch('/evidencias/{evidencia}/validar',   [EvidenciasController::class, 'validar'])->name('sci-evidencias.validar')->middleware('can:evidencias.validar');
+    Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.validar');
 
     // --- Monitoreo ---
-    Route::get('/semaforo',         [SemaforoController::class,       'index'])->name('mon-semaforo');
-    Route::get('/alertas',          [AlertasController::class,        'index'])->name('mon-alertas');
-    Route::patch('/alertas/{alerta}/leer',  [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
-    Route::patch('/alertas/leer-todas',     [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
-    Route::get('/ranking-unidades', [RankingUnidadesController::class,'index'])->name('mon-ranking-unidades');
+    Route::get('/semaforo',          [SemaforoController::class,        'index'])->name('mon-semaforo');
+    Route::middleware('can:alertas.ver')->group(function () {
+        Route::get('/alertas', [AlertasController::class, 'index'])->name('mon-alertas');
+    });
+    Route::patch('/alertas/{alerta}/leer',   [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
+    Route::patch('/alertas/leer-todas',      [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
+    Route::get('/ranking-unidades', [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades');
 
     // --- Reportes ---
-    Route::get('/reportes',         [ReportesController::class,       'index'])->name('rep-reportes');
-    Route::get('/reconocimientos',  [ReconocimientosController::class,'index'])->name('rep-reconocimientos');
+    Route::get('/reportes',        [ReportesController::class,       'index'])->name('rep-reportes')->middleware('can:reportes.ver');
+    Route::get('/reconocimientos', [ReconocimientosController::class, 'index'])->name('rep-reconocimientos')->middleware('can:reconocimientos.ver');
 
-    // --- Administración ---
-    Route::get('/usuarios',          [UserList::class,        'index'])->name('adm-usuarios');
-    Route::get('/usuarios/ver',      [UserViewAccount::class, 'index'])->name('adm-usuarios-ver');
-    Route::get('/usuarios/seguridad',[UserViewSecurity::class,'index'])->name('adm-usuarios-seguridad');
-    Route::get('/roles',             [AccessRoles::class,     'index'])->name('adm-roles');
-    Route::get('/permisos',          [AccessPermission::class,'index'])->name('adm-permisos');
+    // --- Administración: Usuarios ---
+    Route::get('/usuarios',                   [UserList::class, 'index'])->name('adm-usuarios')->middleware('can:usuarios.ver');
+    Route::post('/usuarios',                  [UserList::class, 'store'])->name('adm-usuarios.store')->middleware('can:usuarios.crear');
+    Route::put('/usuarios/{usuario}',         [UserList::class, 'update'])->name('adm-usuarios.update')->middleware('can:usuarios.editar');
+    Route::delete('/usuarios/{usuario}',      [UserList::class, 'destroy'])->name('adm-usuarios.destroy')->middleware('can:usuarios.eliminar');
+    Route::patch('/usuarios/{usuario}/estado',[UserList::class, 'toggleEstado'])->name('adm-usuarios.estado')->middleware('can:usuarios.editar');
 
-    Route::get('/configuracion',                             [ConfiguracionController::class, 'index'])->name('adm-configuracion');
-    Route::put('/configuracion',                             [ConfiguracionController::class, 'update'])->name('adm-configuracion.update');
-    Route::post('/configuracion/unidades',                   [ConfiguracionController::class, 'storeUnidad'])->name('adm-configuracion.unidades.store');
-    Route::put('/configuracion/unidades/{unidad}',           [ConfiguracionController::class, 'updateUnidad'])->name('adm-configuracion.unidades.update');
+    Route::get('/usuarios/ver',       [UserViewAccount::class,  'index'])->name('adm-usuarios-ver');
+    Route::get('/usuarios/seguridad', [UserViewSecurity::class, 'index'])->name('adm-usuarios-seguridad');
+
+    // --- Administración: Roles y Permisos ---
+    Route::middleware('can:configuracion.ver')->group(function () {
+        Route::get('/roles',    [AccessRoles::class,      'index'])->name('adm-roles');
+        Route::get('/permisos', [AccessPermission::class, 'index'])->name('adm-permisos');
+    });
+    Route::middleware('can:configuracion.editar')->group(function () {
+        Route::post('/roles',          [AccessRoles::class, 'store'])->name('adm-roles.store');
+        Route::put('/roles/{role}',    [AccessRoles::class, 'update'])->name('adm-roles.update');
+        Route::delete('/roles/{role}', [AccessRoles::class, 'destroy'])->name('adm-roles.destroy');
+    });
+
+    // --- Administración: Configuración ---
+    Route::get('/configuracion',                   [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
+    Route::put('/configuracion',                   [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
+    Route::post('/configuracion/unidades',         [ConfiguracionController::class, 'storeUnidad'])->name('adm-configuracion.unidades.store')->middleware('can:configuracion.editar');
+    Route::put('/configuracion/unidades/{unidad}', [ConfiguracionController::class, 'updateUnidad'])->name('adm-configuracion.unidades.update')->middleware('can:configuracion.editar');
 });
