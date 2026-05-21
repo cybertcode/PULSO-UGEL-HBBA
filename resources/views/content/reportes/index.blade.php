@@ -1,137 +1,182 @@
 @php
+use Illuminate\Support\Str;
 $configData = Helper::appClasses();
 @endphp
-
 @extends('layouts/layoutMaster')
-
 @section('title', 'Reportes - PULSO UGEL')
 
 @section('vendor-style')
-@vite(['resources/assets/vendor/libs/apex-charts/apex-charts.scss'])
+@vite(['resources/assets/vendor/libs/apex-charts/apex-charts.scss',
+       'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
+       'resources/assets/vendor/libs/select2/select2.scss'])
 @endsection
-
 @section('vendor-script')
-@vite(['resources/assets/vendor/libs/apex-charts/apexcharts.js'])
+@vite(['resources/assets/vendor/libs/apex-charts/apexcharts.js',
+       'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js',
+       'resources/assets/vendor/libs/select2/select2.js'])
 @endsection
 
 @section('content')
 
-<div class="mb-4">
-  <h4 class="mb-1">Reportes</h4>
-  <p class="mb-0 text-muted">Análisis y estadísticas del Sistema de Control Interno</p>
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="mb-1">Reportes de Avance</h4>
+    <p class="mb-0 text-muted">Análisis del cumplimiento del Plan de Control Interno</p>
+  </div>
+  <a href="{{ route('rep-reportes') }}?{{ http_build_query(request()->except('page')) }}&export=pdf" class="btn btn-outline-danger">
+    <i class="ti tabler-file-type-pdf me-1"></i>Exportar PDF
+  </a>
 </div>
 
-<!-- Filtros de reporte -->
+{{-- Filtros --}}
 <div class="card mb-4">
-  <div class="card-body py-3">
-    <div class="row g-3 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label form-label-sm">Período</label>
-        <select class="form-select form-select-sm">
-          <option>2026 - Anual</option>
-          <option>2026 - Semestre I</option>
-          <option>2025 - Anual</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label form-label-sm">Componente</label>
-        <select class="form-select form-select-sm">
-          <option value="">Todos</option>
-          <option>Compromiso e Integridad</option>
-          <option>Gestión de Riesgos</option>
-          <option>Actividades de Control</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label form-label-sm">Estado</label>
-        <select class="form-select form-select-sm">
-          <option value="">Todos</option>
-          <option>Completadas</option>
-          <option>En Proceso</option>
-          <option>Vencidas</option>
-        </select>
-      </div>
-      <div class="col-md-3 d-flex gap-2">
-        <button class="btn btn-sm btn-primary flex-grow-1">Generar</button>
-        <button class="btn btn-sm btn-label-secondary">
-          <i class="ti tabler-download"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Gráficos de reporte -->
-<div class="row g-4 mb-4">
-  <div class="col-12 col-xl-6">
-    <div class="card h-100">
-      <div class="card-header">
-        <h5 class="card-title mb-0">Avance por Componente</h5>
-      </div>
-      <div class="card-body">
-        <div id="reporteBarChart"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-xl-6">
-    <div class="card h-100">
-      <div class="card-header">
-        <h5 class="card-title mb-0">Tendencia Mensual</h5>
-      </div>
-      <div class="card-body">
-        <div id="reporteLineChart"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Tabla resumen -->
-<div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0">Resumen por Componente — 2026</h5>
-    <button class="btn btn-sm btn-label-primary">
-      <i class="ti tabler-file-export me-1"></i> Exportar PDF
-    </button>
-  </div>
   <div class="card-body">
+    <form method="GET" action="{{ route('rep-reportes') }}">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">Año</label>
+          <select name="anio" class="form-select">
+            @foreach($anios as $a)
+            <option value="{{ $a }}" {{ $anio == $a ? 'selected' : '' }}>{{ $a }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Componente</label>
+          <select name="componente_id" class="form-select select2">
+            <option value="">Todos</option>
+            @foreach($componentes as $c)
+            <option value="{{ $c->id }}" {{ $componente == $c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Estado</label>
+          <select name="estado" class="form-select">
+            <option value="">Todos</option>
+            @foreach(['pendiente','en_proceso','completada','vencida','cancelada'] as $e)
+            <option value="{{ $e }}" {{ $estado === $e ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ',$e)) }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Unidad</label>
+          <select name="unidad_organica_id" class="form-select select2">
+            <option value="">Todas</option>
+            @foreach($unidades as $u)
+            <option value="{{ $u->id }}" {{ $unidad == $u->id ? 'selected' : '' }}>{{ $u->sigla }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-12 d-flex gap-2">
+          <button type="submit" class="btn btn-primary"><i class="ti tabler-filter me-1"></i>Generar Reporte</button>
+          <a href="{{ route('rep-reportes') }}" class="btn btn-label-secondary">Limpiar</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{-- Gráfica mensual + Resumen --}}
+<div class="row g-4 mb-4">
+  <div class="col-xl-8">
+    <div class="card h-100">
+      <div class="card-header"><h5 class="mb-0">Actividades por Mes — {{ $anio }}</h5></div>
+      <div class="card-body"><div id="chartMensual"></div></div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header"><h5 class="mb-0">Avance por Componente</h5></div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+          @foreach($resumen as $r)
+          @php $rc = $r->porcentaje >= 75 ? 'success' : ($r->porcentaje >= 50 ? 'warning' : 'danger'); @endphp
+          <div class="list-group-item px-4 py-2">
+            <div class="d-flex justify-content-between mb-1">
+              <small class="fw-medium text-truncate me-2" style="max-width:160px">{{ $r->nombre }}</small>
+              <small class="fw-bold text-{{ $rc }}">{{ $r->porcentaje }}%</small>
+            </div>
+            <div class="progress" style="height:5px">
+              <div class="progress-bar bg-{{ $rc }}" style="width:{{ $r->porcentaje }}%"></div>
+            </div>
+          </div>
+          @endforeach
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- Tabla detalle --}}
+<div class="card">
+  <div class="card-header"><h5 class="mb-0">Detalle de Actividades ({{ $actividades->total() }})</h5></div>
+  <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table">
+      <table class="table table-hover mb-0 datatables-reportes">
         <thead>
           <tr>
-            <th>Componente</th>
-            <th class="text-center">Total</th>
-            <th class="text-center">Completadas</th>
-            <th class="text-center">En Proceso</th>
-            <th class="text-center">Vencidas</th>
-            <th class="text-center">% Avance</th>
-            <th class="text-center">Semáforo</th>
+            <th>Código</th><th>Actividad</th><th>Componente</th><th>Unidad</th><th>Vence</th><th>Avance</th><th>Estado</th><th>Semáforo</th>
           </tr>
         </thead>
         <tbody>
+          @forelse($actividades as $a)
           @php
-          $rows = [
-            ['Compromiso e Integridad', 15, 12, 2, 1, 80, 'success', 'Verde'],
-            ['Gestión de Riesgos', 18, 10, 6, 2, 56, 'warning', 'Amarillo'],
-            ['Actividades de Control', 20, 14, 4, 2, 70, 'warning', 'Amarillo'],
-            ['Información y Comunicación', 12, 9, 2, 1, 75, 'success', 'Verde'],
-            ['Supervisión', 10, 8, 1, 1, 80, 'success', 'Verde'],
-          ];
+            $ec = match($a->estado) { 'completada' => 'success', 'en_proceso' => 'warning', 'vencida' => 'danger', default => 'secondary' };
+            $sc = $a->avance >= 75 ? 'success' : ($a->avance >= 50 ? 'warning' : 'danger');
           @endphp
-          @foreach($rows as [$nombre, $total, $comp, $proc, $venc, $pct, $color, $label])
           <tr>
-            <td>{{ $nombre }}</td>
-            <td class="text-center">{{ $total }}</td>
-            <td class="text-center text-success">{{ $comp }}</td>
-            <td class="text-center text-warning">{{ $proc }}</td>
-            <td class="text-center text-danger">{{ $venc }}</td>
-            <td class="text-center fw-medium">{{ $pct }}%</td>
-            <td class="text-center"><span class="badge bg-{{ $color }}">{{ $label }}</span></td>
+            <td><small class="text-muted">{{ $a->codigo }}</small></td>
+            <td><div class="fw-medium text-truncate" style="max-width:200px">{{ $a->nombre }}</div></td>
+            <td><small>{{ $a->componente->nombre ?? '—' }}</small></td>
+            <td><small>{{ $a->unidadOrganica->sigla ?? '—' }}</small></td>
+            <td><small>{{ $a->fecha_limite->format('d/m/Y') }}</small></td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <div class="progress" style="width:50px;height:5px"><div class="progress-bar bg-{{ $ec }}" style="width:{{ $a->avance }}%"></div></div>
+                <small>{{ $a->avance }}%</small>
+              </div>
+            </td>
+            <td><span class="badge bg-label-{{ $ec }}">{{ ucfirst(str_replace('_',' ',$a->estado)) }}</span></td>
+            <td><i class="ti tabler-circle-filled text-{{ $sc }} icon-20px"></i></td>
           </tr>
-          @endforeach
+          @empty
+          <tr><td colspan="8" class="text-center text-muted py-4">Sin resultados</td></tr>
+          @endforelse
         </tbody>
       </table>
     </div>
   </div>
+  @if($actividades->hasPages())
+  <div class="card-footer">{{ $actividades->links() }}</div>
+  @endif
 </div>
 
+@endsection
+
+@section('page-script')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.select2').forEach(el => $(el).select2());
+
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+  const data  = @json($por_mes);
+  const cats  = data.map(d => meses[d.mes - 1]);
+  const total = data.map(d => parseInt(d.total));
+  const comp  = data.map(d => parseInt(d.completadas));
+
+  new ApexCharts(document.getElementById('chartMensual'), {
+    chart: { type: 'bar', height: 280, toolbar: { show: false } },
+    series: [
+      { name: 'Total', data: total },
+      { name: 'Completadas', data: comp },
+    ],
+    xaxis: { categories: cats.length ? cats : meses },
+    colors: ['#696cff', '#28c76f'],
+    dataLabels: { enabled: false },
+    legend: { position: 'top' },
+    plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
+  }).render();
+});
+</script>
 @endsection
