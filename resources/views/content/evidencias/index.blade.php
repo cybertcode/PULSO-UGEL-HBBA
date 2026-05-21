@@ -1,5 +1,6 @@
 @php
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 $configData = Helper::appClasses();
 @endphp
 @extends('layouts/layoutMaster')
@@ -18,10 +19,6 @@ $configData = Helper::appClasses();
 @endsection
 
 @section('content')
-
-@if(session('success'))
-<div class="alert alert-success alert-dismissible mb-4"><i class="ti tabler-check me-2"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-@endif
 
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
@@ -252,3 +249,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endsection
+

@@ -1,78 +1,165 @@
 @php
 $configData = Helper::appClasses();
 @endphp
-
 @extends('layouts/layoutMaster')
-
 @section('title', 'Permisos - PULSO UGEL')
+
+@section('vendor-style')
+@vite([
+  'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
+  'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss',
+])
+@endsection
+
+@section('vendor-script')
+@vite(['resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js'])
+@endsection
 
 @section('content')
 
-<div class="mb-4">
+<div class="mb-6">
   <h4 class="mb-1">Permisos del Sistema</h4>
-  <p class="mb-0 text-muted">Lista de todos los permisos disponibles agrupados por módulo. Los permisos se asignan a través de los <a href="{{ route('adm-roles') }}">Roles</a>.</p>
+  <p class="mb-0 text-muted">
+    Los permisos se asignan a <a href="{{ route('adm-roles') }}" class="text-primary">Roles</a>.
+    Los usuarios heredan automáticamente los permisos del rol asignado.
+  </p>
 </div>
 
-<div class="row g-4">
-  @foreach($permisos as $modulo => $listaPermisos)
-  @php
-    $colorMap = [
-      'usuarios'        => 'primary',
-      'control-interno' => 'info',
-      'integridad'      => 'success',
-      'evidencias'      => 'warning',
-      'reportes'        => 'secondary',
-      'reconocimientos' => 'danger',
-      'alertas'         => 'primary',
-      'configuracion'   => 'dark',
-    ];
-    $iconMap = [
-      'usuarios'        => 'tabler-users',
-      'control-interno' => 'tabler-clipboard-list',
-      'integridad'      => 'tabler-shield-check',
-      'evidencias'      => 'tabler-file-upload',
-      'reportes'        => 'tabler-chart-bar',
-      'reconocimientos' => 'tabler-award',
-      'alertas'         => 'tabler-bell',
-      'configuracion'   => 'tabler-settings',
-    ];
-    $color = $colorMap[$modulo] ?? 'primary';
-    $icon  = $iconMap[$modulo]  ?? 'tabler-lock';
-  @endphp
-  <div class="col-xl-4 col-md-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center gap-2">
-        <div class="avatar avatar-sm">
-          <span class="avatar-initial rounded bg-label-{{ $color }}">
-            <i class="ti {{ $icon }}"></i>
-          </span>
-        </div>
-        <h6 class="mb-0 text-capitalize">{{ $modulo }}</h6>
-        <span class="badge bg-label-{{ $color }} ms-auto">{{ $listaPermisos->count() }}</span>
-      </div>
-      <div class="card-body">
-        <div class="list-group list-group-flush">
-          @foreach($listaPermisos as $permiso)
-          <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-            <div>
-              <div class="fw-medium small">{{ $permiso->name }}</div>
-              <small class="text-muted">{{ $permiso->roles_count }} rol(es) lo usan</small>
+<div class="card">
+  <div class="card-datatable table-responsive">
+    <table class="datatables-permisos table border-top">
+      <thead>
+        <tr>
+          <th>Permiso</th>
+          <th>Módulo</th>
+          <th>Roles que lo usan</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($permisos as $modulo => $listaPermisos)
+        @php
+          $colorMap = [
+            'usuarios'        => 'primary',
+            'control-interno' => 'info',
+            'integridad'      => 'success',
+            'evidencias'      => 'warning',
+            'reportes'        => 'secondary',
+            'reconocimientos' => 'danger',
+            'alertas'         => 'primary',
+            'configuracion'   => 'dark',
+          ];
+          $iconMap = [
+            'usuarios'        => 'tabler-users',
+            'control-interno' => 'tabler-clipboard-list',
+            'integridad'      => 'tabler-shield-check',
+            'evidencias'      => 'tabler-file-upload',
+            'reportes'        => 'tabler-chart-bar',
+            'reconocimientos' => 'tabler-award',
+            'alertas'         => 'tabler-bell',
+            'configuracion'   => 'tabler-settings',
+          ];
+          $color = $colorMap[$modulo] ?? 'primary';
+          $icon  = $iconMap[$modulo]  ?? 'tabler-lock';
+        @endphp
+        @foreach($listaPermisos as $permiso)
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar avatar-sm">
+                <span class="avatar-initial rounded bg-label-{{ $color }}">
+                  <i class="icon-base ti {{ $icon }}"></i>
+                </span>
+              </div>
+              <span class="fw-medium text-heading">{{ $permiso->name }}</span>
             </div>
-            <span class="badge {{ $permiso->roles_count > 0 ? 'bg-label-success' : 'bg-label-secondary' }}">
-              {{ $permiso->roles_count > 0 ? 'En uso' : 'Sin asignar' }}
+          </td>
+          <td>
+            <span class="badge bg-label-{{ $color }} text-capitalize">{{ $modulo }}</span>
+          </td>
+          <td>
+            <div class="d-flex flex-wrap gap-1">
+              @forelse($permiso->roles as $rol)
+              <span class="badge bg-label-secondary">{{ $rol->name }}</span>
+              @empty
+              <span class="text-muted small">Sin asignar</span>
+              @endforelse
+            </div>
+          </td>
+          <td>
+            @if($permiso->roles_count > 0)
+            <span class="badge bg-label-success">
+              <i class="icon-base ti tabler-check icon-14px me-1"></i>En uso
             </span>
-          </div>
-          @endforeach
-        </div>
-      </div>
-    </div>
+            @else
+            <span class="badge bg-label-secondary">Sin asignar</span>
+            @endif
+          </td>
+        </tr>
+        @endforeach
+        @endforeach
+      </tbody>
+    </table>
   </div>
-  @endforeach
 </div>
 
-<div class="alert alert-info mt-4">
-  <i class="ti tabler-info-circle me-2"></i>
-  <strong>¿Cómo funciona?</strong> Los permisos no se asignan directamente a usuarios. Se asignan a <strong>Roles</strong>, y los usuarios heredan los permisos del rol que tienen asignado. Para cambiar qué puede hacer un usuario, edita su rol o crea uno nuevo desde <a href="{{ route('adm-roles') }}" class="alert-link">Gestión de Roles</a>.
+<div class="alert alert-primary d-flex align-items-center gap-3 mt-6" role="alert">
+  <i class="icon-base ti tabler-info-circle icon-22px flex-shrink-0"></i>
+  <div>
+    <strong>¿Cómo funciona el sistema de permisos?</strong>
+    Los permisos no se asignan directamente a usuarios — se agrupan en
+    <a href="{{ route('adm-roles') }}" class="alert-link">Roles</a>.
+    Cada usuario tiene un rol y hereda automáticamente todos sus permisos.
+    El rol <strong>Super Admin</strong> tiene acceso total sin necesitar permisos explícitos.
+  </div>
 </div>
 
+@endsection
+
+@section('page-script')
+<script>
+'use strict';
+document.addEventListener('DOMContentLoaded', function () {
+  const table = document.querySelector('.datatables-permisos');
+  if (!table) return;
+
+  new DataTable(table, {
+    responsive: true,
+    order: [[0, 'asc']],
+    pageLength: 10,
+    layout: {
+      topStart: {
+        rowClass: 'row m-3 my-0 justify-content-between',
+        features: [{ pageLength: { menu: [10, 25, 50], text: '_MENU_' } }]
+      },
+      topEnd: {
+        features: [{ search: { placeholder: 'Buscar permiso...', text: '_INPUT_' } }]
+      },
+      bottomStart: { rowClass: 'row mx-3 justify-content-between', features: ['info'] },
+      bottomEnd: 'paging'
+    },
+    language: {
+      paginate: {
+        next: '<i class="icon-base ti tabler-chevron-right scaleX-n1-rtl icon-18px"></i>',
+        previous: '<i class="icon-base ti tabler-chevron-left scaleX-n1-rtl icon-18px"></i>'
+      }
+    }
+  });
+
+  setTimeout(() => {
+    [
+      { sel: '.dt-search .form-control', rm: 'form-control-sm' },
+      { sel: '.dt-length .form-select',  rm: 'form-select-sm' },
+      { sel: '.dt-length',               add: 'mb-md-6 mb-0' },
+      { sel: '.dt-layout-table',         rm: 'row mt-2' },
+      { sel: '.dt-layout-full',          rm: 'col-md col-12', add: 'table-responsive' },
+    ].forEach(({ sel, rm, add }) => {
+      document.querySelectorAll(sel).forEach(el => {
+        rm  && rm.split(' ').forEach(c => el.classList.remove(c));
+        add && add.split(' ').forEach(c => el.classList.add(c));
+      });
+    });
+  }, 100);
+});
+</script>
 @endsection

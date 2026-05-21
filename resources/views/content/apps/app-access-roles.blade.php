@@ -1,242 +1,294 @@
 @php
 $configData = Helper::appClasses();
 @endphp
-
 @extends('layouts/layoutMaster')
-
 @section('title', 'Roles - PULSO UGEL')
 
 @section('vendor-style')
-@vite(['resources/assets/vendor/libs/sweetalert2/sweetalert2.scss'])
+@vite([
+  'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
+  'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss',
+  'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
+])
 @endsection
 
 @section('vendor-script')
-@vite(['resources/assets/vendor/libs/sweetalert2/sweetalert2.js'])
+@vite([
+  'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js',
+  'resources/assets/vendor/libs/sweetalert2/sweetalert2.js',
+])
 @endsection
 
 @section('content')
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible mb-4" role="alert">
-  {{ session('success') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible mb-4" role="alert">
-  {{ session('error') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
+<h4 class="mb-1">Lista de Roles</h4>
+<p class="mb-6">
+  Un rol otorga acceso a menús y funcionalidades predefinidas. Según el rol asignado,<br>
+  el usuario tendrá acceso solo a lo que necesita.
+</p>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h4 class="mb-1">Roles del Sistema</h4>
-    <p class="mb-0 text-muted">Gestiona los roles y sus permisos. Los usuarios heredan los permisos del rol asignado.</p>
-  </div>
-  @can('configuracion.editar')
-  <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddRole">
-    <i class="ti tabler-plus me-1"></i> Nuevo Rol
-  </button>
-  @endcan
-</div>
-
-{{-- Cards de Roles --}}
-<div class="row g-4 mb-4">
+{{-- Role Cards --}}
+<div class="row g-6">
   @foreach($roles as $rol)
   @php
-    $colorMap = ['Administrador' => 'danger', 'Responsable de Unidad' => 'success', 'Operador' => 'info', 'Visualizador' => 'secondary'];
+    $colorMap = ['Super Admin'=>'danger','Administrador'=>'primary','Responsable de Unidad'=>'success','Operador'=>'info','Visualizador'=>'secondary'];
     $color = $colorMap[$rol->name] ?? 'primary';
-    $iconMap = ['Administrador' => 'tabler-shield-lock', 'Responsable de Unidad' => 'tabler-user-check', 'Operador' => 'tabler-user-edit', 'Visualizador' => 'tabler-eye'];
-    $icon = $iconMap[$rol->name] ?? 'tabler-users';
+    $usersPreview = $rol->usuarios->take(4);
+    $extra = $rol->users_count - $usersPreview->count();
   @endphp
-  <div class="col-xl-4 col-md-6">
-    <div class="card h-100">
+  <div class="col-xl-4 col-lg-6 col-md-6">
+    <div class="card">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-          <div class="d-flex align-items-center gap-2">
-            <div class="avatar">
-              <span class="avatar-initial rounded bg-label-{{ $color }}">
-                <i class="ti {{ $icon }} icon-22px"></i>
-              </span>
-            </div>
-            <div>
-              <h6 class="mb-0">{{ $rol->name }}</h6>
-              <small class="text-muted">{{ $rol->users_count }} usuario(s)</small>
-            </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h6 class="fw-normal mb-0 text-body">Total {{ $rol->users_count }} usuario(s)</h6>
+          <ul class="list-unstyled d-flex align-items-center avatar-group mb-0">
+            @foreach($usersPreview as $u)
+            <li class="avatar pull-up" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $u->name }}">
+              <span class="avatar-initial rounded-circle bg-label-{{ $color }}">{{ strtoupper(substr($u->name,0,1)) }}</span>
+            </li>
+            @endforeach
+            @if($extra > 0)
+            <li class="avatar">
+              <span class="avatar-initial rounded-circle pull-up bg-label-secondary">+{{ $extra }}</span>
+            </li>
+            @endif
+          </ul>
+        </div>
+        <div class="d-flex justify-content-between align-items-end">
+          <div class="role-heading">
+            <h5 class="mb-1">{{ $rol->name }}</h5>
+            @can('configuracion.editar')
+            <a href="javascript:;" class="btn-editar-rol"
+              data-id="{{ $rol->id }}"
+              data-name="{{ addslashes($rol->name) }}"
+              data-permisos="{{ $rol->permissions->pluck('name')->toJson() }}"
+              data-users="{{ $rol->users_count }}"
+              data-bs-toggle="modal" data-bs-target="#editRoleModal">
+              <span>Editar Rol</span>
+            </a>
+            @else
+            <span class="text-muted small">{{ $rol->permissions->count() }} permisos</span>
+            @endcan
           </div>
           @can('configuracion.editar')
-          <div class="d-flex gap-1">
-            <button class="btn btn-sm btn-icon btn-outline-primary"
-              data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditRole"
-              onclick="cargarRol({{ $rol->id }}, '{{ addslashes($rol->name) }}', {{ $rol->permissions->pluck('name')->toJson() }})"
-              title="Editar rol">
-              <i class="ti tabler-edit"></i>
-            </button>
-            @if($rol->users_count == 0)
-            <form method="POST" action="{{ route('adm-roles.destroy', $rol) }}" class="d-inline"
-              onsubmit="return confirmarEliminar(this, '{{ addslashes($rol->name) }}')">
-              @csrf @method('DELETE')
-              <button type="submit" class="btn btn-sm btn-icon btn-outline-danger" title="Eliminar rol">
-                <i class="ti tabler-trash"></i>
-              </button>
-            </form>
-            @endif
-          </div>
+          <a href="javascript:;" class="btn-editar-rol"
+            data-id="{{ $rol->id }}"
+            data-name="{{ addslashes($rol->name) }}"
+            data-permisos="{{ $rol->permissions->pluck('name')->toJson() }}"
+            data-users="{{ $rol->users_count }}"
+            data-bs-toggle="modal" data-bs-target="#editRoleModal">
+            <i class="icon-base ti tabler-edit icon-md text-heading"></i>
+          </a>
           @endcan
-        </div>
-
-        <div class="mb-3">
-          <small class="text-muted fw-medium d-block mb-2">PERMISOS ASIGNADOS ({{ $rol->permissions->count() }})</small>
-          <div class="d-flex flex-wrap gap-1">
-            @forelse($rol->permissions->take(8) as $permiso)
-            <span class="badge bg-label-{{ $color }} small">{{ $permiso->name }}</span>
-            @empty
-            <small class="text-muted">Sin permisos asignados</small>
-            @endforelse
-            @if($rol->permissions->count() > 8)
-            <span class="badge bg-label-secondary small">+{{ $rol->permissions->count() - 8 }} más</span>
-            @endif
-          </div>
         </div>
       </div>
     </div>
   </div>
   @endforeach
+
+  {{-- Add New Role Card --}}
+  @can('configuracion.editar')
+  <div class="col-xl-4 col-lg-6 col-md-6">
+    <div class="card h-100">
+      <div class="row h-100">
+        <div class="col-sm-5">
+          <div class="d-flex align-items-end h-100 justify-content-center mt-sm-0 mt-4">
+            <img src="{{ asset('assets/img/illustrations/add-new-roles.png') }}" class="img-fluid" alt="Agregar Rol" width="83"
+              onerror="this.style.display='none'">
+          </div>
+        </div>
+        <div class="col-sm-7">
+          <div class="card-body text-sm-end text-center ps-sm-0">
+            <button data-bs-toggle="modal" data-bs-target="#addRoleModal" class="btn btn-sm btn-primary mb-4 text-nowrap add-new-role">
+              Agregar Nuevo Rol
+            </button>
+            <p class="mb-0">Agrega un rol nuevo,<br>si no existe aún.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endcan
 </div>
 
-{{-- Tabla de permisos por módulo --}}
-<div class="card">
-  <div class="card-header"><h5 class="mb-0">Matriz de Permisos por Módulo</h5></div>
-  <div class="table-responsive">
-    <table class="table table-bordered mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Módulo / Permiso</th>
-          @foreach($roles as $rol)
-          <th class="text-center">{{ $rol->name }}</th>
+{{-- Tabla de usuarios con roles --}}
+<div class="col-12 mt-6">
+  <h4 class="mb-1">Usuarios y sus Roles</h4>
+  <p class="mb-4 text-muted">Listado de todos los usuarios del sistema con su rol asignado.</p>
+  <div class="card">
+    <div class="card-datatable table-responsive">
+      <table class="datatables-roles table border-top">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach($usuarios as $u)
+          @php
+            $rolNombre = $u->roles->first()->name ?? '—';
+            $rc = $colorMap[$rolNombre] ?? 'secondary';
+            $ec = $u->estado === 'activo' ? 'success' : 'danger';
+          @endphp
+          <tr>
+            <td></td>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <div class="avatar avatar-sm">
+                  <span class="avatar-initial rounded-circle bg-label-{{ $rc }}">{{ strtoupper(substr($u->name,0,1)) }}</span>
+                </div>
+                <span class="fw-medium">{{ $u->name }}</span>
+              </div>
+            </td>
+            <td>{{ $u->email }}</td>
+            <td><span class="badge bg-label-{{ $rc }}">{{ $rolNombre }}</span></td>
+            <td><span class="badge bg-label-{{ $ec }}">{{ ucfirst($u->estado ?? 'activo') }}</span></td>
+          </tr>
           @endforeach
-        </tr>
-      </thead>
-      <tbody>
-        @foreach($permisos as $modulo => $listaPermisos)
-        <tr class="table-light">
-          <td colspan="{{ $roles->count() + 1 }}" class="fw-bold text-uppercase small py-2">
-            <i class="ti tabler-folder me-1"></i>{{ $modulo }}
-          </td>
-        </tr>
-        @foreach($listaPermisos as $permiso)
-        <tr>
-          <td class="ps-4"><small>{{ $permiso->name }}</small></td>
-          @foreach($roles as $rol)
-          <td class="text-center">
-            @if($rol->permissions->contains('id', $permiso->id))
-            <i class="ti tabler-check text-success icon-18px"></i>
-            @else
-            <i class="ti tabler-x text-danger icon-18px"></i>
-            @endif
-          </td>
-          @endforeach
-        </tr>
-        @endforeach
-        @endforeach
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-{{-- Offcanvas: Crear Rol --}}
+{{-- Modal Agregar Rol --}}
 @can('configuracion.editar')
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddRole" style="width:480px">
-  <div class="offcanvas-header border-bottom">
-    <h5 class="offcanvas-title">Nuevo Rol</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-  </div>
-  <div class="offcanvas-body">
-    <form method="POST" action="{{ route('adm-roles.store') }}">
-      @csrf
-      <div class="mb-4">
-        <label class="form-label">Nombre del Rol <span class="text-danger">*</span></label>
-        <input type="text" name="name" class="form-control" required placeholder="Ej: Supervisor de Calidad">
-      </div>
-      <div class="mb-4">
-        <label class="form-label fw-medium">Permisos del Rol</label>
-        <p class="text-muted small mb-3">Selecciona los permisos que tendrá este rol. Los usuarios con este rol heredarán estos permisos.</p>
-        @foreach($permisos as $modulo => $listaPermisos)
-        <div class="mb-3">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input toggle-all" id="add-all-{{ $modulo }}"
-                data-group="add-{{ $modulo }}">
-              <label class="form-check-label fw-bold text-uppercase small" for="add-all-{{ $modulo }}">{{ $modulo }}</label>
-            </div>
-          </div>
-          <div class="ps-3 d-flex flex-wrap gap-2">
-            @foreach($listaPermisos as $permiso)
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input perm-check add-{{ $modulo }}"
-                name="permisos[]" value="{{ $permiso->name }}"
-                id="add-perm-{{ $permiso->id }}">
-              <label class="form-check-label small" for="add-perm-{{ $permiso->id }}">
-                {{ $permiso->name }}
-              </label>
-            </div>
-            @endforeach
-          </div>
+<div class="modal fade" id="addRoleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-simple modal-dialog-centered modal-add-new-role">
+    <div class="modal-content">
+      <div class="modal-body p-6">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="text-center mb-6">
+          <h4 class="role-title mb-2">Agregar Nuevo Rol</h4>
+          <p class="text-body-secondary">Configura los permisos del rol</p>
         </div>
-        @endforeach
+        <form method="POST" action="{{ route('adm-roles.store') }}" class="row g-3">
+          @csrf
+          <div class="col-12 form-control-validation">
+            <label class="form-label" for="addRoleName">Nombre del Rol <span class="text-danger">*</span></label>
+            <input type="text" id="addRoleName" name="name" class="form-control" placeholder="Ej: Supervisor de Calidad" required>
+          </div>
+          <div class="col-12">
+            <h5 class="mb-4">Permisos del Rol</h5>
+            <div class="table-responsive">
+              <table class="table table-flush-spacing">
+                <tbody>
+                  <tr>
+                    <td class="text-nowrap fw-medium">
+                      Acceso Administrador
+                      <i class="icon-base ti tabler-info-circle icon-xs ms-1" data-bs-toggle="tooltip" title="Marca todos los permisos disponibles"></i>
+                    </td>
+                    <td>
+                      <div class="d-flex justify-content-end">
+                        <div class="form-check mb-0">
+                          <input class="form-check-input" type="checkbox" id="addSelectAll">
+                          <label class="form-check-label" for="addSelectAll">Seleccionar Todo</label>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  @foreach($permisos as $modulo => $listaPermisos)
+                  <tr>
+                    <td class="text-nowrap fw-medium text-heading text-capitalize">{{ $modulo }}</td>
+                    <td>
+                      <div class="d-flex justify-content-end flex-wrap gap-4">
+                        @foreach($listaPermisos as $permiso)
+                        @php $slug = $modulo . '-add-' . $permiso->id; @endphp
+                        <div class="form-check mb-0">
+                          <input class="form-check-input add-perm-check" type="checkbox" name="permisos[]" value="{{ $permiso->name }}" id="{{ $slug }}">
+                          <label class="form-check-label" for="{{ $slug }}">{{ ucfirst(explode('.', $permiso->name)[1] ?? $permiso->name) }}</label>
+                        </div>
+                        @endforeach
+                      </div>
+                    </td>
+                  </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Crear Rol</button>
+            <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
+          </div>
+        </form>
       </div>
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary flex-grow-1">Crear Rol</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
 
-{{-- Offcanvas: Editar Rol --}}
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditRole" style="width:480px">
-  <div class="offcanvas-header border-bottom">
-    <h5 class="offcanvas-title">Editar Rol</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-  </div>
-  <div class="offcanvas-body">
-    <form method="POST" id="formEditRole" action="">
-      @csrf @method('PUT')
-      <div class="mb-4">
-        <label class="form-label">Nombre del Rol <span class="text-danger">*</span></label>
-        <input type="text" name="name" id="edit-role-name" class="form-control" required>
-      </div>
-      <div class="mb-4">
-        <label class="form-label fw-medium">Permisos del Rol</label>
-        <p class="text-muted small mb-3">Marca los permisos que debe tener este rol.</p>
-        @foreach($permisos as $modulo => $listaPermisos)
-        <div class="mb-3">
-          <div class="form-check mb-2">
-            <input type="checkbox" class="form-check-input toggle-all" id="edit-all-{{ $modulo }}"
-              data-group="edit-{{ $modulo }}">
-            <label class="form-check-label fw-bold text-uppercase small" for="edit-all-{{ $modulo }}">{{ $modulo }}</label>
-          </div>
-          <div class="ps-3 d-flex flex-wrap gap-2">
-            @foreach($listaPermisos as $permiso)
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input perm-check edit-{{ $modulo }}"
-                name="permisos[]" value="{{ $permiso->name }}"
-                id="edit-perm-{{ $permiso->id }}">
-              <label class="form-check-label small" for="edit-perm-{{ $permiso->id }}">
-                {{ $permiso->name }}
-              </label>
-            </div>
-            @endforeach
-          </div>
+{{-- Modal Editar Rol --}}
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-simple modal-dialog-centered modal-add-new-role">
+    <div class="modal-content">
+      <div class="modal-body p-6">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="text-center mb-6">
+          <h4 class="mb-2">Editar Rol</h4>
+          <p class="text-body-secondary">Actualiza permisos del rol</p>
         </div>
-        @endforeach
+        <form method="POST" id="formEditRole" action="" class="row g-3">
+          @csrf @method('PUT')
+          <div class="col-12 form-control-validation">
+            <label class="form-label" for="editRoleName">Nombre del Rol <span class="text-danger">*</span></label>
+            <input type="text" id="editRoleName" name="name" class="form-control" required>
+          </div>
+          <div class="col-12">
+            <h5 class="mb-4">Permisos del Rol</h5>
+            <div class="table-responsive">
+              <table class="table table-flush-spacing">
+                <tbody>
+                  <tr>
+                    <td class="text-nowrap fw-medium">
+                      Acceso Administrador
+                      <i class="icon-base ti tabler-info-circle icon-xs ms-1" data-bs-toggle="tooltip" title="Marca todos los permisos disponibles"></i>
+                    </td>
+                    <td>
+                      <div class="d-flex justify-content-end">
+                        <div class="form-check mb-0">
+                          <input class="form-check-input" type="checkbox" id="editSelectAll">
+                          <label class="form-check-label" for="editSelectAll">Seleccionar Todo</label>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  @foreach($permisos as $modulo => $listaPermisos)
+                  <tr>
+                    <td class="text-nowrap fw-medium text-heading text-capitalize">{{ $modulo }}</td>
+                    <td>
+                      <div class="d-flex justify-content-end flex-wrap gap-4">
+                        @foreach($listaPermisos as $permiso)
+                        @php $slug = $modulo . '-edit-' . $permiso->id; @endphp
+                        <div class="form-check mb-0">
+                          <input class="form-check-input edit-perm-check" type="checkbox" name="permisos[]" value="{{ $permiso->name }}" id="{{ $slug }}">
+                          <label class="form-check-label" for="{{ $slug }}">{{ ucfirst(explode('.', $permiso->name)[1] ?? $permiso->name) }}</label>
+                        </div>
+                        @endforeach
+                      </div>
+                    </td>
+                  </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Guardar Cambios</button>
+            <button type="button" class="btn btn-label-secondary me-sm-3 me-1" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-label-danger d-none" id="btnEliminarRol">
+              <i class="ti tabler-trash me-1"></i>Eliminar Rol
+            </button>
+          </div>
+        </form>
+        <form method="POST" id="formDeleteRole" action="" class="d-none">
+          @csrf @method('DELETE')
+        </form>
       </div>
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary flex-grow-1">Guardar Cambios</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancelar</button>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
 @endcan
@@ -245,60 +297,118 @@ $configData = Helper::appClasses();
 
 @section('page-script')
 <script>
-function cargarRol(id, name, permisos) {
-  document.getElementById('formEditRole').action = '/roles/' + id;
-  document.getElementById('edit-role-name').value = name;
+document.addEventListener('DOMContentLoaded', function () {
 
-  // Desmarcar todos
-  document.querySelectorAll('#offcanvasEditRole input[name="permisos[]"]').forEach(cb => {
-    cb.checked = permisos.includes(cb.value);
-  });
-
-  // Sincronizar checkboxes "todos"
-  document.querySelectorAll('#offcanvasEditRole .toggle-all').forEach(toggleAll => {
-    const group = toggleAll.dataset.group;
-    const checks = document.querySelectorAll('.' + group);
-    toggleAll.checked = [...checks].every(c => c.checked);
-  });
-}
-
-function confirmarEliminar(form, nombre) {
-  if (typeof Swal !== 'undefined') {
-    Swal.fire({
-      title: '¿Eliminar rol?',
-      text: 'Se eliminará el rol "' + nombre + '".',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-    }).then(r => { if (r.isConfirmed) form.submit(); });
-    return false;
-  }
-  return confirm('¿Eliminar rol ' + nombre + '?');
-}
-
-// Toggle "marcar todos" por módulo
-document.querySelectorAll('.toggle-all').forEach(toggleAll => {
-  toggleAll.addEventListener('change', function () {
-    const group = this.dataset.group;
-    document.querySelectorAll('.' + group).forEach(cb => { cb.checked = this.checked; });
-  });
-});
-
-// Sincronizar toggle-all cuando se cambia un permiso individual
-document.querySelectorAll('.perm-check').forEach(cb => {
-  cb.addEventListener('change', function () {
-    this.classList.forEach(cls => {
-      if (cls.startsWith('add-') || cls.startsWith('edit-')) {
-        const group = cls;
-        const all  = document.querySelectorAll('.' + group);
-        const toggleAll = document.querySelector('[data-group="' + group + '"]');
-        if (toggleAll) toggleAll.checked = [...all].every(c => c.checked);
+  // DataTable usuarios — mismo layout que full-version
+  new DataTable('.datatables-roles', {
+    responsive: true,
+    pageLength: 10,
+    columnDefs: [{ targets: 0, orderable: false, searchable: false, className: 'control' }],
+    layout: {
+      topStart: {
+        rowClass: 'row m-3 my-0 justify-content-between',
+        features: [{ pageLength: { menu: [10, 25, 50], text: '_MENU_' } }]
+      },
+      topEnd: {
+        features: [{ search: { placeholder: 'Buscar usuario...', text: '_INPUT_' } }]
+      },
+      bottomStart: { rowClass: 'row mx-3 justify-content-between', features: ['info'] },
+      bottomEnd: 'paging'
+    },
+    language: {
+      paginate: {
+        next: '<i class="icon-base ti tabler-chevron-right scaleX-n1-rtl icon-18px"></i>',
+        previous: '<i class="icon-base ti tabler-chevron-left scaleX-n1-rtl icon-18px"></i>'
       }
+    }
+  });
+
+  setTimeout(() => {
+    [
+      { sel: '.dt-search .form-control', rm: 'form-control-sm' },
+      { sel: '.dt-length .form-select',  rm: 'form-select-sm' },
+      { sel: '.dt-length',               add: 'mb-md-6 mb-0' },
+      { sel: '.dt-layout-table',         rm: 'row mt-2' },
+      { sel: '.dt-layout-full',          rm: 'col-md col-12', add: 'table-responsive' },
+    ].forEach(({ sel, rm, add }) => {
+      document.querySelectorAll(sel).forEach(el => {
+        rm  && rm.split(' ').forEach(c => el.classList.remove(c));
+        add && add.split(' ').forEach(c => el.classList.add(c));
+      });
+    });
+  }, 100);
+
+  // Tooltips
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+
+  // Add Modal — Select All
+  document.getElementById('addSelectAll')?.addEventListener('change', function () {
+    document.querySelectorAll('.add-perm-check').forEach(c => c.checked = this.checked);
+  });
+  document.querySelectorAll('.add-perm-check').forEach(c => {
+    c.addEventListener('change', syncSelectAll.bind(null, '.add-perm-check', 'addSelectAll'));
+  });
+
+  // Edit Modal — Select All
+  document.getElementById('editSelectAll')?.addEventListener('change', function () {
+    document.querySelectorAll('.edit-perm-check').forEach(c => c.checked = this.checked);
+  });
+  document.querySelectorAll('.edit-perm-check').forEach(c => {
+    c.addEventListener('change', syncSelectAll.bind(null, '.edit-perm-check', 'editSelectAll'));
+  });
+
+  function syncSelectAll(selector, toggleId) {
+    const all = document.querySelectorAll(selector);
+    const toggle = document.getElementById(toggleId);
+    if (!toggle) return;
+    const checked = [...all].filter(c => c.checked).length;
+    toggle.checked = checked === all.length;
+    toggle.indeterminate = checked > 0 && checked < all.length;
+  }
+
+  // Cargar datos en modal editar
+  document.querySelectorAll('.btn-editar-rol').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const id       = this.dataset.id;
+      const name     = this.dataset.name;
+      const permisos = JSON.parse(this.dataset.permisos || '[]');
+      const users    = parseInt(this.dataset.users || 0);
+
+      document.getElementById('formEditRole').action = '/roles/' + id;
+      document.getElementById('formDeleteRole').action = '/roles/' + id;
+      document.getElementById('editRoleName').value = name;
+
+      // Marcar permisos
+      document.querySelectorAll('.edit-perm-check').forEach(cb => {
+        cb.checked = permisos.includes(cb.value);
+      });
+
+      // Sincronizar Select All
+      syncSelectAll('.edit-perm-check', 'editSelectAll');
+
+      // Botón eliminar solo si no tiene usuarios
+      const btnElim = document.getElementById('btnEliminarRol');
+      if (btnElim) btnElim.classList.toggle('d-none', users > 0);
     });
   });
+
+  // Confirmar eliminar rol
+  document.getElementById('btnEliminarRol')?.addEventListener('click', function () {
+    const nombre = document.getElementById('editRoleName').value;
+    Swal.fire({
+      title: '¿Eliminar rol?',
+      text: 'Se eliminará el rol "' + nombre + '". Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ea5455',
+      cancelButtonColor: '#6e7881',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(r => {
+      if (r.isConfirmed) document.getElementById('formDeleteRole').submit();
+    });
+  });
+
 });
 </script>
 @endsection

@@ -74,6 +74,53 @@
           @include('layouts/sections/footer/footer')
         @endif
         <!-- / Footer -->
+
+        <!-- Toast Container Global -->
+        <div class="bs-toast toast-placement-ex m-4" style="position:fixed;top:0;right:0;z-index:9999;min-width:320px">
+          @if(session('success'))
+          <div class="toast align-items-center text-bg-success border-0 show" role="alert" id="toast-global">
+            <div class="d-flex">
+              <div class="toast-body d-flex align-items-center gap-2">
+                <i class="ti tabler-circle-check icon-20px flex-shrink-0"></i>
+                <span>{{ session('success') }}</span>
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+          @elseif(session('error'))
+          <div class="toast align-items-center text-bg-danger border-0 show" role="alert" id="toast-global">
+            <div class="d-flex">
+              <div class="toast-body d-flex align-items-center gap-2">
+                <i class="ti tabler-circle-x icon-20px flex-shrink-0"></i>
+                <span>{{ session('error') }}</span>
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+          @elseif(session('warning'))
+          <div class="toast align-items-center text-bg-warning border-0 show" role="alert" id="toast-global">
+            <div class="d-flex">
+              <div class="toast-body d-flex align-items-center gap-2">
+                <i class="ti tabler-alert-triangle icon-20px flex-shrink-0"></i>
+                <span>{{ session('warning') }}</span>
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+          @elseif(session('info'))
+          <div class="toast align-items-center text-bg-primary border-0 show" role="alert" id="toast-global">
+            <div class="d-flex">
+              <div class="toast-body d-flex align-items-center gap-2">
+                <i class="ti tabler-info-circle icon-20px flex-shrink-0"></i>
+                <span>{{ session('info') }}</span>
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+          @endif
+        </div>
+        <!-- / Toast Container Global -->
+
         <div class="content-backdrop fade"></div>
       </div>
       <!--/ Content wrapper -->

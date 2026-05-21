@@ -4,10 +4,6 @@
 
 @section('content')
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible mb-4"><i class="ti tabler-check me-2"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-@endif
-
 <div class="mb-4">
   <h4 class="mb-1">Configuración del Sistema</h4>
   <p class="mb-0 text-muted">Parámetros institucionales y umbrales del semáforo</p>
@@ -237,3 +233,4 @@
 </div>
 
 @endsection
+

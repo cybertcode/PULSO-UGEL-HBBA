@@ -19,10 +19,6 @@ $configData = Helper::appClasses();
 
 @section('content')
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible mb-4"><i class="ti tabler-check me-2"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-@endif
-
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
     <h4 class="mb-1">Control Interno</h4>
@@ -349,3 +345,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endsection
+
