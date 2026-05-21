@@ -52,7 +52,7 @@
           defaultSemiDark: {{ $configData['semiDark'] ? 'true' : 'false' }},
           defaultShowDropdownOnHover: "{{ $configData['showDropdownOnHover'] }}",
           displayCustomizer: "{{ $configData['displayCustomizer'] }}",
-          lang: '{{ app()->getLocale() }}',
+          lang: 'en',
           'controls': <?php echo json_encode($configData['customizerControls']); ?>,
         });
 
