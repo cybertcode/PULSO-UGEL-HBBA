@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Super Admin bypasses all permission checks via Gate
+        Gate::before(function ($user, $ability) {
+            return $user->hasRole('Super Admin') ? true : null;
+        });
+
         Vite::useStyleTagAttributes(function (?string $src, string $url, ?array $chunk, ?array $manifest) {
             if ($src !== null) {
                 return [

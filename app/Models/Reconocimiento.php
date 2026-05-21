@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Reconocimiento extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'unidad_organica_id', 'anio', 'mes', 'posicion',
         'puntaje', 'avance_global',
