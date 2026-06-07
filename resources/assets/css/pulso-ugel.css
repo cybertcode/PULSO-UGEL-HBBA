@@ -290,3 +290,41 @@ tr:hover .card-actions-hover,
 .swal2-popup.swal2-toast {
   border-radius: var(--bs-border-radius-lg) !important;
 }
+
+/* ── Perfil usuario en menú lateral ─────────────────────────────────────── */
+.menu-user-profile {
+  transition: all .2s ease;
+}
+.menu-user-profile:hover {
+  background: rgba(var(--bs-primary-rgb), .06);
+  border-radius: var(--bs-border-radius);
+}
+/* Cuando el menú está colapsado, ocultar texto y mostrar solo avatar */
+.layout-menu-collapsed .menu-user-text {
+  display: none !important;
+}
+.layout-menu-collapsed .menu-user-profile {
+  padding: .75rem !important;
+  justify-content: center;
+}
+
+/* ── Navbar dropdown usuario — badge de rol ──────────────────────────────── */
+.dropdown-user .dropdown-item .avatar-initial {
+  font-size: 15px;
+}
+
+/* ── Notificaciones badge animado ────────────────────────────────────────── */
+.badge-dot.badge-notifications {
+  width: 8px;
+  height: 8px;
+  top: 2px;
+  right: 2px;
+}
+@keyframes pulse-badge {
+  0%   { box-shadow: 0 0 0 0 rgba(234,84,85,.6); }
+  70%  { box-shadow: 0 0 0 6px rgba(234,84,85,0); }
+  100% { box-shadow: 0 0 0 0 rgba(234,84,85,0); }
+}
+.badge-dot.badge-notifications {
+  animation: pulse-badge 1.8s infinite;
+}
