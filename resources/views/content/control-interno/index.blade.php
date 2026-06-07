@@ -149,19 +149,19 @@ $configData = Helper::appClasses();
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mb-0 align-middle pulso-table">
+      <table class="table table-hover mb-0 align-middle pulso-table" style="min-width:900px">
         <thead class="table-light">
-          <tr>
-            <th>Código</th>
-            <th>Actividad</th>
-            <th>Componente</th>
-            <th>Unidad</th>
-            <th>Responsables</th>
-            <th>Prioridad</th>
-            <th>Fecha Límite</th>
-            <th style="min-width:130px">Avance</th>
-            <th>Estado</th>
-            <th>Acciones</th>
+          <tr style="white-space:nowrap">
+            <th style="width:110px">Código</th>
+            <th style="min-width:200px">Actividad</th>
+            <th style="min-width:130px">Componente</th>
+            <th style="width:70px;text-align:center">Unidad</th>
+            <th style="min-width:160px">Responsables</th>
+            <th style="width:85px">Prioridad</th>
+            <th style="width:100px">Fecha Límite</th>
+            <th style="width:120px">Avance</th>
+            <th style="width:90px">Estado</th>
+            <th style="width:110px">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -172,12 +172,14 @@ $configData = Helper::appClasses();
             $prioColor = match($a->prioridad) { 'alta'=>'danger','media'=>'warning',default=>'info' };
           @endphp
           <tr>
-            <td><small class="text-muted fw-medium">{{ $a->codigo }}</small></td>
             <td>
-              <div class="fw-medium" style="max-width:200px">{{ Str::limit($a->nombre, 45) }}</div>
+              <div class="fw-semibold text-primary" style="font-size:11px;white-space:nowrap">{{ $a->codigo }}</div>
               @if($a->numero_sgd)
-              <small class="text-muted"><i class="ti tabler-file-description icon-12px me-1"></i>{{ $a->numero_sgd }}</small>
+              <div class="text-muted" style="font-size:10px;white-space:nowrap">{{ $a->numero_sgd }}</div>
               @endif
+            </td>
+            <td>
+              <div class="fw-medium" style="max-width:220px;word-break:break-word;font-size:13px">{{ Str::limit($a->nombre, 50) }}</div>
             </td>
             <td>
               <small class="d-flex align-items-center gap-1">

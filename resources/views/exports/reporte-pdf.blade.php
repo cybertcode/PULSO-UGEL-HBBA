@@ -80,7 +80,7 @@
       <td>{{ $a->nombre }}</td>
       <td>{{ $a->componente->nombre ?? '—' }}</td>
       <td>{{ $a->unidadOrganica->nombre ?? '—' }}</td>
-      <td>{{ $a->responsable->name ?? '—' }}</td>
+      <td>{{ $a->responsables->pluck('name')->implode(', ') ?: '—' }}</td>
       <td><span class="badge badge-{{ $eb }}">{{ ucfirst($a->estado) }}</span></td>
       <td>@if($a->prioridad)<span class="badge badge-{{ $pb }}">{{ ucfirst($a->prioridad) }}</span>@else —@endif</td>
       <td>{{ $a->fecha_limite?->format('d/m/Y') ?? '—' }}</td>

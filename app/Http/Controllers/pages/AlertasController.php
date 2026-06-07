@@ -27,7 +27,7 @@ class AlertasController extends Controller
             'baja'      => Alerta::where('leida', false)->where('prioridad', 'baja')->count(),
         ];
 
-        $query = Alerta::with(['actividad.componente', 'actividad.responsable', 'unidadOrganica'])
+        $query = Alerta::with(['actividad.componente', 'actividad.responsables', 'unidadOrganica'])
             ->orderByRaw("FIELD(prioridad,'alta','media','baja')")
             ->orderByDesc('created_at');
 
@@ -98,7 +98,7 @@ class AlertasController extends Controller
             ->each(function ($actividad) use (&$generadas) {
                 $alerta = Alerta::create([
                     'actividad_id'      => $actividad->id,
-                    'usuario_id'        => $actividad->responsable_id,
+                    'usuario_id'        => $actividad->responsablePrincipal()->first()?->id ?? $actividad->responsables()->first()?->id,
                     'unidad_organica_id'=> $actividad->unidad_organica_id,
                     'titulo'            => "Actividad vencida: {$actividad->nombre}",
                     'mensaje'           => "La actividad «{$actividad->nombre}» (código: {$actividad->codigo}) venció el {$actividad->fecha_limite->format('d/m/Y')} y no ha sido completada.",
@@ -118,7 +118,7 @@ class AlertasController extends Controller
             ->each(function ($actividad) use (&$generadas) {
                 Alerta::create([
                     'actividad_id'      => $actividad->id,
-                    'usuario_id'        => $actividad->responsable_id,
+                    'usuario_id'        => $actividad->responsablePrincipal()->first()?->id ?? $actividad->responsables()->first()?->id,
                     'unidad_organica_id'=> $actividad->unidad_organica_id,
                     'titulo'            => "Sin avance: {$actividad->nombre}",
                     'mensaje'           => "La actividad «{$actividad->nombre}» lleva más de 7 días sin registrar avance.",
@@ -135,7 +135,7 @@ class AlertasController extends Controller
             ->each(function ($actividad) use (&$generadas) {
                 Alerta::create([
                     'actividad_id'      => $actividad->id,
-                    'usuario_id'        => $actividad->responsable_id,
+                    'usuario_id'        => $actividad->responsablePrincipal()->first()?->id ?? $actividad->responsables()->first()?->id,
                     'unidad_organica_id'=> $actividad->unidad_organica_id,
                     'titulo'            => "Sin evidencias: {$actividad->nombre}",
                     'mensaje'           => "La actividad «{$actividad->nombre}» está en proceso pero no tiene evidencias adjuntas.",

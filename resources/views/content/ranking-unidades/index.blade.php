@@ -36,9 +36,9 @@ $configData = Helper::appClasses();
         $unRiesgo     = $unidades->where('color','warning')->count();
         $unCriticas   = $unidades->where('color','danger')->count();
       @endphp
-      <div class="badge bg-white bg-opacity-25 text-white px-3 py-2"><i class="ti tabler-check me-1"></i>{{ $unCumplieron }} Cumplen</div>
-      <div class="badge bg-white bg-opacity-25 text-white px-3 py-2"><i class="ti tabler-alert-triangle me-1"></i>{{ $unRiesgo }} En riesgo</div>
-      <div class="badge bg-white bg-opacity-25 text-white px-3 py-2"><i class="ti tabler-flame me-1"></i>{{ $unCriticas }} Críticas</div>
+      <div class="px-3 py-1 rounded-pill d-flex align-items-center gap-1" style="background:rgba(40,199,111,.25);border:1px solid rgba(40,199,111,.5);color:#fff;font-size:12px;font-weight:600"><i class="ti tabler-check"></i>{{ $unCumplieron }} Cumplen</div>
+      <div class="px-3 py-1 rounded-pill d-flex align-items-center gap-1" style="background:rgba(255,159,67,.25);border:1px solid rgba(255,159,67,.5);color:#fff;font-size:12px;font-weight:600"><i class="ti tabler-alert-triangle"></i>{{ $unRiesgo }} En riesgo</div>
+      <div class="px-3 py-1 rounded-pill d-flex align-items-center gap-1" style="background:rgba(234,84,85,.25);border:1px solid rgba(234,84,85,.5);color:#fff;font-size:12px;font-weight:600"><i class="ti tabler-flame"></i>{{ $unCriticas }} Críticas</div>
       <a href="{{ route('rep-reconocimientos') }}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4)">
         <i class="ti tabler-trophy me-1"></i>Nuevo reconocimiento
       </a>
@@ -55,59 +55,59 @@ $configData = Helper::appClasses();
       <p class="card-subtitle">Las tres unidades con mayor avance en el período</p>
     </div>
   </div>
-  <div class="card-body">
-    <div class="row justify-content-center align-items-end g-4">
+  <div class="card-body pb-4">
+    {{-- Podio: orden visual 2-1-3 con escalonado real usando padding-top --}}
+    <div class="d-flex justify-content-center align-items-end gap-3 flex-wrap">
 
       {{-- 2° lugar --}}
       @if($unidades->get(1))
       @php $u2 = $unidades->get(1); @endphp
-      <div class="col-sm-4 col-md-3 text-center">
-        <div class="podio-card card border-0 bg-body-secondary mb-0" style="padding: 1.5rem 1rem 0">
-          <div class="podio-numero bg-label-secondary">2°</div>
-          <div class="avatar avatar-xl mx-auto mb-3" style="width:68px;height:68px">
-            <span class="avatar-initial rounded-circle bg-label-secondary fw-bold" style="font-size:22px;width:68px;height:68px">
-              {{ strtoupper(substr($u2->sigla ?? $u2->nombre, 0, 2)) }}
-            </span>
+      <div class="text-center" style="width:200px;min-width:160px">
+        <div class="card border-0 bg-body-secondary mb-0 overflow-hidden" style="padding-top:1.5rem">
+          <div class="d-flex justify-content-center mb-2">
+            <div class="rounded-pill px-3 py-1 fw-bold text-secondary" style="background:rgba(134,142,150,.2);font-size:13px">2°</div>
           </div>
-          <h6 class="mb-0 fw-bold">{{ $u2->sigla }}</h6>
-          <small class="text-muted d-block mb-2" style="font-size:11px">{{ Str::limit($u2->nombre,24) }}</small>
+          <div class="mx-auto mb-2" style="width:60px;height:60px;border-radius:50%;background:var(--bs-gray-200);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--bs-gray-700)">
+            {{ strtoupper(substr($u2->sigla ?? $u2->nombre, 0, 2)) }}
+          </div>
+          <div class="fw-bold mb-0" style="font-size:14px">{{ $u2->sigla }}</div>
+          <div class="text-muted mb-2" style="font-size:11px">{{ Str::limit($u2->nombre, 22) }}</div>
           @if($u2->variacion > 0)
-          <span class="badge bg-label-success rounded-pill mb-2" style="font-size:10px"><i class="ti tabler-arrow-up icon-10px me-1"></i>+{{ $u2->variacion }} pos.</span>
+            <span class="badge bg-label-success rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px"><i class="ti tabler-arrow-up" style="font-size:10px"></i>+{{ $u2->variacion }} pos.</span>
           @elseif($u2->variacion < 0)
-          <span class="badge bg-label-danger rounded-pill mb-2" style="font-size:10px"><i class="ti tabler-arrow-down icon-10px me-1"></i>{{ $u2->variacion }} pos.</span>
+            <span class="badge bg-label-danger rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px"><i class="ti tabler-arrow-down" style="font-size:10px"></i>{{ $u2->variacion }} pos.</span>
           @else
-          <span class="badge bg-label-secondary rounded-pill mb-2" style="font-size:10px"><i class="ti tabler-minus icon-10px me-1"></i>Sin cambio</span>
+            <span class="badge bg-label-secondary rounded-pill mb-2 mx-auto" style="font-size:10px">— Sin cambio</span>
           @endif
-          <div class="py-4 mt-2 mx-n3" style="background:rgba(134,142,150,.12);border-radius:0 0 var(--bs-card-border-radius) var(--bs-card-border-radius)">
-            <div class="fw-bold text-secondary" style="font-size:2rem;line-height:1">{{ $u2->porcentaje }}%</div>
+          <div class="py-3 mt-1" style="background:rgba(134,142,150,.12)">
+            <div class="fw-bold text-body" style="font-size:1.75rem;line-height:1">{{ $u2->porcentaje }}%</div>
             <small class="text-muted">{{ $u2->completadas_count }}/{{ $u2->actividades_count }} completadas</small>
           </div>
         </div>
       </div>
       @endif
 
-      {{-- 1° lugar — más alto --}}
+      {{-- 1° lugar — más alto con corona flotante --}}
       @if($unidades->get(0))
       @php $u1 = $unidades->get(0); @endphp
-      <div class="col-sm-4 col-md-3 text-center" style="margin-bottom:-1rem">
-        <div class="text-warning mb-2"><i class="ti tabler-crown icon-32px"></i></div>
-        <div class="podio-card primer-lugar card border-0 mb-0" style="padding:1.5rem 1rem 0">
-          <div class="podio-numero" style="background:linear-gradient(135deg,#ffd700,#ffb300);color:#7a5c00">1°</div>
-          <div class="mx-auto mb-3" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#ffc107,#ff9800);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;box-shadow:0 .5rem 1.5rem rgba(255,193,7,.4)">
+      <div class="text-center" style="width:220px;min-width:180px;margin-bottom:-16px">
+        <div class="text-warning mb-1" style="font-size:28px"><i class="ti tabler-crown"></i></div>
+        <div class="card border-0 mb-0 overflow-hidden" style="border:2px solid rgba(255,193,7,.4)!important;padding-top:1.5rem">
+          <div class="d-flex justify-content-center mb-2">
+            <div class="rounded-pill px-3 py-1 fw-bold" style="background:linear-gradient(135deg,#ffd700,#ff9800);color:#5c3800;font-size:13px">1°</div>
+          </div>
+          <div class="mx-auto mb-2" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#ffc107,#ff9800);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;box-shadow:0 6px 20px rgba(255,193,7,.35)">
             {{ strtoupper(substr($u1->sigla ?? $u1->nombre, 0, 2)) }}
           </div>
-          <h5 class="mb-0 fw-bold">{{ $u1->sigla }}</h5>
-          <small class="text-muted d-block mb-2" style="font-size:11px">{{ Str::limit($u1->nombre,26) }}</small>
-          <span class="badge bg-label-success rounded-pill mb-2">
-            <i class="ti tabler-heart me-1 icon-10px"></i>{{ $u1->porcentaje >= 85 ? 'Excelente' : ($u1->porcentaje >= 75 ? 'Bueno' : 'Regular') }}
+          <div class="fw-bold mb-0" style="font-size:16px">{{ $u1->sigla }}</div>
+          <div class="text-muted mb-2" style="font-size:11px">{{ Str::limit($u1->nombre, 24) }}</div>
+          <span class="badge bg-label-success rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px">
+            <i class="ti tabler-heart" style="font-size:10px"></i>{{ $u1->porcentaje >= 85 ? 'Excelente' : ($u1->porcentaje >= 75 ? 'Bueno' : 'Regular') }}
+            @if($u1->variacion > 0) · +{{ $u1->variacion }}@endif
           </span>
-          @if($u1->variacion > 0)<span class="badge bg-label-success rounded-pill mb-2 ms-1" style="font-size:10px"><i class="ti tabler-arrow-up icon-10px me-1"></i>+{{ $u1->variacion }}</span>@endif
-          <div class="py-4 mt-2 mx-n3" style="background:rgba(255,193,7,.15);border-radius:0 0 calc(var(--bs-card-border-radius) - 2px) calc(var(--bs-card-border-radius) - 2px)">
-            <div class="fw-bold text-warning" style="font-size:2.5rem;line-height:1">{{ $u1->porcentaje }}%</div>
+          <div class="py-3 mt-1" style="background:rgba(255,193,7,.12)">
+            <div class="fw-bold text-warning" style="font-size:2.25rem;line-height:1">{{ $u1->porcentaje }}%</div>
             <small class="text-muted">{{ $u1->completadas_count }}/{{ $u1->actividades_count }} completadas</small>
-            @if($u1->posicion_anterior && $u1->posicion_anterior != 1)
-            <div class="text-muted" style="font-size:10px;margin-top:4px">Antes: {{ $u1->posicion_anterior }}° lugar</div>
-            @endif
           </div>
         </div>
       </div>
@@ -116,25 +116,25 @@ $configData = Helper::appClasses();
       {{-- 3° lugar --}}
       @if($unidades->get(2))
       @php $u3 = $unidades->get(2); @endphp
-      <div class="col-sm-4 col-md-3 text-center">
-        <div class="podio-card card border-0 bg-body-secondary mb-0" style="padding:1.5rem 1rem 0">
-          <div class="podio-numero bg-label-warning">3°</div>
-          <div class="avatar avatar-xl mx-auto mb-3" style="width:68px;height:68px">
-            <span class="avatar-initial rounded-circle bg-label-warning fw-bold" style="font-size:22px;width:68px;height:68px">
-              {{ strtoupper(substr($u3->sigla ?? $u3->nombre, 0, 2)) }}
-            </span>
+      <div class="text-center" style="width:200px;min-width:160px">
+        <div class="card border-0 bg-body-secondary mb-0 overflow-hidden" style="padding-top:1.5rem">
+          <div class="d-flex justify-content-center mb-2">
+            <div class="rounded-pill px-3 py-1 fw-bold" style="background:rgba(205,127,50,.2);color:#8b5e3c;font-size:13px">3°</div>
           </div>
-          <h6 class="mb-0 fw-bold">{{ $u3->sigla }}</h6>
-          <small class="text-muted d-block mb-2" style="font-size:11px">{{ Str::limit($u3->nombre,24) }}</small>
+          <div class="mx-auto mb-2" style="width:60px;height:60px;border-radius:50%;background:rgba(205,127,50,.15);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#cd7f32">
+            {{ strtoupper(substr($u3->sigla ?? $u3->nombre, 0, 2)) }}
+          </div>
+          <div class="fw-bold mb-0" style="font-size:14px">{{ $u3->sigla }}</div>
+          <div class="text-muted mb-2" style="font-size:11px">{{ Str::limit($u3->nombre, 22) }}</div>
           @if($u3->variacion > 0)
-          <span class="badge bg-label-success rounded-pill mb-2" style="font-size:10px"><i class="ti tabler-arrow-up icon-10px me-1"></i>+{{ $u3->variacion }} pos.</span>
+            <span class="badge bg-label-success rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px"><i class="ti tabler-arrow-up" style="font-size:10px"></i>+{{ $u3->variacion }} pos.</span>
           @elseif($u3->variacion < 0)
-          <span class="badge bg-label-danger rounded-pill mb-2" style="font-size:10px"><i class="ti tabler-arrow-down icon-10px me-1"></i>{{ $u3->variacion }} pos.</span>
+            <span class="badge bg-label-danger rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px"><i class="ti tabler-arrow-down" style="font-size:10px"></i>{{ $u3->variacion }} pos.</span>
           @else
-          <span class="badge bg-label-secondary rounded-pill mb-2" style="font-size:10px"><i class="ti tabler-minus icon-10px me-1"></i>Sin cambio</span>
+            <span class="badge bg-label-secondary rounded-pill mb-2 mx-auto" style="font-size:10px">— Sin cambio</span>
           @endif
-          <div class="py-4 mt-2 mx-n3" style="background:rgba(205,127,50,.12);border-radius:0 0 var(--bs-card-border-radius) var(--bs-card-border-radius)">
-            <div class="fw-bold" style="font-size:2rem;line-height:1;color:#cd7f32">{{ $u3->porcentaje }}%</div>
+          <div class="py-3 mt-1" style="background:rgba(205,127,50,.1)">
+            <div class="fw-bold" style="font-size:1.75rem;line-height:1;color:#cd7f32">{{ $u3->porcentaje }}%</div>
             <small class="text-muted">{{ $u3->completadas_count }}/{{ $u3->actividades_count }} completadas</small>
           </div>
         </div>

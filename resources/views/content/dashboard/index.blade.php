@@ -19,7 +19,7 @@
       <p>Sistema de seguimiento del Plan de Control Interno y Modelo de Integridad Institucional · Directiva N° 006-2019-CG-INTEG</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-      <div class="badge bg-white bg-opacity-25 text-white px-3 py-2 rounded-pill" style="font-size:13px">
+      <div class="px-3 py-2 rounded-pill d-flex align-items-center gap-1" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);font-size:13px;color:#fff">
         <i class="ti tabler-calendar-event me-1"></i>
         {{ \Carbon\Carbon::now()->translatedFormat('l, d \d\e F \d\e Y') }}
       </div>
@@ -85,22 +85,24 @@
 
   @foreach($kpis as $kpi)
   <div class="col-6 col-md-4 col-xl-2 pulso-animate" style="animation-delay:{{ $loop->index * .05 }}s">
-    <a href="{{ route($kpi['route'], $kpi['route_params'] ?? []) }}" class="pulso-kpi-card">
-      <div class="card h-100">
-        <div class="card-body">
-          {{-- Icono + etiqueta --}}
-          <div class="d-flex align-items-start justify-content-between mb-3">
-            <div class="badge rounded bg-label-{{ $kpi['color'] }} p-2">
-              <i class="icon-base ti {{ $kpi['icon'] }} icon-22px"></i>
+    <a href="{{ route($kpi['route'], $kpi['route_params'] ?? []) }}" class="pulso-kpi-card text-decoration-none">
+      <div class="card h-100 mb-0">
+        <div class="card-body p-3">
+          {{-- Icono + flecha --}}
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="badge rounded bg-label-{{ $kpi['color'] }} p-2 flex-shrink-0" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center">
+              <i class="icon-base ti {{ $kpi['icon'] }}" style="font-size:18px"></i>
             </div>
-            <i class="ti tabler-chevron-right text-body-secondary icon-14px"></i>
+            <i class="ti tabler-chevron-right text-body-secondary" style="font-size:14px;margin-top:2px"></i>
           </div>
-          {{-- Número grande --}}
-          <h2 class="mb-0 text-{{ $kpi['color'] }}" style="font-size:2rem;font-weight:800;line-height:1">{{ $kpi['val'] }}</h2>
-          <p class="mb-1 fw-semibold mt-1" style="font-size:12px">{{ $kpi['label'] }}</p>
-          <small class="text-{{ $kpi['trend_color'] }} fw-medium" style="font-size:11px">
-            <i class="ti tabler-trending-up icon-12px me-1"></i>{{ $kpi['trend'] }}
-          </small>
+          {{-- Número --}}
+          <div class="text-{{ $kpi['color'] }} fw-bold mb-0" style="font-size:1.75rem;line-height:1.1">{{ $kpi['val'] }}</div>
+          <div class="fw-semibold text-body mb-1" style="font-size:12px;line-height:1.3;margin-top:2px">{{ $kpi['label'] }}</div>
+          {{-- Trend — truncado para evitar desborde --}}
+          <div class="text-{{ $kpi['trend_color'] }} fw-medium d-flex align-items-center gap-1 text-truncate" style="font-size:11px" title="{{ $kpi['trend'] }}">
+            <i class="ti tabler-trending-up flex-shrink-0" style="font-size:11px"></i>
+            <span class="text-truncate">{{ $kpi['trend'] }}</span>
+          </div>
         </div>
       </div>
     </a>
@@ -351,14 +353,15 @@
             <div class="fw-semibold text-truncate" style="font-size:13px">{{ $a->nombre }}</div>
             <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
               <span class="badge bg-label-secondary rounded-pill" style="font-size:10px">{{ $a->componente->nombre ?? '—' }}</span>
-              @if($a->responsable)
+              @php $respPrincipal = $a->responsables->first(); @endphp
+              @if($respPrincipal)
               <div class="d-flex align-items-center gap-1">
                 <div class="avatar avatar-xs">
                   <span class="avatar-initial rounded-circle bg-label-primary" style="font-size:9px;width:18px;height:18px">
-                    {{ strtoupper(substr($a->responsable->name,0,2)) }}
+                    {{ strtoupper(substr($respPrincipal->name,0,2)) }}
                   </span>
                 </div>
-                <small class="text-muted" style="font-size:11px">{{ explode(' ',$a->responsable->name)[0] }}</small>
+                <small class="text-muted" style="font-size:11px">{{ explode(' ',$respPrincipal->name)[0] }}</small>
               </div>
               @endif
             </div>

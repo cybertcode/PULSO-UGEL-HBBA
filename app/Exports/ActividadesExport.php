@@ -23,7 +23,7 @@ class ActividadesExport implements FromCollection, WithHeadings, WithStyles, Wit
 
     public function collection()
     {
-        $query = Actividad::with(['componente', 'unidadOrganica', 'responsable'])
+        $query = Actividad::with(['componente', 'unidadOrganica', 'responsables'])
             ->whereYear('created_at', $this->anio);
 
         if ($this->componenteId) $query->where('componente_id', $this->componenteId);
@@ -35,7 +35,7 @@ class ActividadesExport implements FromCollection, WithHeadings, WithStyles, Wit
             $a->nombre,
             $a->componente->nombre ?? '—',
             $a->unidadOrganica->nombre ?? '—',
-            $a->responsable->name ?? '—',
+            $a->responsables->pluck('name')->implode(', ') ?: '—',
             ucfirst($a->estado),
             $a->prioridad ? ucfirst($a->prioridad) : '—',
             $a->fecha_limite?->format('d/m/Y') ?? '—',
