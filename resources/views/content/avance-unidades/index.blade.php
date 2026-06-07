@@ -109,13 +109,13 @@ $configData = Helper::appClasses();
           <small class="text-muted">{{ $u->completadas_count }} de {{ $u->actividades_count }} actividades</small>
         </div>
       </div>
-      <div class="card-footer py-2 px-3 d-flex gap-2">
-        <div class="d-flex align-items-center gap-2 flex-fill">
-          <span class="badge bg-label-warning">
-            <i class="ti tabler-loader icon-12px me-1"></i>En Proceso: {{ $u->en_proceso_count }}
+      <div class="card-footer py-2 px-3">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge bg-label-warning d-flex align-items-center gap-1" style="font-size:10px">
+            <i class="ti tabler-loader" style="font-size:10px"></i>{{ $u->en_proceso_count }} en proceso
           </span>
-          <span class="badge bg-label-danger">
-            <i class="ti tabler-clock icon-12px me-1"></i>Pendientes: {{ $u->pendientes_count }}
+          <span class="badge bg-label-danger d-flex align-items-center gap-1" style="font-size:10px">
+            <i class="ti tabler-clock" style="font-size:10px"></i>{{ $u->pendientes_count }} pendientes
           </span>
         </div>
       </div>

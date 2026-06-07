@@ -6,11 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Actividad;
 use App\Models\Componente;
 use App\Models\Alerta;
-use App\Models\Reconocimiento;
 use App\Models\TrabajadorDestacado;
 use App\Models\UnidadOrganica;
-use App\Models\User;
 use App\Models\ConfiguracionInstitucional;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -30,10 +29,11 @@ class DashboardController extends Controller
         $umbral_amarillo = $config->umbral_amarillo ?? 50;
 
         $totalUnidades = UnidadOrganica::where('activo', true)->count();
-        $responsables  = Actividad::whereNotNull('responsable_id')
-                            ->whereNotIn('estado', ['completada'])
-                            ->distinct('responsable_id')
-                            ->count('responsable_id');
+        $responsables  = DB::table('actividad_responsables')
+                            ->join('actividades', 'actividades.id', '=', 'actividad_responsables.actividad_id')
+                            ->whereNotIn('actividades.estado', ['completada'])
+                            ->distinct('actividad_responsables.user_id')
+                            ->count('actividad_responsables.user_id');
 
         $reconocimientosTotal = TrabajadorDestacado::where('activo', true)->count();
         $reconocimientosImpl  = TrabajadorDestacado::where('activo', true)
@@ -103,12 +103,12 @@ class DashboardController extends Controller
             return $c;
         });
 
-        $alertas_recientes = Alerta::with('actividad', 'unidadOrganica')
+        $alertas_recientes = Alerta::with(['actividad.responsables', 'unidadOrganica'])
             ->where('leida', false)
             ->orderByRaw("FIELD(prioridad,'alta','media','baja')")
             ->limit(5)->get();
 
-        $actividades_proximas = Actividad::with('componente', 'responsable')
+        $actividades_proximas = Actividad::with('componente', 'responsables')
             ->whereNotIn('estado', ['completada', 'observado'])
             ->whereDate('fecha_limite', '>=', now())
             ->orderBy('fecha_limite')

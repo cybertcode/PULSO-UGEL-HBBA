@@ -141,18 +141,19 @@ $configData = Helper::appClasses();
               @endif
             </td>
             <td>
-              @if($alerta->actividad?->responsable)
+              @php $respAlerta = $alerta->actividad?->responsables->first(); @endphp
+              @if($respAlerta)
               <div class="d-flex align-items-center gap-2">
                 <div class="avatar avatar-sm">
-                  @if($alerta->actividad->responsable->profile_photo_path)
-                  <img src="{{ Storage::url($alerta->actividad->responsable->profile_photo_path) }}" alt="{{ $alerta->actividad->responsable->name }}" class="rounded-circle" style="width:36px;height:36px;object-fit:cover">
+                  @if($respAlerta->profile_photo_path)
+                  <img src="{{ Storage::url($respAlerta->profile_photo_path) }}" alt="{{ $respAlerta->name }}" class="rounded-circle" style="width:36px;height:36px;object-fit:cover">
                   @else
                   <span class="avatar-initial rounded-circle bg-label-primary" style="width:36px;height:36px;font-size:13px">
-                    {{ strtoupper(substr($alerta->actividad->responsable->name, 0, 2)) }}
+                    {{ strtoupper(substr($respAlerta->name, 0, 2)) }}
                   </span>
                   @endif
                 </div>
-                <small class="fw-medium d-none d-md-inline" style="max-width:120px">{{ $alerta->actividad->responsable->name }}</small>
+                <small class="fw-medium d-none d-md-inline" style="max-width:120px">{{ $respAlerta->name }}</small>
               </div>
               @else
               <span class="text-muted small">—</span>
