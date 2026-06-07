@@ -82,6 +82,9 @@ class MenuServiceProvider extends ServiceProvider
             if (Gate::check('usuarios.ver')) {
                 $admSubmenu[] = (object)['url'=>'/usuarios','name'=>'Usuarios','icon'=>'menu-icon icon-base ti tabler-users','slug'=>'adm-usuarios'];
             }
+            if (Gate::check('componentes.ver')) {
+                $admSubmenu[] = (object)['url'=>'/administracion/componentes','name'=>'Componentes SCI','icon'=>'menu-icon icon-base ti tabler-layout-grid','slug'=>'adm-componentes'];
+            }
             if (Gate::check('configuracion.ver')) {
                 $admSubmenu[] = (object)['url'=>'/roles','name'=>'Roles','icon'=>'menu-icon icon-base ti tabler-user-check','slug'=>'adm-roles'];
                 $admSubmenu[] = (object)['url'=>'/permisos','name'=>'Permisos','icon'=>'menu-icon icon-base ti tabler-lock','slug'=>'adm-permisos'];

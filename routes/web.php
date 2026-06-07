@@ -15,6 +15,7 @@ use App\Http\Controllers\pages\SemaforoController;
 use App\Http\Controllers\pages\RankingUnidadesController;
 use App\Http\Controllers\pages\AvanceUnidadesController;
 use App\Http\Controllers\pages\ConfiguracionController;
+use App\Http\Controllers\pages\ComponenteController;
 use App\Http\Controllers\apps\UserList;
 use App\Http\Controllers\apps\UserViewAccount;
 use App\Http\Controllers\apps\UserViewSecurity;
@@ -102,6 +103,17 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::post('/roles',          [AccessRoles::class, 'store'])->name('adm-roles.store');
         Route::put('/roles/{role}',    [AccessRoles::class, 'update'])->name('adm-roles.update');
         Route::delete('/roles/{role}', [AccessRoles::class, 'destroy'])->name('adm-roles.destroy');
+    });
+
+    // --- Administración: Componentes SCI ---
+    Route::middleware('can:componentes.ver')->group(function () {
+        Route::get('/administracion/componentes', [ComponenteController::class, 'index'])->name('adm-componentes');
+    });
+    Route::middleware('can:componentes.editar')->group(function () {
+        Route::post('/administracion/componentes',                    [ComponenteController::class, 'store'])->name('adm-componentes.store');
+        Route::put('/administracion/componentes/{componente}',        [ComponenteController::class, 'update'])->name('adm-componentes.update');
+        Route::patch('/administracion/componentes/{componente}/toggle',[ComponenteController::class, 'toggle'])->name('adm-componentes.toggle');
+        Route::delete('/administracion/componentes/{componente}',     [ComponenteController::class, 'destroy'])->name('adm-componentes.destroy');
     });
 
     // --- Administración: Configuración ---

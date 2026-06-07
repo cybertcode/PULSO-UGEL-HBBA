@@ -18,6 +18,8 @@ class RolesPermisosSeeder extends Seeder
             'usuarios.ver', 'usuarios.crear', 'usuarios.editar', 'usuarios.eliminar',
             // Control Interno
             'control-interno.ver', 'control-interno.crear', 'control-interno.editar',
+            // Componentes SCI
+            'componentes.ver', 'componentes.editar',
             // Modelo de Integridad
             'integridad.ver', 'integridad.editar',
             // Evidencias
@@ -47,6 +49,7 @@ class RolesPermisosSeeder extends Seeder
         $responsable = Role::firstOrCreate(['name' => 'Responsable de Unidad', 'guard_name' => 'web']);
         $responsable->syncPermissions([
             'control-interno.ver', 'control-interno.crear', 'control-interno.editar',
+            'componentes.ver',
             'integridad.ver', 'integridad.editar',
             'evidencias.ver', 'evidencias.subir',
             'reportes.ver',

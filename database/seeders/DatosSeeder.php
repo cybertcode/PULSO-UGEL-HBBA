@@ -29,28 +29,31 @@ class DatosSeeder extends Seeder
             $responsable = $usuarios->where('unidad_organica_id', $unidad->id)->first()
                         ?? $usuarios->random();
 
-            Actividad::factory(5)->create([
+            $normales = Actividad::factory(5)->create([
                 'unidad_organica_id' => $unidad->id,
-                'responsable_id'     => $responsable->id,
                 'creado_por'         => $responsable->id,
                 'componente_id'      => $componentes->random()->id,
             ]);
+            // Asignar responsable principal al pivote
+            foreach ($normales as $act) {
+                $act->responsables()->attach($responsable->id, ['tipo' => 'principal']);
+            }
 
             // 1 actividad completada por unidad
-            Actividad::factory()->completada()->create([
+            $completada = Actividad::factory()->completada()->create([
                 'unidad_organica_id' => $unidad->id,
-                'responsable_id'     => $responsable->id,
                 'creado_por'         => $responsable->id,
                 'componente_id'      => $componentes->random()->id,
             ]);
+            $completada->responsables()->attach($responsable->id, ['tipo' => 'principal']);
 
             // 1 actividad vencida por unidad
-            Actividad::factory()->vencida()->create([
+            $vencida = Actividad::factory()->vencida()->create([
                 'unidad_organica_id' => $unidad->id,
-                'responsable_id'     => $responsable->id,
                 'creado_por'         => $responsable->id,
                 'componente_id'      => $componentes->random()->id,
             ]);
+            $vencida->responsables()->attach($responsable->id, ['tipo' => 'principal']);
         }
 
         // Evidencias: 2-3 por actividad completada o en proceso
