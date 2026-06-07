@@ -76,7 +76,6 @@ class ActividadFactory extends Factory
             'descripcion'        => fake()->optional(0.6)->paragraph(2),
             'componente_id'      => Componente::inRandomOrder()->value('id'),
             'unidad_organica_id' => UnidadOrganica::inRandomOrder()->value('id'),
-            'responsable_id'     => User::where('estado', 'activo')->inRandomOrder()->value('id'),
             'creado_por'         => User::where('estado', 'activo')->inRandomOrder()->value('id'),
             'numero_sgd'         => fake()->optional(0.7)->numerify("SGD-{$anio}-####"),
             'fecha_inicio'       => $fechaInicio,
