@@ -147,7 +147,24 @@ $configData = Helper::appClasses();
             <td><small>{{ $ev->created_at->format('d/m/Y') }}</small></td>
             <td>
               <div class="d-flex gap-1">
-                <a href="{{ Storage::url($ev->archivo_ruta) }}" target="_blank" class="btn btn-icon btn-sm btn-label-info" title="Descargar">
+                {{-- Preview / ver --}}
+                @php $mime = $ev->archivo_tipo ?? ''; @endphp
+                @if(str_contains($mime, 'image'))
+                <button class="btn btn-icon btn-sm btn-label-secondary btn-preview"
+                  data-url="{{ Storage::url($ev->archivo_ruta) }}"
+                  data-titulo="{{ $ev->titulo }}"
+                  data-tipo="imagen" title="Vista previa">
+                  <i class="ti tabler-eye"></i>
+                </button>
+                @elseif(str_contains($mime, 'pdf'))
+                <button class="btn btn-icon btn-sm btn-label-secondary btn-preview"
+                  data-url="{{ Storage::url($ev->archivo_ruta) }}"
+                  data-titulo="{{ $ev->titulo }}"
+                  data-tipo="pdf" title="Vista previa">
+                  <i class="ti tabler-eye"></i>
+                </button>
+                @endif
+                <a href="{{ Storage::url($ev->archivo_ruta) }}" target="_blank" class="btn btn-icon btn-sm btn-label-info" title="Descargar / Abrir">
                   <i class="ti tabler-download"></i>
                 </a>
                 @if($ev->estado === 'pendiente')
@@ -234,6 +251,27 @@ $configData = Helper::appClasses();
 <form method="POST" id="formValidar" style="display:none">@csrf @method('PATCH')<input type="hidden" name="accion" value="validado"></form>
 <form method="POST" id="formRechazar" style="display:none">@csrf @method('PATCH')<input type="hidden" name="accion" value="rechazado"><input type="hidden" name="motivo_rechazo" id="motivoInput"></form>
 
+{{-- Modal Preview de evidencia --}}
+<div class="modal fade" id="modalPreview" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewTitulo"><i class="ti tabler-eye me-2"></i>Vista Previa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-2" style="min-height:500px">
+        <div id="previewContenido" class="w-100 h-100 d-flex align-items-center justify-content-center"></div>
+      </div>
+      <div class="modal-footer">
+        <a id="previewDescarga" href="#" target="_blank" class="btn btn-primary">
+          <i class="ti tabler-download me-1"></i>Descargar
+        </a>
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 @section('page-script')
@@ -258,6 +296,28 @@ document.addEventListener('DOMContentLoaded', function () {
         inputValidator: v => !v && 'El motivo es requerido' })
         .then(r => { if (r.isConfirmed) { document.getElementById('motivoInput').value = r.value; document.getElementById('formRechazar').action = url; document.getElementById('formRechazar').submit(); } });
     });
+  });
+
+  // Preview de evidencia
+  document.querySelectorAll('.btn-preview').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const url    = this.dataset.url;
+      const titulo = this.dataset.titulo;
+      const tipo   = this.dataset.tipo;
+      document.getElementById('previewTitulo').textContent = titulo;
+      document.getElementById('previewDescarga').href = url;
+      const cont = document.getElementById('previewContenido');
+      if (tipo === 'imagen') {
+        cont.innerHTML = `<img src="${url}" class="img-fluid rounded" style="max-height:75vh;object-fit:contain" alt="${titulo}">`;
+      } else if (tipo === 'pdf') {
+        cont.innerHTML = `<iframe src="${url}" class="w-100 border-0 rounded" style="height:75vh"></iframe>`;
+      }
+      new bootstrap.Modal(document.getElementById('modalPreview')).show();
+    });
+  });
+
+  document.getElementById('modalPreview').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('previewContenido').innerHTML = '';
   });
 
   document.querySelectorAll('.form-eliminar-ev').forEach(form => {

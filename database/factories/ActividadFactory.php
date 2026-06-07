@@ -50,7 +50,7 @@ class ActividadFactory extends Factory
         $fechaInicio = fake()->dateTimeBetween('-6 months', '-1 month');
         $fechaLimite = fake()->dateTimeBetween('-2 months', '+4 months');
         $estado      = fake()->randomElement([
-            'completada','completada','en_proceso','en_proceso','en_proceso','pendiente','vencida',
+            'completada','completada','en_proceso','en_proceso','en_proceso','pendiente','vencida','observado',
         ]);
 
         $avance = match($estado) {
@@ -58,26 +58,27 @@ class ActividadFactory extends Factory
             'en_proceso' => fake()->numberBetween(20, 90),
             'pendiente'  => fake()->numberBetween(0, 20),
             'vencida'    => fake()->numberBetween(0, 60),
+            'observado'  => fake()->numberBetween(10, 70),
             default      => 0,
         };
 
         $anio  = now()->year;
         $lastNum = Actividad::withTrashed()
-            ->where('codigo', 'like', 'SCI-' . $anio . '-%')
+            ->where('codigo', 'like', "SCI-{$anio}-%")
             ->count();
         static $offset = null;
         if ($offset === null) $offset = $lastNum;
         $offset++;
 
         return [
-            'codigo'             => 'SCI-' . $anio . '-' . str_pad($offset, 3, '0', STR_PAD_LEFT),
+            'codigo'             => "SCI-{$anio}-" . str_pad($offset, 3, '0', STR_PAD_LEFT),
             'nombre'             => fake()->randomElement($this->actividades),
             'descripcion'        => fake()->optional(0.6)->paragraph(2),
             'componente_id'      => Componente::inRandomOrder()->value('id'),
             'unidad_organica_id' => UnidadOrganica::inRandomOrder()->value('id'),
             'responsable_id'     => User::where('estado', 'activo')->inRandomOrder()->value('id'),
             'creado_por'         => User::where('estado', 'activo')->inRandomOrder()->value('id'),
-            'numero_sgd'         => fake()->optional(0.7)->numerify('SGD-' . $anio . '-####'),
+            'numero_sgd'         => fake()->optional(0.7)->numerify("SGD-{$anio}-####"),
             'fecha_inicio'       => $fechaInicio,
             'fecha_limite'       => $fechaLimite,
             'fecha_cumplimiento' => $estado === 'completada' ? fake()->dateTimeBetween($fechaInicio, 'now') : null,

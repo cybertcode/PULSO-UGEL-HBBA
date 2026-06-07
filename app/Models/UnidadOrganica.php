@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class UnidadOrganica extends Model
 {
     protected $table = 'unidades_organicas';
 
-    protected $fillable = ['codigo', 'nombre', 'sigla', 'responsable', 'activo'];
+    protected $fillable = [
+        'codigo', 'nombre', 'sigla', 'responsable',
+        'foto_ruta', 'correo', 'telefono', 'descripcion', 'activo',
+    ];
 
     protected function casts(): array
     {
@@ -29,5 +33,31 @@ class UnidadOrganica extends Model
     public function reconocimientos(): HasMany
     {
         return $this->hasMany(Reconocimiento::class, 'unidad_organica_id');
+    }
+
+    public function historialRanking(): HasMany
+    {
+        return $this->hasMany(HistorialRanking::class, 'unidad_organica_id');
+    }
+
+    public function trabajadoresDestacados(): HasMany
+    {
+        return $this->hasMany(TrabajadorDestacado::class, 'unidad_organica_id');
+    }
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        if ($this->foto_ruta) {
+            return Storage::url($this->foto_ruta);
+        }
+        return null;
+    }
+
+    public function getPorcentajeAttribute(): int
+    {
+        $total = $this->actividades()->count();
+        if ($total === 0) return 0;
+        $completadas = $this->actividades()->where('estado', 'completada')->count();
+        return (int) round(($completadas / $total) * 100);
     }
 }
