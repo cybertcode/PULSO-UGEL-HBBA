@@ -46,12 +46,6 @@ use Illuminate\Support\Facades\Storage;
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#tab-unidades" data-bs-toggle="pill">
-        <i class="ti tabler-sitemap icon-sm me-1_5"></i>Unidades Orgánicas
-        <span class="badge bg-label-primary ms-1">{{ $unidades->count() }}</span>
-      </a>
-    </li>
-    <li class="nav-item">
       <a class="nav-link" href="#tab-accesos" data-bs-toggle="pill">
         <i class="ti tabler-layout-grid icon-sm me-1_5"></i>Accesos Rápidos
       </a>
@@ -614,105 +608,6 @@ use Illuminate\Support\Facades\Storage;
 </div>{{-- /tab-content --}}
 </form>
 
-{{-- ============================
-     TAB: UNIDADES ORGÁNICAS (fuera del form principal)
-     ============================ --}}
-<div class="tab-pane fade" id="tab-unidades" style="display:none">
-  {{-- se muestra via JS --}}
-</div>
-
-{{-- Contenedor real de unidades (dentro del tab-content gestionado por JS) --}}
-<div id="tabUnidadesContent" class="d-none">
-  <div class="row g-4">
-    <div class="col-xl-8">
-      <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-label-primary p-2"><i class="ti tabler-sitemap icon-20px"></i></span>
-            <h5 class="mb-0">Unidades Orgánicas</h5>
-          </div>
-          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaUnidad">
-            <i class="ti tabler-plus me-1"></i>Nueva Unidad
-          </button>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Código</th>
-                <th>Nombre</th>
-                <th>Sigla</th>
-                <th>Responsable</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse($unidades as $u)
-              <tr>
-                <td><span class="badge bg-label-secondary">{{ $u->codigo }}</span></td>
-                <td><div class="fw-medium">{{ $u->nombre }}</div></td>
-                <td>{{ $u->sigla ?? '—' }}</td>
-                <td>{{ $u->responsable ?? '—' }}</td>
-                <td class="text-center">
-                  <form method="POST" action="{{ route('adm-configuracion.unidades.toggle', $u) }}" class="d-inline">
-                    @csrf @method('PATCH')
-                    <button type="submit" class="badge border-0 cursor-pointer bg-label-{{ $u->activo ? 'success' : 'secondary' }}"
-                      title="{{ $u->activo ? 'Desactivar' : 'Activar' }}">
-                      {{ $u->activo ? 'Activa' : 'Inactiva' }}
-                    </button>
-                  </form>
-                </td>
-                <td class="text-center">
-                  <div class="d-flex gap-1 justify-content-center">
-                    <button class="btn btn-sm btn-icon btn-text-secondary rounded-pill"
-                      onclick="editarUnidad({{ $u->id }}, '{{ addslashes($u->nombre) }}', '{{ addslashes($u->sigla ?? '') }}', '{{ addslashes($u->responsable ?? '') }}')"
-                      title="Editar">
-                      <i class="ti tabler-edit"></i>
-                    </button>
-                    <form method="POST" action="{{ route('adm-configuracion.unidades.destroy', $u) }}" class="d-inline"
-                      onsubmit="return confirm('¿Eliminar la unidad {{ addslashes($u->nombre) }}?')">
-                      @csrf @method('DELETE')
-                      <button type="submit" class="btn btn-sm btn-icon btn-text-danger rounded-pill" title="Eliminar">
-                        <i class="ti tabler-trash"></i>
-                      </button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-              @empty
-              <tr>
-                <td colspan="6" class="text-center py-4 text-muted">
-                  <i class="ti tabler-sitemap icon-30px d-block mx-auto mb-2"></i>
-                  No hay unidades orgánicas registradas.
-                </td>
-              </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xl-4">
-      <div class="card">
-        <div class="card-header"><h6 class="mb-0">Resumen</h6></div>
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-6 text-center">
-              <div class="fw-bold fs-3 text-primary">{{ $unidades->count() }}</div>
-              <div class="small text-muted">Total</div>
-            </div>
-            <div class="col-6 text-center">
-              <div class="fw-bold fs-3 text-success">{{ $unidades->where('activo', true)->count() }}</div>
-              <div class="small text-muted">Activas</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 {{-- ============================
      TAB: ACCESOS RÁPIDOS (fuera del form)
@@ -743,89 +638,6 @@ use Illuminate\Support\Facades\Storage;
   </div>
 </div>
 
-{{-- ========= MODALES ========= --}}
-
-{{-- Modal Nueva Unidad --}}
-<div class="modal fade" id="modalNuevaUnidad" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="POST" action="{{ route('adm-configuracion.unidades.store') }}">
-        @csrf
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="ti tabler-plus me-2"></i>Nueva Unidad Orgánica</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Código <span class="text-danger">*</span></label>
-              <input type="text" name="codigo" class="form-control text-uppercase"
-                placeholder="Ej: UGEL-ADM" required maxlength="20">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Sigla</label>
-              <input type="text" name="sigla" class="form-control" placeholder="Ej: ADM" maxlength="20">
-            </div>
-            <div class="col-12">
-              <label class="form-label">Nombre <span class="text-danger">*</span></label>
-              <input type="text" name="nombre" class="form-control" placeholder="Nombre completo de la unidad" required>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Responsable</label>
-              <input type="text" name="responsable" class="form-control" placeholder="Nombre del jefe de la unidad">
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><i class="ti tabler-plus me-1"></i>Crear Unidad</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-{{-- Modal Editar Unidad --}}
-<div class="modal fade" id="modalEditarUnidad" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="POST" id="formEditarUnidad" action="">
-        @csrf @method('PUT')
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="ti tabler-edit me-2"></i>Editar Unidad Orgánica</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Sigla</label>
-              <input type="text" name="sigla" id="editSigla" class="form-control" maxlength="20">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Estado</label>
-              <select name="activo" class="form-select">
-                <option value="1">Activa</option>
-                <option value="0">Inactiva</option>
-              </select>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Nombre <span class="text-danger">*</span></label>
-              <input type="text" name="nombre" id="editNombre" class="form-control" required>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Responsable</label>
-              <input type="text" name="responsable" id="editResponsable" class="form-control">
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><i class="ti tabler-device-floppy me-1"></i>Guardar Cambios</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
 
 @endsection
 
@@ -892,20 +704,10 @@ function updateSemaforoBar() {
 document.querySelector('[name="umbral_verde"]')?.addEventListener('input', updateSemaforoBar);
 document.querySelector('[name="umbral_amarillo"]')?.addEventListener('input', updateSemaforoBar);
 
-// Editar unidad: abrir modal con datos
-function editarUnidad(id, nombre, sigla, responsable) {
-  document.getElementById('editNombre').value      = nombre;
-  document.getElementById('editSigla').value       = sigla;
-  document.getElementById('editResponsable').value = responsable;
-  document.getElementById('formEditarUnidad').action = `/configuracion/unidades/${id}`;
-  new bootstrap.Modal(document.getElementById('modalEditarUnidad')).show();
-}
-
-// Tabs con contenido fuera del form principal (unidades y accesos)
+// Tabs con contenido fuera del form principal (accesos)
 document.querySelectorAll('#configTabs .nav-link').forEach(link => {
   link.addEventListener('shown.bs.tab', function (e) {
     const target = e.target.getAttribute('href');
-    document.getElementById('tabUnidadesContent')?.classList.toggle('d-none', target !== '#tab-unidades');
     document.getElementById('tabAccesosContent')?.classList.toggle('d-none', target !== '#tab-accesos');
   });
 });
