@@ -15,11 +15,13 @@ class LocaleMiddleware
    */
   public function handle(Request $request, Closure $next): Response
   {
-    // Locale is enabled and allowed to be change
-    if (session()->has('locale') && in_array(session()->get('locale'), ['es', 'en', 'fr', 'ar', 'de'])) {
+    // Sistema configurado para Español (Perú) — permite cambio solo entre es/en
+    if (session()->has('locale') && in_array(session()->get('locale'), ['es', 'en'])) {
       app()->setLocale(session()->get('locale'));
     } else {
+      // Siempre Spanish por defecto — sistema institucional peruano
       app()->setLocale(config('app.locale', 'es'));
+      session()->put('locale', config('app.locale', 'es'));
     }
 
     return $next($request);

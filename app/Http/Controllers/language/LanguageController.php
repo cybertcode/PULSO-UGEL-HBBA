@@ -8,13 +8,12 @@ use Illuminate\Support\Facades\App;
 
 class LanguageController extends Controller
 {
-  public function swap(Request $request, $locale)
+  public function swap(Request $request, string $locale)
   {
-    if (!in_array($locale, ['en', 'fr', 'ar', 'de', 'es'])) {
+    if (!in_array($locale, ['es', 'en'])) {
       abort(400);
-    } else {
-      $request->session()->put('locale', $locale);
     }
+    $request->session()->put('locale', $locale);
     App::setLocale($locale);
     return redirect()->back();
   }

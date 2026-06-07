@@ -22,6 +22,7 @@ use App\Http\Controllers\apps\AccessRoles;
 use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\authentications\LoginBasic;
 use App\Http\Controllers\authentications\RegisterBasic;
+use App\Http\Controllers\pages\PerfilController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
@@ -29,6 +30,12 @@ Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('auth-
 Route::get('/pages/misc-error',    [MiscError::class,     'index'])->name('pages-misc-error');
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+
+    // Perfil de usuario (reemplaza el Livewire de Jetstream)
+    Route::get('/user/profile',           [PerfilController::class, 'show'])->name('profile.show');
+    Route::post('/user/profile/info',     [PerfilController::class, 'updateInfo'])->name('profile.update-info');
+    Route::post('/user/profile/password', [PerfilController::class, 'updatePassword'])->name('profile.update-password');
+    Route::delete('/user/profile/photo',  [PerfilController::class, 'deletePhoto'])->name('profile.delete-photo');
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');

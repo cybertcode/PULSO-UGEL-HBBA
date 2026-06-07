@@ -139,24 +139,94 @@ use Illuminate\Support\Facades\Storage;
                 @error('sigla')<div class="invalid-feedback">{{ $message }}</div>@enderror
               </div>
               <div class="col-md-4">
-                <label class="form-label">Código UGEL</label>
-                <input type="text" name="ugel_codigo" class="form-control"
-                  value="{{ old('ugel_codigo', $config->ugel_codigo) }}" maxlength="20">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Región</label>
-                <input type="text" name="region" class="form-control"
-                  value="{{ old('region', $config->region) }}" maxlength="100">
+                <label class="form-label">Departamento</label>
+                <input type="text" name="departamento" class="form-control"
+                  value="{{ old('departamento', $config->departamento) }}" maxlength="100"
+                  placeholder="Ej: Lima">
               </div>
               <div class="col-md-4">
                 <label class="form-label">Provincia</label>
                 <input type="text" name="provincia" class="form-control"
-                  value="{{ old('provincia', $config->provincia) }}" maxlength="100">
+                  value="{{ old('provincia', $config->provincia) }}" maxlength="100"
+                  placeholder="Ej: Lima">
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
+                <label class="form-label">Distrito</label>
+                <input type="text" name="distrito" class="form-control"
+                  value="{{ old('distrito', $config->distrito) }}" maxlength="100"
+                  placeholder="Ej: San Isidro">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Región / Departamento (UGEL)</label>
+                <input type="text" name="region" class="form-control"
+                  value="{{ old('region', $config->region) }}" maxlength="100"
+                  placeholder="Ej: Lima Metropolitana">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Ubigeo</label>
+                <input type="text" name="ubigeo" class="form-control"
+                  value="{{ old('ubigeo', $config->ubigeo) }}" maxlength="10"
+                  placeholder="Ej: 150101">
+              </div>
+              <div class="col-md-4">
                 <label class="form-label">Año de Gestión</label>
                 <input type="number" name="anio_gestion" class="form-control"
                   value="{{ old('anio_gestion', $config->anio_gestion) }}" min="2020" max="2099">
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Dirección</label>
+                <input type="text" name="direccion" class="form-control"
+                  value="{{ old('direccion', $config->direccion) }}" maxlength="255"
+                  placeholder="Ej: Av. Arequipa 123, Lima">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Sitio Web</label>
+                <input type="url" name="sitio_web" class="form-control"
+                  value="{{ old('sitio_web', $config->sitio_web) }}" maxlength="255"
+                  placeholder="https://www.ugel.gob.pe">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{-- Zona horaria y configuración regional --}}
+        <div class="card mb-4">
+          <div class="card-header d-flex align-items-center gap-2">
+            <span class="badge bg-label-warning p-2"><i class="ti tabler-clock icon-20px"></i></span>
+            <h5 class="mb-0">Configuración Regional</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Zona Horaria</label>
+                <select name="timezone" class="form-select">
+                  @php
+                    $zonas = [
+                      'America/Lima'       => 'Lima, Perú (UTC-5)',
+                      'America/Bogota'     => 'Bogotá, Colombia (UTC-5)',
+                      'America/Santiago'   => 'Santiago, Chile (UTC-4)',
+                      'America/La_Paz'     => 'La Paz, Bolivia (UTC-4)',
+                      'America/Caracas'    => 'Caracas, Venezuela (UTC-4)',
+                      'America/Sao_Paulo'  => 'São Paulo, Brasil (UTC-3)',
+                      'America/Argentina/Buenos_Aires' => 'Buenos Aires, Argentina (UTC-3)',
+                      'America/Guayaquil'  => 'Guayaquil, Ecuador (UTC-5)',
+                      'America/Asuncion'   => 'Asunción, Paraguay (UTC-4)',
+                      'America/Montevideo' => 'Montevideo, Uruguay (UTC-3)',
+                    ];
+                    $tzActual = old('timezone', $config->timezone ?? 'America/Lima');
+                  @endphp
+                  @foreach($zonas as $tz => $label)
+                    <option value="{{ $tz }}" {{ $tzActual === $tz ? 'selected' : '' }}>{{ $label }}</option>
+                  @endforeach
+                </select>
+                <div class="form-text">Hora actual del servidor: <strong>{{ now()->format('d/m/Y H:i:s') }}</strong></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Código UGEL</label>
+                <input type="text" name="ugel_codigo" class="form-control"
+                  value="{{ old('ugel_codigo', $config->ugel_codigo) }}" maxlength="20"
+                  placeholder="Ej: 150101">
+                <div class="form-text">Código oficial asignado por el MINEDU</div>
               </div>
             </div>
           </div>
@@ -233,10 +303,13 @@ use Illuminate\Support\Facades\Storage;
             </div>
             <h5 class="mb-1" id="previewNombre">{{ $config->nombre_institucion }}</h5>
             <p class="text-muted small mb-0" id="previewRegion">
-              {{ implode(' — ', array_filter([$config->region, $config->provincia])) }}
+              {{ implode(' — ', array_filter([$config->departamento ?: $config->region, $config->provincia, $config->distrito])) }}
             </p>
             @if($config->anio_gestion)
             <span class="badge bg-label-primary mt-2">Gestión {{ $config->anio_gestion }}</span>
+            @endif
+            @if($config->ubigeo)
+            <div class="small text-muted mt-1"><i class="ti tabler-map-pin icon-12px me-1"></i>Ubigeo: {{ $config->ubigeo }}</div>
             @endif
           </div>
           @if($config->director || $config->correo_institucional)
@@ -251,9 +324,27 @@ use Illuminate\Support\Facades\Storage;
             </div>
             @endif
             @if($config->correo_institucional)
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 mb-2">
               <i class="ti tabler-mail text-muted icon-18px"></i>
               <div class="small">{{ $config->correo_institucional }}</div>
+            </div>
+            @endif
+            @if($config->telefono)
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <i class="ti tabler-phone text-muted icon-18px"></i>
+              <div class="small">{{ $config->telefono }}</div>
+            </div>
+            @endif
+            @if($config->direccion)
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <i class="ti tabler-map-pin text-muted icon-18px"></i>
+              <div class="small">{{ $config->direccion }}</div>
+            </div>
+            @endif
+            @if($config->sitio_web)
+            <div class="d-flex align-items-center gap-2">
+              <i class="ti tabler-world text-muted icon-18px"></i>
+              <a href="{{ $config->sitio_web }}" target="_blank" class="small text-primary">{{ $config->sitio_web }}</a>
             </div>
             @endif
           </div>

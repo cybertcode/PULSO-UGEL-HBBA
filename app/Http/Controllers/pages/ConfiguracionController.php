@@ -13,10 +13,16 @@ class ConfiguracionController extends Controller
     public function index()
     {
         $config   = ConfiguracionInstitucional::firstOrCreate([], [
-            'nombre_institucion' => 'UGEL Huacaybamba',
-            'sigla'              => 'UGEL-HCB',
-            'region'             => 'Huánuco',
-            'provincia'          => 'Huacaybamba',
+            'nombre_institucion' => 'Mi Institución',
+            'sigla'              => 'MI-INST',
+            'departamento'       => 'Lima',
+            'provincia'          => 'Lima',
+            'distrito'           => 'Lima',
+            'ubigeo'             => '150101',
+            'timezone'           => 'America/Lima',
+            'anio_gestion'       => date('Y'),
+            'umbral_verde'       => 75,
+            'umbral_amarillo'    => 50,
         ]);
         $unidades = UnidadOrganica::orderBy('nombre')->get();
 
@@ -33,6 +39,12 @@ class ConfiguracionController extends Controller
             'ugel_codigo'             => 'nullable|string|max:20',
             'region'                  => 'nullable|string|max:100',
             'provincia'               => 'nullable|string|max:100',
+            'departamento'            => 'nullable|string|max:100',
+            'distrito'                => 'nullable|string|max:100',
+            'ubigeo'                  => 'nullable|string|max:10',
+            'direccion'               => 'nullable|string|max:255',
+            'sitio_web'               => 'nullable|url|max:255',
+            'timezone'                => 'nullable|string|max:50',
             'director'                => 'nullable|string|max:255',
             'coordinador_sci'         => 'nullable|string|max:255',
             'correo_institucional'    => 'nullable|email|max:255',
