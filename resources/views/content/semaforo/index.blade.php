@@ -21,14 +21,17 @@
 </nav>
 
 {{-- Header --}}
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-  <div>
-    <h4 class="mb-1">Semáforo Institucional</h4>
-    <p class="mb-0 text-muted">Visualiza rápidamente el estado de cumplimiento de los componentes del Modelo de Integridad.</p>
+<div class="pulso-page-header mb-6">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1"><i class="ti tabler-traffic-lights me-2"></i>Semáforo Institucional</h4>
+      <p>Visualiza el estado de cumplimiento de los 9 componentes del Modelo de Integridad · Directiva N° 006-2019-CG-INTEG</p>
+    </div>
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4)"
+      data-bs-toggle="modal" data-bs-target="#modalCriterios">
+      <i class="ti tabler-info-circle me-1"></i>Ver criterios
+    </button>
   </div>
-  <button class="btn btn-label-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCriterios">
-    <i class="ti tabler-info-circle me-1"></i>Ver criterios de evaluación
-  </button>
 </div>
 
 {{-- ── Resumen superior: gauge + 3 contadores grandes ── --}}

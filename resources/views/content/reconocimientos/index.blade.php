@@ -22,11 +22,17 @@ $configData = Helper::appClasses();
   </ol>
 </nav>
 
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-  <div>
-    <h4 class="mb-1"><i class="ti tabler-trophy me-2 text-warning"></i>Reconocimientos</h4>
-    <p class="mb-0 text-muted">Celebramos el compromiso de quienes impulsan la integridad institucional en la UGEL Huacaybamba.</p>
+<div class="pulso-page-header mb-6">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1"><i class="ti tabler-trophy me-2"></i>Reconocimientos</h4>
+      <p>Celebramos el compromiso de quienes impulsan la integridad institucional en la UGEL Huacaybamba.</p>
+    </div>
   </div>
+</div>
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+  <div></div>
   <div class="d-flex gap-2 align-items-center flex-wrap">
     {{-- Filtros de período --}}
     <form method="GET" class="d-flex gap-2 align-items-end flex-wrap">
