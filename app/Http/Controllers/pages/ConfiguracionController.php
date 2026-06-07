@@ -5,6 +5,7 @@ namespace App\Http\Controllers\pages;
 use App\Http\Controllers\Controller;
 use App\Models\ConfiguracionInstitucional;
 use App\Models\UnidadOrganica;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -57,20 +58,20 @@ class ConfiguracionController extends Controller
             'notif_avance_bajo'       => 'boolean',
             'notif_umbral_avance'     => 'nullable|integer|min:1|max:100',
             'notif_email'             => 'boolean',
-            'logo'                    => 'nullable|image|max:2048',
+            'logo'                    => 'nullable|image|mimes:' . \App\Services\ImageService::ALLOWED_MIMES . '|max:' . \App\Services\ImageService::MAX_SIZE_KB,
             'remove_logo'             => 'nullable|boolean',
         ]);
 
-        // Eliminar logo si se solicitó
+        $images = app(ImageService::class);
+
         if ($request->boolean('remove_logo') && $config->logo_ruta) {
-            Storage::disk('public')->delete($config->logo_ruta);
+            $images->delete($config->logo_ruta);
             $validated['logo_ruta'] = null;
         }
 
-        // Subir nuevo logo
         if ($request->hasFile('logo')) {
-            if ($config->logo_ruta) Storage::disk('public')->delete($config->logo_ruta);
-            $validated['logo_ruta'] = $request->file('logo')->store('logos', 'public');
+            $images->delete($config->logo_ruta);
+            $validated['logo_ruta'] = $images->store($request->file('logo'), 'logos', maxWidth: 400);
         }
 
         unset($validated['logo'], $validated['remove_logo']);
