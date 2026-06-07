@@ -10,6 +10,7 @@ use App\Http\Controllers\pages\EvidenciasController;
 use App\Http\Controllers\pages\AlertasController;
 use App\Http\Controllers\pages\ReportesController;
 use App\Http\Controllers\pages\ReconocimientosController;
+use App\Models\TrabajadorDestacado;
 use App\Http\Controllers\pages\SemaforoController;
 use App\Http\Controllers\pages\RankingUnidadesController;
 use App\Http\Controllers\pages\AvanceUnidadesController;
@@ -41,6 +42,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::put('/control-interno/{actividad}',            [ControlInternoController::class, 'update'])->name('sci-control-interno.update')->middleware('can:control-interno.editar');
     Route::delete('/control-interno/{actividad}',         [ControlInternoController::class, 'destroy'])->name('sci-control-interno.destroy')->middleware('can:control-interno.editar');
     Route::patch('/control-interno/{actividad}/avance',   [ControlInternoController::class, 'updateAvance'])->name('sci-control-interno.avance')->middleware('can:control-interno.editar');
+    Route::get('/control-interno/{actividad}/historial',  [ControlInternoController::class, 'historial'])->name('sci-control-interno.historial')->middleware('can:control-interno.ver');
 
     Route::get('/modelo-integridad', [ModeloIntegridadController::class, 'index'])->name('sci-modelo-integridad')->middleware('can:integridad.ver');
 
@@ -58,12 +60,20 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
     Route::patch('/alertas/{alerta}/leer',   [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
     Route::patch('/alertas/leer-todas',      [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
+    Route::post('/alertas',                  [AlertasController::class, 'store'])->name('mon-alertas.store')->middleware('can:alertas.ver');
+    Route::delete('/alertas/{alerta}',       [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.ver');
     Route::get('/ranking-unidades', [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades');
     Route::get('/avance-unidades',  [AvanceUnidadesController::class,  'index'])->name('mon-avance-unidades');
 
     // --- Reportes ---
     Route::get('/reportes',        [ReportesController::class,       'index'])->name('rep-reportes')->middleware('can:reportes.ver');
+    Route::get('/reportes/exportar', [ReportesController::class, 'exportar'])->name('rep-reportes.exportar')->middleware('can:reportes.ver');
+
     Route::get('/reconocimientos', [ReconocimientosController::class, 'index'])->name('rep-reconocimientos')->middleware('can:reconocimientos.ver');
+    Route::post('/reconocimientos', [ReconocimientosController::class, 'store'])->name('rep-reconocimientos.store')->middleware('can:reconocimientos.ver');
+    Route::get('/reconocimientos/{trabajador}', [ReconocimientosController::class, 'show'])->name('rep-reconocimientos.show')->middleware('can:reconocimientos.ver');
+    Route::put('/reconocimientos/{trabajador}', [ReconocimientosController::class, 'update'])->name('rep-reconocimientos.update')->middleware('can:reconocimientos.ver');
+    Route::delete('/reconocimientos/{trabajador}', [ReconocimientosController::class, 'destroy'])->name('rep-reconocimientos.destroy')->middleware('can:reconocimientos.ver');
 
     // --- Administración: Usuarios ---
     Route::get('/usuarios',                   [UserList::class, 'index'])->name('adm-usuarios')->middleware('can:usuarios.ver');

@@ -1,448 +1,517 @@
 @php
-use Illuminate\Support\Str;
 $configData = Helper::appClasses();
 @endphp
 @extends('layouts/layoutMaster')
 @section('title', 'Reconocimientos - PULSO UGEL')
 
+@section('vendor-style')
+@vite(['resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
+       'resources/assets/vendor/libs/select2/select2.scss'])
+@endsection
+@section('vendor-script')
+@vite(['resources/assets/vendor/libs/sweetalert2/sweetalert2.js',
+       'resources/assets/vendor/libs/select2/select2.js'])
+@endsection
+
 @section('content')
 
-{{-- Breadcrumb --}}
 <nav aria-label="breadcrumb" class="mb-4">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti tabler-home icon-14px me-1"></i>Inicio</a></li>
     <li class="breadcrumb-item active">Reconocimientos</li>
   </ol>
 </nav>
 
-{{-- Header --}}
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
   <div>
-    <div class="d-flex align-items-center gap-3 mb-1">
-      <div class="avatar">
-        <span class="avatar-initial rounded bg-label-warning"><i class="ti tabler-trophy icon-26px"></i></span>
-      </div>
-      <div>
-        <h4 class="mb-0">Reconocimientos</h4>
-        <p class="mb-0 text-muted small">Celebramos el compromiso y los resultados de quienes impulsan la mejora continua en el Sistema de Control Interno y el Modelo de Integridad.</p>
-      </div>
-    </div>
+    <h4 class="mb-1"><i class="ti tabler-trophy me-2 text-warning"></i>Reconocimientos</h4>
+    <p class="mb-0 text-muted">Celebramos el compromiso de quienes impulsan la integridad institucional en la UGEL Huacaybamba.</p>
   </div>
-  <div class="d-flex gap-2 align-items-center">
-    <form method="GET" action="{{ route('rep-reconocimientos') }}" class="d-flex gap-2">
-      <select name="anio" class="form-select form-select-sm" onchange="this.form.submit()" style="width:200px">
-        <option>I Trimestre {{ now()->year }} (Ene - Mar)</option>
+  <div class="d-flex gap-2 align-items-center flex-wrap">
+    {{-- Filtros de período --}}
+    <form method="GET" class="d-flex gap-2 align-items-end flex-wrap">
+      <select name="anio" class="form-select form-select-sm" style="width:100px" onchange="this.form.submit()">
         @foreach($anios as $a)
         <option value="{{ $a }}" {{ $anio == $a ? 'selected' : '' }}>{{ $a }}</option>
         @endforeach
       </select>
+      <select name="mes" class="form-select form-select-sm" style="width:130px" onchange="this.form.submit()">
+        <option value="">Año completo</option>
+        @foreach($meses as $m => $nm)
+        <option value="{{ $m }}" {{ $mes == $m ? 'selected' : '' }}>{{ $nm }}</option>
+        @endforeach
+      </select>
+      <select name="categoria" class="form-select form-select-sm" style="width:170px" onchange="this.form.submit()">
+        <option value="">Todas las categorías</option>
+        @foreach($categorias as $cat)
+        <option value="{{ $cat }}" {{ $categoria == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+        @endforeach
+      </select>
     </form>
-    <button class="btn btn-sm btn-label-secondary">
-      <i class="ti tabler-download me-1"></i>Exportar
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoReconocimiento">
+      <i class="ti tabler-plus me-1"></i>Nuevo Reconocimiento
     </button>
+    <a href="{{ route('rep-reportes', ['tipo'=>'reconocimientos','anio'=>$anio]) }}" class="btn btn-label-secondary btn-sm">
+      <i class="ti tabler-download me-1"></i>Exportar
+    </a>
   </div>
 </div>
 
-{{-- ── Tabs principales ── --}}
-<div class="card mb-4">
-  <div class="card-header pb-0">
-    <ul class="nav nav-tabs card-header-tabs" role="tablist">
-      <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#tab-resumen" role="tab">Resumen</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#tab-reconocidos" role="tab">
-          Reconocimientos
-          @if($ranking->count() > 0)
-          <span class="badge bg-label-warning rounded-pill ms-1">{{ $ranking->count() }}</span>
-          @endif
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#tab-historico" role="tab">Histórico</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#tab-criterios" role="tab">Criterios</a>
-      </li>
-    </ul>
+{{-- Stats --}}
+<div class="row g-4 mb-6">
+  <div class="col-6 col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="badge rounded bg-label-warning p-3 mb-2 d-inline-flex">
+          <i class="ti tabler-user-star icon-28px"></i>
+        </div>
+        <h3 class="text-warning mb-1">{{ $stats['total_reconocidos'] }}</h3>
+        <p class="mb-0 fw-medium small">Reconocimientos Entregados</p>
+        <small class="text-muted">Año {{ $anio }}</small>
+      </div>
+    </div>
   </div>
+  <div class="col-6 col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="badge rounded bg-label-primary p-3 mb-2 d-inline-flex">
+          <i class="ti tabler-building-community icon-28px"></i>
+        </div>
+        <h3 class="text-primary mb-1">{{ $stats['unidades_destacadas'] }}</h3>
+        <p class="mb-0 fw-medium small">Unidades Destacadas</p>
+        <small class="text-muted">Con reconocimiento</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="badge rounded bg-label-success p-3 mb-2 d-inline-flex">
+          <i class="ti tabler-chart-line icon-28px"></i>
+        </div>
+        <h3 class="text-success mb-1">{{ $stats['promedio_puntaje'] }}%</h3>
+        <p class="mb-0 fw-medium small">Promedio de Cumplimiento</p>
+        <small class="text-muted">General institucional</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="badge rounded bg-label-info p-3 mb-2 d-inline-flex">
+          <i class="ti tabler-calendar-event icon-28px"></i>
+        </div>
+        <h3 class="text-info mb-1" style="font-size:1.4rem">{{ $stats['proxima_ceremonia'] }}</h3>
+        <p class="mb-0 fw-medium small">Próxima Ceremonia</p>
+        <small class="text-muted">Reconocimiento a la Gestión Íntegra</small>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <div class="tab-content">
-
-    {{-- Tab Resumen --}}
-    <div class="tab-pane fade show active" id="tab-resumen" role="tabpanel">
-      <div class="card-body">
-
-        {{-- KPI Cards --}}
-        <div class="row g-4 mb-5">
-          @php
-          $rkpis = [
-            ['val'=>$ranking->count(),                          'label'=>'Reconocimientos Entregados', 'sub'=>'+20% vs. trimestre anterior', 'color'=>'primary', 'icon'=>'tabler-award'],
-            ['val'=>$ranking->count(),                          'label'=>'Funcionarios Reconocidos',   'sub'=>'+12% vs. trimestre anterior', 'color'=>'info',    'icon'=>'tabler-users'],
-            ['val'=>$ranking->groupBy('unidad_organica_id')->count(),'label'=>'Unidades Destacadas',  'sub'=>'+1 vs. trimestre anterior',   'color'=>'success', 'icon'=>'tabler-building-community'],
-            ['val'=>($ranking->isNotEmpty() ? $ranking->avg('puntaje') : 0).'%','label'=>'Promedio de Cumplimiento','sub'=>'+8.5% vs. trimestre anterior','color'=>'warning','icon'=>'tabler-chart-pie'],
-          ];
-          @endphp
-          @foreach($rkpis as $rk)
-          <div class="col-6 col-md-3">
-            <div class="card h-100">
-              <div class="card-body">
-                <div class="d-flex align-items-start justify-content-between mb-4">
-                  <div class="badge rounded bg-label-{{ $rk['color'] }} p-2">
-                    <i class="icon-base ti {{ $rk['icon'] }} icon-26px"></i>
-                  </div>
-                </div>
-                <h3 class="mb-1 text-{{ $rk['color'] }}">{{ $rk['val'] }}</h3>
-                <p class="mb-0 fw-medium">{{ $rk['label'] }}</p>
-                <small class="text-body-secondary">
-                  <i class="ti tabler-trending-up icon-12px text-success me-1"></i>{{ $rk['sub'] }}
-                </small>
-              </div>
+{{-- Podio de reconocidos --}}
+@if($top3->isNotEmpty())
+<div class="card mb-6">
+  <div class="card-header">
+    <h5 class="mb-1"><i class="ti tabler-award me-2 text-warning"></i>Reconocimientos Destacados del Período</h5>
+    <p class="card-subtitle">{{ $mes ? ($meses[$mes] ?? '') . ' ' . $anio : 'Año ' . $anio }}</p>
+  </div>
+  <div class="card-body">
+    <div class="row g-4 justify-content-center">
+      @foreach($top3 as $idx => $t)
+      @php
+        $medallas = ['🥇 Primer Lugar', '🥈 Segundo Lugar', '🥉 Tercer Lugar'];
+        $medBg    = ['warning', 'secondary', 'danger'];
+        $med      = $medallas[$idx] ?? ('N°' . ($idx+1));
+        $bg       = $medBg[$idx] ?? 'primary';
+      @endphp
+      <div class="col-md-4">
+        <div class="card h-100 border-{{ $bg }} border-2">
+          <div class="card-body text-center p-4">
+            <div class="badge bg-label-{{ $bg }} rounded-pill mb-3 px-3 py-2">{{ $med }}</div>
+            <div class="avatar avatar-xl mb-3 mx-auto">
+              <img src="{{ $t->foto_url }}" alt="{{ $t->nombre }}" class="rounded-circle" style="width:80px;height:80px;object-fit:cover">
             </div>
-          </div>
-          @endforeach
-        </div>
-
-        {{-- Banner reconocimiento a la excelencia --}}
-        <div class="card mb-5 border-warning border-opacity-25" style="background:linear-gradient(135deg,rgba(255,193,7,.08) 0%,rgba(255,159,67,.05) 100%)">
-          <div class="card-body py-4">
-            <div class="row align-items-center g-3">
-              <div class="col-auto">
-                <div class="avatar" style="width:56px;height:56px">
-                  <span class="avatar-initial rounded-circle bg-label-warning" style="width:56px;height:56px;font-size:28px">🏆</span>
-                </div>
-              </div>
-              <div class="col">
-                <h5 class="mb-1 text-warning fw-bold">Reconocimiento a la Excelencia en Gestión</h5>
-                <p class="mb-0 text-muted">Este reconocimiento destaca a los funcionarios y unidades que, con liderazgo, compromiso y buenas prácticas, generan un impacto positivo en la integridad institucional.</p>
-              </div>
-              <div class="col-auto">
-                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modalCriterios">
-                  <i class="ti tabler-info-circle me-1"></i>Conoce los criterios
-                </button>
-              </div>
+            <h5 class="mb-1">{{ $t->nombre }}</h5>
+            <p class="text-muted mb-1 small">{{ $t->cargo }}</p>
+            <span class="badge bg-label-secondary mb-3">{{ $t->unidadOrganica->sigla ?? $t->unidadOrganica->nombre ?? '—' }}</span>
+            @if($t->numero_resolucion)
+            <div class="mb-3">
+              <span class="badge bg-label-info"><i class="ti tabler-file-certificate me-1"></i>{{ $t->numero_resolucion }}</span>
             </div>
-          </div>
-        </div>
-
-        @if($ranking->isEmpty())
-        <div class="text-center py-5">
-          <i class="ti tabler-trophy-off icon-48px d-block mb-3 text-muted"></i>
-          <h5 class="text-muted">Sin reconocimientos para este período</h5>
-          <p class="text-muted mb-4">Los reconocimientos se generan automáticamente al cierre de cada período evaluado.</p>
-          <a href="{{ route('mon-ranking-unidades') }}" class="btn btn-label-warning">
-            <i class="ti tabler-trophy me-1"></i>Ver Ranking Actual
-          </a>
-        </div>
-        @else
-
-        {{-- ── Reconocimientos Destacados del Período — Podio ── --}}
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <h5 class="mb-0">Reconocimientos Destacados del Período</h5>
-          <a href="#tab-reconocidos" data-bs-toggle="tab" class="btn btn-xs btn-label-secondary">Ver todos</a>
-        </div>
-
-        <div class="row g-4 mb-5">
-          @foreach($top3->take(4) as $idx => $r)
-          @php
-            $lugares = ['Primer Lugar', 'Segundo Lugar', 'Tercer Lugar', 'Mención Especial'];
-            $lcolors = ['warning','secondary','orange','info'];
-            $lcolor  = ['warning','secondary','warning','info'][$idx] ?? 'secondary';
-            $medalColors = ['#ffc107','#6c757d','#cd7f32','#00cfe8'];
-          @endphp
-          <div class="col-md-6 col-xl-3">
-            <div class="card h-100 text-center">
-              <div class="card-body py-4">
-                <small class="text-muted d-block mb-2">{{ $lugares[$idx] ?? 'Destacado' }}</small>
-                {{-- Avatar --}}
-                <div class="avatar mx-auto mb-3" style="width:64px;height:64px">
-                  <span class="avatar-initial rounded-circle bg-label-{{ $lcolor }}" style="font-size:20px;font-weight:700;width:64px;height:64px;line-height:64px">
-                    {{ strtoupper(substr($r->unidadOrganica->sigla ?? 'U', 0, 2)) }}
-                  </span>
+            @endif
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="p-2 bg-body-secondary rounded text-center">
+                  <div class="fw-bold text-success">{{ $t->puntaje_cumplimiento }}%</div>
+                  <small class="text-muted">Cumplimiento</small>
                 </div>
-                <div class="fw-bold mb-0">{{ $r->unidadOrganica->sigla ?? '—' }}</div>
-                <small class="text-muted d-block mb-2">{{ Str::limit($r->unidadOrganica->nombre ?? '—', 30) }}</small>
-                <p class="text-muted small mb-3" style="font-size:11px">
-                  {{ Str::limit($r->observaciones ?? 'Desempeño destacado en actividades de control.', 80) }}
-                </p>
-                <div class="d-flex align-items-center justify-content-between">
-                  <span class="badge bg-label-{{ $lcolor }}">
-                    Puntaje: {{ $r->puntaje }}/100
-                  </span>
-                  <a href="{{ route('mon-ranking-unidades') }}" class="btn btn-xs btn-label-secondary">Ver detalle</a>
+              </div>
+              <div class="col-6">
+                <div class="p-2 bg-body-secondary rounded text-center">
+                  <div class="fw-bold text-primary">{{ $t->puntaje_puntualidad }}%</div>
+                  <small class="text-muted">Puntualidad</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 bg-body-secondary rounded text-center">
+                  <div class="fw-bold text-warning">{{ $t->puntaje_participacion }}%</div>
+                  <small class="text-muted">Participación</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 bg-body-secondary rounded text-center">
+                  <div class="fw-bold text-info">{{ $t->puntaje_responsabilidad }}%</div>
+                  <small class="text-muted">Responsabilidad</small>
                 </div>
               </div>
             </div>
-          </div>
-          @endforeach
-        </div>
-
-        {{-- ── Ranking + Próxima Ceremonia ── --}}
-        <div class="row g-4">
-          <div class="col-xl-8">
-            <h5 class="mb-3">Reconocimientos Recientes</h5>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Reconocido</th>
-                    <th>Unidad</th>
-                    <th class="text-center">Categoría</th>
-                    <th>Motivo</th>
-                    <th class="text-center">Puntaje</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @foreach($ranking->take(6) as $r)
-                  @php $pc = $r->avance_global >= 75 ? 'success' : ($r->avance_global >= 50 ? 'warning' : 'danger'); @endphp
-                  <tr>
-                    <td><small class="text-muted">{{ $r->created_at->format('d/m/Y') }}</small></td>
-                    <td>
-                      <div class="d-flex align-items-center gap-2">
-                        <div class="avatar avatar-sm">
-                          <span class="avatar-initial rounded-circle bg-label-{{ $pc }}" style="font-size:11px;font-weight:700">
-                            {{ strtoupper(substr($r->unidadOrganica->sigla ?? 'U', 0, 2)) }}
-                          </span>
-                        </div>
-                        <div class="fw-medium">{{ $r->unidadOrganica->sigla ?? '—' }}</div>
-                      </div>
-                    </td>
-                    <td><small class="text-muted">{{ Str::limit($r->unidadOrganica->nombre ?? '—', 30) }}</small></td>
-                    <td class="text-center">
-                      <span class="badge bg-label-{{ $pc }}">
-                        @if($r->medalla === 'oro') Control Interno
-                        @elseif($r->medalla === 'plata') Modelo de Integridad
-                        @else Buenas Prácticas
-                        @endif
-                      </span>
-                    </td>
-                    <td><small class="text-muted">{{ Str::limit($r->observaciones ?? 'Implementación de controles.', 40) }}</small></td>
-                    <td class="text-center fw-bold text-primary">{{ $r->puntaje }}</td>
-                    <td>
-                      <a href="{{ route('mon-ranking-unidades') }}" class="btn btn-xs btn-label-secondary">
-                        <i class="ti tabler-eye icon-12px me-1"></i>Ver
-                      </a>
-                    </td>
-                  </tr>
-                  @endforeach
-                </tbody>
-              </table>
+            <div class="d-flex justify-content-center align-items-center gap-2">
+              <span class="display-6 fw-bold text-{{ $t->nivel_color }}">{{ number_format($t->puntaje_total, 1) }}%</span>
+              <span class="badge bg-label-{{ $t->nivel_color }}">{{ $t->nivel }}</span>
             </div>
+            @if($t->motivo)
+            <p class="text-muted mt-3 mb-0 small fst-italic">{{ $t->motivo }}</p>
+            @endif
           </div>
+          <div class="card-footer d-flex justify-content-end gap-1">
+            <a href="{{ route('rep-reconocimientos.show', $t) }}" class="btn btn-sm btn-label-primary">
+              <i class="ti tabler-eye me-1"></i>Ver detalle
+            </a>
+          </div>
+        </div>
+      </div>
+      @endforeach
+    </div>
+  </div>
+</div>
+@endif
 
-          {{-- Próxima Ceremonia + Ranking de Unidades --}}
-          <div class="col-xl-4">
-            <div class="card mb-3 border-warning border-opacity-25">
-              <div class="card-header">
-                <h6 class="mb-0"><i class="ti tabler-calendar-event me-2 text-warning"></i>Próxima Ceremonia</h6>
+{{-- Tabla general de reconocidos --}}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Reconocimientos Recientes</h5>
+    <span class="text-muted small">{{ $trabajadores->count() }} reconocidos en el período</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Servidor/a</th>
+            <th>Unidad</th>
+            <th>Categoría</th>
+            <th>Cumplimiento</th>
+            <th>Puntualidad</th>
+            <th>Participación</th>
+            <th>Responsabilidad</th>
+            <th>Puntaje Total</th>
+            <th>Nivel</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($trabajadores as $idx => $t)
+          <tr>
+            <td><strong class="text-muted">{{ $idx + 1 }}</strong></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar avatar-sm">
+                  <img src="{{ $t->foto_url }}" class="rounded-circle" alt="{{ $t->nombre }}" style="width:36px;height:36px;object-fit:cover">
+                </div>
+                <div>
+                  <div class="fw-medium" style="font-size:13px">{{ $t->nombre }}</div>
+                  <small class="text-muted">{{ $t->cargo }}</small>
+                </div>
               </div>
-              <div class="card-body py-3">
-                @php
-                  $ceremonia = now()->addMonth()->startOfMonth();
-                @endphp
-                <div class="d-flex align-items-center gap-3 mb-2">
-                  <div class="badge bg-label-warning p-2 rounded">
-                    <i class="icon-base ti tabler-calendar icon-22px"></i>
-                  </div>
-                  <div>
-                    <div class="fw-medium">{{ $ceremonia->translatedFormat('d \d\e F \d\e Y') }}</div>
-                    <small class="text-muted">Ceremonia de Reconocimiento</small>
-                  </div>
+            </td>
+            <td><span class="badge bg-label-secondary">{{ $t->unidadOrganica->sigla ?? '—' }}</span></td>
+            <td><small>{{ $t->categoria ?? '—' }}</small></td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <div class="progress flex-grow-1" style="height:5px;min-width:50px">
+                  <div class="progress-bar bg-success" style="width:{{ $t->puntaje_cumplimiento }}%"></div>
                 </div>
-                <div class="d-flex align-items-center gap-3 mb-2">
-                  <div class="badge bg-label-primary p-2 rounded">
-                    <i class="icon-base ti tabler-award icon-22px"></i>
-                  </div>
-                  <div>
-                    <div class="fw-medium">Reconocimiento a la Gestión Íntegra</div>
-                    <small class="text-muted">I Semestre {{ now()->year }}</small>
-                  </div>
-                </div>
-                <a href="#" class="btn btn-xs btn-label-warning w-100 mt-2">
-                  <i class="ti tabler-calendar-check me-1"></i>Ver detalles del evento
+                <small class="fw-bold">{{ $t->puntaje_cumplimiento }}%</small>
+              </div>
+            </td>
+            <td><small class="fw-bold text-primary">{{ $t->puntaje_puntualidad }}%</small></td>
+            <td><small class="fw-bold text-warning">{{ $t->puntaje_participacion }}%</small></td>
+            <td><small class="fw-bold text-info">{{ $t->puntaje_responsabilidad }}%</small></td>
+            <td>
+              <span class="badge bg-label-{{ $t->nivel_color }} fs-6">{{ number_format($t->puntaje_total, 1) }}%</span>
+            </td>
+            <td><span class="badge bg-{{ $t->nivel_color }}">{{ $t->nivel }}</span></td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ route('rep-reconocimientos.show', $t) }}" class="btn btn-icon btn-sm btn-label-info" title="Ver detalle">
+                  <i class="ti tabler-eye"></i>
                 </a>
+                <button class="btn btn-icon btn-sm btn-label-primary btn-editar-reconocimiento"
+                  data-id="{{ $t->id }}"
+                  data-nombre="{{ $t->nombre }}"
+                  data-cargo="{{ $t->cargo }}"
+                  data-unidad="{{ $t->unidad_organica_id }}"
+                  data-dni="{{ $t->dni }}"
+                  data-correo="{{ $t->correo }}"
+                  data-cumplimiento="{{ $t->puntaje_cumplimiento }}"
+                  data-puntualidad="{{ $t->puntaje_puntualidad }}"
+                  data-participacion="{{ $t->puntaje_participacion }}"
+                  data-responsabilidad="{{ $t->puntaje_responsabilidad }}"
+                  data-categoria="{{ $t->categoria }}"
+                  data-motivo="{{ $t->motivo }}"
+                  data-resolucion="{{ $t->numero_resolucion }}"
+                  title="Editar">
+                  <i class="ti tabler-edit"></i>
+                </button>
+                <form method="POST" action="{{ route('rep-reconocimientos.destroy', $t) }}" class="form-eliminar-rec d-inline">
+                  @csrf @method('DELETE')
+                  <button type="submit" class="btn btn-icon btn-sm btn-label-danger" title="Eliminar">
+                    <i class="ti tabler-trash"></i>
+                  </button>
+                </form>
               </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header d-flex justify-content-between">
-                <h6 class="mb-0">Ranking de Unidades</h6>
-                <a href="{{ route('mon-ranking-unidades') }}" class="btn btn-xs btn-label-secondary">Ver ranking completo</a>
-              </div>
-              <div class="card-body p-0">
-                @foreach($ranking->take(4) as $idx => $r)
-                @php $pc2 = $r->avance_global >= 75 ? 'success' : ($r->avance_global >= 50 ? 'warning' : 'danger'); @endphp
-                <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom">
-                  <span class="badge bg-label-{{ $idx === 0 ? 'warning' : 'secondary' }}" style="min-width:24px;text-align:center">{{ $idx+1 }}</span>
-                  <div class="avatar avatar-xs">
-                    <span class="avatar-initial rounded-circle bg-label-{{ $pc2 }}" style="font-size:10px;font-weight:700">
-                      {{ strtoupper(substr($r->unidadOrganica->sigla ?? 'U', 0, 2)) }}
-                    </span>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="fw-medium small">{{ $r->unidadOrganica->sigla ?? '—' }}</div>
-                    <small class="text-muted" style="font-size:10px">{{ Str::limit($r->unidadOrganica->nombre ?? '—', 25) }}</small>
-                  </div>
-                  <span class="fw-bold text-{{ $pc2 }}">{{ $r->puntaje }}</span>
-                  <small class="text-muted">pts.</small>
-                </div>
-                @endforeach
-              </div>
-            </div>
-          </div>
-        </div>
-
-        @endif {{-- /ranking no vacío --}}
-
-      </div>
+            </td>
+          </tr>
+          @empty
+          <tr><td colspan="11" class="text-center text-muted py-5">
+            <i class="ti tabler-trophy-off icon-32px d-block mb-2"></i>
+            No hay reconocimientos para el período seleccionado.
+          </td></tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-
-    {{-- Tab Reconocidos --}}
-    <div class="tab-pane fade" id="tab-reconocidos" role="tabpanel">
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th style="width:60px" class="text-center">Pos.</th>
-                <th>Unidad Orgánica</th>
-                <th class="text-center">Actividades</th>
-                <th style="min-width:160px">Avance</th>
-                <th class="text-center">Puntaje</th>
-                <th class="text-center">Reconocimiento</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse($ranking as $r)
-              @php
-                $pc = $r->avance_global >= 75 ? 'success' : ($r->avance_global >= 50 ? 'warning' : 'danger');
-              @endphp
-              <tr>
-                <td class="text-center">
-                  @if($r->posicion <= 3)
-                  <span class="badge {{ $r->posicion == 1 ? 'bg-warning text-dark' : 'bg-label-secondary' }} px-2">{{ $r->posicion }}°</span>
-                  @else
-                  <span class="badge bg-label-secondary">{{ $r->posicion }}°</span>
-                  @endif
-                </td>
-                <td>
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="avatar avatar-sm">
-                      <span class="avatar-initial rounded-circle bg-label-{{ $pc }}" style="font-size:11px;font-weight:700">
-                        {{ strtoupper(substr($r->unidadOrganica->sigla ?? 'U', 0, 2)) }}
-                      </span>
-                    </div>
-                    <div>
-                      <div class="fw-semibold">{{ $r->unidadOrganica->sigla ?? '—' }}</div>
-                      <small class="text-muted">{{ Str::limit($r->unidadOrganica->nombre ?? '—', 35) }}</small>
-                    </div>
-                  </div>
-                </td>
-                <td class="text-center">
-                  <span class="fw-medium">{{ $r->actividades_completadas }}</span>
-                  <span class="text-muted">/{{ $r->actividades_total }}</span>
-                </td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="progress flex-grow-1" style="height:8px">
-                      <div class="progress-bar bg-{{ $pc }} rounded-pill" style="width:{{ $r->avance_global }}%"></div>
-                    </div>
-                    <span class="fw-bold text-{{ $pc }}" style="min-width:38px">{{ $r->avance_global }}%</span>
-                  </div>
-                </td>
-                <td class="text-center"><strong class="text-primary">{{ $r->puntaje }}</strong></td>
-                <td class="text-center">
-                  @if($r->medalla === 'oro')
-                  <span class="badge bg-label-warning"><i class="ti tabler-trophy me-1"></i>Oro</span>
-                  @elseif($r->medalla === 'plata')
-                  <span class="badge bg-label-secondary"><i class="ti tabler-medal me-1"></i>Plata</span>
-                  @elseif($r->medalla === 'bronce')
-                  <span class="badge" style="background:rgba(205,127,50,.15);color:#cd7f32"><i class="ti tabler-medal-2 me-1"></i>Bronce</span>
-                  @else
-                  <span class="text-muted">—</span>
-                  @endif
-                </td>
-              </tr>
-              @empty
-              <tr><td colspan="6" class="text-center text-muted py-5">Sin reconocimientos para este período</td></tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    {{-- Tab Histórico --}}
-    <div class="tab-pane fade" id="tab-historico" role="tabpanel">
-      <div class="card-body text-center py-5 text-muted">
-        <i class="ti tabler-history icon-48px d-block mb-3"></i>
-        <h6>Historial de Reconocimientos</h6>
-        <p class="mb-0">Aquí se mostrará el historial completo de reconocimientos por período.</p>
-      </div>
-    </div>
-
-    {{-- Tab Criterios --}}
-    <div class="tab-pane fade" id="tab-criterios" role="tabpanel">
-      <div class="card-body">
-        <h5 class="mb-4">Criterios de Evaluación para Reconocimientos</h5>
-        <div class="row g-4">
-          <div class="col-md-4">
-            <div class="card border-primary border-opacity-25 h-100">
-              <div class="card-body">
-                <div class="avatar mb-3"><span class="avatar-initial rounded bg-label-primary"><i class="ti tabler-shield-check icon-24px"></i></span></div>
-                <h6 class="fw-bold mb-2">Control Interno</h6>
-                <p class="text-muted small mb-0">Porcentaje de actividades completadas del Sistema de Control Interno en el período evaluado.</p>
-                <div class="mt-3"><span class="badge bg-label-primary">Peso: 40%</span></div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card border-info border-opacity-25 h-100">
-              <div class="card-body">
-                <div class="avatar mb-3"><span class="avatar-initial rounded bg-label-info"><i class="ti tabler-shield-half icon-24px"></i></span></div>
-                <h6 class="fw-bold mb-2">Modelo de Integridad</h6>
-                <p class="text-muted small mb-0">Cumplimiento de los componentes del Modelo de Integridad asignados a la unidad.</p>
-                <div class="mt-3"><span class="badge bg-label-info">Peso: 40%</span></div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card border-success border-opacity-25 h-100">
-              <div class="card-body">
-                <div class="avatar mb-3"><span class="avatar-initial rounded bg-label-success"><i class="ti tabler-star icon-24px"></i></span></div>
-                <h6 class="fw-bold mb-2">Buenas Prácticas</h6>
-                <p class="text-muted small mb-0">Iniciativas y buenas prácticas implementadas que contribuyen a la integridad institucional.</p>
-                <div class="mt-3"><span class="badge bg-label-success">Peso: 20%</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 
-{{-- Modal criterios --}}
-<div class="modal fade" id="modalCriterios" tabindex="-1">
-  <div class="modal-dialog">
+{{-- Modal Nuevo Reconocimiento --}}
+<div class="modal fade" id="modalNuevoReconocimiento" tabindex="-1">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Criterios de Evaluación</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <p>Los reconocimientos se otorgan en base a tres criterios ponderados:</p>
-        <ul>
-          <li><strong>Control Interno (40%):</strong> % actividades SCI completadas</li>
-          <li><strong>Modelo de Integridad (40%):</strong> cumplimiento de componentes</li>
-          <li><strong>Buenas Prácticas (20%):</strong> iniciativas y prácticas implementadas</li>
-        </ul>
-      </div>
+      <form method="POST" action="{{ route('rep-reconocimientos.store') }}" enctype="multipart/form-data">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti tabler-trophy me-2 text-warning"></i>Propuesta de Reconocimiento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
+              <input type="text" name="nombre" class="form-control" required placeholder="Nombres y apellidos">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">DNI</label>
+              <input type="text" name="dni" class="form-control" maxlength="8" placeholder="12345678">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cargo</label>
+              <input type="text" name="cargo" class="form-control" placeholder="Especialista en...">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Correo institucional</label>
+              <input type="email" name="correo" class="form-control" placeholder="servidor@ugel.gob.pe">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Unidad Orgánica</label>
+              <select name="unidad_organica_id" class="form-select select2-rec">
+                <option value="">Seleccionar unidad</option>
+                @foreach(\App\Models\UnidadOrganica::where('activo',true)->orderBy('nombre')->get() as $u)
+                <option value="{{ $u->id }}">{{ $u->nombre }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Año <span class="text-danger">*</span></label>
+              <select name="anio" class="form-select">
+                @foreach($anios as $a)
+                <option value="{{ $a }}" {{ $anio == $a ? 'selected' : '' }}>{{ $a }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Mes</label>
+              <select name="mes" class="form-select">
+                <option value="">Anual</option>
+                @foreach($meses as $m => $nm)
+                <option value="{{ $m }}" {{ $mes == $m ? 'selected' : '' }}>{{ $nm }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Categoría</label>
+              <select name="categoria" class="form-select">
+                <option value="">Sin categoría</option>
+                @foreach($categorias as $cat)
+                <option value="{{ $cat }}">{{ $cat }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">N° Resolución Directoral</label>
+              <input type="text" name="numero_resolucion" class="form-control" placeholder="RD N° 1457-2025">
+            </div>
+            <hr class="my-1">
+            <div class="col-12"><h6 class="text-muted mb-0"><i class="ti tabler-chart-bar me-1"></i>Indicadores de Evaluación (0-100)</h6></div>
+            <div class="col-md-3">
+              <label class="form-label">Cumplimiento <span class="text-danger">*</span></label>
+              <input type="number" name="puntaje_cumplimiento" class="form-control" min="0" max="100" value="0" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Puntualidad <span class="text-danger">*</span></label>
+              <input type="number" name="puntaje_puntualidad" class="form-control" min="0" max="100" value="0" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Participación <span class="text-danger">*</span></label>
+              <input type="number" name="puntaje_participacion" class="form-control" min="0" max="100" value="0" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Responsabilidad <span class="text-danger">*</span></label>
+              <input type="number" name="puntaje_responsabilidad" class="form-control" min="0" max="100" value="0" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Foto del servidor/a</label>
+              <input type="file" name="foto" class="form-control" accept="image/*">
+              <div class="form-text">Imagen JPG/PNG. Máx. 2MB.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Resolución Directoral (PDF)</label>
+              <input type="file" name="resolucion_archivo" class="form-control" accept=".pdf">
+              <div class="form-text">PDF. Máx. 5MB.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Motivo / Justificación</label>
+              <textarea name="motivo" class="form-control" rows="3" placeholder="Descripción de los logros y contribuciones..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-warning"><i class="ti tabler-trophy me-1"></i>Registrar Reconocimiento</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
+{{-- Modal Editar Reconocimiento --}}
+<div class="modal fade" id="modalEditarReconocimiento" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" id="formEditarRec" enctype="multipart/form-data">
+        @csrf @method('PUT')
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti tabler-edit me-2"></i>Editar Reconocimiento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
+              <input type="text" name="nombre" id="rec_nombre" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">DNI</label>
+              <input type="text" name="dni" id="rec_dni" class="form-control" maxlength="8">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cargo</label>
+              <input type="text" name="cargo" id="rec_cargo" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Correo</label>
+              <input type="email" name="correo" id="rec_correo" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Categoría</label>
+              <select name="categoria" id="rec_categoria" class="form-select">
+                <option value="">Sin categoría</option>
+                @foreach($categorias as $cat)
+                <option value="{{ $cat }}">{{ $cat }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">N° Resolución</label>
+              <input type="text" name="numero_resolucion" id="rec_resolucion" class="form-control">
+            </div>
+            <hr class="my-1">
+            <div class="col-md-3">
+              <label class="form-label">Cumplimiento</label>
+              <input type="number" name="puntaje_cumplimiento" id="rec_cumplimiento" class="form-control" min="0" max="100">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Puntualidad</label>
+              <input type="number" name="puntaje_puntualidad" id="rec_puntualidad" class="form-control" min="0" max="100">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Participación</label>
+              <input type="number" name="puntaje_participacion" id="rec_participacion" class="form-control" min="0" max="100">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Responsabilidad</label>
+              <input type="number" name="puntaje_responsabilidad" id="rec_responsabilidad" class="form-control" min="0" max="100">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Nueva foto (opcional)</label>
+              <input type="file" name="foto" class="form-control" accept="image/*">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Motivo</label>
+              <textarea name="motivo" id="rec_motivo" class="form-control" rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="ti tabler-device-floppy me-1"></i>Actualizar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+@endsection
+
+@section('page-script')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.select2-rec').forEach(el =>
+    $(el).select2({ dropdownParent: el.closest('.modal'), width: '100%' })
+  );
+
+  document.querySelectorAll('.btn-editar-reconocimiento').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const form = document.getElementById('formEditarRec');
+      form.action = '/reconocimientos/' + this.dataset.id;
+      document.getElementById('rec_nombre').value          = this.dataset.nombre;
+      document.getElementById('rec_cargo').value           = this.dataset.cargo || '';
+      document.getElementById('rec_dni').value             = this.dataset.dni || '';
+      document.getElementById('rec_correo').value          = this.dataset.correo || '';
+      document.getElementById('rec_cumplimiento').value    = this.dataset.cumplimiento;
+      document.getElementById('rec_puntualidad').value     = this.dataset.puntualidad;
+      document.getElementById('rec_participacion').value   = this.dataset.participacion;
+      document.getElementById('rec_responsabilidad').value = this.dataset.responsabilidad;
+      document.getElementById('rec_motivo').value          = this.dataset.motivo || '';
+      document.getElementById('rec_resolucion').value      = this.dataset.resolucion || '';
+      const catEl = document.getElementById('rec_categoria');
+      if (catEl) { catEl.value = this.dataset.categoria || ''; }
+      new bootstrap.Modal(document.getElementById('modalEditarReconocimiento')).show();
+    });
+  });
+
+  document.querySelectorAll('.form-eliminar-rec').forEach(form => {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      Swal.fire({
+        title: '¿Eliminar reconocimiento?', icon: 'warning', showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#ea5455'
+      }).then(r => { if (r.isConfirmed) form.submit(); });
+    });
+  });
+});
+</script>
 @endsection

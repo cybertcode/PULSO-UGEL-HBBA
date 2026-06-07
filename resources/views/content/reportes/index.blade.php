@@ -1,7 +1,4 @@
-@php
-use Illuminate\Support\Str;
-$configData = Helper::appClasses();
-@endphp
+@php $configData = Helper::appClasses(); @endphp
 @extends('layouts/layoutMaster')
 @section('title', 'Reportes - PULSO UGEL')
 
@@ -31,10 +28,15 @@ $configData = Helper::appClasses();
     <h4 class="mb-1"><i class="ti tabler-chart-bar me-2 text-primary"></i>Reportes de Avance</h4>
     <p class="mb-0 text-body-secondary">Análisis del cumplimiento del Plan de Control Interno — {{ $anio }}</p>
   </div>
-  <div class="d-flex gap-2">
-    <a href="{{ route('rep-reportes') }}?{{ http_build_query(array_merge(request()->except('page'), ['export'=>'pdf'])) }}"
+  <div class="d-flex gap-2 flex-wrap">
+    @php $exportParams = array_filter(['anio'=>$anio,'componente_id'=>$componente,'estado'=>$estado,'unidad_organica_id'=>$unidad]) @endphp
+    <a href="{{ route('rep-reportes.exportar', [...$exportParams, 'formato'=>'pdf']) }}"
        class="btn btn-label-danger btn-sm">
       <i class="ti tabler-file-type-pdf me-1"></i>Exportar PDF
+    </a>
+    <a href="{{ route('rep-reportes.exportar', [...$exportParams, 'formato'=>'excel']) }}"
+       class="btn btn-label-success btn-sm">
+      <i class="ti tabler-file-spreadsheet me-1"></i>Exportar Excel
     </a>
     <a href="{{ route('rep-reportes') }}" class="btn btn-label-secondary btn-sm">
       <i class="ti tabler-refresh me-1"></i>Limpiar
@@ -189,7 +191,7 @@ $configData = Helper::appClasses();
       <h5 class="mb-1">Detalle de Actividades</h5>
       <p class="card-subtitle">{{ $actividades->total() }} registros encontrados</p>
     </div>
-    <a href="{{ route('rep-reportes') }}?{{ http_build_query(array_merge(request()->except('page'), ['export'=>'pdf'])) }}"
+    <a href="{{ route('rep-reportes.exportar', [...$exportParams, 'formato'=>'pdf']) }}"
        class="btn btn-sm btn-label-danger">
       <i class="ti tabler-file-type-pdf me-1"></i>PDF
     </a>

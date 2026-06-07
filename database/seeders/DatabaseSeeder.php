@@ -15,6 +15,9 @@ class DatabaseSeeder extends Seeder
             RolesPermisosSeeder::class,
             UsuariosSeeder::class,
             DatosSeeder::class,
+            TrabajadoresDestacadosSeeder::class,
+            HistorialRankingSeeder::class,
+            DatosComplementariosSeeder::class,
         ]);
     }
 }

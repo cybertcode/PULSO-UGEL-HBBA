@@ -19,7 +19,6 @@ $configData = Helper::appClasses();
 
 @section('content')
 
-{{-- Breadcrumb --}}
 <nav aria-label="breadcrumb" class="mb-4">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti tabler-home icon-14px me-1"></i>Inicio</a></li>
@@ -27,28 +26,31 @@ $configData = Helper::appClasses();
   </ol>
 </nav>
 
-<div class="d-flex align-items-center justify-content-between mb-4">
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
   <div>
-    <h4 class="mb-1">Control Interno</h4>
-    <p class="mb-0 text-muted">Seguimiento de actividades del Sistema de Control Interno</p>
+    <h4 class="mb-1">Sistema de Control Interno</h4>
+    <p class="mb-0 text-muted">Seguimiento y registro de actividades de control institucional</p>
   </div>
+  @can('control-interno.crear')
   <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaActividad">
     <i class="ti tabler-plus me-1"></i>Nueva Actividad
   </button>
+  @endcan
 </div>
 
-{{-- Stats (estilo cards-statistics full-version) --}}
-<div class="row g-6 mb-6">
+{{-- KPIs --}}
+<div class="row g-4 mb-6">
   @php
   $kpis = [
     ['k'=>'total',      'label'=>'Total SCI',    'sub'=>'Actividades registradas', 'color'=>'primary', 'icon'=>'tabler-clipboard-list'],
     ['k'=>'completadas','label'=>'Completadas',  'sub'=>'Actividades finalizadas', 'color'=>'success', 'icon'=>'tabler-circle-check'],
     ['k'=>'en_proceso', 'label'=>'En Proceso',   'sub'=>'En desarrollo',           'color'=>'warning', 'icon'=>'tabler-loader'],
+    ['k'=>'observados', 'label'=>'Observados',   'sub'=>'Pendientes de revisión',  'color'=>'info',    'icon'=>'tabler-eye'],
     ['k'=>'vencidas',   'label'=>'Vencidas',     'sub'=>'Sin completar',           'color'=>'danger',  'icon'=>'tabler-alert-triangle'],
   ];
   @endphp
   @foreach($kpis as $kp)
-  <div class="col-6 col-md-3">
+  <div class="col-6 col-md">
     <div class="card h-100">
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between mb-4">
@@ -66,6 +68,60 @@ $configData = Helper::appClasses();
   @endforeach
 </div>
 
+{{-- Filtros --}}
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <form method="GET" action="{{ route('sci-control-interno') }}">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label form-label-sm">Componente</label>
+          <select name="componente_id" class="form-select form-select-sm select2-filtro">
+            <option value="">Todos</option>
+            @foreach($componentes as $c)
+            <option value="{{ $c->id }}" {{ request('componente_id') == $c->id ? 'selected' : '' }}>{{ $c->numero }}. {{ $c->nombre }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label form-label-sm">Unidad</label>
+          <select name="unidad_id" class="form-select form-select-sm select2-filtro">
+            <option value="">Todas</option>
+            @foreach($unidades as $u)
+            <option value="{{ $u->id }}" {{ request('unidad_id') == $u->id ? 'selected' : '' }}>{{ $u->sigla ?? $u->nombre }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label form-label-sm">Estado</label>
+          <select name="estado" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            @foreach(['pendiente'=>'Pendiente','en_proceso'=>'En Proceso','completada'=>'Completada','observado'=>'Observado','vencida'=>'Vencida'] as $v => $l)
+            <option value="{{ $v }}" {{ request('estado') === $v ? 'selected' : '' }}>{{ $l }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label form-label-sm">Prioridad</label>
+          <select name="prioridad" class="form-select form-select-sm">
+            <option value="">Todas</option>
+            <option value="alta"  {{ request('prioridad') === 'alta'  ? 'selected' : '' }}>Alta</option>
+            <option value="media" {{ request('prioridad') === 'media' ? 'selected' : '' }}>Media</option>
+            <option value="baja"  {{ request('prioridad') === 'baja'  ? 'selected' : '' }}>Baja</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label form-label-sm">Buscar</label>
+          <input type="text" name="buscar" class="form-control form-control-sm" value="{{ request('buscar') }}" placeholder="Código, nombre...">
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="ti tabler-filter"></i></button>
+          <a href="{{ route('sci-control-interno') }}" class="btn btn-sm btn-label-secondary"><i class="ti tabler-x"></i></a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 {{-- Tabla --}}
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
@@ -74,15 +130,16 @@ $configData = Helper::appClasses();
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover datatables-actividades mb-0">
-        <thead>
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
           <tr>
             <th>Código</th>
             <th>Actividad</th>
             <th>Componente</th>
             <th>Unidad</th>
+            <th>Prioridad</th>
             <th>Fecha Límite</th>
-            <th>Avance</th>
+            <th style="min-width:130px">Avance</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
@@ -90,58 +147,76 @@ $configData = Helper::appClasses();
         <tbody>
           @forelse($actividades as $a)
           @php
-            $estadoColor = match($a->estado) {
-              'completada' => 'success', 'en_proceso' => 'warning',
-              'vencida' => 'danger', 'cancelada' => 'secondary', default => 'info',
-            };
+            $ec   = $a->estado_color;
             $dias = now()->diffInDays($a->fecha_limite, false);
+            $prioColor = match($a->prioridad) { 'alta'=>'danger','media'=>'warning',default=>'info' };
           @endphp
           <tr>
-            <td><small class="text-muted">{{ $a->codigo }}</small></td>
+            <td><small class="text-muted fw-medium">{{ $a->codigo }}</small></td>
             <td>
-              <div class="fw-medium">{{ Str::limit($a->nombre, 45) }}</div>
+              <div class="fw-medium" style="max-width:220px">{{ Str::limit($a->nombre, 50) }}</div>
               @if($a->responsable)<small class="text-muted"><i class="ti tabler-user icon-12px me-1"></i>{{ $a->responsable->name }}</small>@endif
+              @if($a->numero_sgd)<br><small class="text-muted"><i class="ti tabler-file-description icon-12px me-1"></i>{{ $a->numero_sgd }}</small>@endif
             </td>
-            <td><small>{{ $a->componente->nombre ?? '—' }}</small></td>
-            <td><small>{{ $a->unidadOrganica->sigla ?? '—' }}</small></td>
             <td>
-              <span class="badge bg-label-{{ $dias >= 0 ? ($dias <= 7 ? 'warning' : 'secondary') : 'danger' }}">
+              <small class="d-flex align-items-center gap-1">
+                <i class="ti {{ $a->componente->icono ?? 'tabler-point' }} icon-14px text-primary"></i>
+                {{ Str::limit($a->componente->nombre ?? '—', 25) }}
+              </small>
+            </td>
+            <td><span class="badge bg-label-secondary">{{ $a->unidadOrganica->sigla ?? '—' }}</span></td>
+            <td><span class="badge bg-label-{{ $prioColor }}">{{ ucfirst($a->prioridad) }}</span></td>
+            <td>
+              <span class="badge bg-label-{{ $dias < 0 ? 'danger' : ($dias <= 7 ? 'warning' : 'secondary') }}">
                 {{ $a->fecha_limite->format('d/m/Y') }}
               </span>
+              @if($dias >= 0 && $dias <= 7)<br><small class="text-warning">{{ $dias }}d restantes</small>@endif
             </td>
-            <td style="min-width:120px">
+            <td>
               <div class="d-flex align-items-center gap-1">
                 <div class="progress flex-grow-1" style="height:6px">
-                  <div class="progress-bar bg-{{ $estadoColor }}" style="width:{{ $a->avance }}%"></div>
+                  <div class="progress-bar bg-{{ $ec }} rounded-pill" style="width:{{ $a->avance }}%"></div>
                 </div>
-                <small class="fw-medium">{{ $a->avance }}%</small>
+                <small class="fw-bold text-{{ $ec }}" style="min-width:30px">{{ $a->avance }}%</small>
               </div>
             </td>
-            <td><span class="badge bg-label-{{ $estadoColor }}">{{ ucfirst(str_replace('_',' ',$a->estado)) }}</span></td>
+            <td><span class="badge bg-label-{{ $ec }}">{{ $a->estado_label }}</span></td>
             <td>
-              <div class="d-flex gap-1">
-                <button class="btn btn-icon btn-sm btn-label-primary"
-                  data-bs-toggle="modal" data-bs-target="#modalEditarActividad"
+              <div class="d-flex gap-1 flex-nowrap">
+                {{-- Ver historial --}}
+                <button class="btn btn-icon btn-sm btn-label-secondary btn-historial"
                   data-id="{{ $a->id }}" data-nombre="{{ $a->nombre }}"
-                  data-componente="{{ $a->componente_id }}" data-unidad="{{ $a->unidad_organica_id }}"
-                  data-responsable="{{ $a->responsable_id }}" data-fecha="{{ $a->fecha_limite->format('Y-m-d') }}"
+                  data-url="{{ route('sci-control-interno.historial', $a) }}"
+                  title="Historial de cambios">
+                  <i class="ti tabler-history"></i>
+                </button>
+                @can('control-interno.editar')
+                {{-- Editar --}}
+                <button class="btn btn-icon btn-sm btn-label-primary btn-editar"
+                  data-id="{{ $a->id }}" data-nombre="{{ $a->nombre }}"
+                  data-componente="{{ $a->componente_id }}" data-unidad="{{ $a->unidad_organica_id ?? '' }}"
+                  data-responsable="{{ $a->responsable_id ?? '' }}"
+                  data-fecha="{{ $a->fecha_limite->format('Y-m-d') }}"
+                  data-fechainicio="{{ $a->fecha_inicio?->format('Y-m-d') ?? '' }}"
                   data-avance="{{ $a->avance }}" data-estado="{{ $a->estado }}"
-                  data-prioridad="{{ $a->prioridad }}" data-sgd="{{ $a->numero_sgd }}"
-                  data-observaciones="{{ $a->observaciones }}"
+                  data-prioridad="{{ $a->prioridad }}" data-sgd="{{ $a->numero_sgd ?? '' }}"
+                  data-observaciones="{{ htmlspecialchars($a->observaciones ?? '') }}"
                   title="Editar">
                   <i class="ti tabler-edit"></i>
                 </button>
-                <form method="POST" action="{{ route('sci-control-interno.destroy', $a) }}" class="form-eliminar">
+                {{-- Eliminar --}}
+                <form method="POST" action="{{ route('sci-control-interno.destroy', $a) }}" class="form-eliminar d-inline">
                   @csrf @method('DELETE')
                   <button type="submit" class="btn btn-icon btn-sm btn-label-danger" title="Eliminar">
                     <i class="ti tabler-trash"></i>
                   </button>
                 </form>
+                @endcan
               </div>
             </td>
           </tr>
           @empty
-          <tr><td colspan="8" class="text-center text-muted py-5">
+          <tr><td colspan="9" class="text-center text-muted py-5">
             <i class="ti tabler-clipboard-off icon-32px d-block mb-2"></i>No hay actividades registradas
           </td></tr>
           @endforelse
@@ -161,7 +236,7 @@ $configData = Helper::appClasses();
       <form method="POST" action="{{ route('sci-control-interno.store') }}">
         @csrf
         <div class="modal-header">
-          <h5 class="modal-title"><i class="ti tabler-plus me-2"></i>Nueva Actividad</h5>
+          <h5 class="modal-title"><i class="ti tabler-plus me-2"></i>Nueva Actividad SCI</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -172,7 +247,7 @@ $configData = Helper::appClasses();
             </div>
             <div class="col-md-6">
               <label class="form-label">Componente <span class="text-danger">*</span></label>
-              <select name="componente_id" class="form-select select2" required>
+              <select name="componente_id" class="form-select select2-modal" required>
                 <option value="">Seleccionar componente</option>
                 @foreach($componentes as $c)
                 <option value="{{ $c->id }}">{{ $c->numero }}. {{ $c->nombre }}</option>
@@ -181,8 +256,8 @@ $configData = Helper::appClasses();
             </div>
             <div class="col-md-6">
               <label class="form-label">Unidad Orgánica</label>
-              <select name="unidad_organica_id" class="form-select select2">
-                <option value="">Todas las unidades</option>
+              <select name="unidad_organica_id" class="form-select select2-modal">
+                <option value="">Sin unidad</option>
                 @foreach($unidades as $u)
                 <option value="{{ $u->id }}">{{ $u->nombre }}</option>
                 @endforeach
@@ -190,7 +265,7 @@ $configData = Helper::appClasses();
             </div>
             <div class="col-md-6">
               <label class="form-label">Responsable</label>
-              <select name="responsable_id" class="form-select select2">
+              <select name="responsable_id" class="form-select select2-modal">
                 <option value="">Sin asignar</option>
                 @foreach($responsables as $u)
                 <option value="{{ $u->id }}">{{ $u->name }}</option>
@@ -205,7 +280,7 @@ $configData = Helper::appClasses();
               <label class="form-label">Fecha Límite <span class="text-danger">*</span></label>
               <input type="date" name="fecha_limite" class="form-control" required>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label">Prioridad</label>
               <select name="prioridad" class="form-select">
                 <option value="alta">Alta</option>
@@ -213,13 +288,13 @@ $configData = Helper::appClasses();
                 <option value="baja">Baja</option>
               </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-8">
               <label class="form-label">N° SGD / Expediente</label>
               <input type="text" name="numero_sgd" class="form-control" placeholder="Ej: SGD-2024-001">
             </div>
             <div class="col-12">
-              <label class="form-label">Descripción / Observaciones</label>
-              <textarea name="observaciones" class="form-control" rows="3" placeholder="Detalle adicional..."></textarea>
+              <label class="form-label">Observaciones / Recomendaciones</label>
+              <textarea name="observaciones" class="form-control" rows="3" placeholder="Detalle adicional, observaciones técnicas..."></textarea>
             </div>
           </div>
         </div>
@@ -250,7 +325,7 @@ $configData = Helper::appClasses();
             </div>
             <div class="col-md-6">
               <label class="form-label">Componente <span class="text-danger">*</span></label>
-              <select name="componente_id" id="edit_componente" class="form-select select2" required>
+              <select name="componente_id" id="edit_componente" class="form-select select2-modal-edit" required>
                 @foreach($componentes as $c)
                 <option value="{{ $c->id }}">{{ $c->numero }}. {{ $c->nombre }}</option>
                 @endforeach
@@ -258,8 +333,8 @@ $configData = Helper::appClasses();
             </div>
             <div class="col-md-6">
               <label class="form-label">Unidad Orgánica</label>
-              <select name="unidad_organica_id" id="edit_unidad" class="form-select select2">
-                <option value="">Todas las unidades</option>
+              <select name="unidad_organica_id" id="edit_unidad" class="form-select select2-modal-edit">
+                <option value="">Sin unidad</option>
                 @foreach($unidades as $u)
                 <option value="{{ $u->id }}">{{ $u->nombre }}</option>
                 @endforeach
@@ -267,7 +342,7 @@ $configData = Helper::appClasses();
             </div>
             <div class="col-md-6">
               <label class="form-label">Responsable</label>
-              <select name="responsable_id" id="edit_responsable" class="form-select select2">
+              <select name="responsable_id" id="edit_responsable" class="form-select select2-modal-edit">
                 <option value="">Sin asignar</option>
                 @foreach($responsables as $u)
                 <option value="{{ $u->id }}">{{ $u->name }}</option>
@@ -275,24 +350,24 @@ $configData = Helper::appClasses();
               </select>
             </div>
             <div class="col-md-3">
+              <label class="form-label">Fecha Inicio</label>
+              <input type="date" name="fecha_inicio" id="edit_fechainicio" class="form-control">
+            </div>
+            <div class="col-md-3">
               <label class="form-label">Fecha Límite <span class="text-danger">*</span></label>
               <input type="date" name="fecha_limite" id="edit_fecha" class="form-control" required>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Avance %</label>
-              <input type="number" name="avance" id="edit_avance" class="form-control" min="0" max="100">
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label">Estado</label>
               <select name="estado" id="edit_estado" class="form-select">
                 <option value="pendiente">Pendiente</option>
                 <option value="en_proceso">En Proceso</option>
                 <option value="completada">Completada</option>
+                <option value="observado">Observado</option>
                 <option value="vencida">Vencida</option>
-                <option value="cancelada">Cancelada</option>
               </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label">Prioridad</label>
               <select name="prioridad" id="edit_prioridad" class="form-select">
                 <option value="alta">Alta</option>
@@ -300,12 +375,16 @@ $configData = Helper::appClasses();
                 <option value="baja">Baja</option>
               </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+              <label class="form-label">Avance %</label>
+              <input type="number" name="avance" id="edit_avance" class="form-control" min="0" max="100">
+            </div>
+            <div class="col-12">
               <label class="form-label">N° SGD</label>
               <input type="text" name="numero_sgd" id="edit_sgd" class="form-control">
             </div>
             <div class="col-12">
-              <label class="form-label">Observaciones</label>
+              <label class="form-label">Observaciones / Recomendaciones</label>
               <textarea name="observaciones" id="edit_observaciones" class="form-control" rows="3"></textarea>
             </div>
           </div>
@@ -319,52 +398,148 @@ $configData = Helper::appClasses();
   </div>
 </div>
 
+{{-- Modal Historial de Cambios --}}
+<div class="modal fade" id="modalHistorial" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ti tabler-history me-2 text-primary"></i>Historial de Cambios</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3" id="historial_actividad_nombre"></p>
+        <div id="historial_loading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Cargando historial...</p>
+        </div>
+        <div id="historial_content" style="display:none">
+          <div class="timeline-container" id="historial_lista"></div>
+        </div>
+        <div id="historial_empty" style="display:none" class="text-center text-muted py-4">
+          <i class="ti tabler-history icon-32px d-block mb-2"></i>
+          <p>Sin historial de cambios registrado.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 @section('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // DataTable
-  if (document.querySelector('.datatables-actividades tbody tr td[colspan]') === null) {
-    new DataTable('.datatables-actividades', {
-      responsive: true, pageLength: 15,
-      language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' }
-    });
-  }
 
-  // Select2
-  document.querySelectorAll('.select2').forEach(el => $(el).select2({ dropdownParent: el.closest('.modal') || document.body }));
+  // Select2 para filtros
+  document.querySelectorAll('.select2-filtro').forEach(el =>
+    $(el).select2({ dropdownParent: document.body, width: '100%' })
+  );
+  // Select2 modal nueva
+  document.querySelectorAll('.select2-modal').forEach(el =>
+    $(el).select2({ dropdownParent: document.getElementById('modalNuevaActividad'), width: '100%' })
+  );
+  // Select2 modal editar
+  document.querySelectorAll('.select2-modal-edit').forEach(el =>
+    $(el).select2({ dropdownParent: document.getElementById('modalEditarActividad'), width: '100%' })
+  );
 
   // Modal editar — poblar campos
-  document.getElementById('modalEditarActividad').addEventListener('show.bs.modal', function (e) {
-    const btn = e.relatedTarget;
-    const id  = btn.dataset.id;
-    document.getElementById('formEditarActividad').action = '/control-interno/' + id;
-    document.getElementById('edit_nombre').value       = btn.dataset.nombre;
-    document.getElementById('edit_fecha').value        = btn.dataset.fecha;
-    document.getElementById('edit_avance').value       = btn.dataset.avance;
-    document.getElementById('edit_sgd').value          = btn.dataset.sgd || '';
-    document.getElementById('edit_observaciones').value= btn.dataset.observaciones || '';
-    ['edit_componente','edit_unidad','edit_responsable','edit_estado','edit_prioridad'].forEach(id => {
-      const el  = document.getElementById(id);
-      const key = id.replace('edit_','');
-      const map = { edit_componente: 'componente', edit_unidad: 'unidad', edit_responsable: 'responsable' };
-      const val = btn.dataset[map[id] || key];
-      if (el && val) { el.value = val; $(el).trigger('change'); }
+  document.querySelectorAll('.btn-editar').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const modal = document.getElementById('modalEditarActividad');
+      const form  = document.getElementById('formEditarActividad');
+      form.action = '/control-interno/' + this.dataset.id;
+
+      document.getElementById('edit_nombre').value        = this.dataset.nombre;
+      document.getElementById('edit_fecha').value         = this.dataset.fecha;
+      document.getElementById('edit_fechainicio').value   = this.dataset.fechainicio || '';
+      document.getElementById('edit_avance').value        = this.dataset.avance;
+      document.getElementById('edit_sgd').value           = this.dataset.sgd || '';
+      document.getElementById('edit_observaciones').value = this.dataset.observaciones || '';
+
+      const setSelect = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val) { el.value = val; $(el).trigger('change'); }
+      };
+      setSelect('edit_componente',  this.dataset.componente);
+      setSelect('edit_unidad',      this.dataset.unidad);
+      setSelect('edit_responsable', this.dataset.responsable);
+      setSelect('edit_estado',      this.dataset.estado);
+      setSelect('edit_prioridad',   this.dataset.prioridad);
+
+      const bsModal = new bootstrap.Modal(modal);
+      bsModal.show();
     });
   });
 
-  // Confirm delete
+  // Modal historial de cambios
+  document.querySelectorAll('.btn-historial').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const url    = this.dataset.url;
+      const nombre = this.dataset.nombre;
+
+      document.getElementById('historial_actividad_nombre').textContent = nombre;
+      document.getElementById('historial_loading').style.display  = 'block';
+      document.getElementById('historial_content').style.display  = 'none';
+      document.getElementById('historial_empty').style.display    = 'none';
+
+      const bsModal = new bootstrap.Modal(document.getElementById('modalHistorial'));
+      bsModal.show();
+
+      fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('historial_loading').style.display = 'none';
+          if (!data.length) {
+            document.getElementById('historial_empty').style.display = 'block';
+            return;
+          }
+          const colores = { estado: 'primary', avance: 'success', prioridad: 'warning', default: 'secondary' };
+          const lista = data.map(h => {
+            const color = colores[h.campo] || colores.default;
+            const fecha = new Date(h.created_at).toLocaleString('es-PE');
+            return `<div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+              <div class="badge rounded bg-label-${color} p-2 flex-shrink-0 align-self-start">
+                <i class="ti tabler-edit icon-18px"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div class="fw-medium">${h.campo_label ?? h.campo}</div>
+                <div class="d-flex gap-2 mt-1 flex-wrap">
+                  <span class="badge bg-label-secondary text-truncate" style="max-width:180px" title="${h.valor_anterior ?? '—'}">Antes: ${h.valor_anterior ?? '—'}</span>
+                  <i class="ti tabler-arrow-right align-self-center text-muted"></i>
+                  <span class="badge bg-label-${color} text-truncate" style="max-width:180px" title="${h.valor_nuevo ?? '—'}">Ahora: ${h.valor_nuevo ?? '—'}</span>
+                </div>
+                <small class="text-muted d-block mt-1">
+                  <i class="ti tabler-user icon-12px me-1"></i>${h.usuario?.name ?? 'Sistema'} — ${fecha}
+                </small>
+              </div>
+            </div>`;
+          }).join('');
+
+          document.getElementById('historial_lista').innerHTML = lista;
+          document.getElementById('historial_content').style.display = 'block';
+        })
+        .catch(() => {
+          document.getElementById('historial_loading').style.display = 'none';
+          document.getElementById('historial_empty').style.display   = 'block';
+        });
+    });
+  });
+
+  // Confirm eliminar
   document.querySelectorAll('.form-eliminar').forEach(form => {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      Swal.fire({ title: '¿Eliminar actividad?', icon: 'warning', showCancelButton: true,
+      Swal.fire({
+        title: '¿Eliminar actividad?', icon: 'warning', showCancelButton: true,
         confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#ea5455' })
-        .then(r => { if (r.isConfirmed) form.submit(); });
+        confirmButtonColor: '#ea5455'
+      }).then(r => { if (r.isConfirmed) form.submit(); });
     });
   });
 });
 </script>
 @endsection
-

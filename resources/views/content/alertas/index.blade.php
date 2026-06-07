@@ -22,14 +22,19 @@ $configData = Helper::appClasses();
     <h4 class="mb-1">Alertas</h4>
     <p class="mb-0 text-muted">Notificaciones automáticas por actividades vencidas, avance bajo o evidencias faltantes.</p>
   </div>
-  @if($stats['pendientes'] > 0)
-  <form method="POST" action="{{ route('mon-alertas.leer-todas') }}">
-    @csrf @method('PATCH')
-    <button type="submit" class="btn btn-label-secondary btn-sm">
-      <i class="ti tabler-checks me-1"></i>Marcar todas como leídas
+  <div class="d-flex gap-2 flex-wrap">
+    @if($stats['pendientes'] > 0)
+    <form method="POST" action="{{ route('mon-alertas.leer-todas') }}">
+      @csrf @method('PATCH')
+      <button type="submit" class="btn btn-label-secondary btn-sm">
+        <i class="ti tabler-checks me-1"></i>Marcar todas como leídas
+      </button>
+    </form>
+    @endif
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaAlerta">
+      <i class="ti tabler-plus me-1"></i>Nueva Alerta
     </button>
-  </form>
-  @endif
+  </div>
 </div>
 
 {{-- Tabla de alertas --}}
@@ -55,13 +60,15 @@ $configData = Helper::appClasses();
         </a>
       </li>
     </ul>
-    {{-- Filtro prioridad --}}
-    <div class="d-flex gap-2 pb-2">
-      @foreach([''=>'Todas', 'alta'=>'Alta', 'media'=>'Media', 'baja'=>'Baja'] as $val => $label)
-      <a href="{{ route('mon-alertas', ['tab' => $tab, 'prioridad' => $val ?: null]) }}"
-         class="btn btn-xs {{ $prioridad == $val ? 'btn-primary' : 'btn-label-secondary' }}">
-        {{ $label }}
-      </a>
+    <div class="d-flex gap-1 pb-2 flex-wrap">
+      @foreach([''=>'Todas','alta'=>'Alta','media'=>'Media','baja'=>'Baja'] as $val => $label)
+      <a href="{{ route('mon-alertas', ['tab'=>$tab,'prioridad'=>$val ?: null,'tipo'=>$tipo]) }}"
+         class="btn btn-xs {{ $prioridad == $val ? 'btn-danger' : 'btn-label-secondary' }}">{{ $label }}</a>
+      @endforeach
+      <span class="ms-2"></span>
+      @foreach([''=>'Tipo','vencimiento'=>'Vencimiento','avance_bajo'=>'Avance','evidencia_falta'=>'Evidencia','sistema'=>'Sistema'] as $val => $label)
+      <a href="{{ route('mon-alertas', ['tab'=>$tab,'prioridad'=>$prioridad,'tipo'=>$val ?: null]) }}"
+         class="btn btn-xs {{ ($tipo ?? '') == $val ? 'btn-primary' : 'btn-label-secondary' }}">{{ $label }}</a>
       @endforeach
     </div>
   </div>
@@ -185,6 +192,60 @@ $configData = Helper::appClasses();
   </div>
   @endif
 
+</div>
+
+{{-- Modal Nueva Alerta --}}
+<div class="modal fade" id="modalNuevaAlerta" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ route('mon-alertas.store') }}">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti tabler-bell-plus me-2 text-warning"></i>Nueva Alerta Manual</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Título <span class="text-danger">*</span></label>
+              <input type="text" name="titulo" class="form-control" required placeholder="Resumen de la alerta">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo</label>
+              <select name="tipo" class="form-select">
+                <option value="sistema">Sistema</option>
+                <option value="vencimiento">Vencimiento</option>
+                <option value="avance_bajo">Avance Bajo</option>
+                <option value="evidencia_falta">Evidencia Faltante</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Prioridad</label>
+              <select name="prioridad" class="form-select">
+                <option value="alta">Alta</option>
+                <option value="media" selected>Media</option>
+                <option value="baja">Baja</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Mensaje <span class="text-danger">*</span></label>
+              <textarea name="mensaje" class="form-control" rows="3" required placeholder="Descripción detallada de la alerta..."></textarea>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="enviar_email" value="1" id="chkEmail">
+                <label class="form-check-label" for="chkEmail">Enviar notificación por correo electrónico</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="ti tabler-send me-1"></i>Crear Alerta</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 @endsection
