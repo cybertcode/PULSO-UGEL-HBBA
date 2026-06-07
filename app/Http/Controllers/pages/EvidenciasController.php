@@ -52,7 +52,7 @@ class EvidenciasController extends Controller
             'titulo'       => 'required|string|max:255',
             'numero_sgd'   => 'nullable|string|max:50',
             'descripcion'  => 'nullable|string',
-            'archivo'      => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg',
+            'archivo'      => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp,gif,bmp',
         ]);
 
         $file = $request->file('archivo');

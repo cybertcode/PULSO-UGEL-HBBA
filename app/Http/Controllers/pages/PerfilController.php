@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 class PerfilController extends Controller
@@ -16,7 +16,7 @@ class PerfilController extends Controller
         return view('profile.show', ['user' => Auth::user()]);
     }
 
-    public function updateInfo(Request $request)
+    public function updateInfo(Request $request, ImageService $images)
     {
         $user = Auth::user();
 
@@ -25,19 +25,17 @@ class PerfilController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'dni'   => ['nullable', 'string', 'digits:8'],
             'cargo' => ['nullable', 'string', 'max:255'],
-            'foto'  => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'foto'  => ['nullable', 'image', 'mimes:' . ImageService::ALLOWED_MIMES, 'max:' . ImageService::MAX_SIZE_KB],
         ]);
 
         if ($request->hasFile('foto')) {
-            if ($user->profile_photo_path) {
-                Storage::disk('public')->delete($user->profile_photo_path);
-            }
-            $path = $request->file('foto')->store('profile-photos', 'public');
+            $images->delete($user->profile_photo_path);
+            $path = $images->store($request->file('foto'), 'profile-photos');
             $user->forceFill(['profile_photo_path' => $path])->save();
         }
 
         if ($request->boolean('remove_foto') && $user->profile_photo_path) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+            $images->delete($user->profile_photo_path);
             $user->forceFill(['profile_photo_path' => null])->save();
         }
 
@@ -69,11 +67,11 @@ class PerfilController extends Controller
         return back()->with('success', 'Contraseña actualizada correctamente.');
     }
 
-    public function deletePhoto()
+    public function deletePhoto(ImageService $images)
     {
         $user = Auth::user();
         if ($user->profile_photo_path) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+            $images->delete($user->profile_photo_path);
             $user->forceFill(['profile_photo_path' => null])->save();
         }
         return back()->with('success', 'Foto de perfil eliminada.');

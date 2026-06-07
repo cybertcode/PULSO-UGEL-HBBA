@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Reconocimiento;
 use App\Models\TrabajadorDestacado;
 use App\Models\UnidadOrganica;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -80,15 +81,19 @@ class ReconocimientosController extends Controller
             'categoria'                => 'nullable|string|max:60',
             'motivo'                   => 'nullable|string',
             'numero_resolucion'        => 'nullable|string|max:60',
-            'foto'                     => 'nullable|image|max:2048',
+            'foto'                     => 'nullable|image|mimes:' . ImageService::ALLOWED_MIMES . '|max:' . ImageService::MAX_SIZE_KB,
             'resolucion_archivo'       => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         $validated['registrado_por'] = Auth::id();
 
+        $images = app(ImageService::class);
+
         if ($request->hasFile('foto')) {
-            $validated['foto_ruta'] = $request->file('foto')
-                ->store('reconocimientos/fotos/' . $validated['anio'], 'public');
+            $validated['foto_ruta'] = $images->store(
+                $request->file('foto'),
+                'reconocimientos/fotos/' . $validated['anio']
+            );
         }
         if ($request->hasFile('resolucion_archivo')) {
             $validated['resolucion_ruta'] = $request->file('resolucion_archivo')
@@ -117,15 +122,17 @@ class ReconocimientosController extends Controller
             'categoria'                => 'nullable|string|max:60',
             'motivo'                   => 'nullable|string',
             'numero_resolucion'        => 'nullable|string|max:60',
-            'foto'                     => 'nullable|image|max:2048',
+            'foto'                     => 'nullable|image|mimes:' . ImageService::ALLOWED_MIMES . '|max:' . ImageService::MAX_SIZE_KB,
         ]);
 
+        $images = app(ImageService::class);
+
         if ($request->hasFile('foto')) {
-            if ($trabajador->foto_ruta) {
-                Storage::disk('public')->delete($trabajador->foto_ruta);
-            }
-            $validated['foto_ruta'] = $request->file('foto')
-                ->store('reconocimientos/fotos/' . $trabajador->anio, 'public');
+            $images->delete($trabajador->foto_ruta);
+            $validated['foto_ruta'] = $images->store(
+                $request->file('foto'),
+                'reconocimientos/fotos/' . $trabajador->anio
+            );
         }
         unset($validated['foto']);
 
@@ -136,9 +143,7 @@ class ReconocimientosController extends Controller
 
     public function destroy(TrabajadorDestacado $trabajador)
     {
-        if ($trabajador->foto_ruta) {
-            Storage::disk('public')->delete($trabajador->foto_ruta);
-        }
+        app(ImageService::class)->delete($trabajador->foto_ruta);
         $trabajador->delete();
         return back()->with('success', 'Reconocimiento eliminado.');
     }
