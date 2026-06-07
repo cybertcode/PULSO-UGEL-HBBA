@@ -26,16 +26,19 @@ $configData = Helper::appClasses();
   </ol>
 </nav>
 
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-  <div>
-    <h4 class="mb-1">Sistema de Control Interno</h4>
-    <p class="mb-0 text-muted">Seguimiento y registro de actividades de control institucional</p>
+<div class="pulso-page-header mb-6">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1"><i class="ti tabler-clipboard-list me-2"></i>Sistema de Control Interno</h4>
+      <p>Seguimiento y registro de actividades de control institucional · {{ now()->year }}</p>
+    </div>
+    @can('control-interno.crear')
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4)"
+      data-bs-toggle="modal" data-bs-target="#modalNuevaActividad">
+      <i class="ti tabler-plus me-1"></i>Nueva Actividad
+    </button>
+    @endcan
   </div>
-  @can('control-interno.crear')
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaActividad">
-    <i class="ti tabler-plus me-1"></i>Nueva Actividad
-  </button>
-  @endcan
 </div>
 
 {{-- KPIs --}}
@@ -130,7 +133,7 @@ $configData = Helper::appClasses();
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mb-0 align-middle">
+      <table class="table table-hover mb-0 align-middle pulso-table">
         <thead class="table-light">
           <tr>
             <th>Código</th>

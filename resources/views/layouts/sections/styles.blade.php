@@ -28,5 +28,7 @@
 
 <!-- app CSS -->
 @vite(['resources/css/app.css'])
+<!-- PULSO UGEL custom styles -->
+@vite(['resources/assets/css/pulso-ugel.css'])
 <!-- END: app CSS-->
 

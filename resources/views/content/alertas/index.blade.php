@@ -17,25 +17,29 @@ $configData = Helper::appClasses();
 </nav>
 
 {{-- Header --}}
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-  <div>
-    <h4 class="mb-1">Alertas</h4>
-    <p class="mb-0 text-muted">Notificaciones automáticas por actividades vencidas, avance bajo o evidencias faltantes.</p>
-  </div>
-  <div class="d-flex gap-2 flex-wrap">
-    @if($stats['pendientes'] > 0)
-    <form method="POST" action="{{ route('mon-alertas.leer-todas') }}">
-      @csrf @method('PATCH')
-      <button type="submit" class="btn btn-label-secondary btn-sm">
-        <i class="ti tabler-checks me-1"></i>Marcar todas como leídas
+<div class="pulso-page-header mb-4">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1"><i class="ti tabler-bell-ringing me-2"></i>Alertas</h4>
+      <p>Notificaciones automáticas por actividades vencidas, avance bajo o evidencias faltantes.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      @if($stats['pendientes'] > 0)
+      <form method="POST" action="{{ route('mon-alertas.leer-todas') }}">
+        @csrf @method('PATCH')
+        <button type="submit" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4)">
+          <i class="ti tabler-checks me-1"></i>Marcar leídas
+        </button>
+      </form>
+      @endif
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4)"
+        data-bs-toggle="modal" data-bs-target="#modalNuevaAlerta">
+        <i class="ti tabler-plus me-1"></i>Nueva Alerta
       </button>
-    </form>
-    @endif
-    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaAlerta">
-      <i class="ti tabler-plus me-1"></i>Nueva Alerta
-    </button>
+    </div>
   </div>
 </div>
+
 
 {{-- Tabla de alertas --}}
 <div class="card">
