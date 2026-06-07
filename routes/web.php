@@ -15,6 +15,7 @@ use App\Http\Controllers\pages\SemaforoController;
 use App\Http\Controllers\pages\RankingUnidadesController;
 use App\Http\Controllers\pages\AvanceUnidadesController;
 use App\Http\Controllers\pages\ConfiguracionController;
+use App\Http\Controllers\pages\UnidadesOrganicasController;
 use App\Http\Controllers\pages\ComponenteController;
 use App\Http\Controllers\apps\UserList;
 use App\Http\Controllers\apps\UserViewAccount;
@@ -116,11 +117,18 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::delete('/administracion/componentes/{componente}',     [ComponenteController::class, 'destroy'])->name('adm-componentes.destroy');
     });
 
-    // --- Administración: Configuración ---
-    Route::get('/configuracion',                   [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
-    Route::put('/configuracion',                   [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
-    Route::post('/configuracion/unidades',                   [ConfiguracionController::class, 'storeUnidad'])->name('adm-configuracion.unidades.store')->middleware('can:configuracion.editar');
-    Route::put('/configuracion/unidades/{unidad}',           [ConfiguracionController::class, 'updateUnidad'])->name('adm-configuracion.unidades.update')->middleware('can:configuracion.editar');
-    Route::patch('/configuracion/unidades/{unidad}/toggle',  [ConfiguracionController::class, 'toggleUnidad'])->name('adm-configuracion.unidades.toggle')->middleware('can:configuracion.editar');
-    Route::delete('/configuracion/unidades/{unidad}',        [ConfiguracionController::class, 'destroyUnidad'])->name('adm-configuracion.unidades.destroy')->middleware('can:configuracion.editar');
+    // --- Configuración Institucional ---
+    Route::get('/configuracion',  [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
+    Route::put('/configuracion',  [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
+
+    // --- Unidades Orgánicas ---
+    Route::middleware('can:configuracion.ver')->group(function () {
+        Route::get('/unidades-organicas', [UnidadesOrganicasController::class, 'index'])->name('adm-unidades');
+    });
+    Route::middleware('can:configuracion.editar')->group(function () {
+        Route::post('/unidades-organicas',                  [UnidadesOrganicasController::class, 'store'])->name('adm-unidades.store');
+        Route::put('/unidades-organicas/{unidad}',          [UnidadesOrganicasController::class, 'update'])->name('adm-unidades.update');
+        Route::patch('/unidades-organicas/{unidad}/toggle', [UnidadesOrganicasController::class, 'toggle'])->name('adm-unidades.toggle');
+        Route::delete('/unidades-organicas/{unidad}',       [UnidadesOrganicasController::class, 'destroy'])->name('adm-unidades.destroy');
+    });
 });

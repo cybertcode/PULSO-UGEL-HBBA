@@ -61,7 +61,7 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
     } elseif (isset($menu->submenu)) {
       if (gettype($menu->slug) === 'array') {
         foreach ($menu->slug as $slug) {
-          if (str_contains($currentRouteName, $slug) and strpos($currentRouteName, $slug) === 0) {
+          if ($currentRouteName === $slug || str_starts_with($currentRouteName, $slug . '.')) {
             $activeClass = 'active open';
           }
         }

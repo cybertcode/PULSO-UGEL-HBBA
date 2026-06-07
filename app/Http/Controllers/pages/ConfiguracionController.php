@@ -4,16 +4,14 @@ namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
 use App\Models\ConfiguracionInstitucional;
-use App\Models\UnidadOrganica;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ConfiguracionController extends Controller
 {
     public function index()
     {
-        $config   = ConfiguracionInstitucional::firstOrCreate([], [
+        $config = ConfiguracionInstitucional::firstOrCreate([], [
             'nombre_institucion' => 'Mi Institución',
             'sigla'              => 'MI-INST',
             'departamento'       => 'Lima',
@@ -25,9 +23,8 @@ class ConfiguracionController extends Controller
             'umbral_verde'       => 75,
             'umbral_amarillo'    => 50,
         ]);
-        $unidades = UnidadOrganica::orderBy('nombre')->get();
 
-        return view('content.configuracion.index', compact('config', 'unidades'));
+        return view('content.configuracion.index', compact('config'));
     }
 
     public function update(Request $request)
@@ -90,41 +87,4 @@ class ConfiguracionController extends Controller
         return back()->with('success', 'Configuración guardada correctamente.');
     }
 
-    // CRUD Unidades Orgánicas
-    public function storeUnidad(Request $request)
-    {
-        $validated = $request->validate([
-            'codigo'      => 'required|string|max:20|unique:unidades_organicas,codigo',
-            'nombre'      => 'required|string|max:255',
-            'sigla'       => 'nullable|string|max:20',
-            'responsable' => 'nullable|string|max:255',
-        ]);
-        UnidadOrganica::create(array_merge($validated, ['activo' => true]));
-        return back()->with('success', 'Unidad orgánica creada.')->with('_tab', '#tab-unidades');
-    }
-
-    public function updateUnidad(Request $request, UnidadOrganica $unidad)
-    {
-        $validated = $request->validate([
-            'nombre'      => 'required|string|max:255',
-            'sigla'       => 'nullable|string|max:20',
-            'responsable' => 'nullable|string|max:255',
-            'activo'      => 'nullable|boolean',
-        ]);
-        $validated['activo'] = $request->boolean('activo', $unidad->activo);
-        $unidad->update($validated);
-        return back()->with('success', 'Unidad orgánica actualizada.')->with('_tab', '#tab-unidades');
-    }
-
-    public function toggleUnidad(UnidadOrganica $unidad)
-    {
-        $unidad->update(['activo' => !$unidad->activo]);
-        return back()->with('success', 'Estado de la unidad actualizado.')->with('_tab', '#tab-unidades');
-    }
-
-    public function destroyUnidad(UnidadOrganica $unidad)
-    {
-        $unidad->delete();
-        return back()->with('success', 'Unidad orgánica eliminada.')->with('_tab', '#tab-unidades');
-    }
 }
