@@ -17,6 +17,7 @@ use App\Http\Controllers\pages\ConfiguracionController;
 use App\Http\Controllers\pages\UnidadesOrganicasController;
 use App\Http\Controllers\pages\ComponenteController;
 use App\Http\Controllers\apps\UserList;
+use App\Http\Controllers\apps\CargosController;
 use App\Http\Controllers\apps\UserViewAccount;
 use App\Http\Controllers\apps\UserViewSecurity;
 use App\Http\Controllers\apps\AccessRoles;
@@ -110,6 +111,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::put('/usuarios/{usuario}',         [UserList::class, 'update'])->name('adm-usuarios.update')->middleware('can:usuarios.editar');
     Route::delete('/usuarios/{usuario}',      [UserList::class, 'destroy'])->name('adm-usuarios.destroy')->middleware('can:usuarios.eliminar');
     Route::patch('/usuarios/{usuario}/estado',[UserList::class, 'toggleEstado'])->name('adm-usuarios.estado')->middleware('can:usuarios.editar');
+
+    // Cargos (catálogo)
+    Route::get('/cargos',             [CargosController::class, 'index'])->name('cargos.index');
+    Route::post('/cargos',            [CargosController::class, 'store'])->name('cargos.store')->middleware('can:usuarios.crear');
+    Route::put('/cargos/{cargo}',     [CargosController::class, 'update'])->name('cargos.update')->middleware('can:usuarios.editar');
+    Route::delete('/cargos/{cargo}',  [CargosController::class, 'destroy'])->name('cargos.destroy')->middleware('can:usuarios.eliminar');
 
     Route::get('/usuarios/ver',       [UserViewAccount::class,  'index'])->name('adm-usuarios-ver');
     Route::get('/usuarios/seguridad', [UserViewSecurity::class, 'index'])->name('adm-usuarios-seguridad');

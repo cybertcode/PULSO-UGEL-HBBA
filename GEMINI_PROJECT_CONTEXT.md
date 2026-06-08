@@ -1,5 +1,15 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.3] - 2026-06-08
+### Catálogo Maestro de Cargos
+- **Gestión de Cargos**: Implementación de un CRUD completo para el catálogo de cargos institucionales, permitiendo estandarizar las denominaciones en todo el sistema.
+- **Selección Dinámica (UI)**: Integración de Select2 con soporte para "tags" en los formularios de Usuarios y Reconocimientos, permitiendo seleccionar cargos existentes o crear nuevos instantáneamente.
+- **Componentes de Administración**: Se ha añadido una nueva sección de gestión de cargos dentro de la lista de usuarios para facilitar la administración centralizada.
+- **Estructura Técnica**: 
+    - Modelo `Cargo` y controlador `CargosController`.
+    - Migración `create_cargos_table` para el almacenamiento persistente.
+    - Definición de rutas API-like para la carga dinámica de datos.
+
 ## [v1.3.2] - 2026-06-08
 ### Optimización de Perfil Institucional
 - **Interfaz de Perfil**: Rediseño de la vista de perfil para mostrar de forma clara y profesional la Unidad Orgánica, el Rol asignado y el Estado de cuenta del usuario.

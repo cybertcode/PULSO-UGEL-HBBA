@@ -107,9 +107,13 @@
         </div>
         <div class="col-md-8">
           <label class="form-label fw-medium" for="cargo">Cargo</label>
-          <input type="text" id="cargo" name="cargo" class="form-control @error('cargo') is-invalid @enderror"
-                 value="{{ old('cargo', $authUser->cargo) }}" placeholder="Especialista en Control Interno">
-          @error('cargo') <div class="invalid-feedback">{{ $message }}</div> @enderror
+          <select id="cargo" name="cargo" class="form-select @error('cargo') is-invalid @enderror">
+            @if(old('cargo', $authUser->cargo))
+              <option value="{{ old('cargo', $authUser->cargo) }}" selected>{{ old('cargo', $authUser->cargo) }}</option>
+            @endif
+          </select>
+          <div class="form-text">Elige de la lista o escribe uno nuevo.</div>
+          @error('cargo') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
         </div>
         <div class="col-md-6">
           <label class="form-label fw-medium">Unidad Orgánica</label>
@@ -207,8 +211,41 @@
 
 @endsection
 
+@section('vendor-style')
+@vite(['resources/assets/vendor/libs/select2/select2.scss'])
+@endsection
+
+@section('vendor-script')
+@vite(['resources/assets/vendor/libs/select2/select2.js'])
+@endsection
+
 @section('page-script')
 <script>
+// Select2 con tags para cargo
+$(function() {
+  $('#cargo').select2({
+    placeholder: 'Buscar o escribir cargo...',
+    allowClear: true,
+    tags: true,
+    ajax: {
+      url: '{{ route("cargos.index") }}',
+      dataType: 'json',
+      delay: 200,
+      processResults: data => ({ results: data.map(c => ({ id: c.nombre, text: c.nombre })) }),
+      cache: true,
+    },
+    createTag: params => {
+      const term = $.trim(params.term);
+      if (!term) return null;
+      return { id: term, text: term, newTag: true };
+    },
+    templateResult: data => {
+      if (data.newTag) return $(`<span><i class="ti tabler-plus me-1 text-primary"></i>${data.text} <em class="text-muted">(nuevo)</em></span>`);
+      return data.text;
+    },
+  });
+});
+
 // Preview foto antes de subir
 document.getElementById('fotoInput')?.addEventListener('change', function(e) {
   const file = e.target.files[0];
