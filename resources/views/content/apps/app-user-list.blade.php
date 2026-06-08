@@ -417,6 +417,13 @@ document.addEventListener('DOMContentLoaded', function () {
       bottomEnd: 'paging'
     },
     language: {
+      info:           'Mostrando _START_ al _END_ de _TOTAL_ registros',
+      infoEmpty:      'Mostrando 0 al 0 de 0 registros',
+      infoFiltered:   '(filtrado de _MAX_ registros en total)',
+      lengthMenu:     'Mostrar _MENU_ registros',
+      zeroRecords:    'No se encontraron resultados',
+      emptyTable:     'No hay datos disponibles',
+      search:         'Buscar:',
       paginate: {
         next:     '<i class="icon-base ti tabler-chevron-right scaleX-n1-rtl icon-18px"></i>',
         previous: '<i class="icon-base ti tabler-chevron-left scaleX-n1-rtl icon-18px"></i>',
