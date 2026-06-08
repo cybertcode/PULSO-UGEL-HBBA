@@ -15,33 +15,41 @@ $configData = Helper::appClasses();
 @section('content')
 
 {{-- Breadcrumb --}}
-<nav aria-label="breadcrumb" class="mb-4">
+<nav aria-label="breadcrumb" class="mb-3">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti tabler-home icon-14px me-1"></i>Inicio</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
     <li class="breadcrumb-item active">Modelo de Integridad</li>
   </ol>
 </nav>
 
 {{-- Header --}}
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+<div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-3">
   <div>
-    <h4 class="mb-1">
-      <i class="ti tabler-shield-half me-2 text-primary"></i>Modelo de Integridad
-      <span class="badge bg-label-primary ms-2 align-middle" style="font-size:12px">9 Componentes</span>
+    <h4 class="mb-1 d-flex align-items-center gap-2">
+      Modelo de Integridad
+      <span class="badge bg-label-success rounded-pill" style="font-size:11px">Nuevos Componentes</span>
     </h4>
-    <p class="mb-0 text-muted">Sistema de Integridad Institucional — Seguimiento y cumplimiento por componente.</p>
+    <p class="mb-0 text-muted">Monitorea el cumplimiento de los nueve componentes del Modelo de Integridad de la PCM.<br>Registra tus evidencias y mantiene actualizada la información.</p>
   </div>
-  <div class="d-flex gap-2">
-    <a href="{{ route('sci-evidencias') }}" class="btn btn-label-primary btn-sm">
-      <i class="ti tabler-upload me-1"></i>Subir Evidencia
-    </a>
-    <a href="{{ route('mon-semaforo') }}" class="btn btn-label-secondary btn-sm">
-      <i class="ti tabler-traffic-lights me-1"></i>Semáforo
-    </a>
-  </div>
+  <button class="btn btn-label-primary btn-sm align-self-start" data-bs-toggle="modal" data-bs-target="#modalGuiaModelo">
+    <i class="ti tabler-book me-1"></i>Guía del Modelo
+  </button>
 </div>
 
-{{-- ── Fila principal: resumen + componentes | barra lateral ── --}}
+{{-- Tabs Vista General / Detalle por Componente --}}
+<ul class="nav nav-tabs mb-4" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active fw-semibold" data-bs-toggle="tab" href="#tab-vista-general">Vista General</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link fw-semibold" data-bs-toggle="tab" href="#tab-detalle-componente">Detalle por Componente</a>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+{{-- Tab Vista General --}}
+<div class="tab-pane fade show active" id="tab-vista-general">
 <div class="row g-4">
 
   {{-- Columna izquierda (8/12) --}}
@@ -117,72 +125,46 @@ $configData = Helper::appClasses();
       </div>
     </div>
 
-    {{-- ── Tarjetas de Componentes ── --}}
-    <h5 class="mb-3"><i class="ti tabler-components me-2"></i>Componentes del Modelo</h5>
+    {{-- ── Tarjetas de Componentes — grid 3 cols como el prototipo ── --}}
+    <p class="text-muted mb-3" style="font-size:13px">Los 9 componentes del Modelo de Integridad con su nivel de cumplimiento actual</p>
     <div class="row g-3 mb-4">
       @forelse($componentes as $c)
-      <div class="col-12 col-md-6">
-        <div class="card h-100 border-{{ $c->color }} border-opacity-25">
+      @php
+        $nivelLabel = match($c->color) { 'success'=>'Cumplido', 'warning'=>'En proceso', default=>'En riesgo' };
+        $nivelIcon  = match($c->color) { 'success'=>'tabler-circle-check', 'warning'=>'tabler-clock', default=>'tabler-alert-triangle' };
+      @endphp
+      <div class="col-12 col-sm-6 col-xl-4">
+        <div class="card h-100" style="border-top:3px solid var(--bs-{{ $c->color }})">
           <div class="card-body pb-2">
-
-            {{-- Header tarjeta --}}
+            {{-- Número + nombre --}}
             <div class="d-flex align-items-start justify-content-between mb-2">
-              <div class="d-flex align-items-center gap-2">
-                <div class="avatar avatar-sm">
-                  <span class="avatar-initial rounded bg-label-{{ $c->color }}">
-                    <i class="ti {{ $c->icono ?? 'tabler-point' }} icon-18px"></i>
-                  </span>
-                </div>
-                <div>
-                  <span class="badge bg-label-secondary" style="font-size:10px">Comp. {{ $c->numero }}</span>
-                </div>
-              </div>
-              <span class="badge bg-label-{{ $c->color }}">{{ $c->nivel }}</span>
+              <div class="fw-bold text-muted" style="font-size:12px">{{ $c->numero }}. {{ Str::limit($c->nombre, 28) }}</div>
+              <span class="badge bg-label-{{ $c->color }} flex-shrink-0 ms-1" style="font-size:10px">{{ $nivelLabel }}</span>
             </div>
-
-            <h6 class="mb-2 fw-semibold" style="font-size:13px;line-height:1.3">{{ $c->nombre }}</h6>
-
-            {{-- Progreso --}}
-            <div class="d-flex justify-content-between mb-1">
-              <small class="text-muted">{{ $c->completadas_count }}/{{ $c->actividades_count }} actividades</small>
-              <small class="fw-bold text-{{ $c->color }}">{{ $c->porcentaje }}%</small>
+            {{-- % grande + barra --}}
+            <div class="d-flex align-items-end gap-1 mb-1">
+              <span class="fw-bold text-{{ $c->color }}" style="font-size:1.6rem;line-height:1">{{ $c->porcentaje }}</span>
+              <span class="text-muted fw-semibold mb-1" style="font-size:13px">%</span>
+              <span class="ms-auto">
+                <i class="icon-base ti {{ $nivelIcon }} text-{{ $c->color }}" style="font-size:18px"></i>
+              </span>
             </div>
-            <div class="progress mb-3" style="height:7px">
+            <div class="progress mb-2" style="height:5px">
               <div class="progress-bar bg-{{ $c->color }} rounded-pill" style="width:{{ $c->porcentaje }}%"></div>
             </div>
-
             {{-- Mini stats --}}
-            <div class="row g-2 mb-2">
-              <div class="col-4 text-center">
-                <div class="rounded bg-label-success py-1 px-2">
-                  <div class="fw-bold text-success small">{{ $c->completadas_count }}</div>
-                  <div style="font-size:10px" class="text-muted">Completadas</div>
-                </div>
-              </div>
-              <div class="col-4 text-center">
-                <div class="rounded bg-label-warning py-1 px-2">
-                  <div class="fw-bold text-warning small">{{ $c->en_proceso_count }}</div>
-                  <div style="font-size:10px" class="text-muted">En proceso</div>
-                </div>
-              </div>
-              <div class="col-4 text-center">
-                <div class="rounded bg-label-info py-1 px-2">
-                  <div class="fw-bold text-info small">{{ $c->evidencias_count }}</div>
-                  <div style="font-size:10px" class="text-muted">Evidencias</div>
-                </div>
-              </div>
+            <div class="d-flex align-items-center gap-2" style="font-size:11px">
+              <span class="text-success fw-semibold"><i class="ti tabler-check icon-12px me-1"></i>{{ $c->completadas_count }}</span>
+              <span class="text-muted">·</span>
+              <span class="text-warning fw-semibold"><i class="ti tabler-clock icon-12px me-1"></i>{{ $c->en_proceso_count }}</span>
+              <span class="text-muted">·</span>
+              <span class="text-info fw-semibold"><i class="ti tabler-files icon-12px me-1"></i>{{ $c->evidencias_count }} evid.</span>
             </div>
-
           </div>
-          {{-- Footer con acciones --}}
           <div class="card-footer py-2 px-3 d-flex gap-1">
             <a href="{{ route('sci-evidencias') }}?componente_id={{ $c->id }}"
-               class="btn btn-xs btn-label-{{ $c->color }} flex-fill text-center py-1">
-              <i class="ti tabler-upload icon-14px me-1"></i>Subir N° SGD
-            </a>
-            <a href="{{ route('sci-control-interno') }}?componente_id={{ $c->id }}"
-               class="btn btn-xs btn-label-secondary flex-fill text-center py-1">
-              <i class="ti tabler-list-details icon-14px me-1"></i>Actividades
+               class="btn btn-xs btn-label-{{ $c->color }} flex-fill text-center">
+              <i class="ti tabler-upload icon-12px me-1"></i>Subir N° SGD
             </a>
           </div>
         </div>
@@ -308,6 +290,12 @@ $configData = Helper::appClasses();
           <small>Sin alertas activas</small>
         </div>
         @endforelse
+        <div class="px-4 py-3 border-top bg-body-secondary" style="border-radius:0 0 var(--bs-card-border-radius) var(--bs-card-border-radius)">
+          <small class="text-muted d-flex align-items-start gap-2">
+            <i class="ti tabler-info-circle text-info flex-shrink-0 mt-px"></i>
+            Las alertas se envían automáticamente al correo del responsable asignado.
+          </small>
+        </div>
       </div>
     </div>
 
@@ -349,6 +337,57 @@ $configData = Helper::appClasses();
   </div>{{-- /col-xl-4 --}}
 
 </div>{{-- /row --}}
+</div>{{-- /tab-pane vista-general --}}
+
+{{-- Tab Detalle por Componente --}}
+<div class="tab-pane fade" id="tab-detalle-componente">
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr style="background:var(--bs-tertiary-bg)">
+              <th class="ps-4 fw-semibold" style="font-size:11px">#</th>
+              <th class="fw-semibold" style="font-size:11px">COMPONENTE</th>
+              <th class="fw-semibold" style="font-size:11px;min-width:150px">AVANCE</th>
+              <th class="text-center fw-semibold" style="font-size:11px">COMPLETADAS</th>
+              <th class="text-center fw-semibold" style="font-size:11px">EN PROCESO</th>
+              <th class="text-center fw-semibold" style="font-size:11px">EVIDENCIAS</th>
+              <th class="text-center fw-semibold pe-4" style="font-size:11px">NIVEL</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($componentes as $c)
+            @php $nivelLabel = match($c->color) { 'success'=>'Cumplido', 'warning'=>'En proceso', default=>'En riesgo' }; @endphp
+            <tr style="border-left:3px solid var(--bs-{{ $c->color }})">
+              <td class="ps-4"><span class="fw-bold text-muted">{{ $c->numero }}</span></td>
+              <td>
+                <div class="fw-semibold" style="font-size:13px">{{ $c->nombre }}</div>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:6px">
+                    <div class="progress-bar bg-{{ $c->color }} rounded-pill" style="width:{{ $c->porcentaje }}%"></div>
+                  </div>
+                  <span class="fw-bold text-{{ $c->color }}" style="min-width:32px;font-size:12px">{{ $c->porcentaje }}%</span>
+                </div>
+              </td>
+              <td class="text-center"><span class="fw-bold text-success">{{ $c->completadas_count }}</span></td>
+              <td class="text-center"><span class="fw-bold text-warning">{{ $c->en_proceso_count }}</span></td>
+              <td class="text-center"><span class="fw-bold text-info">{{ $c->evidencias_count }}</span></td>
+              <td class="text-center pe-4"><span class="badge bg-label-{{ $c->color }} rounded-pill">{{ $nivelLabel }}</span></td>
+            </tr>
+            @empty
+            <tr><td colspan="7" class="text-center text-muted py-6">Sin componentes</td></tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>{{-- /tab-content --}}
 
 @endsection
 

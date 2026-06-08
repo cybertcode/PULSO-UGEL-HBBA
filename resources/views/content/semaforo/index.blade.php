@@ -24,30 +24,29 @@
   $colorRgb = ['success' => '40,199,111', 'warning' => '255,159,67', 'danger' => '234,84,85'];
 @endphp
 
+{{-- Breadcrumb --}}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('sci-modelo-integridad') }}">Modelo de Integridad</a></li>
+    <li class="breadcrumb-item active">Semáforo Institucional</li>
+  </ol>
+</nav>
+
 {{-- ════════════════════════════════════════════
      CABECERA
 ════════════════════════════════════════════ --}}
 <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-6">
   <div>
-    <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
-      <span class="badge rounded bg-label-{{ $nivelColor }} p-2">
-        <i class="icon-base ti tabler-traffic-lights icon-lg text-{{ $nivelColor }}"></i>
-      </span>
-      Semáforo Institucional
-    </h4>
-    <p class="text-muted mb-0 ms-1">
-      Modelo de Integridad · {{ $total }} componentes ·
-      <span class="badge bg-label-secondary rounded-pill ms-1" style="font-size:10px">
-        Directiva N° 006-2019-CG-INTEG
-      </span>
-    </p>
+    <h4 class="fw-bold mb-1">Semáforo Institucional</h4>
+    <p class="text-muted mb-0">Visualiza rápidamente el estado de cumplimiento de los componentes del Modelo de Integridad.</p>
   </div>
   <div class="d-flex gap-2">
     <a href="{{ route('adm-configuracion') }}" class="btn btn-sm btn-label-secondary">
       <i class="ti tabler-settings me-1"></i>Umbrales
     </a>
     <button class="btn btn-sm btn-label-primary" data-bs-toggle="modal" data-bs-target="#modalCriterios">
-      <i class="ti tabler-info-circle me-1"></i>Criterios
+      <i class="ti tabler-info-circle me-1"></i>Ver criterios de evaluación
     </button>
   </div>
 </div>
@@ -325,13 +324,18 @@
           <span class="badge bg-label-{{ $c->color }} rounded-pill" style="font-size:10px">{{ $c->semaforo }}</span>
         </div>
       </div>
-      <div class="card-footer border-top py-2 px-4"
+      <div class="card-footer border-top py-2 px-3"
            style="background:rgba({{ $rgb }},.05)">
-        <a href="{{ route('sci-control-interno') }}?componente_id={{ $c->id }}"
-           class="d-flex align-items-center justify-content-center gap-1 text-{{ $c->color }} text-decoration-none fw-semibold"
-           style="font-size:12px">
-          <i class="ti tabler-arrow-right" style="font-size:13px"></i>Ver actividades
-        </a>
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="badge bg-label-{{ $c->color }} rounded-pill" style="font-size:11px">
+            <i class="ti {{ $icon }} me-1" style="font-size:10px"></i>{{ $c->semaforo }}
+          </span>
+          <a href="{{ route('sci-control-interno') }}?componente_id={{ $c->id }}"
+             class="text-{{ $c->color }} text-decoration-none fw-semibold"
+             style="font-size:11px">
+            <i class="ti tabler-upload me-1" style="font-size:11px"></i>Subir N° SGD
+          </a>
+        </div>
       </div>
     </div>
   </div>

@@ -28,33 +28,20 @@ $configData = Helper::appClasses();
   $colorRgb = ['success'=>'40,199,111','warning'=>'255,159,67','danger'=>'234,84,85'];
 @endphp
 
+{{-- Breadcrumb --}}
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('sci-modelo-integridad') }}">Modelo de Integridad</a></li>
+    <li class="breadcrumb-item active">Ranking de Unidades</li>
+  </ol>
+</nav>
+
 {{-- ════ CABECERA ════ --}}
 <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-6">
   <div>
-    <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
-      <span class="badge rounded bg-label-warning p-2">
-        <i class="icon-base ti tabler-trophy icon-lg text-warning"></i>
-      </span>
-      Ranking de Unidades Orgánicas
-    </h4>
-    <p class="text-muted mb-0 ms-1">
-      Clasificación por cumplimiento · {{ $unidades->count() }} unidades ·
-      <span style="font-size:11px">{{ now()->translatedFormat('F Y') }}</span>
-    </p>
-  </div>
-  <div class="d-flex align-items-center gap-2 flex-wrap">
-    <span class="badge bg-label-success rounded-pill px-3 py-1_5" style="font-size:11px">
-      <i class="ti tabler-circle-check me-1"></i>{{ $unCumplieron }} cumplen
-    </span>
-    <span class="badge bg-label-warning rounded-pill px-3 py-1_5" style="font-size:11px">
-      <i class="ti tabler-clock me-1"></i>{{ $unRiesgo }} en proceso
-    </span>
-    <span class="badge bg-label-danger rounded-pill px-3 py-1_5" style="font-size:11px">
-      <i class="ti tabler-flame me-1"></i>{{ $unCriticas }} críticas
-    </span>
-    <a href="{{ route('rep-reconocimientos') }}" class="btn btn-sm btn-label-warning ms-1">
-      <i class="ti tabler-star me-1"></i>Reconocimiento
-    </a>
+    <h4 class="fw-bold mb-1">Ranking de Unidades</h4>
+    <p class="text-muted mb-0">Competencia sana entre áreas para fortalecer el cumplimiento y la integridad institucional.</p>
   </div>
 </div>
 
@@ -289,107 +276,77 @@ $configData = Helper::appClasses();
   </div>
 
   {{-- Panel lateral --}}
-  <div class="col-xl-5 d-flex flex-column gap-5">
+  <div class="col-xl-5 d-flex flex-column gap-4">
 
-    {{-- Resumen estadístico --}}
+    {{-- Resumen --}}
     <div class="card">
-      <div class="card-header border-bottom py-4">
-        <h5 class="fw-bold mb-1">Resumen del Período</h5>
-        <p class="card-subtitle mb-0">Indicadores consolidados · {{ now()->year }}</p>
+      <div class="card-header border-bottom py-3">
+        <h6 class="fw-bold mb-0">Resumen</h6>
+      </div>
+      <div class="card-body pb-2">
+        <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded-3" style="background:rgba(40,199,111,.08);border:1px solid rgba(40,199,111,.2)">
+          <div class="badge rounded bg-label-success p-2 flex-shrink-0">
+            <i class="ti tabler-circle-check icon-20px text-success"></i>
+          </div>
+          <div>
+            <div class="fw-semibold" style="font-size:13px">{{ $unCumplieron }} Unidades más cumplieron</div>
+            <div class="text-muted" style="font-size:11px">Con avance ≥ 75% en el período</div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded-3" style="background:rgba(255,159,67,.08);border:1px solid rgba(255,159,67,.2)">
+          <div class="badge rounded bg-label-warning p-2 flex-shrink-0">
+            <i class="ti tabler-alert-circle icon-20px text-warning"></i>
+          </div>
+          <div>
+            <div class="fw-semibold" style="font-size:13px">{{ $unRiesgo }} Unidades en riesgo</div>
+            <div class="text-muted" style="font-size:11px">Requieren atención urgente</div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-3 mb-4 p-3 rounded-3" style="background:rgba(234,84,85,.08);border:1px solid rgba(234,84,85,.2)">
+          <div class="badge rounded bg-label-danger p-2 flex-shrink-0">
+            <i class="ti tabler-flame icon-20px text-danger"></i>
+          </div>
+          <div>
+            <div class="fw-semibold" style="font-size:13px">{{ $unCriticas }} Unidades críticas</div>
+            <div class="text-muted" style="font-size:11px">Avance menor al 50%</div>
+          </div>
+        </div>
+        <a href="{{ route('rep-reconocimientos') }}" class="btn btn-primary w-100">
+          <i class="ti tabler-trophy me-2"></i>Nuevo reconocimiento
+        </a>
+      </div>
+    </div>
+
+    {{-- Estadísticas del período --}}
+    <div class="card">
+      <div class="card-header border-bottom py-3">
+        <h6 class="fw-bold mb-0">Estadísticas del Período</h6>
       </div>
       <div class="card-body">
-        {{-- 3 métricas --}}
-        <div class="row g-4 text-center mb-4">
+        <div class="row g-4 text-center">
           <div class="col-4">
-            <div class="badge rounded bg-label-primary p-2 mb-2 d-inline-flex">
-              <i class="icon-base ti tabler-chart-line icon-lg text-primary"></i>
-            </div>
             <h3 class="fw-bold text-primary mb-0">{{ $promedio }}%</h3>
             <small class="text-muted">Promedio</small>
           </div>
           <div class="col-4">
-            <div class="badge rounded bg-label-success p-2 mb-2 d-inline-flex">
-              <i class="icon-base ti tabler-arrow-up icon-lg text-success"></i>
-            </div>
             <h3 class="fw-bold text-success mb-0">{{ $maxVal }}%</h3>
             <small class="text-muted">Máximo</small>
           </div>
           <div class="col-4">
-            <div class="badge rounded bg-label-danger p-2 mb-2 d-inline-flex">
-              <i class="icon-base ti tabler-arrow-down icon-lg text-danger"></i>
-            </div>
             <h3 class="fw-bold text-danger mb-0">{{ $minVal }}%</h3>
             <small class="text-muted">Mínimo</small>
           </div>
         </div>
-
-        {{-- Barra apilada de distribución --}}
-        <p class="fw-semibold mb-2" style="font-size:11px;letter-spacing:.06em;color:var(--bs-secondary-color)">DISTRIBUCIÓN POR ZONA</p>
-        <div class="d-flex rounded-pill overflow-hidden mb-4" style="height:12px;gap:2px">
-          @if($unCumplieron)
-          <div style="flex:{{ $unCumplieron }};background:#28c76f;border-radius:99px 0 0 99px"></div>
-          @endif
-          @if($unRiesgo)
-          <div style="flex:{{ $unRiesgo }};background:#ff9f43"></div>
-          @endif
-          @if($unCriticas)
-          <div style="flex:{{ $unCriticas }};background:#ea5455;border-radius:0 99px 99px 0"></div>
-          @endif
+        <div class="d-flex rounded-pill overflow-hidden mt-4" style="height:8px;gap:2px">
+          @if($unCumplieron)<div style="flex:{{ $unCumplieron }};background:#28c76f;border-radius:99px 0 0 99px"></div>@endif
+          @if($unRiesgo)<div style="flex:{{ $unRiesgo }};background:#ff9f43"></div>@endif
+          @if($unCriticas)<div style="flex:{{ $unCriticas }};background:#ea5455;border-radius:0 99px 99px 0"></div>@endif
         </div>
-
-        <div class="d-flex flex-column gap-3">
-          @foreach([
-            ['label'=>'Zona verde — Cumplen','sub'=>'≥75%','color'=>'success','icon'=>'tabler-circle-check','val'=>$unCumplieron],
-            ['label'=>'Zona amarilla — En proceso','sub'=>'50–74%','color'=>'warning','icon'=>'tabler-clock','val'=>$unRiesgo],
-            ['label'=>'Zona roja — Críticas','sub'=>'<50%','color'=>'danger','icon'=>'tabler-flame','val'=>$unCriticas],
-          ] as $z)
-          <div class="d-flex align-items-center gap-3">
-            <div class="badge rounded bg-label-{{ $z['color'] }} p-1_5 flex-shrink-0">
-              <i class="icon-base ti {{ $z['icon'] }} icon-sm text-{{ $z['color'] }}"></i>
-            </div>
-            <div class="flex-grow-1">
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="fw-semibold">{{ $z['label'] }} <span class="text-muted fw-normal">({{ $z['sub'] }})</span></small>
-                <span class="fw-bold text-{{ $z['color'] }}">{{ $z['val'] }}</span>
-              </div>
-              <div class="progress rounded-pill mt-1" style="height:4px">
-                <div class="progress-bar bg-{{ $z['color'] }} rounded-pill"
-                     style="width:{{ $unidades->count() ? round($z['val']/$unidades->count()*100) : 0 }}%"></div>
-              </div>
-            </div>
-          </div>
-          @endforeach
+        <div class="d-flex justify-content-between mt-2">
+          <small class="text-success fw-semibold">{{ $unCumplieron }} cumplen</small>
+          <small class="text-warning fw-semibold">{{ $unRiesgo }} en proceso</small>
+          <small class="text-danger fw-semibold">{{ $unCriticas }} críticas</small>
         </div>
-      </div>
-    </div>
-
-    {{-- Acciones rápidas --}}
-    <div class="card">
-      <div class="card-header border-bottom py-4">
-        <h5 class="fw-bold mb-1">Acciones Rápidas</h5>
-        <p class="card-subtitle mb-0">Gestión y seguimiento del período</p>
-      </div>
-      <div class="card-body p-0">
-        @foreach([
-          ['route'=>'sci-control-interno','icon'=>'tabler-clipboard-list','label'=>'Ver actividades pendientes','sub'=>'Control interno y Modelo','color'=>'primary'],
-          ['route'=>'mon-alertas',        'icon'=>'tabler-bell',          'label'=>'Revisar alertas activas',   'sub'=>'Notificaciones del sistema','color'=>'warning'],
-          ['route'=>'rep-reportes',       'icon'=>'tabler-file-analytics','label'=>'Exportar reporte PDF/Excel','sub'=>'Reporte del período actual','color'=>'success'],
-          ['route'=>'rep-reconocimientos','icon'=>'tabler-trophy',        'label'=>'Registrar reconocimiento',  'sub'=>'Premio a unidades destacadas','color'=>'info'],
-        ] as $acc)
-        <a href="{{ route($acc['route']) }}"
-           class="d-flex align-items-center gap-3 px-4 py-3 border-bottom text-decoration-none"
-           onmouseover="this.style.background='var(--bs-tertiary-bg)'"
-           onmouseout="this.style.background='transparent'">
-          <div class="badge rounded bg-label-{{ $acc['color'] }} p-2 flex-shrink-0">
-            <i class="icon-base ti {{ $acc['icon'] }} icon-md text-{{ $acc['color'] }}"></i>
-          </div>
-          <div class="flex-grow-1">
-            <p class="fw-semibold mb-0" style="font-size:13px">{{ $acc['label'] }}</p>
-            <small class="text-muted">{{ $acc['sub'] }}</small>
-          </div>
-          <i class="ti tabler-chevron-right text-muted flex-shrink-0" style="font-size:14px"></i>
-        </a>
-        @endforeach
       </div>
     </div>
 

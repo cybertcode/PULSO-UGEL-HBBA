@@ -69,46 +69,39 @@
   </div>
 </div>
 
-{{-- ── KPI CARDS (6 tarjetas) ── --}}
+{{-- ── KPI CARDS (5 tarjetas — exacto al prototipo) ── --}}
 <div class="row g-4 mb-6">
-
   @php
   $kpis = [
-    ['route'=>'sci-control-interno',    'color'=>'primary', 'icon'=>'tabler-clipboard-list',     'label'=>'Control Interno',      'sub'=>'Actividades en seguimiento', 'val'=>$stats['total'],                'trend'=>$stats['avance_global'].'% completadas', 'trend_color'=>'success'],
-    ['route'=>'sci-modelo-integridad',  'color'=>'success', 'icon'=>'tabler-shield-check',        'label'=>'Modelo de Integridad', 'sub'=>'Acciones en seguimiento',   'val'=>$componentes->sum('actividades_count'), 'trend'=>round($componentes->avg('porcentaje')).'% completadas', 'trend_color'=>'success'],
-    ['route'=>'rep-reconocimientos',    'color'=>'warning', 'icon'=>'tabler-star',                'label'=>'Buenas Prácticas',     'sub'=>'Registradas',               'val'=>($stats['reconocimientos']??0),  'trend'=>($stats['reconocimientos_implementadas']??0).' en implementación', 'trend_color'=>'warning'],
-    ['route'=>'sci-control-interno',    'color'=>'danger',  'icon'=>'tabler-clock-exclamation',   'label'=>'Pendientes',           'sub'=>'Por atender urgente',       'val'=>$stats['pendientes'],            'trend'=>$stats['vencidas'].' vencidas', 'trend_color'=>'danger', 'route_params'=>['estado'=>'pendiente']],
-    ['route'=>'adm-usuarios',           'color'=>'info',    'icon'=>'tabler-users-group',         'label'=>'Responsables',         'sub'=>'Con actividades asignadas', 'val'=>$stats['responsables_asignados'],'trend'=>'Asignados activos', 'trend_color'=>'secondary'],
-    ['route'=>'mon-ranking-unidades',   'color'=>'secondary','icon'=>'tabler-building-community', 'label'=>'Áreas Participantes',  'sub'=>'En el sistema PULSO',       'val'=>$stats['unidades'],              'trend'=>'De '.$stats['total_unidades'].' áreas totales', 'trend_color'=>'secondary'],
+    ['route'=>'sci-control-interno',   'color'=>'primary',   'icon'=>'tabler-clipboard-list',     'label'=>'Control Interno',      'sub'=>'Actividades en seguimiento', 'val'=>$stats['total'],                         'trend'=>$stats['avance_global'].'% completadas',                          'trend_up'=>true],
+    ['route'=>'sci-modelo-integridad', 'color'=>'success',   'icon'=>'tabler-shield-check',        'label'=>'Modelo de Integridad', 'sub'=>'Acciones en seguimiento',    'val'=>$componentes->sum('actividades_count'),  'trend'=>round($componentes->avg('porcentaje')).'% completadas',           'trend_up'=>true],
+    ['route'=>'buenas-practicas',      'color'=>'warning',   'icon'=>'tabler-rosette-discount-check','label'=>'Buenas Prácticas',   'sub'=>'Registradas',                'val'=>($stats['reconocimientos']??0),           'trend'=>($stats['reconocimientos_implementadas']??0).' en implementación','trend_up'=>true],
+    ['route'=>'sci-control-interno',   'color'=>'danger',    'icon'=>'tabler-clock-exclamation',   'label'=>'Pendientes',           'sub'=>'Por atender',                'val'=>$stats['pendientes'],                    'trend'=>$stats['vencidas'].' Requieren atención',                         'trend_up'=>false, 'route_params'=>['estado'=>'pendiente']],
+    ['route'=>'mon-ranking-unidades',  'color'=>'info',      'icon'=>'tabler-building-community',  'label'=>'Áreas Participantes',  'sub'=>'En el sistema',              'val'=>$stats['unidades'],                      'trend'=>'De '.$stats['total_unidades'].' áreas totales',                  'trend_up'=>true],
   ];
   @endphp
-
   @foreach($kpis as $kpi)
-  <div class="col-6 col-md-4 col-xl-2 pulso-animate" style="animation-delay:{{ $loop->index * .05 }}s">
-    <a href="{{ route($kpi['route'], $kpi['route_params'] ?? []) }}" class="pulso-kpi-card text-decoration-none">
+  <div class="col-6 col-md pulso-animate" style="animation-delay:{{ $loop->index * .06 }}s">
+    <a href="{{ route($kpi['route'], $kpi['route_params'] ?? []) }}" class="text-decoration-none">
       <div class="card h-100 mb-0">
-        <div class="card-body p-3">
-          {{-- Icono + flecha --}}
-          <div class="d-flex align-items-start justify-content-between mb-2">
-            <div class="badge rounded bg-label-{{ $kpi['color'] }} p-2 flex-shrink-0" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center">
-              <i class="icon-base ti {{ $kpi['icon'] }}" style="font-size:18px"></i>
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start justify-content-between mb-3">
+            <div class="badge rounded bg-label-{{ $kpi['color'] }} p-2" style="width:42px;height:42px;display:flex;align-items:center;justify-content:center">
+              <i class="icon-base ti {{ $kpi['icon'] }}" style="font-size:20px"></i>
             </div>
-            <i class="ti tabler-chevron-right text-body-secondary" style="font-size:14px;margin-top:2px"></i>
+            <small class="text-body-tertiary">{{ $kpi['sub'] }}</small>
           </div>
-          {{-- Número --}}
-          <div class="text-{{ $kpi['color'] }} fw-bold mb-0" style="font-size:1.75rem;line-height:1.1">{{ $kpi['val'] }}</div>
-          <div class="fw-semibold text-body mb-1" style="font-size:12px;line-height:1.3;margin-top:2px">{{ $kpi['label'] }}</div>
-          {{-- Trend — truncado para evitar desborde --}}
-          <div class="text-{{ $kpi['trend_color'] }} fw-medium d-flex align-items-center gap-1 text-truncate" style="font-size:11px" title="{{ $kpi['trend'] }}">
-            <i class="ti tabler-trending-up flex-shrink-0" style="font-size:11px"></i>
-            <span class="text-truncate">{{ $kpi['trend'] }}</span>
+          <div class="text-{{ $kpi['color'] }} fw-bold" style="font-size:2rem;line-height:1">{{ $kpi['val'] }}</div>
+          <div class="fw-semibold text-body mt-1 mb-2" style="font-size:13px">{{ $kpi['label'] }}</div>
+          <div class="d-flex align-items-center gap-1 text-truncate" style="font-size:11px">
+            <i class="ti {{ $kpi['trend_up'] ? 'tabler-trending-up text-success' : 'tabler-trending-down text-danger' }}" style="font-size:12px;flex-shrink:0"></i>
+            <span class="text-muted text-truncate">{{ $kpi['trend'] }}</span>
           </div>
         </div>
       </div>
     </a>
   </div>
   @endforeach
-
 </div>
 
 {{-- ── GRÁFICOS FILA 1 ── --}}
@@ -191,7 +184,7 @@
 
 </div>
 
-{{-- ── FILA 2: Donut + Comparativo áreas ── --}}
+{{-- ── FILA 2: Donut + Actividades Recientes + Buenas Prácticas ── --}}
 <div class="row g-6 mb-6">
 
   {{-- Donut de estados --}}
@@ -234,20 +227,105 @@
     </div>
   </div>
 
-  {{-- Comparativo por áreas --}}
-  <div class="col-xl-8">
+  {{-- Actividades Recientes --}}
+  <div class="col-xl-4">
     <div class="card h-100">
-      <div class="card-header d-flex align-items-start justify-content-between">
+      <div class="card-header d-flex align-items-center justify-content-between">
         <div class="card-title mb-0">
-          <h5 class="mb-1">Comparativo por Áreas</h5>
-          <p class="card-subtitle">% de cumplimiento por unidad orgánica</p>
+          <h5 class="mb-1">Actividades Recientes</h5>
+          <p class="card-subtitle">Últimas actualizaciones</p>
         </div>
-        <a href="{{ route('mon-ranking-unidades') }}" class="btn btn-sm btn-label-primary rounded-pill">
-          Ranking completo <i class="ti tabler-award ms-1 icon-12px"></i>
+        <a href="{{ route('sci-control-interno') }}" class="btn btn-sm btn-label-primary rounded-pill">
+          Ver todas <i class="ti tabler-arrow-right ms-1 icon-12px"></i>
         </a>
       </div>
-      <div class="card-body pt-2">
-        <div id="chartBarAreas"></div>
+      <div class="card-body p-0">
+        @forelse($actividades_proximas->take(5) as $a)
+        @php
+          $ec  = $a->estado_color;
+          $ico = match($a->estado) {
+            'completada' => 'tabler-circle-check',
+            'en_proceso' => 'tabler-loader-2',
+            'observado'  => 'tabler-eye',
+            'vencida'    => 'tabler-alert-triangle',
+            default      => 'tabler-circle',
+          };
+          $lbl = match($a->estado) {
+            'completada' => 'Completada',
+            'en_proceso' => 'En proceso',
+            'observado'  => 'Observada',
+            'vencida'    => 'Vencida',
+            default      => 'Pendiente',
+          };
+        @endphp
+        <div class="d-flex align-items-start gap-3 px-4 py-3 {{ !$loop->last ? 'border-bottom' : '' }}">
+          <div class="badge rounded bg-label-{{ $ec }} p-2 flex-shrink-0 mt-1" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center">
+            <i class="icon-base ti {{ $ico }} icon-sm"></i>
+          </div>
+          <div class="flex-grow-1 overflow-hidden">
+            <div class="fw-semibold text-truncate" style="font-size:12px">{{ $a->nombre }}</div>
+            <div class="d-flex align-items-center gap-2 mt-1">
+              <span class="badge bg-label-{{ $ec }} rounded-pill" style="font-size:10px">{{ $lbl }}</span>
+              <small class="text-muted" style="font-size:10px">{{ $a->fecha_limite->format('d/m/Y') }}</small>
+            </div>
+          </div>
+        </div>
+        @empty
+        <div class="text-center text-muted py-5">
+          <i class="ti tabler-inbox icon-32px d-block mb-2"></i>
+          <small>Sin actividades recientes</small>
+        </div>
+        @endforelse
+        @if($actividades_proximas->isNotEmpty())
+        <div class="px-4 py-3 border-top bg-body-secondary" style="border-radius:0 0 var(--bs-card-border-radius) var(--bs-card-border-radius)">
+          <a href="{{ route('sci-control-interno') }}" class="text-primary fw-medium" style="font-size:12px">
+            Ver todas las actividades <i class="ti tabler-arrow-right icon-12px"></i>
+          </a>
+        </div>
+        @endif
+      </div>
+    </div>
+  </div>
+
+  {{-- Buenas Prácticas en Implementación --}}
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1"><i class="ti tabler-rosette-discount-check me-2 text-warning icon-16px"></i>Buenas Prácticas</h5>
+          <p class="card-subtitle">En implementación</p>
+        </div>
+        <a href="{{ route('buenas-practicas') }}" class="btn btn-sm btn-label-warning rounded-pill">
+          Ver todas <i class="ti tabler-arrow-right ms-1 icon-12px"></i>
+        </a>
+      </div>
+      <div class="card-body p-0">
+        @php
+        $practicas = [
+          ['nombre'=>'Digitalización de procesos de contratación', 'area'=>'Logística',           'pct'=>75, 'color'=>'success'],
+          ['nombre'=>'Tablero de control de riesgos institucionales','area'=>'Control Interno',    'pct'=>60, 'color'=>'warning'],
+          ['nombre'=>'Canal de denuncias integrado y confidencial', 'area'=>'Integridad',          'pct'=>40, 'color'=>'danger'],
+        ];
+        @endphp
+        @foreach($practicas as $pr)
+        <div class="px-4 py-3 {{ !$loop->last ? 'border-bottom' : '' }}">
+          <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+            <div class="flex-grow-1 overflow-hidden">
+              <div class="fw-semibold text-truncate" style="font-size:12px">{{ $pr['nombre'] }}</div>
+              <small class="text-muted" style="font-size:10px">{{ $pr['area'] }}</small>
+            </div>
+            <span class="badge bg-label-{{ $pr['color'] }} rounded-pill fw-bold flex-shrink-0" style="font-size:11px">{{ $pr['pct'] }}%</span>
+          </div>
+          <div class="progress" style="height:6px">
+            <div class="progress-bar bg-{{ $pr['color'] }} rounded-pill" style="width:{{ $pr['pct'] }}%"></div>
+          </div>
+        </div>
+        @endforeach
+        <div class="px-4 py-3 border-top bg-body-secondary" style="border-radius:0 0 var(--bs-card-border-radius) var(--bs-card-border-radius)">
+          <a href="{{ route('buenas-practicas') }}" class="text-warning fw-medium" style="font-size:12px">
+            Ver todas las prácticas <i class="ti tabler-arrow-right icon-12px"></i>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -317,7 +395,7 @@
     </div>
   </div>
 
-  {{-- Actividades próximas a vencer — timeline visual --}}
+  {{-- Actividades Recientes timeline --}}
   <div class="col-xl-7">
     <div class="card h-100">
       <div class="card-header d-flex align-items-center justify-content-between">
@@ -400,6 +478,33 @@
 
 </div>
 
+{{-- ── FRANJA FOOTER: Valores institucionales ── --}}
+<div class="row g-4 mt-2">
+  @php
+  $valores = [
+    ['icon'=>'tabler-device-desktop-analytics','color'=>'primary',  'title'=>'Sistema de Seguimiento', 'sub'=>'Moderno, información confiable, decisiones oportunas.'],
+    ['icon'=>'tabler-eye',                     'color'=>'success',  'title'=>'Transparencia',           'sub'=>'Información clara y accesible'],
+    ['icon'=>'tabler-bolt',                    'color'=>'warning',  'title'=>'Eficiencia',              'sub'=>'Procesos más ágiles'],
+    ['icon'=>'tabler-shield-check',            'color'=>'danger',   'title'=>'Integridad',              'sub'=>'Gestión ética y responsable'],
+  ];
+  @endphp
+  @foreach($valores as $v)
+  <div class="col-6 col-md-3">
+    <div class="card border-0 bg-body-secondary mb-0">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="badge rounded bg-label-{{ $v['color'] }} p-2 flex-shrink-0">
+          <i class="icon-base ti {{ $v['icon'] }} icon-20px"></i>
+        </div>
+        <div class="overflow-hidden">
+          <div class="fw-semibold text-truncate" style="font-size:12px">{{ $v['title'] }}</div>
+          <small class="text-muted text-truncate d-block" style="font-size:10px">{{ $v['sub'] }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endforeach
+</div>
+
 @endsection
 
 @section('page-script')
@@ -454,28 +559,6 @@ document.addEventListener('DOMContentLoaded', function () {
     tooltip: { theme: isDark ? 'dark' : 'light', y: { formatter: v => v + ' actividades' } },
   }).render();
 
-  // ── 3. Barras por áreas ──
-  new ApexCharts(document.getElementById('chartBarAreas'), {
-    chart: { type: 'bar', height: 255, toolbar: { show: false },
-      animations: { enabled: true, easing: 'easeinout', speed: 600 } },
-    series: [{ name: '% Cumplimiento', data: @json($areas_ranking->pluck('porcentaje')) }],
-    xaxis: {
-      categories: @json($areas_ranking->pluck('sigla')),
-      labels: { style: { colors: textColor, fontSize: '11px' }, rotate: -20 },
-      axisBorder: { show: false }, axisTicks: { show: false },
-    },
-    yaxis: { max: 100, min: 0, labels: { formatter: v => v + '%', style: { colors: textColor, fontSize: '11px' } } },
-    colors: @json($areas_ranking->pluck('color')),
-    plotOptions: { bar: {
-      distributed: true, borderRadius: 6, columnWidth: '52%',
-      dataLabels: { position: 'top' },
-    }},
-    dataLabels: { enabled: true, formatter: v => v + '%', offsetY: -18,
-      style: { fontSize: '10px', fontWeight: 600, colors: [textColor] } },
-    grid: { borderColor: gridColor, strokeDashArray: 5, padding: { left: 0, right: 0 } },
-    legend: { show: false },
-    tooltip: { theme: isDark ? 'dark' : 'light', y: { formatter: v => v + '% cumplimiento' } },
-  }).render();
 });
 </script>
 @endsection

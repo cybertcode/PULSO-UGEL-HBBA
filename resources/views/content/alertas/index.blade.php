@@ -8,21 +8,27 @@ $configData = Helper::appClasses();
 
 @section('content')
 
+{{-- Breadcrumb --}}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
+    <li class="breadcrumb-item active">Alertas</li>
+  </ol>
+</nav>
+
 {{-- ══════════════════════════════════════════════
      CABECERA DE PÁGINA
 ══════════════════════════════════════════════ --}}
 <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
   <div>
-    <h4 class="mb-1 fw-bold">
-      <i class="ti tabler-bell-ringing me-2 text-danger"></i>Centro de Alertas
-    </h4>
+    <h4 class="mb-1 fw-bold">Alertas</h4>
     <p class="text-muted mb-0">Notificaciones automáticas por actividades vencidas, avance bajo o evidencias faltantes.</p>
   </div>
   <div class="d-flex gap-2">
     @if($stats['pendientes'] > 0)
     <form method="POST" action="{{ route('mon-alertas.leer-todas') }}">
       @csrf @method('PATCH')
-      <button type="submit" class="btn btn-label-success">
+      <button type="submit" class="btn btn-label-success btn-sm">
         <i class="ti tabler-checks me-1"></i>Marcar todas leídas
       </button>
     </form>
@@ -120,22 +126,24 @@ $configData = Helper::appClasses();
   {{-- Tabs + Filtros --}}
   <div class="card-header border-bottom-0 bg-transparent pb-0 pt-3 px-4">
 
-    {{-- Tabs --}}
+    {{-- Tabs exactos al prototipo --}}
     <ul class="nav nav-tabs border-0 mb-3">
       <li class="nav-item">
-        <a class="nav-link px-3 {{ $tab === 'pendientes' ? 'active fw-semibold' : 'text-muted' }}"
+        <a class="nav-link px-3 d-flex align-items-center gap-2 {{ $tab === 'pendientes' ? 'active fw-semibold' : 'text-muted' }}"
            href="{{ route('mon-alertas', ['tab'=>'pendientes','prioridad'=>$prioridad,'tipo'=>$tipo]) }}">
-          <i class="ti tabler-bell me-1"></i>Activas
-          @if($stats['pendientes'] > 0)
-          <span class="badge bg-danger rounded-pill ms-1" style="font-size:10px">{{ $stats['pendientes'] }}</span>
-          @endif
+          <i class="ti tabler-bell icon-16px"></i>
+          Alertas
+          <span class="badge {{ $tab === 'pendientes' ? 'bg-danger' : 'bg-label-secondary' }} rounded-pill" style="font-size:10px">
+            {{ $stats['pendientes'] }}<i class="ti tabler-arrow-up ms-1" style="font-size:8px"></i>
+          </span>
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link px-3 {{ $tab === 'resueltas' ? 'active fw-semibold' : 'text-muted' }}"
+        <a class="nav-link px-3 d-flex align-items-center gap-2 {{ $tab === 'resueltas' ? 'active fw-semibold' : 'text-muted' }}"
            href="{{ route('mon-alertas', ['tab'=>'resueltas','prioridad'=>$prioridad,'tipo'=>$tipo]) }}">
-          <i class="ti tabler-circle-check me-1"></i>Resueltas
-          <span class="badge bg-label-success rounded-pill ms-1" style="font-size:10px">{{ $stats['resueltas'] }}</span>
+          <i class="ti tabler-circle-check icon-16px"></i>
+          Resueltas
+          <span class="badge bg-label-success rounded-pill" style="font-size:10px">{{ $stats['resueltas'] }}</span>
         </a>
       </li>
     </ul>
@@ -183,12 +191,12 @@ $configData = Helper::appClasses();
   <div class="table-responsive">
     <table class="table align-middle mb-0" style="border-collapse:separate">
       <thead>
-        <tr style="background:#f8f9fa">
-          <th class="px-4 py-3 text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;border:none">Alerta</th>
-          <th class="py-3 text-muted fw-semibold text-center" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;border:none;width:130px">Estado</th>
-          <th class="py-3 text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;border:none;width:130px">Vence</th>
-          <th class="py-3 text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;border:none;width:190px">Responsable</th>
-          <th class="py-3 text-muted fw-semibold text-end px-4" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;border:none;width:120px">Acción</th>
+        <tr style="background:var(--bs-tertiary-bg)">
+          <th class="px-4 py-3 fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Alerta</th>
+          <th class="py-3 fw-semibold text-center" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:130px">Días restantes <i class="ti tabler-x icon-10px"></i></th>
+          <th class="py-3 fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:130px">Vencimiento</th>
+          <th class="py-3 fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:190px">Responsable</th>
+          <th class="py-3 fw-semibold text-end px-4" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:130px">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -318,21 +326,22 @@ $configData = Helper::appClasses();
             @endif
           </td>
 
-          {{-- Acción --}}
+          {{-- Acciones --}}
           <td class="text-end px-4 py-3">
-            @if(!$isLeida)
-            <form method="POST" action="{{ route('mon-alertas.leer', $alerta) }}" class="d-inline">
-              @csrf @method('PATCH')
-              <button type="submit" class="btn btn-sm btn-label-primary rounded-pill px-3"
-                      style="font-size:12px">
-                <i class="ti tabler-check me-1" style="font-size:11px"></i>Resolver
-              </button>
-            </form>
-            @else
-            <span class="badge bg-label-success px-2 py-1 rounded-pill" style="font-size:11px">
-              <i class="ti tabler-circle-check me-1" style="font-size:10px"></i>Resuelta
-            </span>
-            @endif
+            <div class="d-flex align-items-center justify-content-end gap-2">
+              @if(!$isLeida)
+              <form method="POST" action="{{ route('mon-alertas.leer', $alerta) }}" class="d-inline">
+                @csrf @method('PATCH')
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size:12px">
+                  <i class="ti tabler-eye me-1" style="font-size:11px"></i>Ver alerta
+                </button>
+              </form>
+              @else
+              <span class="badge bg-label-success px-2 py-1 rounded-pill" style="font-size:11px">
+                <i class="ti tabler-circle-check me-1" style="font-size:10px"></i>Resuelta
+              </span>
+              @endif
+            </div>
           </td>
         </tr>
         @empty
