@@ -75,6 +75,33 @@
           wire:model="state.cargo" placeholder="Tu cargo" />
         <x-input-error for="cargo" bag="updateProfileInformation" />
       </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="unidad">Unidad Orgánica</label>
+        <input id="unidad" type="text" class="form-control" disabled
+          value="{{ $this->user->unidadOrganica?->nombre ?? 'Sin asignar' }}" />
+        <small class="text-muted">Solo puede ser modificado por un administrador.</small>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="rol">Rol</label>
+        <input id="rol" type="text" class="form-control" disabled
+          value="{{ $this->user->roles->first()?->name ?? 'Sin rol asignado' }}" />
+        <small class="text-muted">Solo puede ser modificado por un administrador.</small>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="estado">Estado de cuenta</label>
+        @php
+          $estadoMap = ['activo' => 'Activo', 'inactivo' => 'Inactivo', 'pendiente' => 'Pendiente'];
+          $estadoLabel = $estadoMap[$this->user->estado] ?? ucfirst($this->user->estado ?? 'Desconocido');
+          $estadoColor = ['activo' => 'success', 'inactivo' => 'secondary', 'pendiente' => 'warning'][$this->user->estado] ?? 'secondary';
+        @endphp
+        <div class="form-control d-flex align-items-center" style="background:#f8f9fa; cursor:default;">
+          <span class="badge bg-label-{{ $estadoColor }} me-2">{{ $estadoLabel }}</span>
+        </div>
+        <small class="text-muted">Solo puede ser modificado por un administrador.</small>
+      </div>
     </div>
   </x-slot>
 

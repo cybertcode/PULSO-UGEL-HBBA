@@ -111,13 +111,31 @@
                  value="{{ old('cargo', $authUser->cargo) }}" placeholder="Especialista en Control Interno">
           @error('cargo') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
-        @if($authUser->unidadOrganica)
-        <div class="col-md-12">
+        <div class="col-md-6">
           <label class="form-label fw-medium">Unidad Orgánica</label>
-          <input type="text" class="form-control bg-body-secondary" value="{{ $authUser->unidadOrganica->nombre }}" readonly>
-          <div class="form-text">La unidad orgánica es asignada por el administrador del sistema.</div>
+          <input type="text" class="form-control bg-body-secondary" disabled
+                 value="{{ $authUser->unidadOrganica?->nombre ?? 'Sin asignar' }}">
+          <div class="form-text">Asignada por el administrador del sistema.</div>
         </div>
-        @endif
+
+        <div class="col-md-3">
+          <label class="form-label fw-medium">Rol</label>
+          <input type="text" class="form-control bg-body-secondary" disabled
+                 value="{{ $authUser->roles->first()?->name ?? 'Sin rol asignado' }}">
+          <div class="form-text">Asignado por el administrador.</div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-medium">Estado de cuenta</label>
+          @php
+            $estadoLabel = ['activo' => 'Activo', 'inactivo' => 'Inactivo', 'pendiente' => 'Pendiente'][$authUser->estado] ?? ucfirst($authUser->estado ?? '—');
+            $estadoColor = ['activo' => 'success', 'inactivo' => 'secondary', 'pendiente' => 'warning'][$authUser->estado] ?? 'secondary';
+          @endphp
+          <div class="form-control bg-body-secondary d-flex align-items-center" style="cursor:default;">
+            <span class="badge bg-label-{{ $estadoColor }}">{{ $estadoLabel }}</span>
+          </div>
+          <div class="form-text">Gestionado por el administrador.</div>
+        </div>
       </div>
 
       <div class="mt-5 pt-2 border-top">
