@@ -25,6 +25,8 @@ use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\authentications\LoginBasic;
 use App\Http\Controllers\authentications\RegisterBasic;
 use App\Http\Controllers\pages\PerfilController;
+use App\Http\Controllers\pages\BuenasPracticasController;
+use App\Http\Controllers\pages\AyudaController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
@@ -120,6 +122,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // --- Configuración Institucional ---
     Route::get('/configuracion',  [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
     Route::put('/configuracion',  [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
+
+    // --- Buenas Prácticas ---
+    Route::get('/buenas-practicas', [BuenasPracticasController::class, 'index'])->name('buenas-practicas');
+
+    // --- Ayuda ---
+    Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda');
 
     // --- Unidades Orgánicas ---
     Route::middleware('can:configuracion.ver')->group(function () {
