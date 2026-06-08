@@ -141,6 +141,14 @@ class MenuServiceProvider extends ServiceProvider
                 'i18n' => 'Registro y seguimiento',
             ];
 
+            $menu[] = (object)[
+                'url'  => '/recomendaciones',
+                'name' => 'Recomendaciones',
+                'icon' => 'menu-icon icon-base ti tabler-message-report',
+                'slug' => 'recomendaciones',
+                'i18n' => 'Observaciones institucionales',
+            ];
+
             if (Gate::check('reconocimientos.ver')) {
                 $menu[] = (object)[
                     'url'  => '/reconocimientos',
