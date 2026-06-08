@@ -482,11 +482,128 @@ document.addEventListener('DOMContentLoaded', function () {
                 className: 'btn btn-label-secondary dropdown-toggle me-4',
                 text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i><span class="d-none d-sm-inline-block">Exportar</span></span>',
                 buttons: [
-                  { extend: 'print',  text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-printer me-2"></i>Imprimir</span>', className: 'dropdown-item', exportOptions: { columns: [2,3,4,5,6] } },
-                  { extend: 'csv',    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file me-2"></i>CSV</span>', className: 'dropdown-item', exportOptions: { columns: [2,3,4,5,6] } },
-                  { extend: 'excel',  text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-export me-2"></i>Excel</span>', className: 'dropdown-item', exportOptions: { columns: [2,3,4,5,6] } },
-                  { extend: 'pdf',    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-text me-2"></i>PDF</span>', className: 'dropdown-item', exportOptions: { columns: [2,3,4,5,6] } },
-                  { extend: 'copy',   text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-copy me-2"></i>Copiar</span>', className: 'dropdown-item', exportOptions: { columns: [2,3,4,5,6] } },
+                  {
+                    extend: 'print',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-printer me-2"></i>Imprimir</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [2,3,4,5,6], stripHtml: true },
+                    customize: function(win) {
+                      const doc = win.document;
+                      const now = new Date().toLocaleDateString('es-PE', { year:'numeric', month:'long', day:'numeric' });
+                      const style = doc.createElement('style');
+                      style.innerHTML = `
+                        body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+                        .dt-print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #696cff; padding-bottom: 12px; }
+                        .dt-print-header h2 { margin: 0 0 4px; font-size: 16px; color: #696cff; }
+                        .dt-print-header p { margin: 0; font-size: 11px; color: #666; }
+                        table { border-collapse: collapse; width: 100%; }
+                        thead tr { background: #696cff !important; color: #fff !important; }
+                        thead th { padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+                        tbody tr:nth-child(even) { background: #f5f5ff; }
+                        tbody td { padding: 7px 10px; border-bottom: 1px solid #e0e0e0; }
+                        .dt-print-footer { margin-top: 16px; font-size: 10px; color: #999; text-align: right; }
+                        @media print { thead { display: table-header-group; } }
+                      `;
+                      doc.head.appendChild(style);
+                      const header = doc.createElement('div');
+                      header.className = 'dt-print-header';
+                      header.innerHTML = `<h2>Unidad de Gestión Educativa Local Huánuco</h2>
+                        <p>Reporte de Usuarios del Sistema — PULSO UGEL &nbsp;|&nbsp; ${now}</p>`;
+                      doc.body.insertBefore(header, doc.body.firstChild);
+                      const footer = doc.createElement('div');
+                      footer.className = 'dt-print-footer';
+                      footer.innerHTML = `Generado el ${now} &nbsp;·&nbsp; UGEL Huánuco — Sistema de Control Interno`;
+                      doc.body.appendChild(footer);
+                    }
+                  },
+                  {
+                    extend: 'csv',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file me-2"></i>CSV</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [2,3,4,5,6], stripHtml: true },
+                    filename: 'usuarios-pulso-ugel',
+                    bom: true,
+                  },
+                  {
+                    extend: 'excel',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-export me-2"></i>Excel</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [2,3,4,5,6], stripHtml: true },
+                    filename: 'usuarios-pulso-ugel',
+                    title: 'Usuarios del Sistema — UGEL Huánuco',
+                    messageTop: `PULSO UGEL — Sistema de Control Interno | Generado: ${new Date().toLocaleDateString('es-PE')}`,
+                    customize: function(xlsx) {
+                      const sheet = xlsx.xl.worksheets['sheet1.xml'];
+                      // Color azul-violeta en cabecera (fila 4 = primera fila de datos de cabecera tras title+msg)
+                      $('row:nth-child(4) c', sheet).attr('s', '2'); // estilo bold+fondo
+                      // Ancho de columnas
+                      const cols = $('cols', sheet);
+                      cols.html('<col min="1" max="1" width="35" customWidth="1"/>' +
+                                '<col min="2" max="2" width="18" customWidth="1"/>' +
+                                '<col min="3" max="3" width="16" customWidth="1"/>' +
+                                '<col min="4" max="4" width="28" customWidth="1"/>' +
+                                '<col min="5" max="5" width="14" customWidth="1"/>');
+                    }
+                  },
+                  {
+                    extend: 'pdfHtml5',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-text me-2"></i>PDF</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [2,3,4,5,6], stripHtml: true },
+                    filename: 'usuarios-pulso-ugel',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    customize: function(doc) {
+                      const now = new Date().toLocaleDateString('es-PE', { year:'numeric', month:'long', day:'numeric' });
+                      // Cabecera del documento
+                      doc.content.unshift({
+                        columns: [
+                          {
+                            stack: [
+                              { text: 'UNIDAD DE GESTIÓN EDUCATIVA LOCAL HUÁNUCO', style: 'instHeader' },
+                              { text: 'PULSO UGEL — Sistema de Control Interno', style: 'instSubHeader' },
+                              { text: `Reporte de Usuarios del Sistema | ${now}`, style: 'instDate' },
+                            ]
+                          }
+                        ],
+                        margin: [0, 0, 0, 12]
+                      });
+                      // Línea separadora
+                      doc.content.splice(1, 0, { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 770, y2: 0, lineWidth: 1.5, lineColor: '#696cff' }], margin: [0, 0, 0, 10] });
+                      // Footer
+                      doc.footer = function(currentPage, pageCount) {
+                        return {
+                          columns: [
+                            { text: 'UGEL Huánuco — Sistema de Control Interno', fontSize: 8, color: '#888' },
+                            { text: `Página ${currentPage} de ${pageCount}`, alignment: 'right', fontSize: 8, color: '#888' }
+                          ],
+                          margin: [40, 0]
+                        };
+                      };
+                      // Estilo de la tabla
+                      doc.styles.tableHeader = { fillColor: '#696cff', color: '#ffffff', bold: true, fontSize: 9, alignment: 'center' };
+                      doc.styles.instHeader  = { fontSize: 13, bold: true, color: '#696cff', alignment: 'center' };
+                      doc.styles.instSubHeader = { fontSize: 10, color: '#555', alignment: 'center', margin: [0,2,0,0] };
+                      doc.styles.instDate    = { fontSize: 9, color: '#888', alignment: 'center', margin: [0,2,0,0] };
+                      // Alternar colores de filas
+                      doc.content.forEach(function(el) {
+                        if (el.table) {
+                          el.table.widths = ['*', 'auto', 'auto', '*', 'auto'];
+                          el.layout = {
+                            fillColor: function(i) { return i % 2 === 0 && i > 0 ? '#f0f0ff' : null; },
+                            hLineColor: function() { return '#ddd'; },
+                            vLineColor: function() { return '#eee'; },
+                          };
+                        }
+                      });
+                    }
+                  },
+                  {
+                    extend: 'copy',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-copy me-2"></i>Copiar</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [2,3,4,5,6], stripHtml: true },
+                  },
                 ]
               },
               @can('usuarios.crear')
@@ -855,43 +972,115 @@ document.addEventListener('DOMContentLoaded', function () {
                     extend: 'print',
                     text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-printer me-2"></i>Imprimir</span>',
                     className: 'dropdown-item',
-                    exportOptions: { columns: [0, 1, 2, 3] },
-                    customize: function (win) {
-                      $(win.document.body).find('h1').text('Catálogo de Cargos - UGEL');
-                      $(win.document.body).css('font-size', '12px');
-                      $(win.document.body).find('table').addClass('compact').css('font-size', '12px');
+                    exportOptions: { columns: [0, 1, 2, 3], stripHtml: true },
+                    customize: function(win) {
+                      const doc = win.document;
+                      const now = new Date().toLocaleDateString('es-PE', { year:'numeric', month:'long', day:'numeric' });
+                      const style = doc.createElement('style');
+                      style.innerHTML = `
+                        body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+                        .dt-print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #696cff; padding-bottom: 12px; }
+                        .dt-print-header h2 { margin: 0 0 4px; font-size: 16px; color: #696cff; }
+                        .dt-print-header p { margin: 0; font-size: 11px; color: #666; }
+                        table { border-collapse: collapse; width: 100%; }
+                        thead tr { background: #696cff !important; color: #fff !important; }
+                        thead th { padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+                        tbody tr:nth-child(even) { background: #f5f5ff; }
+                        tbody td { padding: 7px 10px; border-bottom: 1px solid #e0e0e0; }
+                        .dt-print-footer { margin-top: 16px; font-size: 10px; color: #999; text-align: right; }
+                        @media print { thead { display: table-header-group; } }
+                      `;
+                      doc.head.appendChild(style);
+                      const header = doc.createElement('div');
+                      header.className = 'dt-print-header';
+                      header.innerHTML = `<h2>Unidad de Gestión Educativa Local Huánuco</h2>
+                        <p>Catálogo de Cargos Institucionales — PULSO UGEL &nbsp;|&nbsp; ${now}</p>`;
+                      doc.body.insertBefore(header, doc.body.firstChild);
+                      const footer = doc.createElement('div');
+                      footer.className = 'dt-print-footer';
+                      footer.innerHTML = `Generado el ${now} &nbsp;·&nbsp; UGEL Huánuco — Sistema de Control Interno`;
+                      doc.body.appendChild(footer);
                     },
                   },
                   {
                     extend: 'csv',
                     text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file me-2"></i>CSV</span>',
                     className: 'dropdown-item',
-                    exportOptions: { columns: [0, 1, 2, 3] },
-                    filename: 'catalogo-cargos',
+                    exportOptions: { columns: [0, 1, 2, 3], stripHtml: true },
+                    filename: 'catalogo-cargos-ugel',
+                    bom: true,
                   },
                   {
                     extend: 'excel',
                     text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-export me-2"></i>Excel</span>',
                     className: 'dropdown-item',
-                    exportOptions: { columns: [0, 1, 2, 3] },
-                    filename: 'catalogo-cargos',
-                    title: 'Catálogo de Cargos - UGEL',
+                    exportOptions: { columns: [0, 1, 2, 3], stripHtml: true },
+                    filename: 'catalogo-cargos-ugel',
+                    title: 'Catálogo de Cargos — UGEL Huánuco',
+                    messageTop: `PULSO UGEL — Sistema de Control Interno | Generado: ${new Date().toLocaleDateString('es-PE')}`,
+                    customize: function(xlsx) {
+                      const sheet = xlsx.xl.worksheets['sheet1.xml'];
+                      $('row:nth-child(4) c', sheet).attr('s', '2');
+                      const cols = $('cols', sheet);
+                      cols.html('<col min="1" max="1" width="40" customWidth="1"/>' +
+                                '<col min="2" max="2" width="14" customWidth="1"/>' +
+                                '<col min="3" max="3" width="14" customWidth="1"/>' +
+                                '<col min="4" max="4" width="18" customWidth="1"/>');
+                    },
                   },
                   {
-                    extend: 'pdf',
+                    extend: 'pdfHtml5',
                     text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-text me-2"></i>PDF</span>',
                     className: 'dropdown-item',
-                    exportOptions: { columns: [0, 1, 2, 3] },
-                    filename: 'catalogo-cargos',
-                    title: 'Catálogo de Cargos - UGEL',
-                    orientation: 'portrait',
+                    exportOptions: { columns: [0, 1, 2, 3], stripHtml: true },
+                    filename: 'catalogo-cargos-ugel',
+                    orientation: 'landscape',
                     pageSize: 'A4',
+                    customize: function(doc) {
+                      const now = new Date().toLocaleDateString('es-PE', { year:'numeric', month:'long', day:'numeric' });
+                      doc.content.unshift({
+                        columns: [
+                          {
+                            stack: [
+                              { text: 'UNIDAD DE GESTIÓN EDUCATIVA LOCAL HUÁNUCO', style: 'instHeader' },
+                              { text: 'PULSO UGEL — Sistema de Control Interno', style: 'instSubHeader' },
+                              { text: `Catálogo de Cargos Institucionales | ${now}`, style: 'instDate' },
+                            ]
+                          }
+                        ],
+                        margin: [0, 0, 0, 12]
+                      });
+                      doc.content.splice(1, 0, { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 770, y2: 0, lineWidth: 1.5, lineColor: '#696cff' }], margin: [0, 0, 0, 10] });
+                      doc.footer = function(currentPage, pageCount) {
+                        return {
+                          columns: [
+                            { text: 'UGEL Huánuco — Sistema de Control Interno', fontSize: 8, color: '#888' },
+                            { text: `Página ${currentPage} de ${pageCount}`, alignment: 'right', fontSize: 8, color: '#888' }
+                          ],
+                          margin: [40, 0]
+                        };
+                      };
+                      doc.styles.tableHeader   = { fillColor: '#696cff', color: '#ffffff', bold: true, fontSize: 9, alignment: 'center' };
+                      doc.styles.instHeader    = { fontSize: 13, bold: true, color: '#696cff', alignment: 'center' };
+                      doc.styles.instSubHeader = { fontSize: 10, color: '#555', alignment: 'center', margin: [0,2,0,0] };
+                      doc.styles.instDate      = { fontSize: 9, color: '#888', alignment: 'center', margin: [0,2,0,0] };
+                      doc.content.forEach(function(el) {
+                        if (el.table) {
+                          el.table.widths = ['*', 'auto', 'auto', 'auto'];
+                          el.layout = {
+                            fillColor: function(i) { return i % 2 === 0 && i > 0 ? '#f0f0ff' : null; },
+                            hLineColor: function() { return '#ddd'; },
+                            vLineColor: function() { return '#eee'; },
+                          };
+                        }
+                      });
+                    },
                   },
                   {
                     extend: 'copy',
                     text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-copy me-2"></i>Copiar</span>',
                     className: 'dropdown-item',
-                    exportOptions: { columns: [0, 1, 2, 3] },
+                    exportOptions: { columns: [0, 1, 2, 3], stripHtml: true },
                   },
                 ],
               },

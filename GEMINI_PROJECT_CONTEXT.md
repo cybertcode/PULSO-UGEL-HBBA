@@ -1,5 +1,12 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.6] - 2026-06-08
+### Reportes y Exportación Premium
+- **Customización de DataTables**: Implementación de funciones `customize` para PDF, Excel e Impresión, añadiendo cabeceras oficiales de la UGEL Huánuco y estilos corporativos.
+- **Formatos Profesionales**: Los reportes PDF ahora incluyen orientación horizontal, numeración de páginas, footer institucional y líneas de marca personalizadas.
+- **Excel Corporativo**: Optimización de anchos de columna y estilos de cabecera en las exportaciones a Excel para un acabado ejecutivo.
+- **Identidad en Reportes**: Integración de la identidad visual de la institución en todos los documentos generados por el sistema.
+
 ## [v1.3.5] - 2026-06-08
 ### Integración AJAX y Datos Institucionales
 - **Gestión de Usuarios (AJAX)**: Refactorización de `UserList.php` para soportar operaciones CRUD mediante peticiones asíncronas, eliminando recargas de página innecesarias.
