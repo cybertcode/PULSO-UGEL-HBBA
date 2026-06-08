@@ -1,46 +1,64 @@
 {
   "menu": [
+    { "menuHeader": "General" },
     {
       "url": "/",
       "name": "Inicio",
       "icon": "menu-icon icon-base ti tabler-smart-home",
       "slug": "dashboard",
-      "i18n": "Panel principal"
+      "i18n": "Resumen y estadísticas"
     },
+
+    { "menuHeader": "Control y Seguimiento" },
     {
       "url": "/control-interno",
       "name": "Control Interno",
       "icon": "menu-icon icon-base ti tabler-clipboard-check",
       "slug": "sci-control-interno",
-      "i18n": "Seguimiento de actividades"
+      "i18n": "Actividades y compromisos"
     },
     {
-      "url": "/modelo-integridad",
       "name": "Modelo de Integridad",
       "icon": "menu-icon icon-base ti tabler-shield-check",
-      "slug": "sci-modelo-integridad",
-      "i18n": "Monitoreo de acciones"
+      "slug": ["sci-modelo-integridad", "mon-semaforo"],
+      "i18n": "PCM — 9 componentes",
+      "submenu": [
+        {
+          "url": "/modelo-integridad",
+          "name": "Vista General",
+          "slug": "sci-modelo-integridad",
+          "i18n": "Componentes y cumplimiento"
+        },
+        {
+          "url": "/semaforo",
+          "name": "Semáforo Institucional",
+          "slug": "mon-semaforo",
+          "i18n": "Estado en tiempo real"
+        }
+      ]
     },
     {
-      "url": "/buenas-practicas",
-      "name": "Buenas Prácticas",
-      "icon": "menu-icon icon-base ti tabler-rosette-discount-check",
-      "slug": "buenas-practicas",
-      "i18n": "Registro y seguimiento"
+      "url": "/evidencias",
+      "name": "Evidencias",
+      "icon": "menu-icon icon-base ti tabler-files",
+      "slug": "sci-evidencias",
+      "i18n": "Documentos y registros"
     },
+
+    { "menuHeader": "Monitoreo" },
     {
       "url": "/avance-unidades",
       "name": "Avance por Unidades",
       "icon": "menu-icon icon-base ti tabler-building-community",
       "slug": "mon-avance-unidades",
-      "i18n": "Seguimiento detallado"
+      "i18n": "Seguimiento por área"
     },
     {
-      "url": "/reportes",
-      "name": "Reportes",
-      "icon": "menu-icon icon-base ti tabler-chart-bar",
-      "slug": "rep-reportes",
-      "i18n": "Reportes y analíticas"
+      "url": "/ranking-unidades",
+      "name": "Ranking de Unidades",
+      "icon": "menu-icon icon-base ti tabler-podium",
+      "slug": "mon-ranking-unidades",
+      "i18n": "Clasificación general"
     },
     {
       "url": "/alertas",
@@ -49,6 +67,15 @@
       "slug": "mon-alertas",
       "i18n": "Notificaciones y pendientes"
     },
+
+    { "menuHeader": "Gestión" },
+    {
+      "url": "/buenas-practicas",
+      "name": "Buenas Prácticas",
+      "icon": "menu-icon icon-base ti tabler-rosette-discount-check",
+      "slug": "buenas-practicas",
+      "i18n": "Registro y seguimiento"
+    },
     {
       "url": "/reconocimientos",
       "name": "Reconocimientos",
@@ -56,19 +83,73 @@
       "slug": "rep-reconocimientos",
       "i18n": "Premiación y destacados"
     },
+
+    { "menuHeader": "Reportes" },
+    {
+      "url": "/reportes",
+      "name": "Reportes",
+      "icon": "menu-icon icon-base ti tabler-chart-bar",
+      "slug": "rep-reportes",
+      "i18n": "Análisis y exportación"
+    },
+
+    { "menuHeader": "Administración" },
+    {
+      "url": "/usuarios",
+      "name": "Usuarios",
+      "icon": "menu-icon icon-base ti tabler-users",
+      "slug": "adm-usuarios",
+      "i18n": "Cuentas y accesos"
+    },
+    {
+      "name": "Roles y Permisos",
+      "icon": "menu-icon icon-base ti tabler-lock",
+      "slug": ["adm-roles", "adm-permisos"],
+      "i18n": "Seguridad del sistema",
+      "submenu": [
+        {
+          "url": "/roles",
+          "name": "Roles",
+          "slug": "adm-roles",
+          "i18n": "Perfiles de usuario"
+        },
+        {
+          "url": "/permisos",
+          "name": "Permisos",
+          "slug": "adm-permisos",
+          "i18n": "Control de acceso"
+        }
+      ]
+    },
+    {
+      "url": "/unidades-organicas",
+      "name": "Unidades Orgánicas",
+      "icon": "menu-icon icon-base ti tabler-sitemap",
+      "slug": "adm-unidades",
+      "i18n": "Estructura institucional"
+    },
+    {
+      "url": "/administracion/componentes",
+      "name": "Componentes SCI",
+      "icon": "menu-icon icon-base ti tabler-layout-grid",
+      "slug": "adm-componentes",
+      "i18n": "Catálogo del modelo"
+    },
     {
       "url": "/configuracion",
       "name": "Configuración",
       "icon": "menu-icon icon-base ti tabler-settings",
       "slug": "adm-configuracion",
-      "i18n": "Administración del sistema"
+      "i18n": "Parámetros del sistema"
     },
+
+    { "menuHeader": "Soporte" },
     {
       "url": "/ayuda",
       "name": "Ayuda",
       "icon": "menu-icon icon-base ti tabler-help-circle",
       "slug": "ayuda",
-      "i18n": "Guías y soporte"
+      "i18n": "Guías y documentación"
     }
   ]
 }

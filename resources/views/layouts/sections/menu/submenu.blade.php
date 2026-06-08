@@ -36,7 +36,12 @@ use Illuminate\Support\Facades\Route;
           @if (isset($submenu->icon))
           <i class="{{ $submenu->icon }}"></i>
           @endif
-          <div>{{ isset($submenu->name) ? __($submenu->name) : '' }}</div>
+          <div class="d-flex flex-column lh-1">
+            <span>{{ isset($submenu->name) ? __($submenu->name) : '' }}</span>
+            @isset($submenu->i18n)
+            <small class="text-muted fw-normal" style="font-size:10px;opacity:.75">{{ __($submenu->i18n) }}</small>
+            @endisset
+          </div>
           @isset($submenu->badge)
             <div class="badge bg-{{ $submenu->badge[0] }} rounded-pill ms-auto">{{ $submenu->badge[1] }}</div>
           @endisset
