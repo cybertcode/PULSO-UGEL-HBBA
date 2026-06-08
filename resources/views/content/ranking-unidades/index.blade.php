@@ -3,7 +3,7 @@ use Illuminate\Support\Str;
 $configData = Helper::appClasses();
 @endphp
 @extends('layouts/layoutMaster')
-@section('title', 'Ranking de Unidades - PULSO UGEL')
+@section('title', 'Ranking de Unidades — PULSO UGEL')
 
 @section('vendor-style')
 @vite(['resources/assets/vendor/libs/apex-charts/apex-charts.scss'])
@@ -14,289 +14,385 @@ $configData = Helper::appClasses();
 
 @section('content')
 
-{{-- Breadcrumb --}}
-<nav aria-label="breadcrumb" class="mb-4">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti tabler-home icon-14px me-1"></i>Inicio</a></li>
-    <li class="breadcrumb-item active">Ranking de Unidades</li>
-  </ol>
-</nav>
+@php
+  $unCumplieron = $unidades->where('color','success')->count();
+  $unRiesgo     = $unidades->where('color','warning')->count();
+  $unCriticas   = $unidades->where('color','danger')->count();
+  $promedio     = round($unidades->avg('porcentaje'));
+  $maxVal       = $unidades->max('porcentaje');
+  $minVal       = $unidades->min('porcentaje');
+  $u1 = $unidades->get(0);
+  $u2 = $unidades->get(1);
+  $u3 = $unidades->get(2);
+  $colorHex = ['success'=>'#28c76f','warning'=>'#ff9f43','danger'=>'#ea5455'];
+  $colorRgb = ['success'=>'40,199,111','warning'=>'255,159,67','danger'=>'234,84,85'];
+@endphp
 
-{{-- Header con gradiente --}}
-<div class="pulso-page-header mb-6">
-  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-    <div>
-      <h4 class="mb-1"><i class="ti tabler-award me-2"></i>Ranking de Unidades Orgánicas</h4>
-      <p>Competencia sana entre áreas — {{ now()->format('F Y') }}</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-      {{-- Mini resumen --}}
-      @php
-        $unCumplieron = $unidades->where('color','success')->count();
-        $unRiesgo     = $unidades->where('color','warning')->count();
-        $unCriticas   = $unidades->where('color','danger')->count();
-      @endphp
-      <div class="px-3 py-1 rounded-pill d-flex align-items-center gap-1" style="background:rgba(40,199,111,.25);border:1px solid rgba(40,199,111,.5);color:#fff;font-size:12px;font-weight:600"><i class="ti tabler-check"></i>{{ $unCumplieron }} Cumplen</div>
-      <div class="px-3 py-1 rounded-pill d-flex align-items-center gap-1" style="background:rgba(255,159,67,.25);border:1px solid rgba(255,159,67,.5);color:#fff;font-size:12px;font-weight:600"><i class="ti tabler-alert-triangle"></i>{{ $unRiesgo }} En riesgo</div>
-      <div class="px-3 py-1 rounded-pill d-flex align-items-center gap-1" style="background:rgba(234,84,85,.25);border:1px solid rgba(234,84,85,.5);color:#fff;font-size:12px;font-weight:600"><i class="ti tabler-flame"></i>{{ $unCriticas }} Críticas</div>
-      <a href="{{ route('rep-reconocimientos') }}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4)">
-        <i class="ti tabler-trophy me-1"></i>Nuevo reconocimiento
-      </a>
-    </div>
+{{-- ════ CABECERA ════ --}}
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-6">
+  <div>
+    <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
+      <span class="badge rounded bg-label-warning p-2">
+        <i class="icon-base ti tabler-trophy icon-lg text-warning"></i>
+      </span>
+      Ranking de Unidades Orgánicas
+    </h4>
+    <p class="text-muted mb-0 ms-1">
+      Clasificación por cumplimiento · {{ $unidades->count() }} unidades ·
+      <span style="font-size:11px">{{ now()->translatedFormat('F Y') }}</span>
+    </p>
+  </div>
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <span class="badge bg-label-success rounded-pill px-3 py-1_5" style="font-size:11px">
+      <i class="ti tabler-circle-check me-1"></i>{{ $unCumplieron }} cumplen
+    </span>
+    <span class="badge bg-label-warning rounded-pill px-3 py-1_5" style="font-size:11px">
+      <i class="ti tabler-clock me-1"></i>{{ $unRiesgo }} en proceso
+    </span>
+    <span class="badge bg-label-danger rounded-pill px-3 py-1_5" style="font-size:11px">
+      <i class="ti tabler-flame me-1"></i>{{ $unCriticas }} críticas
+    </span>
+    <a href="{{ route('rep-reconocimientos') }}" class="btn btn-sm btn-label-warning ms-1">
+      <i class="ti tabler-star me-1"></i>Reconocimiento
+    </a>
   </div>
 </div>
 
-{{-- ── PODIO TOP 3 — diseño columnas desescalonadas ── --}}
-@if($unidades->count() >= 1)
-<div class="card mb-6">
-  <div class="card-header border-0 pb-0">
-    <div class="card-title mb-0">
-      <h5 class="mb-1"><i class="ti tabler-podium me-2 text-warning"></i>Podio — Top 3</h5>
-      <p class="card-subtitle">Las tres unidades con mayor avance en el período</p>
-    </div>
-  </div>
-  <div class="card-body pb-4">
-    {{-- Podio: orden visual 2-1-3 con escalonado real usando padding-top --}}
-    <div class="d-flex justify-content-center align-items-end gap-3 flex-wrap">
+{{-- ════ PODIO TOP 3 ════ --}}
+@if($u1)
+<div class="card mb-6" style="overflow:visible">
+  <div class="card-body pt-5 pb-4 px-4">
 
-      {{-- 2° lugar --}}
-      @if($unidades->get(1))
-      @php $u2 = $unidades->get(1); @endphp
-      <div class="text-center" style="width:200px;min-width:160px">
-        <div class="card border-0 bg-body-secondary mb-0 overflow-hidden" style="padding-top:1.5rem">
-          <div class="d-flex justify-content-center mb-2">
-            <div class="rounded-pill px-3 py-1 fw-bold text-secondary" style="background:rgba(134,142,150,.2);font-size:13px">2°</div>
-          </div>
-          <div class="mx-auto mb-2" style="width:60px;height:60px;border-radius:50%;background:var(--bs-gray-200);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--bs-gray-700)">
-            {{ strtoupper(substr($u2->sigla ?? $u2->nombre, 0, 2)) }}
-          </div>
-          <div class="fw-bold mb-0" style="font-size:14px">{{ $u2->sigla }}</div>
-          <div class="text-muted mb-2" style="font-size:11px">{{ Str::limit($u2->nombre, 22) }}</div>
-          @if($u2->variacion > 0)
-            <span class="badge bg-label-success rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px"><i class="ti tabler-arrow-up" style="font-size:10px"></i>+{{ $u2->variacion }} pos.</span>
-          @elseif($u2->variacion < 0)
-            <span class="badge bg-label-danger rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px"><i class="ti tabler-arrow-down" style="font-size:10px"></i>{{ $u2->variacion }} pos.</span>
-          @else
-            <span class="badge bg-label-secondary rounded-pill mb-2 mx-auto" style="font-size:10px">— Sin cambio</span>
-          @endif
-          <div class="py-3 mt-1" style="background:rgba(134,142,150,.12)">
-            <div class="fw-bold text-body" style="font-size:1.75rem;line-height:1">{{ $u2->porcentaje }}%</div>
-            <small class="text-muted">{{ $u2->completadas_count }}/{{ $u2->actividades_count }} completadas</small>
+    <div class="text-center mb-5">
+      <h5 class="fw-bold mb-1"><i class="ti tabler-podium me-2 text-warning"></i>Podio — Mejores del Período</h5>
+      <p class="card-subtitle mb-0">Las tres unidades con mayor porcentaje de cumplimiento</p>
+    </div>
+
+    {{-- Podio: flex puro, align-items:flex-end garantiza escalonado real --}}
+    <div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;padding:0 16px">
+
+      {{-- ── 2° PLATA (altura media) ── --}}
+      @if($u2)
+      <div style="width:200px;flex-shrink:0">
+        <div class="rounded-3 p-3 text-center"
+             style="height:270px;display:flex;flex-direction:column;align-items:center;
+                    background:linear-gradient(170deg,rgba(192,192,192,.18),rgba(192,192,192,.05));
+                    border:1px solid rgba(192,192,192,.3)">
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                      font-size:16px;font-weight:900;flex-shrink:0;margin-bottom:8px;
+                      background:linear-gradient(135deg,#b8b8b8,#e0e0e0);color:#fff;
+                      box-shadow:0 3px 10px rgba(0,0,0,.2)">2</div>
+          <div style="width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                      font-size:19px;font-weight:900;flex-shrink:0;margin-bottom:8px;
+                      background:linear-gradient(145deg,#c0c0c0,#989898);color:#fff;
+                      box-shadow:0 6px 18px rgba(0,0,0,.18)">{{ strtoupper(substr($u2->sigla,0,2)) }}</div>
+          <p class="fw-bold mb-0" style="font-size:14px">{{ $u2->sigla }}</p>
+          <p class="text-muted mb-0" style="font-size:10px;line-height:1.3">{{ Str::limit($u2->nombre,20) }}</p>
+          <div style="margin-top:auto;padding-top:8px">
+            <div class="fw-bold mb-1" style="font-size:1.6rem;color:#909090;line-height:1">{{ $u2->porcentaje }}%</div>
+            <small class="text-muted d-block mb-2">{{ $u2->completadas_count }}/{{ $u2->actividades_count }}</small>
+            @if($u2->variacion > 0)<span class="badge bg-label-success rounded-pill" style="font-size:9px"><i class="ti tabler-arrow-up"></i>+{{ $u2->variacion }}</span>
+            @elseif($u2->variacion < 0)<span class="badge bg-label-danger rounded-pill" style="font-size:9px"><i class="ti tabler-arrow-down"></i>{{ $u2->variacion }}</span>
+            @else<span class="badge bg-label-secondary rounded-pill" style="font-size:9px">—</span>@endif
           </div>
         </div>
       </div>
       @endif
 
-      {{-- 1° lugar — más alto con corona flotante --}}
-      @if($unidades->get(0))
-      @php $u1 = $unidades->get(0); @endphp
-      <div class="text-center" style="width:220px;min-width:180px;margin-bottom:-16px">
-        <div class="text-warning mb-1" style="font-size:28px"><i class="ti tabler-crown"></i></div>
-        <div class="card border-0 mb-0 overflow-hidden" style="border:2px solid rgba(255,193,7,.4)!important;padding-top:1.5rem">
-          <div class="d-flex justify-content-center mb-2">
-            <div class="rounded-pill px-3 py-1 fw-bold" style="background:linear-gradient(135deg,#ffd700,#ff9800);color:#5c3800;font-size:13px">1°</div>
-          </div>
-          <div class="mx-auto mb-2" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#ffc107,#ff9800);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;box-shadow:0 6px 20px rgba(255,193,7,.35)">
-            {{ strtoupper(substr($u1->sigla ?? $u1->nombre, 0, 2)) }}
-          </div>
-          <div class="fw-bold mb-0" style="font-size:16px">{{ $u1->sigla }}</div>
-          <div class="text-muted mb-2" style="font-size:11px">{{ Str::limit($u1->nombre, 24) }}</div>
-          <span class="badge bg-label-success rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px">
-            <i class="ti tabler-heart" style="font-size:10px"></i>{{ $u1->porcentaje >= 85 ? 'Excelente' : ($u1->porcentaje >= 75 ? 'Bueno' : 'Regular') }}
-            @if($u1->variacion > 0) · +{{ $u1->variacion }}@endif
+      {{-- ── 1° ORO (el más alto) ── --}}
+      <div style="width:220px;flex-shrink:0">
+        <div class="rounded-3 p-3 text-center"
+             style="height:360px;display:flex;flex-direction:column;align-items:center;
+                    background:linear-gradient(170deg,rgba(255,193,7,.22),rgba(255,193,7,.06));
+                    border:2px solid rgba(255,193,7,.45)">
+          <div style="font-size:26px;line-height:1;margin-bottom:6px;flex-shrink:0;
+                      filter:drop-shadow(0 3px 8px rgba(255,193,7,.7))">👑</div>
+          <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                      font-size:19px;font-weight:900;flex-shrink:0;margin-bottom:8px;
+                      background:linear-gradient(135deg,#ffd700,#ff9800);color:#fff;
+                      box-shadow:0 4px 16px rgba(255,193,7,.5)">1</div>
+          <div style="width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                      font-size:26px;font-weight:900;flex-shrink:0;margin-bottom:8px;
+                      background:linear-gradient(145deg,#ffd700,#ff9800);color:#fff;
+                      box-shadow:0 8px 24px rgba(255,193,7,.5)">{{ strtoupper(substr($u1->sigla,0,2)) }}</div>
+          <p class="fw-bold mb-0" style="font-size:16px">{{ $u1->sigla }}</p>
+          <p class="text-muted mb-1" style="font-size:10px;line-height:1.3">{{ Str::limit($u1->nombre,24) }}</p>
+          <span class="badge bg-warning rounded-pill px-2 mb-0" style="font-size:10px;color:#fff">
+            {{ $u1->porcentaje >= 85 ? '⭐ Excelente' : ($u1->porcentaje >= 75 ? '✓ Bueno' : '↑ Regular') }}
           </span>
-          <div class="py-3 mt-1" style="background:rgba(255,193,7,.12)">
-            <div class="fw-bold text-warning" style="font-size:2.25rem;line-height:1">{{ $u1->porcentaje }}%</div>
-            <small class="text-muted">{{ $u1->completadas_count }}/{{ $u1->actividades_count }} completadas</small>
+          <div style="margin-top:auto;padding-top:8px">
+            <div class="fw-bold mb-1" style="font-size:2.2rem;color:#ff9800;line-height:1">{{ $u1->porcentaje }}%</div>
+            <small class="text-muted d-block mb-2">{{ $u1->completadas_count }}/{{ $u1->actividades_count }}</small>
+            @if($u1->variacion > 0)<span class="badge bg-label-success rounded-pill" style="font-size:9px">+{{ $u1->variacion }}</span>@endif
           </div>
         </div>
       </div>
-      @endif
 
-      {{-- 3° lugar --}}
-      @if($unidades->get(2))
-      @php $u3 = $unidades->get(2); @endphp
-      <div class="text-center" style="width:200px;min-width:160px">
-        <div class="card border-0 bg-body-secondary mb-0 overflow-hidden" style="padding-top:1.5rem">
-          <div class="d-flex justify-content-center mb-2">
-            <div class="rounded-pill px-3 py-1 fw-bold" style="background:rgba(205,127,50,.2);color:#8b5e3c;font-size:13px">3°</div>
-          </div>
-          <div class="mx-auto mb-2" style="width:60px;height:60px;border-radius:50%;background:rgba(205,127,50,.15);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#cd7f32">
-            {{ strtoupper(substr($u3->sigla ?? $u3->nombre, 0, 2)) }}
-          </div>
-          <div class="fw-bold mb-0" style="font-size:14px">{{ $u3->sigla }}</div>
-          <div class="text-muted mb-2" style="font-size:11px">{{ Str::limit($u3->nombre, 22) }}</div>
-          @if($u3->variacion > 0)
-            <span class="badge bg-label-success rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px"><i class="ti tabler-arrow-up" style="font-size:10px"></i>+{{ $u3->variacion }} pos.</span>
-          @elseif($u3->variacion < 0)
-            <span class="badge bg-label-danger rounded-pill mb-2 mx-auto" style="font-size:10px;display:inline-flex;align-items:center;gap:2px"><i class="ti tabler-arrow-down" style="font-size:10px"></i>{{ $u3->variacion }} pos.</span>
-          @else
-            <span class="badge bg-label-secondary rounded-pill mb-2 mx-auto" style="font-size:10px">— Sin cambio</span>
-          @endif
-          <div class="py-3 mt-1" style="background:rgba(205,127,50,.1)">
-            <div class="fw-bold" style="font-size:1.75rem;line-height:1;color:#cd7f32">{{ $u3->porcentaje }}%</div>
-            <small class="text-muted">{{ $u3->completadas_count }}/{{ $u3->actividades_count }} completadas</small>
+      {{-- ── 3° BRONCE (el más bajo) ── --}}
+      @if($u3)
+      <div style="width:200px;flex-shrink:0">
+        <div class="rounded-3 p-3 text-center"
+             style="height:210px;display:flex;flex-direction:column;align-items:center;
+                    background:linear-gradient(170deg,rgba(205,127,50,.18),rgba(205,127,50,.05));
+                    border:1px solid rgba(205,127,50,.3)">
+          <div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                      font-size:14px;font-weight:900;flex-shrink:0;margin-bottom:8px;
+                      background:linear-gradient(135deg,#cd7f32,#e09050);color:#fff;
+                      box-shadow:0 3px 10px rgba(205,127,50,.3)">3</div>
+          <div style="width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                      font-size:18px;font-weight:900;flex-shrink:0;margin-bottom:8px;
+                      background:linear-gradient(145deg,#d4833a,#b8692a);color:#fff;
+                      box-shadow:0 5px 16px rgba(205,127,50,.3)">{{ strtoupper(substr($u3->sigla,0,2)) }}</div>
+          <p class="fw-bold mb-0" style="font-size:14px">{{ $u3->sigla }}</p>
+          <p class="text-muted mb-0" style="font-size:10px;line-height:1.3">{{ Str::limit($u3->nombre,20) }}</p>
+          <div style="margin-top:auto;padding-top:8px">
+            <div class="fw-bold mb-1" style="font-size:1.6rem;color:#cd7f32;line-height:1">{{ $u3->porcentaje }}%</div>
+            <small class="text-muted d-block mb-2">{{ $u3->completadas_count }}/{{ $u3->actividades_count }}</small>
+            @if($u3->variacion > 0)<span class="badge bg-label-success rounded-pill" style="font-size:9px"><i class="ti tabler-arrow-up"></i>+{{ $u3->variacion }}</span>
+            @elseif($u3->variacion < 0)<span class="badge bg-label-danger rounded-pill" style="font-size:9px"><i class="ti tabler-arrow-down"></i>{{ $u3->variacion }}</span>
+            @else<span class="badge bg-label-secondary rounded-pill" style="font-size:9px">—</span>@endif
           </div>
         </div>
       </div>
       @endif
 
     </div>
+
+    {{-- Base inferior --}}
+    <div class="mt-4 rounded-pill mx-auto" style="height:5px;max-width:700px;background:linear-gradient(90deg,rgba(192,192,192,.3) 0%,rgba(255,193,7,.5) 50%,rgba(205,127,50,.3) 100%)"></div>
+
   </div>
 </div>
 @endif
 
-{{-- ── Gráfico de barras ── --}}
+{{-- ════ GRÁFICO DE BARRAS ════ --}}
 <div class="card mb-6">
-  <div class="card-header d-flex align-items-center justify-content-between">
-    <div class="card-title mb-0">
-      <h5 class="mb-1">Avance por Unidad Orgánica</h5>
-      <p class="card-subtitle">Porcentaje de cumplimiento acumulado {{ now()->year }}</p>
+  <div class="card-header border-bottom d-flex align-items-center justify-content-between py-4">
+    <div>
+      <h5 class="fw-bold mb-1">Avance por Unidad Orgánica</h5>
+      <p class="card-subtitle mb-0">Porcentaje de cumplimiento acumulado · {{ now()->year }}</p>
     </div>
-    <span class="badge bg-label-primary rounded-pill px-3">{{ now()->year }}</span>
+    <div class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--bs-secondary-color)">
+        <span style="width:20px;height:2px;background:#28c76f;display:inline-block;border-radius:2px;border-top:2px dashed #28c76f"></span>
+        Umbral 75%
+      </div>
+      <span class="badge bg-label-primary rounded-pill px-3">{{ now()->year }}</span>
+    </div>
   </div>
-  <div class="card-body pt-2">
+  <div class="card-body">
     <div id="chartRanking"></div>
   </div>
 </div>
 
-{{-- ── Clasificación completa con ranking-item pattern ── --}}
+{{-- ════ TABLA CLASIFICACIÓN + PANEL LATERAL ════ --}}
 <div class="row g-6">
+
+  {{-- Clasificación completa --}}
   <div class="col-xl-7">
     <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1">Clasificación Completa</h5>
-          <p class="card-subtitle">Todas las unidades orgánicas ordenadas por avance</p>
-        </div>
+      <div class="card-header border-bottom py-4">
+        <h5 class="fw-bold mb-1">Clasificación Completa</h5>
+        <p class="card-subtitle mb-0">Todas las unidades ordenadas por cumplimiento</p>
       </div>
       <div class="card-body p-0">
-        @forelse($unidades as $u)
+
+        {{-- TOP 3 con fondo especial --}}
+        @foreach($unidades->take(3) as $u)
         @php
-          $posClass = match($u->posicion_actual) { 1=>'pos-1',2=>'pos-2',3=>'pos-3',default=>'pos-n' };
+          $bgMap  = [1=>'rgba(255,193,7,.07)',2=>'rgba(192,192,192,.07)',3=>'rgba(205,127,50,.07)'];
+          $bdMap  = [1=>'rgba(255,193,7,.3)', 2=>'rgba(192,192,192,.25)',3=>'rgba(205,127,50,.25)'];
+          $numBg  = [1=>'linear-gradient(135deg,#ffd700,#ff9800)',2=>'linear-gradient(135deg,#c0c0c0,#e0e0e0)',3=>'linear-gradient(135deg,#cd7f32,#e09050)'];
+          $numClr = [1=>'#fff',2=>'#666',3=>'#fff'];
+          $hex    = $colorHex[$u->color];
+          $rgb    = $colorRgb[$u->color];
+          $icon   = match($u->color){'success'=>'tabler-circle-check','warning'=>'tabler-clock',default=>'tabler-alert-triangle'};
         @endphp
-        <div class="ranking-item">
-          {{-- Posición --}}
-          <div class="ranking-pos {{ $posClass }}" style="font-size:13px">{{ $u->posicion_actual }}</div>
-          {{-- Avatar --}}
+        <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom"
+             style="background:{{ $bgMap[$u->posicion_actual] }};border-left:3px solid {{ $bdMap[$u->posicion_actual] }}!important">
+          <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+               style="width:30px;height:30px;font-size:12px;
+                      background:{{ $numBg[$u->posicion_actual] }};color:{{ $numClr[$u->posicion_actual] }};
+                      box-shadow:0 2px 8px rgba(0,0,0,.15)">
+            {{ $u->posicion_actual }}
+          </div>
           <div class="avatar avatar-sm flex-shrink-0">
-            <span class="avatar-initial rounded-circle bg-label-{{ $u->color }}" style="font-size:11px;font-weight:700">
-              {{ strtoupper(substr($u->sigla ?? $u->nombre, 0, 2)) }}
+            <span class="avatar-initial rounded-circle bg-label-{{ $u->color }}" style="font-size:11px;font-weight:800">
+              {{ strtoupper(substr($u->sigla,0,2)) }}
             </span>
           </div>
-          {{-- Nombre + barra --}}
+          <div class="flex-grow-1 overflow-hidden">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="fw-bold" style="font-size:13.5px">{{ $u->sigla }}</span>
+              <small class="text-muted text-truncate">{{ $u->nombre }}</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1 rounded-pill" style="height:6px;background:rgba({{ $rgb }},.15)">
+                <div class="progress-bar rounded-pill" style="width:{{ $u->porcentaje }}%;background:{{ $hex }}"></div>
+              </div>
+              <span class="fw-bold" style="min-width:38px;font-size:12px;color:{{ $hex }}">{{ $u->porcentaje }}%</span>
+            </div>
+          </div>
+          <div class="flex-shrink-0 text-end" style="min-width:90px">
+            <span class="badge bg-label-{{ $u->color }} rounded-pill d-block mb-1" style="font-size:10px">{{ $u->semaforo }}</span>
+            @if($u->variacion > 0)<small class="text-success fw-bold"><i class="ti tabler-arrow-up" style="font-size:10px"></i>+{{ $u->variacion }}</small>
+            @elseif($u->variacion < 0)<small class="text-danger fw-bold"><i class="ti tabler-arrow-down" style="font-size:10px"></i>{{ $u->variacion }}</small>
+            @else<small class="text-muted"><i class="ti tabler-minus" style="font-size:10px"></i></small>@endif
+          </div>
+        </div>
+        @endforeach
+
+        {{-- Resto --}}
+        @if($unidades->count() > 3)
+        <div class="px-4 py-2" style="background:var(--bs-tertiary-bg)">
+          <small class="text-muted fw-semibold" style="font-size:10px;letter-spacing:.07em">RESTO DE UNIDADES</small>
+        </div>
+        @foreach($unidades->slice(3) as $u)
+        @php
+          $hex = $colorHex[$u->color];
+          $rgb = $colorRgb[$u->color];
+        @endphp
+        <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom"
+             style="border-left:3px solid {{ $hex }}!important">
+          <div class="text-center flex-shrink-0" style="width:30px">
+            <span class="fw-bold text-muted" style="font-size:12px">{{ $u->posicion_actual }}</span>
+          </div>
+          <div class="avatar avatar-sm flex-shrink-0">
+            <span class="avatar-initial rounded-circle bg-label-{{ $u->color }}" style="font-size:11px;font-weight:800">
+              {{ strtoupper(substr($u->sigla,0,2)) }}
+            </span>
+          </div>
           <div class="flex-grow-1 overflow-hidden">
             <div class="d-flex align-items-center gap-2 mb-1">
               <span class="fw-semibold" style="font-size:13px">{{ $u->sigla }}</span>
-              <span class="badge bg-label-{{ $u->color }} rounded-pill" style="font-size:10px">{{ $u->semaforo }}</span>
+              <small class="text-muted text-truncate">{{ $u->nombre }}</small>
             </div>
             <div class="d-flex align-items-center gap-2">
-              <div class="progress flex-grow-1" style="height:5px">
-                <div class="progress-bar bg-{{ $u->color }} rounded-pill" style="width:{{ $u->porcentaje }}%"></div>
+              <div class="progress flex-grow-1 rounded-pill" style="height:5px;background:rgba({{ $rgb }},.15)">
+                <div class="progress-bar rounded-pill" style="width:{{ $u->porcentaje }}%;background:{{ $hex }}"></div>
               </div>
-              <small class="fw-bold text-{{ $u->color }}" style="min-width:34px;font-size:12px">{{ $u->porcentaje }}%</small>
+              <span class="fw-bold" style="min-width:38px;font-size:12px;color:{{ $hex }}">{{ $u->porcentaje }}%</span>
             </div>
           </div>
-          {{-- Variación --}}
-          <div class="text-end flex-shrink-0" style="min-width:50px">
-            @if($u->variacion > 0)
-            <div class="variacion-up"><i class="ti tabler-arrow-up icon-12px"></i>+{{ $u->variacion }}</div>
-            @elseif($u->variacion < 0)
-            <div class="variacion-down"><i class="ti tabler-arrow-down icon-12px"></i>{{ $u->variacion }}</div>
-            @else
-            <div class="variacion-same"><i class="ti tabler-minus icon-12px"></i></div>
-            @endif
-            @if($u->posicion_anterior && $u->posicion_anterior != $u->posicion_actual)
-            <div style="font-size:9px" class="text-muted">era {{ $u->posicion_anterior }}°</div>
-            @endif
+          <div class="flex-shrink-0 text-end" style="min-width:90px">
+            <span class="badge bg-label-{{ $u->color }} rounded-pill d-block mb-1" style="font-size:10px">{{ $u->semaforo }}</span>
+            @if($u->variacion > 0)<small class="text-success fw-bold"><i class="ti tabler-arrow-up" style="font-size:10px"></i>+{{ $u->variacion }}</small>
+            @elseif($u->variacion < 0)<small class="text-danger fw-bold"><i class="ti tabler-arrow-down" style="font-size:10px"></i>{{ $u->variacion }}</small>
+            @else<small class="text-muted"><i class="ti tabler-minus" style="font-size:10px"></i></small>@endif
           </div>
         </div>
-        @empty
-        <div class="text-center text-muted py-6">
-          <i class="ti tabler-building-community icon-48px d-block mb-2"></i>
-          <p class="mb-0">Sin unidades registradas</p>
-        </div>
-        @endforelse
+        @endforeach
+        @endif
+
       </div>
     </div>
   </div>
 
-  {{-- Panel de detalles + resumen --}}
-  <div class="col-xl-5">
+  {{-- Panel lateral --}}
+  <div class="col-xl-5 d-flex flex-column gap-5">
+
     {{-- Resumen estadístico --}}
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="mb-0">Resumen del Período</h5>
+    <div class="card">
+      <div class="card-header border-bottom py-4">
+        <h5 class="fw-bold mb-1">Resumen del Período</h5>
+        <p class="card-subtitle mb-0">Indicadores consolidados · {{ now()->year }}</p>
       </div>
       <div class="card-body">
-        @php
-          $promedio = $unidades->avg('porcentaje');
-          $max      = $unidades->max('porcentaje');
-          $min      = $unidades->min('porcentaje');
-        @endphp
-        <div class="row g-4 text-center">
+        {{-- 3 métricas --}}
+        <div class="row g-4 text-center mb-4">
           <div class="col-4">
-            <div class="text-primary" style="font-size:1.75rem;font-weight:800;line-height:1">{{ round($promedio) }}%</div>
+            <div class="badge rounded bg-label-primary p-2 mb-2 d-inline-flex">
+              <i class="icon-base ti tabler-chart-line icon-lg text-primary"></i>
+            </div>
+            <h3 class="fw-bold text-primary mb-0">{{ $promedio }}%</h3>
             <small class="text-muted">Promedio</small>
           </div>
           <div class="col-4">
-            <div class="text-success" style="font-size:1.75rem;font-weight:800;line-height:1">{{ $max }}%</div>
+            <div class="badge rounded bg-label-success p-2 mb-2 d-inline-flex">
+              <i class="icon-base ti tabler-arrow-up icon-lg text-success"></i>
+            </div>
+            <h3 class="fw-bold text-success mb-0">{{ $maxVal }}%</h3>
             <small class="text-muted">Máximo</small>
           </div>
           <div class="col-4">
-            <div class="text-danger" style="font-size:1.75rem;font-weight:800;line-height:1">{{ $min }}%</div>
+            <div class="badge rounded bg-label-danger p-2 mb-2 d-inline-flex">
+              <i class="icon-base ti tabler-arrow-down icon-lg text-danger"></i>
+            </div>
+            <h3 class="fw-bold text-danger mb-0">{{ $minVal }}%</h3>
             <small class="text-muted">Mínimo</small>
           </div>
         </div>
-        <hr class="my-4">
-        <div class="row g-3">
-          <div class="col-4 text-center">
-            <div class="badge bg-label-success rounded-circle p-3 mb-2 d-block mx-auto" style="width:48px;height:48px;display:flex!important;align-items:center;justify-content:center">
-              <i class="ti tabler-check icon-22px"></i>
+
+        {{-- Barra apilada de distribución --}}
+        <p class="fw-semibold mb-2" style="font-size:11px;letter-spacing:.06em;color:var(--bs-secondary-color)">DISTRIBUCIÓN POR ZONA</p>
+        <div class="d-flex rounded-pill overflow-hidden mb-4" style="height:12px;gap:2px">
+          @if($unCumplieron)
+          <div style="flex:{{ $unCumplieron }};background:#28c76f;border-radius:99px 0 0 99px"></div>
+          @endif
+          @if($unRiesgo)
+          <div style="flex:{{ $unRiesgo }};background:#ff9f43"></div>
+          @endif
+          @if($unCriticas)
+          <div style="flex:{{ $unCriticas }};background:#ea5455;border-radius:0 99px 99px 0"></div>
+          @endif
+        </div>
+
+        <div class="d-flex flex-column gap-3">
+          @foreach([
+            ['label'=>'Zona verde — Cumplen','sub'=>'≥75%','color'=>'success','icon'=>'tabler-circle-check','val'=>$unCumplieron],
+            ['label'=>'Zona amarilla — En proceso','sub'=>'50–74%','color'=>'warning','icon'=>'tabler-clock','val'=>$unRiesgo],
+            ['label'=>'Zona roja — Críticas','sub'=>'<50%','color'=>'danger','icon'=>'tabler-flame','val'=>$unCriticas],
+          ] as $z)
+          <div class="d-flex align-items-center gap-3">
+            <div class="badge rounded bg-label-{{ $z['color'] }} p-1_5 flex-shrink-0">
+              <i class="icon-base ti {{ $z['icon'] }} icon-sm text-{{ $z['color'] }}"></i>
             </div>
-            <div class="fw-bold" style="font-size:1.25rem">{{ $unidades->where('color','success')->count() }}</div>
-            <small class="text-muted" style="font-size:11px">Cumplen (≥75%)</small>
-          </div>
-          <div class="col-4 text-center">
-            <div class="badge bg-label-warning rounded-circle p-3 mb-2 d-block mx-auto" style="width:48px;height:48px;display:flex!important;align-items:center;justify-content:center">
-              <i class="ti tabler-alert-triangle icon-22px"></i>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="fw-semibold">{{ $z['label'] }} <span class="text-muted fw-normal">({{ $z['sub'] }})</span></small>
+                <span class="fw-bold text-{{ $z['color'] }}">{{ $z['val'] }}</span>
+              </div>
+              <div class="progress rounded-pill mt-1" style="height:4px">
+                <div class="progress-bar bg-{{ $z['color'] }} rounded-pill"
+                     style="width:{{ $unidades->count() ? round($z['val']/$unidades->count()*100) : 0 }}%"></div>
+              </div>
             </div>
-            <div class="fw-bold" style="font-size:1.25rem">{{ $unidades->where('color','warning')->count() }}</div>
-            <small class="text-muted" style="font-size:11px">En riesgo (50–74%)</small>
           </div>
-          <div class="col-4 text-center">
-            <div class="badge bg-label-danger rounded-circle p-3 mb-2 d-block mx-auto" style="width:48px;height:48px;display:flex!important;align-items:center;justify-content:center">
-              <i class="ti tabler-flame icon-22px"></i>
-            </div>
-            <div class="fw-bold" style="font-size:1.25rem">{{ $unidades->where('color','danger')->count() }}</div>
-            <small class="text-muted" style="font-size:11px">Críticas (&lt;50%)</small>
-          </div>
+          @endforeach
         </div>
       </div>
     </div>
 
     {{-- Acciones rápidas --}}
     <div class="card">
-      <div class="card-header">
-        <h5 class="mb-0">Acciones Rápidas</h5>
+      <div class="card-header border-bottom py-4">
+        <h5 class="fw-bold mb-1">Acciones Rápidas</h5>
+        <p class="card-subtitle mb-0">Gestión y seguimiento del período</p>
       </div>
       <div class="card-body p-0">
         @foreach([
-          ['route'=>'sci-control-interno','icon'=>'tabler-clipboard-list','label'=>'Ver actividades pendientes','color'=>'primary'],
-          ['route'=>'mon-alertas','icon'=>'tabler-bell','label'=>'Revisar alertas activas','color'=>'warning'],
-          ['route'=>'rep-reportes','icon'=>'tabler-file-analytics','label'=>'Exportar reporte PDF/Excel','color'=>'success'],
-          ['route'=>'rep-reconocimientos','icon'=>'tabler-trophy','label'=>'Registrar reconocimiento','color'=>'info'],
+          ['route'=>'sci-control-interno','icon'=>'tabler-clipboard-list','label'=>'Ver actividades pendientes','sub'=>'Control interno y Modelo','color'=>'primary'],
+          ['route'=>'mon-alertas',        'icon'=>'tabler-bell',          'label'=>'Revisar alertas activas',   'sub'=>'Notificaciones del sistema','color'=>'warning'],
+          ['route'=>'rep-reportes',       'icon'=>'tabler-file-analytics','label'=>'Exportar reporte PDF/Excel','sub'=>'Reporte del período actual','color'=>'success'],
+          ['route'=>'rep-reconocimientos','icon'=>'tabler-trophy',        'label'=>'Registrar reconocimiento',  'sub'=>'Premio a unidades destacadas','color'=>'info'],
         ] as $acc)
-        <a href="{{ route($acc['route']) }}" class="d-flex align-items-center gap-3 px-4 py-3 border-bottom text-decoration-none hover-bg-body">
-          <div class="badge rounded bg-label-{{ $acc['color'] }} p-2">
-            <i class="icon-base ti {{ $acc['icon'] }} icon-18px"></i>
+        <a href="{{ route($acc['route']) }}"
+           class="d-flex align-items-center gap-3 px-4 py-3 border-bottom text-decoration-none"
+           onmouseover="this.style.background='var(--bs-tertiary-bg)'"
+           onmouseout="this.style.background='transparent'">
+          <div class="badge rounded bg-label-{{ $acc['color'] }} p-2 flex-shrink-0">
+            <i class="icon-base ti {{ $acc['icon'] }} icon-md text-{{ $acc['color'] }}"></i>
           </div>
-          <span class="fw-medium" style="font-size:13px">{{ $acc['label'] }}</span>
-          <i class="ti tabler-chevron-right text-muted ms-auto icon-14px"></i>
+          <div class="flex-grow-1">
+            <p class="fw-semibold mb-0" style="font-size:13px">{{ $acc['label'] }}</p>
+            <small class="text-muted">{{ $acc['sub'] }}</small>
+          </div>
+          <i class="ti tabler-chevron-right text-muted flex-shrink-0" style="font-size:14px"></i>
         </a>
         @endforeach
       </div>
     </div>
+
   </div>
 </div>
 
@@ -307,24 +403,43 @@ $configData = Helper::appClasses();
 document.addEventListener('DOMContentLoaded', function () {
   const isDark    = document.documentElement.getAttribute('data-bs-theme') === 'dark';
   const textColor = isDark ? '#b4bdc6' : '#697a8d';
-  const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)';
+  const gridColor = isDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.04)';
 
   new ApexCharts(document.getElementById('chartRanking'), {
-    chart: { type: 'bar', height: 300, toolbar: { show: false },
-      animations: { enabled: true, easing: 'easeinout', speed: 700 } },
+    chart: {
+      type: 'bar', height: 300, toolbar: { show: false },
+      animations: { enabled: true, easing: 'easeinout', speed: 700 },
+    },
     series: [{ name: '% Cumplimiento', data: {!! $chart_data !!} }],
     xaxis: {
       categories: {!! $chart_labels !!},
-      labels: { style: { colors: textColor, fontSize: '11px' }, rotate: -15 },
+      labels: { style: { colors: textColor, fontSize: '11px' } },
       axisBorder: { show: false }, axisTicks: { show: false },
     },
-    yaxis: { max: 100, min: 0, labels: { formatter: v => v + '%', style: { colors: textColor, fontSize: '11px' } } },
+    yaxis: {
+      max: 100, min: 0,
+      labels: { formatter: v => v + '%', style: { colors: textColor, fontSize: '11px' } },
+    },
     colors: {!! $chart_colors !!},
-    dataLabels: { enabled: true, formatter: v => v + '%', offsetY: -18,
-      style: { fontSize: '10px', fontWeight: 700, colors: [textColor] } },
-    plotOptions: { bar: { borderRadius: 7, distributed: true, columnWidth: '52%', dataLabels: { position: 'top' } } },
+    dataLabels: {
+      enabled: true, formatter: v => v + '%', offsetY: -20,
+      style: { fontSize: '10px', fontWeight: 700, colors: [textColor] },
+    },
+    plotOptions: {
+      bar: { borderRadius: 8, distributed: true, columnWidth: '48%', dataLabels: { position: 'top' } },
+    },
+    annotations: {
+      yaxis: [
+        { y: 75, borderColor: '#28c76f', borderWidth: 2, strokeDashArray: 5,
+          label: { text: 'Verde ≥75%', position: 'right',
+            style: { color: '#28c76f', background: isDark ? '#2b2c40' : '#fff', fontSize: '10px', fontWeight: 700 } } },
+        { y: 50, borderColor: '#ff9f43', borderWidth: 1, strokeDashArray: 5,
+          label: { text: '50%', position: 'right',
+            style: { color: '#ff9f43', background: isDark ? '#2b2c40' : '#fff', fontSize: '10px', fontWeight: 700 } } },
+      ],
+    },
     legend: { show: false },
-    grid: { borderColor: gridColor, strokeDashArray: 5, padding: { left: 0, right: 0 } },
+    grid: { borderColor: gridColor, strokeDashArray: 5 },
     tooltip: { theme: isDark ? 'dark' : 'light', y: { formatter: v => v + '% cumplimiento' } },
   }).render();
 });
