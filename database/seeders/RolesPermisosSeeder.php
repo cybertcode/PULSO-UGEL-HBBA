@@ -60,6 +60,42 @@ class RolesPermisosSeeder extends Seeder
             'alertas.crear',
             'alertas.configurar',
             'alertas.eliminar',
+
+            // Buenas Prácticas
+            'buenas-practicas.ver',
+            'buenas-practicas.crear',
+            'buenas-practicas.editar',
+            'buenas-practicas.eliminar',
+
+            // Recomendaciones
+            'recomendaciones.ver',
+            'recomendaciones.crear',
+            'recomendaciones.editar',
+            'recomendaciones.eliminar',
+
+            // PACI (Plan Anual de Control Interno)
+            'paci.ver',
+            'paci.crear',
+            'paci.editar',
+            'paci.eliminar',
+
+            // Matriz de Riesgos
+            'riesgos.ver',
+            'riesgos.crear',
+            'riesgos.editar',
+            'riesgos.eliminar',
+
+            // Actas del Comité SCI
+            'actas.ver',
+            'actas.crear',
+            'actas.editar',
+            'actas.eliminar',
+
+            // Autoevaluación SCI
+            'autoevaluacion.ver',
+            'autoevaluacion.crear',
+            'autoevaluacion.editar',
+            'autoevaluacion.eliminar',
         ];
 
         foreach ($permisos as $p) {
@@ -99,6 +135,26 @@ class RolesPermisosSeeder extends Seeder
             'alertas.ver',
             'alertas.crear',
             'alertas.configurar',
+            'buenas-practicas.ver',
+            'buenas-practicas.crear',
+            'buenas-practicas.editar',
+            'buenas-practicas.eliminar',
+            'recomendaciones.ver',
+            'recomendaciones.crear',
+            'recomendaciones.editar',
+            'paci.ver',
+            'paci.crear',
+            'paci.editar',
+            'riesgos.ver',
+            'riesgos.crear',
+            'riesgos.editar',
+            'riesgos.eliminar',
+            'actas.ver',
+            'actas.crear',
+            'actas.editar',
+            'autoevaluacion.ver',
+            'autoevaluacion.crear',
+            'autoevaluacion.editar',
         ]);
 
         // ── Responsable de Unidad: gestiona actividades de su unidad orgánica ─
@@ -116,6 +172,17 @@ class RolesPermisosSeeder extends Seeder
             'reconocimientos.ver',
             'alertas.ver',
             'alertas.crear',
+            'buenas-practicas.ver',
+            'buenas-practicas.crear',
+            'buenas-practicas.editar',
+            'recomendaciones.ver',
+            'recomendaciones.crear',
+            'recomendaciones.editar',
+            'paci.ver',
+            'riesgos.ver',
+            'actas.ver',
+            'autoevaluacion.ver',
+            'autoevaluacion.editar',
         ]);
 
         // ── Operador: registra avances y sube evidencias ──────────────────────
@@ -129,6 +196,12 @@ class RolesPermisosSeeder extends Seeder
             'evidencias.subir',
             'reportes.ver',
             'alertas.ver',
+            'buenas-practicas.ver',
+            'recomendaciones.ver',
+            'paci.ver',
+            'riesgos.ver',
+            'actas.ver',
+            'autoevaluacion.ver',
         ]);
 
         // ── Visualizador: solo lectura, sin modificar nada ────────────────────
@@ -141,6 +214,12 @@ class RolesPermisosSeeder extends Seeder
             'reportes.ver',
             'reconocimientos.ver',
             'alertas.ver',
+            'buenas-practicas.ver',
+            'recomendaciones.ver',
+            'paci.ver',
+            'riesgos.ver',
+            'actas.ver',
+            'autoevaluacion.ver',
         ]);
     }
 }
