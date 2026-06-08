@@ -80,7 +80,12 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
         @isset($menu->icon)
         <i class="{{ $menu->icon }}"></i>
         @endisset
-        <div>{{ isset($menu->name) ? __($menu->name) : '' }}</div>
+        <div class="d-flex flex-column lh-1">
+          <span>{{ isset($menu->name) ? __($menu->name) : '' }}</span>
+          @isset($menu->i18n)
+          <small class="text-muted fw-normal" style="font-size:10px;opacity:.75">{{ __($menu->i18n) }}</small>
+          @endisset
+        </div>
         @isset($menu->badge)
         <div class="badge bg-{{ $menu->badge[0] }} rounded-pill ms-auto">{{ $menu->badge[1] }}</div>
         @endisset

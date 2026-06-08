@@ -2,115 +2,73 @@
   "menu": [
     {
       "url": "/",
-      "name": "Panel Principal",
+      "name": "Inicio",
       "icon": "menu-icon icon-base ti tabler-smart-home",
-      "slug": "dashboard"
+      "slug": "dashboard",
+      "i18n": "Panel principal"
     },
     {
-      "name": "Control y Seguimiento",
-      "icon": "menu-icon icon-base ti tabler-clipboard-list",
-      "slug": "sci",
-      "submenu": [
-        {
-          "url": "/control-interno",
-          "name": "Control Interno",
-          "icon": "menu-icon icon-base ti tabler-clipboard-check",
-          "slug": "sci-control-interno"
-        },
-        {
-          "url": "/modelo-integridad",
-          "name": "Modelo de Integridad",
-          "icon": "menu-icon icon-base ti tabler-shield-check",
-          "slug": "sci-modelo-integridad"
-        },
-        {
-          "url": "/evidencias",
-          "name": "Evidencias",
-          "icon": "menu-icon icon-base ti tabler-file-upload",
-          "slug": "sci-evidencias"
-        }
-      ]
+      "url": "/control-interno",
+      "name": "Control Interno",
+      "icon": "menu-icon icon-base ti tabler-clipboard-check",
+      "slug": "sci-control-interno",
+      "i18n": "Seguimiento de actividades"
     },
     {
-      "name": "Monitoreo",
-      "icon": "menu-icon icon-base ti tabler-chart-line",
-      "slug": "mon",
-      "submenu": [
-        {
-          "url": "/semaforo",
-          "name": "Semáforo Institucional",
-          "icon": "menu-icon icon-base ti tabler-traffic-lights",
-          "slug": "mon-semaforo"
-        },
-        {
-          "url": "/alertas",
-          "name": "Alertas",
-          "icon": "menu-icon icon-base ti tabler-bell",
-          "slug": "mon-alertas"
-        },
-        {
-          "url": "/avance-unidades",
-          "name": "Avance por Unidades",
-          "icon": "menu-icon icon-base ti tabler-building-community",
-          "slug": "mon-avance-unidades"
-        },
-        {
-          "url": "/ranking-unidades",
-          "name": "Ranking de Unidades",
-          "icon": "menu-icon icon-base ti tabler-award",
-          "slug": "mon-ranking-unidades"
-        }
-      ]
+      "url": "/modelo-integridad",
+      "name": "Modelo de Integridad",
+      "icon": "menu-icon icon-base ti tabler-shield-check",
+      "slug": "sci-modelo-integridad",
+      "i18n": "Monitoreo de acciones"
     },
     {
+      "url": "/buenas-practicas",
+      "name": "Buenas Prácticas",
+      "icon": "menu-icon icon-base ti tabler-rosette-discount-check",
+      "slug": "buenas-practicas",
+      "i18n": "Registro y seguimiento"
+    },
+    {
+      "url": "/avance-unidades",
+      "name": "Avance por Unidades",
+      "icon": "menu-icon icon-base ti tabler-building-community",
+      "slug": "mon-avance-unidades",
+      "i18n": "Seguimiento detallado"
+    },
+    {
+      "url": "/reportes",
       "name": "Reportes",
       "icon": "menu-icon icon-base ti tabler-chart-bar",
-      "slug": "rep",
-      "submenu": [
-        {
-          "url": "/reportes",
-          "name": "Reportes",
-          "icon": "menu-icon icon-base ti tabler-chart-bar",
-          "slug": "rep-reportes"
-        },
-        {
-          "url": "/reconocimientos",
-          "name": "Reconocimientos",
-          "icon": "menu-icon icon-base ti tabler-trophy",
-          "slug": "rep-reconocimientos"
-        }
-      ]
+      "slug": "rep-reportes",
+      "i18n": "Reportes y analíticas"
     },
     {
-      "name": "Administración",
-      "icon": "menu-icon icon-base ti tabler-settings-2",
-      "slug": "adm",
-      "submenu": [
-        {
-          "url": "/usuarios",
-          "name": "Usuarios",
-          "icon": "menu-icon icon-base ti tabler-users",
-          "slug": "adm-usuarios"
-        },
-        {
-          "url": "/roles",
-          "name": "Roles",
-          "icon": "menu-icon icon-base ti tabler-user-check",
-          "slug": "adm-roles"
-        },
-        {
-          "url": "/permisos",
-          "name": "Permisos",
-          "icon": "menu-icon icon-base ti tabler-lock",
-          "slug": "adm-permisos"
-        },
-        {
-          "url": "/configuracion",
-          "name": "Configuración",
-          "icon": "menu-icon icon-base ti tabler-settings",
-          "slug": "adm-configuracion"
-        }
-      ]
+      "url": "/alertas",
+      "name": "Alertas",
+      "icon": "menu-icon icon-base ti tabler-bell",
+      "slug": "mon-alertas",
+      "i18n": "Notificaciones y pendientes"
+    },
+    {
+      "url": "/reconocimientos",
+      "name": "Reconocimientos",
+      "icon": "menu-icon icon-base ti tabler-trophy",
+      "slug": "rep-reconocimientos",
+      "i18n": "Premiación y destacados"
+    },
+    {
+      "url": "/configuracion",
+      "name": "Configuración",
+      "icon": "menu-icon icon-base ti tabler-settings",
+      "slug": "adm-configuracion",
+      "i18n": "Administración del sistema"
+    },
+    {
+      "url": "/ayuda",
+      "name": "Ayuda",
+      "icon": "menu-icon icon-base ti tabler-help-circle",
+      "slug": "ayuda",
+      "i18n": "Guías y soporte"
     }
   ]
 }
