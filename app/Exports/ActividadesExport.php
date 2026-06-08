@@ -39,7 +39,7 @@ class ActividadesExport implements FromCollection, WithHeadings, WithStyles, Wit
             ucfirst($a->estado),
             $a->prioridad ? ucfirst($a->prioridad) : '—',
             $a->fecha_limite?->format('d/m/Y') ?? '—',
-            $a->porcentaje_avance . '%',
+            $a->avance . '%',
             $a->created_at->format('d/m/Y'),
         ]);
     }

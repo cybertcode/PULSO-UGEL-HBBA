@@ -53,11 +53,4 @@ class UnidadOrganica extends Model
         return null;
     }
 
-    public function getPorcentajeAttribute(): int
-    {
-        $total = $this->actividades()->count();
-        if ($total === 0) return 0;
-        $completadas = $this->actividades()->where('estado', 'completada')->count();
-        return (int) round(($completadas / $total) * 100);
-    }
 }

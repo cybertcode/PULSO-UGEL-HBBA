@@ -125,17 +125,33 @@ class DatosSeeder extends Seeder
             });
 
         // ─── 3. Alertas ───────────────────────────────────────────────────────
+        // Una alerta por tipo por actividad (respeta el unique constraint de alertas pendientes)
+        $tipos = ['vencimiento', 'avance_bajo', 'evidencia_falta', 'sistema'];
         $usuariosConUnidad = $usuarios->whereNotNull('unidad_organica_id')->values();
-        $usuariosConUnidad->take(20)->each(function (User $usuario) use ($unidades) {
+
+        $usuariosConUnidad->take(15)->each(function (User $usuario) use ($unidades, $tipos) {
             $actividad = Actividad::where('unidad_organica_id', $usuario->unidad_organica_id)
                 ->inRandomOrder()->first()
                 ?? Actividad::inRandomOrder()->first();
 
-            Alerta::factory(rand(2, 5))->create([
-                'usuario_id'         => $usuario->id,
-                'unidad_organica_id' => $usuario->unidad_organica_id ?? $unidades->random()->id,
-                'actividad_id'       => $actividad?->id,
-            ]);
+            if (!$actividad) return;
+
+            // Solo 1 alerta por tipo para esta actividad
+            $tipoElegido = collect($tipos)->random();
+            Alerta::firstOrCreate(
+                [
+                    'actividad_id' => $actividad->id,
+                    'tipo'         => $tipoElegido,
+                    'leida'        => false,
+                ],
+                [
+                    'usuario_id'         => $usuario->id,
+                    'unidad_organica_id' => $usuario->unidad_organica_id ?? $unidades->random()->id,
+                    'titulo'             => "Alerta de {$tipoElegido}: {$actividad->nombre}",
+                    'mensaje'            => "Se requiere atención en la actividad.",
+                    'prioridad'          => collect(['alta', 'media', 'baja'])->random(),
+                ]
+            );
         });
 
         // ─── 4. Reconocimientos: 6 meses de histórico ────────────────────────

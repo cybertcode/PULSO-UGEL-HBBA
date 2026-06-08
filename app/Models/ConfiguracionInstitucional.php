@@ -58,4 +58,16 @@ class ConfiguracionInstitucional extends Model
     {
         return static::firstOrFail();
     }
+
+    /** Devuelve la configuración cacheada por 10 minutos para no repetir la query en cada request */
+    public static function cached(): self
+    {
+        return \Illuminate\Support\Facades\Cache::remember('config_institucional', 600, fn() => static::firstOrFail());
+    }
+
+    /** Limpia el cache al actualizar la configuración */
+    protected static function booted(): void
+    {
+        static::saved(fn() => \Illuminate\Support\Facades\Cache::forget('config_institucional'));
+    }
 }
