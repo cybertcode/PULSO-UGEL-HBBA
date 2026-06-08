@@ -12,6 +12,7 @@ use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\UnidadOrganica;
 
 class User extends Authenticatable
@@ -78,5 +79,12 @@ class User extends Authenticatable
     public function unidadOrganica(): BelongsTo
     {
         return $this->belongsTo(UnidadOrganica::class, 'unidad_organica_id');
+    }
+
+    public function actividadesResponsable(): BelongsToMany
+    {
+        return $this->belongsToMany(Actividad::class, 'actividad_responsables', 'user_id', 'actividad_id')
+                    ->withPivot('tipo')
+                    ->withTimestamps();
     }
 }

@@ -1,5 +1,6 @@
 @php
 use Illuminate\Support\Facades\Storage;
+$configInstitucional = $configInstitucional ?? \App\Models\ConfiguracionInstitucional::first();
 $containerFooter =
 isset($configData['contentLayout']) && $configData['contentLayout'] === 'compact'
 ? 'container-xxl'

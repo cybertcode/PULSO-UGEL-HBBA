@@ -216,7 +216,7 @@ $configData = Helper::appClasses();
             <select name="actividad_id" class="form-select select2" required>
               <option value="">Seleccionar actividad</option>
               @foreach($actividades as $a)
-              <option value="{{ $a->id }}">{{ $a->codigo }} — {{ Str::limit($a->nombre, 50) }}</option>
+              <option value="{{ $a->id }}" {{ isset($actividadPresel) && $actividadPresel == $a->id ? 'selected' : '' }}>{{ $a->codigo }} — {{ Str::limit($a->nombre, 50) }}</option>
               @endforeach
             </select>
           </div>
@@ -278,6 +278,12 @@ $configData = Helper::appClasses();
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.select2').forEach(el => $(el).select2({ dropdownParent: el.closest('.modal') || document.body }));
+
+  @if(isset($actividadPresel) && $actividadPresel)
+  // Abrir modal automáticamente y pre-seleccionar actividad
+  const modalSubir = new bootstrap.Modal(document.getElementById('modalSubirEvidencia'));
+  modalSubir.show();
+  @endif
 
   document.querySelectorAll('.btn-validar').forEach(btn => {
     btn.addEventListener('click', function () {

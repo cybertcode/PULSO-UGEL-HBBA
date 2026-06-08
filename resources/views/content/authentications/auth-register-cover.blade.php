@@ -1,11 +1,12 @@
 @php
 $customizerHidden = 'customizer-hide';
 $configData = Helper::appClasses();
+use Illuminate\Support\Facades\Storage;
 @endphp
 
 @extends('layouts/layoutMaster')
 
-@section('title', 'Registrarse - PULSO UGEL')
+@section('title', 'Registrarse')
 
 @section('vendor-style')
 @vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])
@@ -28,10 +29,17 @@ $configData = Helper::appClasses();
 @endsection
 
 @section('content')
+@php $ci = \App\Models\ConfiguracionInstitucional::cached(); @endphp
 <div class="authentication-wrapper authentication-cover">
   <a href="{{ url('/') }}" class="app-brand auth-cover-brand">
-    <span class="app-brand-logo demo">@include('_partials.macros')</span>
-    <span class="app-brand-text demo text-heading fw-bold">PULSO UGEL</span>
+    @if(!empty($ci?->logo_ruta))
+      <span class="app-brand-logo demo">
+        <img src="{{ \Illuminate\Support\Facades\Storage::url($ci->logo_ruta) }}" height="28" alt="logo" class="rounded">
+      </span>
+    @endif
+    <span class="app-brand-text demo text-heading fw-bold">
+      {{ $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL' }}
+    </span>
   </a>
 
   <div class="authentication-inner row m-0">
@@ -53,7 +61,7 @@ $configData = Helper::appClasses();
     <div class="d-flex col-12 col-xl-4 align-items-center authentication-bg p-sm-12 p-6">
       <div class="w-px-400 mx-auto mt-12 pt-5">
         <h4 class="mb-1">Crear Cuenta 🚀</h4>
-        <p class="mb-6 text-muted">Completa tus datos para acceder a PULSO UGEL</p>
+        <p class="mb-6 text-muted">Completa tus datos para acceder a {{ $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL' }}</p>
 
         @if ($errors->any())
           <div class="alert alert-danger mb-4">
@@ -124,7 +132,12 @@ $configData = Helper::appClasses();
         </p>
 
         <div class="divider my-6">
-          <div class="divider-text">UGEL Huacaybamba · Huánuco</div>
+          <div class="divider-text">
+            {{ $ci?->nombre_institucion ?? 'PULSO UGEL' }}
+            @if($ci?->distrito || $ci?->provincia)
+              &bull; {{ implode(', ', array_filter([$ci->distrito, $ci->provincia, $ci->departamento])) }}
+            @endif
+          </div>
         </div>
 
         <p class="text-center text-muted small mb-0">
