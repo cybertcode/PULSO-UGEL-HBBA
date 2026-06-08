@@ -131,6 +131,7 @@
           <th>Unidad</th>
           <th>Cargo</th>
           <th>Estado</th>
+          <th></th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -196,7 +197,8 @@
             <option value="pendiente">Pendiente</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary me-3">Guardar</button>
+        <div id="errorsAddUser" class="alert alert-danger d-none py-2 small mb-3"></div>
+        <button type="button" id="btnGuardarUser" class="btn btn-primary me-3">Guardar</button>
         <button type="button" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Cancelar</button>
       </form>
     </div>
@@ -261,7 +263,8 @@
             <option value="pendiente">Pendiente</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary me-3">Actualizar</button>
+        <div id="errorsEditUser" class="alert alert-danger d-none py-2 small mb-3"></div>
+        <button type="button" id="btnActualizarUser" class="btn btn-primary me-3">Actualizar</button>
         <button type="button" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Cancelar</button>
       </form>
     </div>
@@ -270,34 +273,25 @@
 </div>
 
 {{-- ===================== SECCIÓN CARGOS ===================== --}}
-<div class="card mt-6">
-  <div class="card-header border-bottom d-flex align-items-center justify-content-between">
+<div class="card mt-2">
+  <div class="card-header border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
     <div>
       <h5 class="card-title mb-0"><i class="icon-base ti tabler-briefcase me-2 text-primary"></i>Catálogo de Cargos</h5>
       <small class="text-muted">Cargos disponibles para asignar a los usuarios</small>
     </div>
-    @can('usuarios.crear')
-    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAddCargo">
-      <i class="icon-base ti tabler-plus me-1"></i>Nuevo Cargo
-    </button>
-    @endcan
   </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0" id="tablaCargos">
-        <thead class="table-light">
-          <tr>
-            <th>#</th>
-            <th>Nombre del Cargo</th>
-            <th>Estado</th>
-            @canany(['usuarios.editar','usuarios.eliminar'])<th>Acciones</th>@endcanany
-          </tr>
-        </thead>
-        <tbody id="cargosBody">
-          <tr><td colspan="4" class="text-center py-4 text-muted">Cargando...</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <div class="card-datatable">
+    <table class="table" id="dtCargos">
+      <thead class="border-top">
+        <tr>
+          <th>Nombre del Cargo</th>
+          <th>Usuarios</th>
+          <th>Estado</th>
+          <th>Registrado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+    </table>
   </div>
 </div>
 
@@ -385,6 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
       { data: 'unidad' },
       { data: 'cargo' },
       { data: 'estado' },
+      { data: 'created_ts', visible: false, searchable: false },
       { data: null, orderable: false, searchable: false },
     ],
     columnDefs: [
@@ -447,15 +442,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       },
       {
-        // Acciones
-        targets: -1, title: 'Acciones',
+        // Acciones (columna 8)
+        targets: 8, title: 'Acciones', orderable: false, searchable: false,
         render: (data, type, row) => {
           let btns = `<div class="d-flex align-items-center gap-1">`;
           if (canEdit) {
             btns += `<button class="btn btn-icon btn-text-secondary rounded-pill waves-effect btn-edit-user"
               data-id="${row.id}" data-name="${row.name}" data-email="${row.email}"
               data-dni="${row.dni}" data-cargo="${row.cargo}" data-unidad="${row.unidad}"
-              data-rol="${row.rol}" data-estado="${row.estado}"
+              data-unidad-id="${row.unidad_id}" data-rol="${row.rol}" data-estado="${row.estado}"
               data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditUser"
               title="Editar"><i class="icon-base ti tabler-edit icon-md"></i></button>`;
           }
@@ -471,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     ],
     select: { style: 'multi', selector: 'td:nth-child(2)' },
-    order: [[2, 'asc']],
+    order: [[7, 'desc']],
     layout: {
       topStart: {
         rowClass: 'row my-md-0 me-3 ms-0 justify-content-between',
@@ -607,32 +602,29 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }, 100);
 
-  // ── Select2 en offcanvas: unidad y rol ──
-  document.querySelectorAll('.offcanvas .select2').forEach(el => {
-    $(el).select2({ dropdownParent: $(el).closest('.offcanvas') });
-  });
-
-  // ── Select2 con tags para cargo (carga dinámica desde /cargos) ──
+  // ── Select2: inicializar en shown.bs.offcanvas (jQuery disponible después de Vite) ──
   function initCargosSelect2(selector, offcanvasEl) {
+    if (!window.$ || !$.fn.select2) return;
+    if ($(selector).hasClass('select2-hidden-accessible')) return;
     $(selector).select2({
       dropdownParent: $(offcanvasEl),
       placeholder: 'Buscar o escribir cargo...',
       allowClear: true,
       tags: true,
       ajax: {
-        url: '{{ route("cargos.index") }}',
+        url: '{{ route("cargos.index") }}?select=1',
         dataType: 'json',
         delay: 200,
-        data: params => ({ q: params.term }),
-        processResults: data => ({
+        data: p => ({ q: p.term }),
+        processResults: (data, p) => ({
           results: data
-            .filter(c => !params || !params.term || c.nombre.toLowerCase().includes((params && params.term || '').toLowerCase()))
+            .filter(c => !p.term || c.nombre.toLowerCase().includes(p.term.toLowerCase()))
             .map(c => ({ id: c.nombre, text: c.nombre }))
         }),
         cache: true,
       },
-      createTag: params => {
-        const term = $.trim(params.term);
+      createTag: p => {
+        const term = $.trim(p.term);
         if (!term) return null;
         return { id: term, text: term, newTag: true };
       },
@@ -642,20 +634,45 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       minimumInputLength: 0,
     });
-    // forzar carga inicial
-    $(selector).trigger('change');
   }
 
-  initCargosSelect2('#add-user-cargo',  document.getElementById('offcanvasAddUser'));
-  initCargosSelect2('#edit-user-cargo', document.getElementById('offcanvasEditUser'));
-
-  // precargar opciones al abrir el offcanvas de agregar
-  document.getElementById('offcanvasAddUser')?.addEventListener('show.bs.offcanvas', function () {
-    $.get('{{ route("cargos.index") }}', function(data) {
+  // Inicializar Select2 cuando se abre el offcanvas Agregar
+  document.getElementById('offcanvasAddUser')?.addEventListener('shown.bs.offcanvas', function () {
+    if (!window.$ || !$.fn.select2) return;
+    // Unidad
+    $('#add-user-unidad').not('.select2-hidden-accessible').select2({ dropdownParent: $(this), width: '100%', placeholder: 'Sin asignar' });
+    // Cargo
+    initCargosSelect2('#add-user-cargo', this);
+    $.get('{{ route("cargos.index") }}?select=1', function(data) {
       const sel = $('#add-user-cargo');
       sel.empty().append('<option value="">Sin cargo</option>');
       data.forEach(c => sel.append(new Option(c.nombre, c.nombre)));
+      sel.trigger('change');
     });
+  });
+
+  // Inicializar Select2 cuando se abre el offcanvas Editar
+  document.getElementById('offcanvasEditUser')?.addEventListener('shown.bs.offcanvas', function () {
+    if (!window.$ || !$.fn.select2) return;
+    $('#edit-user-unidad').not('.select2-hidden-accessible').select2({ dropdownParent: $(this), width: '100%', placeholder: 'Sin asignar' });
+    initCargosSelect2('#edit-user-cargo', this);
+    // Aplicar valores pendientes guardados en el dataset del offcanvas
+    const unidadId  = this.dataset.pendingUnidad;
+    const cargoVal  = this.dataset.pendingCargo;
+    if (unidadId)  { $('#edit-user-unidad').val(unidadId).trigger('change'); }
+    if (cargoVal && cargoVal !== '—') {
+      $.get('{{ route("cargos.index") }}?select=1', function(data) {
+        const sel = $('#edit-user-cargo');
+        sel.empty().append('<option value="">Sin cargo</option>');
+        data.forEach(c => sel.append(new Option(c.nombre, c.nombre, false, false)));
+        if (!data.find(c => c.nombre === cargoVal)) {
+          sel.append(new Option(cargoVal, cargoVal, true, true));
+        } else {
+          sel.val(cargoVal);
+        }
+        sel.trigger('change');
+      });
+    }
   });
 
   // ── Poblar offcanvas de edición ──
@@ -663,51 +680,83 @@ document.addEventListener('DOMContentLoaded', function () {
     const btn = e.target.closest('.btn-edit-user');
     if (!btn) return;
 
-    const form = document.getElementById('formEditUser');
-    form.action = '/usuarios/' + btn.dataset.id;
-    document.getElementById('edit-user-name').value  = btn.dataset.name;
-    document.getElementById('edit-user-email').value = btn.dataset.email;
-    document.getElementById('edit-user-dni').value   = btn.dataset.dni !== '—' ? btn.dataset.dni : '';
+    const offcanvas = document.getElementById('offcanvasEditUser');
+
+    // Campos de texto — no necesitan jQuery
+    document.getElementById('formEditUser').action = '/usuarios/' + btn.dataset.id;
+    document.getElementById('edit-user-name').value     = btn.dataset.name;
+    document.getElementById('edit-user-email').value    = btn.dataset.email;
+    document.getElementById('edit-user-dni').value      = btn.dataset.dni !== '—' ? btn.dataset.dni : '';
     document.getElementById('edit-user-password').value = '';
+    document.getElementById('edit-user-rol').value      = btn.dataset.rol;
+    document.getElementById('edit-user-estado').value   = btn.dataset.estado;
 
-    // Cargo — cargar opciones y seleccionar/crear el valor actual
-    const cargoVal = btn.dataset.cargo !== '—' ? btn.dataset.cargo : '';
-    $.get('{{ route("cargos.index") }}', function(data) {
-      const sel = $('#edit-user-cargo');
-      sel.empty().append('<option value="">Sin cargo</option>');
-      data.forEach(c => sel.append(new Option(c.nombre, c.nombre, false, false)));
-      if (cargoVal) {
-        // si no existe en lista, crearlo como tag
-        if (!data.find(c => c.nombre === cargoVal)) {
-          sel.append(new Option(cargoVal, cargoVal, true, true));
-        } else {
-          sel.val(cargoVal);
-        }
-      }
-      sel.trigger('change');
-    });
+    // Guardar valores que requieren Select2 en el dataset para aplicarlos en shown.bs.offcanvas
+    offcanvas.dataset.pendingCargo  = btn.dataset.cargo    || '';
+    offcanvas.dataset.pendingUnidad = btn.dataset.unidadId || '';
 
-    // Rol
-    const rolSel = document.getElementById('edit-user-rol');
-    if (rolSel) rolSel.value = btn.dataset.rol;
-
-    // Estado
-    const estadoSel = document.getElementById('edit-user-estado');
-    if (estadoSel) estadoSel.value = btn.dataset.estado;
-
-    // Unidad — buscar por sigla
+    // Establecer valor nativo también (para caso sin Select2)
     const unidadSel = document.getElementById('edit-user-unidad');
-    if (unidadSel) {
-      Array.from(unidadSel.options).forEach(opt => {
-        if (opt.text.includes(btn.dataset.unidad) || btn.dataset.unidad === '—') {
-          unidadSel.value = btn.dataset.unidad !== '—' ? opt.value : '';
-        }
-      });
-      $(unidadSel).trigger('change');
-    }
+    if (unidadSel) unidadSel.value = offcanvas.dataset.pendingUnidad;
   });
 
-  // Eliminar usuario
+  const csrfToken = '{{ csrf_token() }}';
+
+  // ── Helper: mostrar errores de validación ──
+  function showErrors(containerEl, errors) {
+    let html = '<ul class="mb-0 ps-3">';
+    Object.values(errors).forEach(msgs => msgs.forEach(m => { html += `<li>${m}</li>`; }));
+    html += '</ul>';
+    containerEl.innerHTML = html;
+    containerEl.classList.remove('d-none');
+  }
+
+  // ── Guardar nuevo usuario (AJAX) ──
+  document.getElementById('btnGuardarUser')?.addEventListener('click', function () {
+    const form   = document.getElementById('addNewUserForm');
+    const errEl  = document.getElementById('errorsAddUser');
+    errEl.classList.add('d-none');
+
+    const fd = new FormData(form);
+    fetch('{{ route("adm-usuarios.store") }}', {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+      body: fd,
+    }).then(async r => {
+      const json = await r.json();
+      if (!r.ok) { showErrors(errEl, json.errors ?? { _: [json.message ?? 'Error al guardar.'] }); return; }
+      bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasAddUser'))?.hide();
+      dt.ajax.reload(null, false);
+      Swal.fire({ icon: 'success', title: 'Creado', text: json.message, timer: 2000, showConfirmButton: false });
+      form.reset();
+    }).catch(() => {
+      errEl.innerHTML = 'Error de conexión.'; errEl.classList.remove('d-none');
+    });
+  });
+
+  // ── Actualizar usuario (AJAX) ──
+  document.getElementById('btnActualizarUser')?.addEventListener('click', function () {
+    const form   = document.getElementById('formEditUser');
+    const errEl  = document.getElementById('errorsEditUser');
+    errEl.classList.add('d-none');
+
+    const fd = new FormData(form);
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+      body: fd,
+    }).then(async r => {
+      const json = await r.json();
+      if (!r.ok) { showErrors(errEl, json.errors ?? { _: [json.message ?? 'Error al actualizar.'] }); return; }
+      bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasEditUser'))?.hide();
+      dt.ajax.reload(null, false);
+      Swal.fire({ icon: 'success', title: 'Actualizado', text: json.message, timer: 2000, showConfirmButton: false });
+    }).catch(() => {
+      errEl.innerHTML = 'Error de conexión.'; errEl.classList.remove('d-none');
+    });
+  });
+
+  // ── Eliminar usuario (AJAX) ──
   document.addEventListener('click', function (e) {
     const btn = e.target.closest('.btn-delete-user');
     if (!btn) return;
@@ -722,62 +771,176 @@ document.addEventListener('DOMContentLoaded', function () {
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar'
     }).then(r => {
-      if (r.isConfirmed) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = btn.dataset.url;
-        form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE">';
-        document.body.appendChild(form);
-        form.submit();
-      }
+      if (!r.isConfirmed) return;
+      fetch(btn.dataset.url, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: '_method=DELETE',
+      }).then(async res => {
+        const json = await res.json();
+        if (!res.ok) { Swal.fire({ icon: 'error', title: 'Error', text: json.message }); return; }
+        dt.ajax.reload(null, false);
+        Swal.fire({ icon: 'success', title: 'Eliminado', text: json.message, timer: 2000, showConfirmButton: false });
+      });
     });
   });
 
   // ═══════════════════════════════════════════════
-  //  GESTIÓN DE CARGOS
+  //  DATATABLE CARGOS
   // ═══════════════════════════════════════════════
-  const csrfToken = '{{ csrf_token() }}';
+  const canEditCargo  = {{ auth()->user()->can('usuarios.editar')   ? 'true' : 'false' }};
+  const canDeleteCargo= {{ auth()->user()->can('usuarios.eliminar') ? 'true' : 'false' }};
+  const canCreateCargo= {{ auth()->user()->can('usuarios.crear')    ? 'true' : 'false' }};
 
-  function renderCargos(data) {
-    const tbody = document.getElementById('cargosBody');
-    if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No hay cargos registrados.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map((c, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td><strong>${c.nombre}</strong></td>
-        <td>
-          <span class="badge bg-label-${c.activo ? 'success' : 'secondary'}">
-            ${c.activo ? 'Activo' : 'Inactivo'}
-          </span>
-        </td>
-        <td>
-          @can('usuarios.editar')
-          <button class="btn btn-icon btn-text-secondary rounded-pill btn-editar-cargo"
-            data-id="${c.id}" data-nombre="${c.nombre}" data-activo="${c.activo ? 1 : 0}"
-            data-bs-toggle="modal" data-bs-target="#modalEditCargo" title="Editar">
-            <i class="icon-base ti tabler-edit icon-md"></i>
-          </button>
-          @endcan
-          @can('usuarios.eliminar')
-          <button class="btn btn-icon btn-text-danger rounded-pill btn-eliminar-cargo"
-            data-id="${c.id}" data-nombre="${c.nombre}" title="Eliminar">
-            <i class="icon-base ti tabler-trash icon-md"></i>
-          </button>
-          @endcan
-        </td>
-      </tr>`).join('');
-  }
+  const dtCargos = new DataTable('#dtCargos', {
+    ajax: { url: '{{ route("cargos.index") }}', dataSrc: '' },
+    columns: [
+      { data: 'nombre' },
+      { data: 'numero_usuarios' },
+      { data: 'activo' },
+      { data: 'created_at' },
+      { data: null, orderable: false, searchable: false },
+    ],
+    columnDefs: [
+      {
+        targets: 0,
+        render: (data) => `<strong>${data}</strong>`,
+      },
+      {
+        targets: 1,
+        render: (data) => `<span class="badge bg-label-info">${data}</span>`,
+      },
+      {
+        targets: 2,
+        render: (data) =>
+          `<span class="badge bg-label-${data ? 'success' : 'secondary'}">${data ? 'Activo' : 'Inactivo'}</span>`,
+      },
+      {
+        targets: -1,
+        render: (data, type, row) => {
+          let btns = `<div class="d-flex align-items-center gap-1">`;
+          if (canEditCargo) {
+            btns += `<button class="btn btn-icon btn-text-secondary rounded-pill btn-editar-cargo"
+              data-id="${row.id}" data-nombre="${row.nombre}" data-activo="${row.activo ? 1 : 0}"
+              data-bs-toggle="modal" data-bs-target="#modalEditCargo" title="Editar">
+              <i class="icon-base ti tabler-edit icon-md"></i></button>`;
+          }
+          if (canDeleteCargo) {
+            btns += `<button class="btn btn-icon btn-text-danger rounded-pill btn-eliminar-cargo"
+              data-id="${row.id}" data-nombre="${row.nombre}" title="Eliminar">
+              <i class="icon-base ti tabler-trash icon-md"></i></button>`;
+          }
+          btns += `</div>`;
+          return btns;
+        },
+      },
+    ],
+    order: [[3, 'desc']],
+    layout: {
+      topStart: {
+        rowClass: 'row my-md-0 me-3 ms-0 justify-content-between',
+        features: [{ pageLength: { menu: [10, 25, 50], text: '_MENU_' } }],
+      },
+      topEnd: {
+        features: [
+          { search: { placeholder: 'Buscar cargo', text: '_INPUT_' } },
+          {
+            buttons: [
+              {
+                extend: 'collection',
+                className: 'btn btn-label-secondary dropdown-toggle me-2',
+                text: '<span class="d-flex align-items-center gap-1"><i class="icon-base ti tabler-upload icon-xs"></i><span class="d-none d-sm-inline-block">Exportar</span></span>',
+                buttons: [
+                  {
+                    extend: 'print',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-printer me-2"></i>Imprimir</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [0, 1, 2, 3] },
+                    customize: function (win) {
+                      $(win.document.body).find('h1').text('Catálogo de Cargos - UGEL');
+                      $(win.document.body).css('font-size', '12px');
+                      $(win.document.body).find('table').addClass('compact').css('font-size', '12px');
+                    },
+                  },
+                  {
+                    extend: 'csv',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file me-2"></i>CSV</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [0, 1, 2, 3] },
+                    filename: 'catalogo-cargos',
+                  },
+                  {
+                    extend: 'excel',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-export me-2"></i>Excel</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [0, 1, 2, 3] },
+                    filename: 'catalogo-cargos',
+                    title: 'Catálogo de Cargos - UGEL',
+                  },
+                  {
+                    extend: 'pdf',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-file-text me-2"></i>PDF</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [0, 1, 2, 3] },
+                    filename: 'catalogo-cargos',
+                    title: 'Catálogo de Cargos - UGEL',
+                    orientation: 'portrait',
+                    pageSize: 'A4',
+                  },
+                  {
+                    extend: 'copy',
+                    text: '<span class="d-flex align-items-center"><i class="icon-base ti tabler-copy me-2"></i>Copiar</span>',
+                    className: 'dropdown-item',
+                    exportOptions: { columns: [0, 1, 2, 3] },
+                  },
+                ],
+              },
+              ...(canCreateCargo ? [{
+                text: '<i class="icon-base ti tabler-plus me-0 me-sm-1 icon-16px"></i><span class="d-none d-sm-inline-block">Nuevo Cargo</span>',
+                className: 'btn btn-primary rounded-2 waves-effect waves-light',
+                attr: { 'data-bs-toggle': 'modal', 'data-bs-target': '#modalAddCargo' },
+              }] : []),
+            ],
+          },
+        ],
+      },
+      bottomStart: { rowClass: 'row mx-3 justify-content-between', features: ['info'] },
+      bottomEnd: 'paging',
+    },
+    language: {
+      info:         'Mostrando _START_ al _END_ de _TOTAL_ registros',
+      infoEmpty:    'Mostrando 0 al 0 de 0 registros',
+      infoFiltered: '(filtrado de _MAX_ registros en total)',
+      lengthMenu:   'Mostrar _MENU_ registros',
+      zeroRecords:  'No se encontraron resultados',
+      emptyTable:   'No hay cargos registrados',
+      search:       'Buscar:',
+      paginate: {
+        next:     '<i class="icon-base ti tabler-chevron-right scaleX-n1-rtl icon-18px"></i>',
+        previous: '<i class="icon-base ti tabler-chevron-left scaleX-n1-rtl icon-18px"></i>',
+      },
+    },
+  });
 
-  function cargarCargos() {
-    fetch('{{ route("cargos.index") }}')
-      .then(r => r.json())
-      .then(data => renderCargos(data));
-  }
-
-  cargarCargos();
+  // Ajuste de clases del layout cargos (igual que usuarios)
+  setTimeout(() => {
+    const dtCargosEl = document.getElementById('dtCargos');
+    if (!dtCargosEl) return;
+    const wrapper = dtCargosEl.closest('.card-datatable') || dtCargosEl.parentElement;
+    [
+      { sel: '.dt-buttons .btn',         rm: 'btn-secondary' },
+      { sel: '.dt-search .form-control', rm: 'form-control-sm' },
+      { sel: '.dt-length .form-select',  rm: 'form-select-sm' },
+      { sel: '.dt-length',               add: 'mb-md-6 mb-0' },
+      { sel: '.dt-layout-table',         rm: 'row mt-2' },
+      { sel: '.dt-layout-full',          rm: 'col-md col-12', add: 'table-responsive' },
+    ].forEach(({ sel, rm, add }) => {
+      wrapper?.querySelectorAll(sel).forEach(el => {
+        rm  && rm.split(' ').forEach(c => el.classList.remove(c));
+        add && add.split(' ').forEach(c => el.classList.add(c));
+      });
+    });
+  }, 200);
 
   // Crear cargo
   document.getElementById('btnGuardarCargo')?.addEventListener('click', function () {
@@ -799,7 +962,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       document.getElementById('nuevoCargo').value = '';
       bootstrap.Modal.getInstance(document.getElementById('modalAddCargo')).hide();
-      cargarCargos();
+      dtCargos.ajax.reload(null, false);
+      Swal.fire({ icon: 'success', title: 'Creado', text: 'Cargo registrado correctamente.', timer: 2000, showConfirmButton: false });
     });
   });
 
@@ -834,7 +998,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
       bootstrap.Modal.getInstance(document.getElementById('modalEditCargo')).hide();
-      cargarCargos();
+      dtCargos.ajax.reload(null, false);
+      Swal.fire({ icon: 'success', title: 'Actualizado', text: 'Cargo actualizado correctamente.', timer: 2000, showConfirmButton: false });
     });
   });
 
@@ -856,7 +1021,12 @@ document.addEventListener('DOMContentLoaded', function () {
       fetch(`/cargos/${btn.dataset.id}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': csrfToken },
-      }).then(() => cargarCargos());
+      }).then(async res => {
+        const json = await res.json();
+        if (!res.ok) { Swal.fire({ icon: 'error', title: 'Error', text: json.message ?? 'No se pudo eliminar.' }); return; }
+        dtCargos.ajax.reload(null, false);
+        Swal.fire({ icon: 'success', title: 'Eliminado', text: 'Cargo eliminado del catálogo.', timer: 2000, showConfirmButton: false });
+      });
     });
   });
 

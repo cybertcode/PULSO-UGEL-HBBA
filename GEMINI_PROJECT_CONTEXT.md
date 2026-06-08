@@ -1,5 +1,12 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.5] - 2026-06-08
+### Integración AJAX y Datos Institucionales
+- **Gestión de Usuarios (AJAX)**: Refactorización de `UserList.php` para soportar operaciones CRUD mediante peticiones asíncronas, eliminando recargas de página innecesarias.
+- **Configuración Real**: Actualización de `ConfiguracionInstitucionalSeeder` con los datos oficiales de la institución (nombres, direcciones, autoridades).
+- **Carga de Datos Maestros**: Creación de `CargosSeeder` e integración en el flujo principal de `DatabaseSeeder` para asegurar un entorno de trabajo listo para producción.
+- **Mejoras de UI**: Ajustes finales en el listado de usuarios y modales de permisos para una mejor experiencia de usuario.
+
 ## [v1.3.4] - 2026-06-08
 ### Normalización Estructural y Relacional
 - **Unidades Orgánicas**: Migración del campo `responsable` (texto) a `responsable_id` (FK), vinculando formalmente cada unidad con un usuario del sistema para una gestión de auditoría y flujos de trabajo más robusta.

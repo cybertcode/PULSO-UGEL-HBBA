@@ -12,4 +12,9 @@ class Cargo extends Model
     {
         return $query->where('activo', true);
     }
+
+    public function usuarios()
+    {
+        return $this->hasMany(User::class, 'cargo', 'nombre');
+    }
 }
