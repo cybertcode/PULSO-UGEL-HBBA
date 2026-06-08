@@ -1,5 +1,11 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.2] - 2026-06-08
+### Optimización de Perfil Institucional
+- **Interfaz de Perfil**: Rediseño de la vista de perfil para mostrar de forma clara y profesional la Unidad Orgánica, el Rol asignado y el Estado de cuenta del usuario.
+- **Componentes Jetstream**: Actualización de `update-profile-information-form.blade.php` para integrar campos informativos (solo lectura) que reflejan la jerarquía institucional.
+- **Visualización de Estados**: Implementación de badges dinámicos para el estado de cuenta (Activo, Pendiente, Inactivo) siguiendo el sistema de colores de la plantilla.
+
 ## [v1.3.1] - 2026-06-08
 ### Refinamiento UI/UX y Configuración
 - **Identidad Visual**: Implementación de soporte para favicon dinámico y ajustes en la configuración institucional.
