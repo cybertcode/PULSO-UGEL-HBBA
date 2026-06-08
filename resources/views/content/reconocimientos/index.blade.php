@@ -539,7 +539,9 @@ $configData = Helper::appClasses();
             </div>
             <div class="col-md-6">
               <label class="form-label">Cargo</label>
-              <input type="text" name="cargo" class="form-control" placeholder="Especialista en...">
+              <select name="cargo" class="form-select select2-cargo-rec">
+                <option value="">Sin cargo</option>
+              </select>
             </div>
             <div class="col-md-6">
               <label class="form-label">Correo institucional</label>
@@ -649,7 +651,9 @@ $configData = Helper::appClasses();
             </div>
             <div class="col-md-6">
               <label class="form-label">Cargo</label>
-              <input type="text" name="cargo" id="rec_cargo" class="form-control">
+              <select name="cargo" id="rec_cargo" class="form-select select2-cargo-rec">
+                <option value="">Sin cargo</option>
+              </select>
             </div>
             <div class="col-md-6">
               <label class="form-label">Correo</label>
@@ -713,12 +717,51 @@ document.addEventListener('DOMContentLoaded', function () {
     $(el).select2({ dropdownParent: el.closest('.modal'), width: '100%' })
   );
 
+  // Select2 con tags para cargo en reconocimientos
+  function initCargosSelect2Rec(selector, modalEl) {
+    $(selector).select2({
+      dropdownParent: $(modalEl),
+      placeholder: 'Buscar o escribir cargo...',
+      allowClear: true,
+      tags: true,
+      width: '100%',
+      ajax: {
+        url: '{{ route("cargos.index") }}',
+        dataType: 'json',
+        delay: 200,
+        processResults: data => ({ results: data.map(c => ({ id: c.nombre, text: c.nombre })) }),
+        cache: true,
+      },
+      createTag: params => {
+        const term = $.trim(params.term);
+        if (!term) return null;
+        return { id: term, text: term, newTag: true };
+      },
+      templateResult: data => {
+        if (data.newTag) return $(`<span><i class="ti tabler-plus me-1 text-primary"></i>${data.text} <em class="text-muted">(nuevo)</em></span>`);
+        return data.text;
+      },
+    });
+  }
+
+  document.querySelectorAll('.select2-cargo-rec').forEach(el => {
+    initCargosSelect2Rec(el, el.closest('.modal'));
+  });
+
   document.querySelectorAll('.btn-editar-reconocimiento').forEach(btn => {
     btn.addEventListener('click', function () {
       const form = document.getElementById('formEditarRec');
       form.action = '/reconocimientos/' + this.dataset.id;
       document.getElementById('rec_nombre').value          = this.dataset.nombre;
-      document.getElementById('rec_cargo').value           = this.dataset.cargo || '';
+
+      // Cargo — poblar Select2
+      const cargoVal = this.dataset.cargo || '';
+      const recCargoSel = $('#rec_cargo');
+      recCargoSel.empty().append('<option value="">Sin cargo</option>');
+      if (cargoVal) {
+        recCargoSel.append(new Option(cargoVal, cargoVal, true, true));
+      }
+      recCargoSel.trigger('change');
       document.getElementById('rec_dni').value             = this.dataset.dni || '';
       document.getElementById('rec_correo').value          = this.dataset.correo || '';
       document.getElementById('rec_cumplimiento').value    = this.dataset.cumplimiento;

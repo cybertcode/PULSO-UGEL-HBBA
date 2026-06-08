@@ -1,6 +1,6 @@
 @php $configData = Helper::appClasses(); @endphp
 @extends('layouts/layoutMaster')
-@section('title', 'Usuarios - PULSO UGEL')
+@section('title', 'Usuarios y Cargos - PULSO UGEL')
 
 @section('vendor-style')
 @vite([
@@ -165,7 +165,10 @@
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-user-cargo">Cargo</label>
-          <input type="text" class="form-control" id="add-user-cargo" name="cargo" placeholder="Ej: Director de UGEL">
+          <select id="add-user-cargo" name="cargo" class="select2-cargo form-select">
+            <option value="">Sin cargo</option>
+          </select>
+          <div class="form-text">Elige de la lista o escribe uno nuevo.</div>
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-user-unidad">Unidad Orgánica</label>
@@ -228,7 +231,10 @@
         </div>
         <div class="mb-6">
           <label class="form-label" for="edit-user-cargo">Cargo</label>
-          <input type="text" class="form-control" id="edit-user-cargo" name="cargo">
+          <select id="edit-user-cargo" name="cargo" class="select2-cargo form-select">
+            <option value="">Sin cargo</option>
+          </select>
+          <div class="form-text">Elige de la lista o escribe uno nuevo.</div>
         </div>
         <div class="mb-6">
           <label class="form-label" for="edit-user-unidad">Unidad Orgánica</label>
@@ -262,6 +268,92 @@
   </div>
   @endcan
 </div>
+
+{{-- ===================== SECCIÓN CARGOS ===================== --}}
+<div class="card mt-6">
+  <div class="card-header border-bottom d-flex align-items-center justify-content-between">
+    <div>
+      <h5 class="card-title mb-0"><i class="icon-base ti tabler-briefcase me-2 text-primary"></i>Catálogo de Cargos</h5>
+      <small class="text-muted">Cargos disponibles para asignar a los usuarios</small>
+    </div>
+    @can('usuarios.crear')
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAddCargo">
+      <i class="icon-base ti tabler-plus me-1"></i>Nuevo Cargo
+    </button>
+    @endcan
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" id="tablaCargos">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Nombre del Cargo</th>
+            <th>Estado</th>
+            @canany(['usuarios.editar','usuarios.eliminar'])<th>Acciones</th>@endcanany
+          </tr>
+        </thead>
+        <tbody id="cargosBody">
+          <tr><td colspan="4" class="text-center py-4 text-muted">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{{-- Modal Nuevo Cargo --}}
+@can('usuarios.crear')
+<div class="modal fade" id="modalAddCargo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nuevo Cargo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label" for="nuevoCargo">Nombre <span class="text-danger">*</span></label>
+        <input type="text" id="nuevoCargo" class="form-control" placeholder="Ej: Especialista Legal" maxlength="150">
+        <div id="errorNuevoCargo" class="text-danger small mt-1 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnGuardarCargo">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+@endcan
+
+{{-- Modal Editar Cargo --}}
+@can('usuarios.editar')
+<div class="modal fade" id="modalEditCargo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Cargo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editCargoId">
+        <label class="form-label" for="editCargoNombre">Nombre <span class="text-danger">*</span></label>
+        <input type="text" id="editCargoNombre" class="form-control" maxlength="150">
+        <div id="errorEditCargo" class="text-danger small mt-1 d-none"></div>
+        <div class="mt-3">
+          <label class="form-label">Estado</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="editCargoActivo" checked>
+            <label class="form-check-label" for="editCargoActivo">Activo</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnActualizarCargo">Actualizar</button>
+      </div>
+    </div>
+  </div>
+</div>
+@endcan
 
 @endsection
 
@@ -515,12 +607,58 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }, 100);
 
-  // Select2 en offcanvas
+  // ── Select2 en offcanvas: unidad y rol ──
   document.querySelectorAll('.offcanvas .select2').forEach(el => {
     $(el).select2({ dropdownParent: $(el).closest('.offcanvas') });
   });
 
-  // Poblar offcanvas de edición
+  // ── Select2 con tags para cargo (carga dinámica desde /cargos) ──
+  function initCargosSelect2(selector, offcanvasEl) {
+    $(selector).select2({
+      dropdownParent: $(offcanvasEl),
+      placeholder: 'Buscar o escribir cargo...',
+      allowClear: true,
+      tags: true,
+      ajax: {
+        url: '{{ route("cargos.index") }}',
+        dataType: 'json',
+        delay: 200,
+        data: params => ({ q: params.term }),
+        processResults: data => ({
+          results: data
+            .filter(c => !params || !params.term || c.nombre.toLowerCase().includes((params && params.term || '').toLowerCase()))
+            .map(c => ({ id: c.nombre, text: c.nombre }))
+        }),
+        cache: true,
+      },
+      createTag: params => {
+        const term = $.trim(params.term);
+        if (!term) return null;
+        return { id: term, text: term, newTag: true };
+      },
+      templateResult: data => {
+        if (data.newTag) return $(`<span><i class="ti tabler-plus me-1 text-primary"></i>${data.text} <em class="text-muted">(nuevo)</em></span>`);
+        return data.text;
+      },
+      minimumInputLength: 0,
+    });
+    // forzar carga inicial
+    $(selector).trigger('change');
+  }
+
+  initCargosSelect2('#add-user-cargo',  document.getElementById('offcanvasAddUser'));
+  initCargosSelect2('#edit-user-cargo', document.getElementById('offcanvasEditUser'));
+
+  // precargar opciones al abrir el offcanvas de agregar
+  document.getElementById('offcanvasAddUser')?.addEventListener('show.bs.offcanvas', function () {
+    $.get('{{ route("cargos.index") }}', function(data) {
+      const sel = $('#add-user-cargo');
+      sel.empty().append('<option value="">Sin cargo</option>');
+      data.forEach(c => sel.append(new Option(c.nombre, c.nombre)));
+    });
+  });
+
+  // ── Poblar offcanvas de edición ──
   document.addEventListener('click', function (e) {
     const btn = e.target.closest('.btn-edit-user');
     if (!btn) return;
@@ -530,8 +668,24 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('edit-user-name').value  = btn.dataset.name;
     document.getElementById('edit-user-email').value = btn.dataset.email;
     document.getElementById('edit-user-dni').value   = btn.dataset.dni !== '—' ? btn.dataset.dni : '';
-    document.getElementById('edit-user-cargo').value = btn.dataset.cargo !== '—' ? btn.dataset.cargo : '';
     document.getElementById('edit-user-password').value = '';
+
+    // Cargo — cargar opciones y seleccionar/crear el valor actual
+    const cargoVal = btn.dataset.cargo !== '—' ? btn.dataset.cargo : '';
+    $.get('{{ route("cargos.index") }}', function(data) {
+      const sel = $('#edit-user-cargo');
+      sel.empty().append('<option value="">Sin cargo</option>');
+      data.forEach(c => sel.append(new Option(c.nombre, c.nombre, false, false)));
+      if (cargoVal) {
+        // si no existe en lista, crearlo como tag
+        if (!data.find(c => c.nombre === cargoVal)) {
+          sel.append(new Option(cargoVal, cargoVal, true, true));
+        } else {
+          sel.val(cargoVal);
+        }
+      }
+      sel.trigger('change');
+    });
 
     // Rol
     const rolSel = document.getElementById('edit-user-rol');
@@ -576,6 +730,133 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.appendChild(form);
         form.submit();
       }
+    });
+  });
+
+  // ═══════════════════════════════════════════════
+  //  GESTIÓN DE CARGOS
+  // ═══════════════════════════════════════════════
+  const csrfToken = '{{ csrf_token() }}';
+
+  function renderCargos(data) {
+    const tbody = document.getElementById('cargosBody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No hay cargos registrados.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map((c, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td><strong>${c.nombre}</strong></td>
+        <td>
+          <span class="badge bg-label-${c.activo ? 'success' : 'secondary'}">
+            ${c.activo ? 'Activo' : 'Inactivo'}
+          </span>
+        </td>
+        <td>
+          @can('usuarios.editar')
+          <button class="btn btn-icon btn-text-secondary rounded-pill btn-editar-cargo"
+            data-id="${c.id}" data-nombre="${c.nombre}" data-activo="${c.activo ? 1 : 0}"
+            data-bs-toggle="modal" data-bs-target="#modalEditCargo" title="Editar">
+            <i class="icon-base ti tabler-edit icon-md"></i>
+          </button>
+          @endcan
+          @can('usuarios.eliminar')
+          <button class="btn btn-icon btn-text-danger rounded-pill btn-eliminar-cargo"
+            data-id="${c.id}" data-nombre="${c.nombre}" title="Eliminar">
+            <i class="icon-base ti tabler-trash icon-md"></i>
+          </button>
+          @endcan
+        </td>
+      </tr>`).join('');
+  }
+
+  function cargarCargos() {
+    fetch('{{ route("cargos.index") }}')
+      .then(r => r.json())
+      .then(data => renderCargos(data));
+  }
+
+  cargarCargos();
+
+  // Crear cargo
+  document.getElementById('btnGuardarCargo')?.addEventListener('click', function () {
+    const nombre = document.getElementById('nuevoCargo').value.trim();
+    const errEl  = document.getElementById('errorNuevoCargo');
+    errEl.classList.add('d-none');
+    if (!nombre) { errEl.textContent = 'El nombre es requerido.'; errEl.classList.remove('d-none'); return; }
+
+    fetch('{{ route("cargos.store") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+      body: JSON.stringify({ nombre }),
+    }).then(async r => {
+      if (!r.ok) {
+        const err = await r.json();
+        errEl.textContent = err.errors?.nombre?.[0] ?? 'Error al guardar.';
+        errEl.classList.remove('d-none');
+        return;
+      }
+      document.getElementById('nuevoCargo').value = '';
+      bootstrap.Modal.getInstance(document.getElementById('modalAddCargo')).hide();
+      cargarCargos();
+    });
+  });
+
+  // Abrir modal editar
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-editar-cargo');
+    if (!btn) return;
+    document.getElementById('editCargoId').value       = btn.dataset.id;
+    document.getElementById('editCargoNombre').value   = btn.dataset.nombre;
+    document.getElementById('editCargoActivo').checked = btn.dataset.activo === '1';
+    document.getElementById('errorEditCargo').classList.add('d-none');
+  });
+
+  // Actualizar cargo
+  document.getElementById('btnActualizarCargo')?.addEventListener('click', function () {
+    const id     = document.getElementById('editCargoId').value;
+    const nombre = document.getElementById('editCargoNombre').value.trim();
+    const activo = document.getElementById('editCargoActivo').checked;
+    const errEl  = document.getElementById('errorEditCargo');
+    errEl.classList.add('d-none');
+    if (!nombre) { errEl.textContent = 'El nombre es requerido.'; errEl.classList.remove('d-none'); return; }
+
+    fetch(`/cargos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+      body: JSON.stringify({ nombre, activo }),
+    }).then(async r => {
+      if (!r.ok) {
+        const err = await r.json();
+        errEl.textContent = err.errors?.nombre?.[0] ?? 'Error al actualizar.';
+        errEl.classList.remove('d-none');
+        return;
+      }
+      bootstrap.Modal.getInstance(document.getElementById('modalEditCargo')).hide();
+      cargarCargos();
+    });
+  });
+
+  // Eliminar cargo
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-eliminar-cargo');
+    if (!btn) return;
+    Swal.fire({
+      title: '¿Eliminar cargo?',
+      text: `Se eliminará "${btn.dataset.nombre}" del catálogo.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ea5455',
+      cancelButtonColor: '#6e7881',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      fetch(`/cargos/${btn.dataset.id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+      }).then(() => cargarCargos());
     });
   });
 
