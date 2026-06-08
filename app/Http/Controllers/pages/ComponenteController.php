@@ -9,6 +9,24 @@ use Illuminate\Validation\Rule;
 
 class ComponenteController extends Controller
 {
+    private const CATEGORIAS = [
+        'Ambiente de Control',
+        'Evaluación de Riesgos',
+        'Actividades de Control',
+        'Información y Comunicación',
+        'Supervisión y Monitoreo',
+    ];
+
+    private const ICONOS = [
+        'tabler-crown', 'tabler-shield-check', 'tabler-chart-pie', 'tabler-chart-bar',
+        'tabler-clipboard-list', 'tabler-alert-triangle', 'tabler-messages',
+        'tabler-message-circle', 'tabler-eye', 'tabler-speakerphone', 'tabler-activity',
+        'tabler-user-check', 'tabler-users', 'tabler-building', 'tabler-file-certificate',
+        'tabler-scale', 'tabler-lock', 'tabler-target', 'tabler-trending-up',
+        'tabler-checkup-list', 'tabler-puzzle', 'tabler-compass', 'tabler-flag',
+        'tabler-microscope',
+    ];
+
     public function index()
     {
         $componentes = Componente::withCount([
@@ -22,15 +40,15 @@ class ComponenteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'numero'      => 'required|integer|min:1|unique:componentes,numero',
             'nombre'      => 'required|string|max:255',
-            'icono'       => 'nullable|string|max:80',
-            'tipo'        => 'nullable|string|max:80',
-            'descripcion' => 'nullable|string',
+            'icono'       => ['nullable', Rule::in(self::ICONOS)],
+            'tipo'        => ['nullable', Rule::in(self::CATEGORIAS)],
+            'descripcion' => 'nullable|string|max:1000',
             'activo'      => 'boolean',
         ]);
 
         $validated['activo'] = $request->boolean('activo', true);
+        $validated['numero'] = (Componente::max('numero') ?? 0) + 1;
 
         Componente::create($validated);
 
@@ -40,11 +58,10 @@ class ComponenteController extends Controller
     public function update(Request $request, Componente $componente)
     {
         $validated = $request->validate([
-            'numero'      => ['required', 'integer', 'min:1', Rule::unique('componentes', 'numero')->ignore($componente)],
             'nombre'      => 'required|string|max:255',
-            'icono'       => 'nullable|string|max:80',
-            'tipo'        => 'nullable|string|max:80',
-            'descripcion' => 'nullable|string',
+            'icono'       => ['nullable', Rule::in(self::ICONOS)],
+            'tipo'        => ['nullable', Rule::in(self::CATEGORIAS)],
+            'descripcion' => 'nullable|string|max:1000',
             'activo'      => 'boolean',
         ]);
 
@@ -58,8 +75,12 @@ class ComponenteController extends Controller
     public function toggle(Componente $componente)
     {
         $componente->update(['activo' => !$componente->activo]);
-        $estado = $componente->activo ? 'activado' : 'desactivado';
 
+        if (request()->expectsJson()) {
+            return response()->json(['activo' => $componente->activo]);
+        }
+
+        $estado = $componente->activo ? 'activado' : 'desactivado';
         return back()->with('success', "Componente {$estado} correctamente.");
     }
 

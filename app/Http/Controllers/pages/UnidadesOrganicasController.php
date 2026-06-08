@@ -4,35 +4,71 @@ namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
 use App\Models\UnidadOrganica;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class UnidadesOrganicasController extends Controller
 {
+    private function usuariosParaSelect()
+    {
+        return User::whereIn('estado', ['activo', 'pendiente'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'cargo']);
+    }
+
     public function index()
     {
-        $unidades = UnidadOrganica::orderBy('nombre')->get();
-        return view('content.unidades-organicas.index', compact('unidades'));
+        $unidades = UnidadOrganica::with('responsable')->orderBy('nombre')->get();
+        $usuarios = $this->usuariosParaSelect();
+        return view('content.unidades-organicas.index', compact('unidades', 'usuarios'));
+    }
+
+    private function generarCodigo(string $nombre): string
+    {
+        // Toma las iniciales de cada palabra (máx 6 chars), en mayúsculas
+        $palabras = preg_split('/\s+/', trim($nombre));
+        $base = strtoupper(implode('', array_map(fn($p) => substr($p, 0, 1), $palabras)));
+        $base = substr(preg_replace('/[^A-Z0-9]/', '', $base), 0, 6);
+
+        if (!UnidadOrganica::where('codigo', $base)->exists()) {
+            return $base;
+        }
+
+        $i = 2;
+        while (UnidadOrganica::where('codigo', $base . $i)->exists()) {
+            $i++;
+        }
+        return $base . $i;
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'codigo'      => 'required|string|max:20|unique:unidades_organicas,codigo',
-            'nombre'      => 'required|string|max:255',
-            'sigla'       => 'nullable|string|max:20',
-            'responsable' => 'nullable|string|max:255',
+            'nombre'         => 'required|string|max:255',
+            'sigla'          => 'nullable|string|max:20',
+            'responsable_id' => 'nullable|exists:users,id',
+            'correo'         => 'nullable|email|max:100',
+            'telefono'       => 'nullable|string|max:20',
+            'descripcion'    => 'nullable|string|max:500',
         ]);
-        UnidadOrganica::create(array_merge($validated, ['activo' => true]));
+
+        $validated['codigo'] = $this->generarCodigo($validated['nombre']);
+        $validated['activo'] = true;
+
+        UnidadOrganica::create($validated);
         return back()->with('success', 'Unidad orgánica creada correctamente.');
     }
 
     public function update(Request $request, UnidadOrganica $unidad)
     {
         $validated = $request->validate([
-            'nombre'      => 'required|string|max:255',
-            'sigla'       => 'nullable|string|max:20',
-            'responsable' => 'nullable|string|max:255',
-            'activo'      => 'nullable|boolean',
+            'nombre'         => 'required|string|max:255',
+            'sigla'          => 'nullable|string|max:20',
+            'responsable_id' => 'nullable|exists:users,id',
+            'correo'         => 'nullable|email|max:100',
+            'telefono'       => 'nullable|string|max:20',
+            'descripcion'    => 'nullable|string|max:500',
+            'activo'         => 'nullable|boolean',
         ]);
         $validated['activo'] = $request->boolean('activo', $unidad->activo);
         $unidad->update($validated);

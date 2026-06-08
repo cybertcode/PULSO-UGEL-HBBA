@@ -1,5 +1,12 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.4] - 2026-06-08
+### Normalización Estructural y Relacional
+- **Unidades Orgánicas**: Migración del campo `responsable` (texto) a `responsable_id` (FK), vinculando formalmente cada unidad con un usuario del sistema para una gestión de auditoría y flujos de trabajo más robusta.
+- **Componentes del Sistema**: Corrección técnica de las columnas `tipo` e `icono` en la tabla de componentes para asegurar la consistencia en el renderizado de menús dinámicos.
+- **Refactorización de Seeders**: Actualización de `UnidadesOrganicasSeeder` para reflejar el nuevo esquema relacional.
+- **Optimización de Vistas**: Ajustes en las interfaces de Administración de Componentes y Unidades Orgánicas para soportar la selección de responsables desde la base de datos de usuarios.
+
 ## [v1.3.3] - 2026-06-08
 ### Catálogo Maestro de Cargos
 - **Gestión de Cargos**: Implementación de un CRUD completo para el catálogo de cargos institucionales, permitiendo estandarizar las denominaciones en todo el sistema.

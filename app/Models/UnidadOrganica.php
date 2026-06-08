@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
@@ -11,13 +12,18 @@ class UnidadOrganica extends Model
     protected $table = 'unidades_organicas';
 
     protected $fillable = [
-        'codigo', 'nombre', 'sigla', 'responsable',
+        'codigo', 'nombre', 'sigla', 'responsable_id',
         'foto_ruta', 'correo', 'telefono', 'descripcion', 'activo',
     ];
 
     protected function casts(): array
     {
         return ['activo' => 'boolean'];
+    }
+
+    public function responsable(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responsable_id');
     }
 
     public function usuarios(): HasMany
