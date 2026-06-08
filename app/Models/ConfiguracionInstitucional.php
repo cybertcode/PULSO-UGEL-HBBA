@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $correo_institucional
  * @property string|null $telefono
  * @property string|null $logo_ruta
+ * @property string|null $favicon_ruta
  * @property int|null    $anio_gestion
  * @property int $umbral_verde
  * @property int $umbral_amarillo
@@ -39,7 +40,7 @@ class ConfiguracionInstitucional extends Model
         'nombre_institucion', 'sigla', 'ugel_codigo', 'region', 'provincia',
         'departamento', 'distrito', 'ubigeo', 'direccion', 'sitio_web', 'timezone',
         'director', 'coordinador_sci', 'correo_institucional', 'telefono',
-        'logo_ruta', 'anio_gestion',
+        'logo_ruta', 'favicon_ruta', 'anio_gestion',
         'umbral_verde', 'umbral_amarillo',
         'notif_vencimiento', 'notif_dias_anticipacion',
         'notif_avance_bajo', 'notif_umbral_avance', 'notif_email',

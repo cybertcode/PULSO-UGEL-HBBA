@@ -66,7 +66,11 @@
   <!-- Canonical SEO -->
   <link rel="canonical" href="{{ config('variables.productPage') ? config('variables.productPage') : '' }}" />
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+  @if(!empty($configInstitucional?->favicon_ruta))
+    <link rel="icon" href="{{ \Illuminate\Support\Facades\Storage::url($configInstitucional->favicon_ruta) }}" />
+  @else
+    <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+  @endif
 
   <!-- Include Styles -->
   <!-- $isFront is used to append the front layout styles only on the front layout otherwise the variable will be blank -->

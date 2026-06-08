@@ -23,20 +23,6 @@
   </ol>
 </nav>
 
-{{-- Mensajes de éxito/error --}}
-@if(session('success'))
-<div class="alert alert-success alert-dismissible mb-4" role="alert">
-  <i class="ti tabler-circle-check me-2"></i>{{ session('success') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible mb-4" role="alert">
-  <i class="ti tabler-circle-x me-2"></i>{{ session('error') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
 {{-- Tabs de navegación --}}
 <ul class="nav nav-pills flex-column flex-md-row mb-6 gap-md-0 gap-2">
   <li class="nav-item">

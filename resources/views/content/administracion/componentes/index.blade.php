@@ -34,25 +34,6 @@ $configData = Helper::appClasses();
   @endcan
 </div>
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show mb-4">
-  <i class="ti tabler-circle-check me-2"></i>{{ session('success') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show mb-4">
-  <i class="ti tabler-alert-circle me-2"></i>{{ session('error') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show mb-4">
-  <ul class="mb-0 ps-3">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
 {{-- Tarjetas de Componentes --}}
 <div class="row g-4">
   @forelse($componentes as $comp)

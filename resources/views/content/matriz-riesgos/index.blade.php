@@ -29,19 +29,12 @@
     @endcan
   </div>
 
-  @if(session('success'))
-  <div class="alert alert-success alert-dismissible mb-4"><{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-  @endif
-  @if(session('error'))
-  <div class="alert alert-danger alert-dismissible mb-4">{{ session('error') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-  @endif
-
   {{-- Estadísticas --}}
   <div class="row g-4 mb-4">
     <div class="col-6 col-md-3">
       <div class="card text-center h-100">
         <div class="card-body">
-          <div class="avatar avatar-md mx-auto mb-2 bg-label-primary rounded-circle"><i class="ti tabler-shield-exclamation fs-4"></i></div>
+          <div class="avatar avatar-md mx-auto mb-2"><span class="avatar-initial rounded-circle bg-label-primary"><i class="ti tabler-shield-exclamation fs-4"></i></span></div>
           <h3 class="mb-0">{{ $stats['total'] }}</h3>
           <small class="text-muted">Total Riesgos</small>
         </div>
@@ -50,7 +43,7 @@
     <div class="col-6 col-md-3">
       <div class="card text-center h-100">
         <div class="card-body">
-          <div class="avatar avatar-md mx-auto mb-2 bg-label-danger rounded-circle"><i class="ti tabler-alert-triangle fs-4"></i></div>
+          <div class="avatar avatar-md mx-auto mb-2"><span class="avatar-initial rounded-circle bg-label-danger"><i class="ti tabler-alert-triangle fs-4"></i></span></div>
           <h3 class="mb-0 text-danger">{{ $stats['criticos'] }}</h3>
           <small class="text-muted">Críticos</small>
         </div>
@@ -59,7 +52,7 @@
     <div class="col-6 col-md-3">
       <div class="card text-center h-100">
         <div class="card-body">
-          <div class="avatar avatar-md mx-auto mb-2 bg-label-warning rounded-circle"><i class="ti tabler-alert-circle fs-4"></i></div>
+          <div class="avatar avatar-md mx-auto mb-2"><span class="avatar-initial rounded-circle bg-label-warning"><i class="ti tabler-alert-circle fs-4"></i></span></div>
           <h3 class="mb-0 text-warning">{{ $stats['altos'] }}</h3>
           <small class="text-muted">Altos</small>
         </div>
@@ -68,7 +61,7 @@
     <div class="col-6 col-md-3">
       <div class="card text-center h-100">
         <div class="card-body">
-          <div class="avatar avatar-md mx-auto mb-2 bg-label-info rounded-circle"><i class="ti tabler-activity fs-4"></i></div>
+          <div class="avatar avatar-md mx-auto mb-2"><span class="avatar-initial rounded-circle bg-label-info"><i class="ti tabler-activity fs-4"></i></span></div>
           <h3 class="mb-0">{{ $stats['activos'] }}</h3>
           <small class="text-muted">Activos</small>
         </div>

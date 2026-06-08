@@ -1,5 +1,13 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.1] - 2026-06-08
+### Refinamiento UI/UX y Configuración
+- **Identidad Visual**: Implementación de soporte para favicon dinámico y ajustes en la configuración institucional.
+- **Layouts y Estilos**: Optimización de `commonMaster` y `contentNavbarLayout` para una mejor integración visual. Actualización de `pulso-ugel.css` con efectos de interactividad mejorados.
+- **Vistas de Módulos**: Refinamiento estético de las interfaces de PACI, Matriz de Riesgos, Actas de Comité y Autoevaluación.
+- **Perfil de Usuario**: Actualización de la vista de perfil para mantener la consistencia con la línea gráfica institucional.
+- **Estructura Técnica**: Nueva migración para la gestión de favicons en la tabla de configuración.
+
 ## [v1.3.0] - 2026-06-08 (Sesión Actual)
 ### Módulo de Control Interno (SCI) e Integridad
 - **PACI (Programa Anual de Control Interno)**: Implementación de la gestión del Programa Anual de Control Interno.

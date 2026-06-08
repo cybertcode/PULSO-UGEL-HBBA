@@ -76,48 +76,72 @@
         <!-- / Footer -->
 
         <!-- Toast Container Global -->
-        <div class="bs-toast toast-placement-ex m-4" style="position:fixed;top:0;right:0;z-index:9999;min-width:320px">
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;min-width:320px;max-width:420px">
+
           @if(session('success'))
-          <div class="toast align-items-center text-bg-success border-0 show" role="alert" id="toast-global">
-            <div class="d-flex">
-              <div class="toast-body d-flex align-items-center gap-2">
-                <i class="ti tabler-circle-check icon-20px flex-shrink-0"></i>
-                <span>{{ session('success') }}</span>
-              </div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="5000"
+               style="background:#fff;border-left:4px solid #28a745 !important;border-radius:8px">
+            <div class="toast-header border-0 pb-0" style="background:transparent">
+              <span class="me-2" style="color:#28a745"><i class="ti tabler-circle-check" style="font-size:18px"></i></span>
+              <strong class="me-auto" style="color:#28a745">Operación exitosa</strong>
+              <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
             </div>
+            <div class="toast-body pt-1" style="color:#333">{{ session('success') }}</div>
           </div>
-          @elseif(session('error'))
-          <div class="toast align-items-center text-bg-danger border-0 show" role="alert" id="toast-global">
-            <div class="d-flex">
-              <div class="toast-body d-flex align-items-center gap-2">
-                <i class="ti tabler-circle-x icon-20px flex-shrink-0"></i>
-                <span>{{ session('error') }}</span>
-              </div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          @endif
+
+          @if(session('error'))
+          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="8000"
+               style="background:#fff;border-left:4px solid #dc3545 !important;border-radius:8px">
+            <div class="toast-header border-0 pb-0" style="background:transparent">
+              <span class="me-2" style="color:#dc3545"><i class="ti tabler-circle-x" style="font-size:18px"></i></span>
+              <strong class="me-auto" style="color:#dc3545">Error</strong>
+              <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
             </div>
+            <div class="toast-body pt-1" style="color:#333">{{ session('error') }}</div>
           </div>
-          @elseif(session('warning'))
-          <div class="toast align-items-center text-bg-warning border-0 show" role="alert" id="toast-global">
-            <div class="d-flex">
-              <div class="toast-body d-flex align-items-center gap-2">
-                <i class="ti tabler-alert-triangle icon-20px flex-shrink-0"></i>
-                <span>{{ session('warning') }}</span>
-              </div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          @endif
+
+          @if(session('warning'))
+          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="7000"
+               style="background:#fff;border-left:4px solid #fd7e14 !important;border-radius:8px">
+            <div class="toast-header border-0 pb-0" style="background:transparent">
+              <span class="me-2" style="color:#fd7e14"><i class="ti tabler-alert-triangle" style="font-size:18px"></i></span>
+              <strong class="me-auto" style="color:#fd7e14">Advertencia</strong>
+              <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
             </div>
+            <div class="toast-body pt-1" style="color:#333">{{ session('warning') }}</div>
           </div>
-          @elseif(session('info'))
-          <div class="toast align-items-center text-bg-primary border-0 show" role="alert" id="toast-global">
-            <div class="d-flex">
-              <div class="toast-body d-flex align-items-center gap-2">
-                <i class="ti tabler-info-circle icon-20px flex-shrink-0"></i>
-                <span>{{ session('info') }}</span>
-              </div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          @endif
+
+          @if(session('info'))
+          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="5000"
+               style="background:#fff;border-left:4px solid #0d6efd !important;border-radius:8px">
+            <div class="toast-header border-0 pb-0" style="background:transparent">
+              <span class="me-2" style="color:#0d6efd"><i class="ti tabler-info-circle" style="font-size:18px"></i></span>
+              <strong class="me-auto" style="color:#0d6efd">Información</strong>
+              <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body pt-1" style="color:#333">{{ session('info') }}</div>
+          </div>
+          @endif
+
+          @if($errors->any())
+          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="false"
+               style="background:#fff;border-left:4px solid #dc3545 !important;border-radius:8px">
+            <div class="toast-header border-0 pb-0" style="background:transparent">
+              <span class="me-2" style="color:#dc3545"><i class="ti tabler-alert-circle" style="font-size:18px"></i></span>
+              <strong class="me-auto" style="color:#dc3545">Corrige los errores</strong>
+              <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body pt-1" style="color:#333">
+              <ul class="mb-0 ps-3 small">
+                @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+              </ul>
             </div>
           </div>
           @endif
+
         </div>
         <!-- / Toast Container Global -->
 

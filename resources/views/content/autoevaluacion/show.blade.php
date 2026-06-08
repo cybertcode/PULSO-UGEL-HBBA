@@ -29,10 +29,6 @@
     </a>
   </div>
 
-  @if(session('success'))
-  <div class="alert alert-success alert-dismissible mb-4">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-  @endif
-
   @if($autoevaluacion->estado !== 'cerrada')
   <form method="POST" action="{{ route('autoevaluacion.respuestas', $autoevaluacion) }}">
     @csrf @method('PATCH')

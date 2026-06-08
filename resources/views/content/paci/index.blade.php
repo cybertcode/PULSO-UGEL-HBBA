@@ -29,27 +29,15 @@
     @endcan
   </div>
 
-  {{-- Alertas --}}
-  @if(session('success'))
-  <div class="alert alert-success alert-dismissible mb-4" role="alert">
-    {{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-  @endif
-  @if(session('error'))
-  <div class="alert alert-danger alert-dismissible mb-4" role="alert">
-    {{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-  @endif
-
   {{-- Estadísticas --}}
   <div class="row g-4 mb-4">
     <div class="col-6 col-md-3">
       <div class="card text-center h-100">
         <div class="card-body">
-          <div class="avatar avatar-md mx-auto mb-2 bg-label-primary rounded-circle">
-            <i class="ti tabler-file-description fs-4"></i>
+          <div class="avatar avatar-md mx-auto mb-2">
+            <span class="avatar-initial rounded-circle bg-label-primary">
+              <i class="ti tabler-file-description fs-4"></i>
+            </span>
           </div>
           <h3 class="mb-0">{{ $stats['total'] }}</h3>
           <small class="text-muted">Total PACI</small>
@@ -59,8 +47,10 @@
     <div class="col-6 col-md-3">
       <div class="card text-center h-100">
         <div class="card-body">
-          <div class="avatar avatar-md mx-auto mb-2 bg-label-success rounded-circle">
-            <i class="ti tabler-player-play fs-4"></i>
+          <div class="avatar avatar-md mx-auto mb-2">
+            <span class="avatar-initial rounded-circle bg-label-success">
+              <i class="ti tabler-player-play fs-4"></i>
+            </span>
           </div>
           <h3 class="mb-0">{{ $stats['en_ejecucion'] }}</h3>
           <small class="text-muted">En Ejecución</small>
@@ -70,8 +60,10 @@
     <div class="col-6 col-md-3">
       <div class="card text-center h-100">
         <div class="card-body">
-          <div class="avatar avatar-md mx-auto mb-2 bg-label-info rounded-circle">
-            <i class="ti tabler-circle-check fs-4"></i>
+          <div class="avatar avatar-md mx-auto mb-2">
+            <span class="avatar-initial rounded-circle bg-label-info">
+              <i class="ti tabler-circle-check fs-4"></i>
+            </span>
           </div>
           <h3 class="mb-0">{{ $stats['aprobados'] }}</h3>
           <small class="text-muted">Aprobados</small>
@@ -81,8 +73,10 @@
     <div class="col-6 col-md-3">
       <div class="card text-center h-100">
         <div class="card-body">
-          <div class="avatar avatar-md mx-auto mb-2 bg-label-warning rounded-circle">
-            <i class="ti tabler-chart-bar fs-4"></i>
+          <div class="avatar avatar-md mx-auto mb-2">
+            <span class="avatar-initial rounded-circle bg-label-warning">
+              <i class="ti tabler-chart-bar fs-4"></i>
+            </span>
           </div>
           <h3 class="mb-0">{{ $stats['promedio'] }}%</h3>
           <small class="text-muted">Avance Promedio</small>
@@ -236,7 +230,7 @@
               <label class="form-label">Actividades vinculadas</label>
               <select name="actividades[]" class="form-select select2" multiple>
                 @foreach($actividades as $act)
-                <option value="{{ $act->id }}">{{ $act->titulo }}</option>
+                <option value="{{ $act->id }}">{{ $act->nombre }}</option>
                 @endforeach
               </select>
             </div>
