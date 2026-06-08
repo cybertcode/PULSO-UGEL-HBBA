@@ -12,20 +12,6 @@ use Illuminate\Support\Facades\Storage;
   <p class="mb-0 text-muted">Gestión de parámetros institucionales, semáforo, notificaciones y unidades orgánicas</p>
 </div>
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-  <i class="ti tabler-circle-check me-2"></i>{{ session('success') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-
-@if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-  <i class="ti tabler-alert-circle me-2"></i>
-  <ul class="mb-0 ps-3">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
 
 {{-- Tabs de navegación --}}
 <div class="nav-align-top mb-4">
@@ -107,6 +93,47 @@ use Illuminate\Support\Facades\Storage;
                 <input type="hidden" name="remove_logo" id="removeLogo" value="0">
                 @endif
                 <div class="text-muted small mt-1">PNG, JPG, SVG o GIF. Máximo 2 MB. Recomendado 400×400px.</div>
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            {{-- Favicon --}}
+            <div class="d-flex align-items-start gap-5 flex-wrap">
+              <div class="text-center">
+                <div class="position-relative d-inline-block mb-2">
+                  @if($config->favicon_ruta)
+                    <img src="{{ Storage::url($config->favicon_ruta) }}"
+                         id="faviconPreview"
+                         alt="Favicon"
+                         class="rounded border"
+                         style="width:64px;height:64px;object-fit:contain;background:#f8f9fa">
+                  @else
+                    <div id="faviconPreview"
+                         class="rounded border d-flex align-items-center justify-content-center bg-label-secondary"
+                         style="width:64px;height:64px">
+                      <i class="ti tabler-browser icon-24px text-muted"></i>
+                    </div>
+                  @endif
+                </div>
+                <div class="small text-muted">Favicon actual</div>
+              </div>
+
+              <div class="flex-grow-1">
+                <label for="faviconUpload" class="btn btn-primary me-2 mb-2" tabindex="0">
+                  <i class="ti tabler-upload me-1"></i>
+                  <span>Subir favicon</span>
+                  <input type="file" id="faviconUpload" name="favicon" class="d-none" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/x-icon">
+                </label>
+                @if($config->favicon_ruta)
+                <button type="button" class="btn btn-label-danger mb-2" id="btnRemoveFavicon">
+                  <i class="ti tabler-trash me-1"></i>Eliminar favicon
+                </button>
+                <input type="hidden" name="remove_favicon" id="removeFavicon" value="0">
+                @else
+                <input type="hidden" name="remove_favicon" id="removeFavicon" value="0">
+                @endif
+                <div class="text-muted small mt-1">PNG, JPG, SVG, GIF o ICO. Máximo 512 KB. Recomendado 32×32 o 64×64px.</div>
               </div>
             </div>
           </div>
@@ -669,6 +696,41 @@ document.getElementById('logoUpload')?.addEventListener('change', function (e) {
     }
   };
   reader.readAsDataURL(file);
+});
+
+// Preview del favicon al seleccionar archivo
+document.getElementById('faviconUpload')?.addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const preview = document.getElementById('faviconPreview');
+    if (preview.tagName === 'IMG') {
+      preview.src = ev.target.result;
+    } else {
+      const img = document.createElement('img');
+      img.src = ev.target.result;
+      img.id = 'faviconPreview';
+      img.className = 'rounded border';
+      img.style = 'width:64px;height:64px;object-fit:contain;background:#f8f9fa';
+      img.alt = 'Favicon';
+      preview.replaceWith(img);
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
+// Botón eliminar favicon
+document.getElementById('btnRemoveFavicon')?.addEventListener('click', function () {
+  document.getElementById('removeFavicon').value = '1';
+  const preview = document.getElementById('faviconPreview');
+  const placeholder = document.createElement('div');
+  placeholder.id = 'faviconPreview';
+  placeholder.className = 'rounded border d-flex align-items-center justify-content-center bg-label-secondary';
+  placeholder.style = 'width:64px;height:64px';
+  placeholder.innerHTML = '<i class="ti tabler-browser icon-24px text-muted"></i>';
+  preview.replaceWith(placeholder);
+  this.disabled = true;
 });
 
 // Botón eliminar logo

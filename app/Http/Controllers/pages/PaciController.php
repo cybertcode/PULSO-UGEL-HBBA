@@ -30,7 +30,7 @@ class PaciController extends Controller
             'promedio'    => (int) round(Paci::avg('avance') ?? 0),
         ];
 
-        $actividades = Actividad::orderBy('titulo')->get(['id', 'titulo', 'estado']);
+        $actividades = Actividad::orderBy('nombre')->get(['id', 'nombre', 'estado']);
         $anios = range(now()->year - 2, now()->year + 1);
 
         return view('content.paci.index', compact('pacis', 'stats', 'actividades', 'anios'));

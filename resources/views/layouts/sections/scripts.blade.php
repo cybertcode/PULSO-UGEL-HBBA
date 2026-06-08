@@ -32,11 +32,10 @@
 <!-- Global Toast Auto-dismiss -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const toastEl = document.getElementById('toast-global');
-  if (toastEl) {
-    // Bootstrap Toast con auto-hide a los 5 segundos
-    const toast = new bootstrap.Toast(toastEl, { delay: 5000, autohide: true });
-    toast.show();
-  }
+  document.querySelectorAll('.toast-container .toast').forEach(function (toastEl) {
+    const autohide = toastEl.dataset.bsAutohide !== 'false';
+    const delay    = parseInt(toastEl.dataset.bsDelay) || 5000;
+    new bootstrap.Toast(toastEl, { autohide: autohide, delay: delay }).show();
+  });
 });
 </script>

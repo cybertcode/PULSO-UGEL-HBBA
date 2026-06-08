@@ -291,6 +291,15 @@ tr:hover .card-actions-hover,
   border-radius: var(--bs-border-radius-lg) !important;
 }
 
+/* ── Iconos del menú lateral — centrado vertical con subtítulo i18n ─────── */
+.menu-link .menu-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex-shrink: 0;
+}
+
 /* ── Perfil usuario en menú lateral ─────────────────────────────────────── */
 .menu-user-profile {
   transition: all .2s ease;
