@@ -43,46 +43,32 @@ class MenuServiceProvider extends ServiceProvider
                 'i18n' => 'Resumen y estadísticas',
             ];
 
+            // Mis Actividades — visible para todos los usuarios autenticados
+            $menu[] = (object)[
+                'url'  => '/mis-actividades',
+                'name' => 'Mis Actividades',
+                'icon' => 'menu-icon icon-base ti tabler-checklist',
+                'slug' => 'mis-actividades',
+                'i18n' => 'Mis compromisos asignados',
+            ];
+
             // ════════════════════════════════════════
-            // CONTROL Y SEGUIMIENTO SCI
+            // CONTROL INTERNO
             // ════════════════════════════════════════
             $hasSci = Gate::check('control-interno.ver')
                    || Gate::check('integridad.ver')
                    || Gate::check('evidencias.ver');
 
             if ($hasSci) {
-                $menu[] = (object)['menuHeader' => 'Control y Seguimiento'];
+                $menu[] = (object)['menuHeader' => 'Control Interno'];
 
                 if (Gate::check('control-interno.ver')) {
                     $menu[] = (object)[
                         'url'  => '/control-interno',
-                        'name' => 'Control Interno',
+                        'name' => 'Actividades SCI',
                         'icon' => 'menu-icon icon-base ti tabler-clipboard-check',
                         'slug' => 'sci-control-interno',
-                        'i18n' => 'Actividades y compromisos',
-                    ];
-                }
-
-                if (Gate::check('integridad.ver')) {
-                    $intSub = [];
-                    $intSub[] = (object)[
-                        'url'  => '/modelo-integridad',
-                        'name' => 'Vista General',
-                        'slug' => 'sci-modelo-integridad',
-                        'i18n' => 'Componentes y cumplimiento',
-                    ];
-                    $intSub[] = (object)[
-                        'url'  => '/semaforo',
-                        'name' => 'Semáforo Institucional',
-                        'slug' => 'mon-semaforo',
-                        'i18n' => 'Estado en tiempo real',
-                    ];
-                    $menu[] = (object)[
-                        'name'    => 'Modelo de Integridad',
-                        'icon'    => 'menu-icon icon-base ti tabler-shield-check',
-                        'slug'    => ['sci-modelo-integridad', 'mon-semaforo'],
-                        'i18n'    => 'PCM — 9 componentes',
-                        'submenu' => $intSub,
+                        'i18n' => 'Registro y seguimiento',
                     ];
                 }
 
@@ -92,30 +78,87 @@ class MenuServiceProvider extends ServiceProvider
                         'name' => 'Evidencias',
                         'icon' => 'menu-icon icon-base ti tabler-files',
                         'slug' => 'sci-evidencias',
-                        'i18n' => 'Documentos y registros',
+                        'i18n' => 'Documentos de respaldo',
+                    ];
+                }
+
+                // Modelo de Integridad + Semáforo fusionados en un submenú
+                if (Gate::check('integridad.ver')) {
+                    $intSub = [];
+                    $intSub[] = (object)[
+                        'url'  => '/modelo-integridad',
+                        'name' => 'Vista General',
+                        'slug' => 'sci-modelo-integridad',
+                        'i18n' => '9 componentes PCM',
+                    ];
+                    $intSub[] = (object)[
+                        'url'  => '/semaforo',
+                        'name' => 'Semáforo',
+                        'slug' => 'mon-semaforo',
+                        'i18n' => 'Estado por unidad',
+                    ];
+                    $menu[] = (object)[
+                        'name'    => 'Modelo de Integridad',
+                        'icon'    => 'menu-icon icon-base ti tabler-shield-check',
+                        'slug'    => ['sci-modelo-integridad', 'mon-semaforo'],
+                        'i18n'    => 'PCM — 9 componentes',
+                        'submenu' => $intSub,
                     ];
                 }
             }
 
             // ════════════════════════════════════════
-            // MONITOREO
+            // CUMPLIMIENTO (núcleo del objetivo SCI)
             // ════════════════════════════════════════
-            $menu[] = (object)['menuHeader' => 'Monitoreo'];
+            $menu[] = (object)['menuHeader' => 'Cumplimiento'];
 
+            $cumSub = [];
+            $cumSub[] = (object)[
+                'url'  => '/cumplimiento/panel',
+                'name' => 'Panel de Control',
+                'slug' => 'cumplimiento.panel',
+                'i18n' => 'Resumen ejecutivo',
+            ];
+            $cumSub[] = (object)[
+                'url'  => '/cumplimiento/responsables',
+                'name' => 'Por Responsable',
+                'slug' => 'cumplimiento.responsables',
+                'i18n' => '¿Quién cumple y quién no?',
+            ];
+            $cumSub[] = (object)[
+                'url'  => '/cumplimiento/sin-evidencia',
+                'name' => 'Sin Evidencia',
+                'slug' => 'cumplimiento.sin-evidencia',
+                'i18n' => 'Actividades sin documentar',
+            ];
             $menu[] = (object)[
+                'name'    => 'Seguimiento SCI',
+                'icon'    => 'menu-icon icon-base ti tabler-chart-dots',
+                'slug'    => ['cumplimiento.panel', 'cumplimiento.responsables', 'cumplimiento.sin-evidencia'],
+                'i18n'    => 'Plazos y evidencias',
+                'submenu' => $cumSub,
+            ];
+
+            // Avance y Ranking fusionados bajo Análisis
+            $analisisSub = [];
+            $analisisSub[] = (object)[
                 'url'  => '/avance-unidades',
                 'name' => 'Avance por Unidades',
-                'icon' => 'menu-icon icon-base ti tabler-building-community',
                 'slug' => 'mon-avance-unidades',
                 'i18n' => 'Seguimiento por área',
             ];
-
-            $menu[] = (object)[
+            $analisisSub[] = (object)[
                 'url'  => '/ranking-unidades',
-                'name' => 'Ranking de Unidades',
-                'icon' => 'menu-icon icon-base ti tabler-podium',
+                'name' => 'Ranking',
                 'slug' => 'mon-ranking-unidades',
-                'i18n' => 'Clasificación general',
+                'i18n' => 'Clasificación mensual',
+            ];
+            $menu[] = (object)[
+                'name'    => 'Análisis',
+                'icon'    => 'menu-icon icon-base ti tabler-chart-bar',
+                'slug'    => ['mon-avance-unidades', 'mon-ranking-unidades'],
+                'i18n'    => 'Avance y ranking',
+                'submenu' => $analisisSub,
             ];
 
             if (Gate::check('alertas.ver')) {
@@ -124,7 +167,7 @@ class MenuServiceProvider extends ServiceProvider
                     'name' => 'Alertas',
                     'icon' => 'menu-icon icon-base ti tabler-bell',
                     'slug' => 'mon-alertas',
-                    'i18n' => 'Notificaciones y pendientes',
+                    'i18n' => 'Notificaciones activas',
                 ];
             }
 
@@ -134,19 +177,19 @@ class MenuServiceProvider extends ServiceProvider
             $menu[] = (object)['menuHeader' => 'Gestión'];
 
             $menu[] = (object)[
-                'url'  => '/buenas-practicas',
-                'name' => 'Buenas Prácticas',
-                'icon' => 'menu-icon icon-base ti tabler-rosette-discount-check',
-                'slug' => 'buenas-practicas',
-                'i18n' => 'Registro y seguimiento',
-            ];
-
-            $menu[] = (object)[
                 'url'  => '/recomendaciones',
                 'name' => 'Recomendaciones',
                 'icon' => 'menu-icon icon-base ti tabler-message-report',
                 'slug' => 'recomendaciones',
-                'i18n' => 'Observaciones institucionales',
+                'i18n' => 'Observaciones y mejoras',
+            ];
+
+            $menu[] = (object)[
+                'url'  => '/buenas-practicas',
+                'name' => 'Buenas Prácticas',
+                'icon' => 'menu-icon icon-base ti tabler-rosette-discount-check',
+                'slug' => 'buenas-practicas',
+                'i18n' => 'Prácticas positivas',
             ];
 
             if (Gate::check('reconocimientos.ver')) {
@@ -155,7 +198,7 @@ class MenuServiceProvider extends ServiceProvider
                     'name' => 'Reconocimientos',
                     'icon' => 'menu-icon icon-base ti tabler-trophy',
                     'slug' => 'rep-reconocimientos',
-                    'i18n' => 'Premiación y destacados',
+                    'i18n' => 'Trabajadores destacados',
                 ];
             }
 
@@ -167,10 +210,18 @@ class MenuServiceProvider extends ServiceProvider
 
                 $menu[] = (object)[
                     'url'  => '/reportes',
-                    'name' => 'Reportes',
-                    'icon' => 'menu-icon icon-base ti tabler-chart-bar',
+                    'name' => 'Reportes Generales',
+                    'icon' => 'menu-icon icon-base ti tabler-table-export',
                     'slug' => 'rep-reportes',
-                    'i18n' => 'Análisis y exportación',
+                    'i18n' => 'Excel y PDF por actividad',
+                ];
+
+                $menu[] = (object)[
+                    'url'  => '/cumplimiento/responsables',
+                    'name' => 'Reporte Cumplimiento',
+                    'icon' => 'menu-icon icon-base ti tabler-user-check',
+                    'slug' => 'cumplimiento.responsables',
+                    'i18n' => 'Exportar por responsable',
                 ];
             }
 

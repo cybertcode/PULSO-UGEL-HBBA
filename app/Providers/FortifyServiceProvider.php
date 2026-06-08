@@ -6,6 +6,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Models\ConfiguracionInstitucional;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -29,6 +30,42 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Fortify::loginView(function () {
+            return view('content.authentications.auth-login-cover', [
+                'pageConfigs'         => ['myLayout' => 'blank'],
+                'configInstitucional' => ConfiguracionInstitucional::first(),
+            ]);
+        });
+
+        Fortify::registerView(function () {
+            return view('content.authentications.auth-register-cover', [
+                'pageConfigs'         => ['myLayout' => 'blank'],
+                'configInstitucional' => ConfiguracionInstitucional::first(),
+            ]);
+        });
+
+        Fortify::requestPasswordResetLinkView(function () {
+            return view('content.authentications.auth-forgot-password-cover', [
+                'pageConfigs'         => ['myLayout' => 'blank'],
+                'configInstitucional' => ConfiguracionInstitucional::first(),
+            ]);
+        });
+
+        Fortify::resetPasswordView(function (Request $request) {
+            return view('content.authentications.auth-reset-password-cover', [
+                'pageConfigs'         => ['myLayout' => 'blank'],
+                'configInstitucional' => ConfiguracionInstitucional::first(),
+                'request'             => $request,
+            ]);
+        });
+
+        Fortify::verifyEmailView(function () {
+            return view('content.authentications.auth-verify-email-cover', [
+                'pageConfigs'         => ['myLayout' => 'blank'],
+                'configInstitucional' => ConfiguracionInstitucional::first(),
+            ]);
+        });
+
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);

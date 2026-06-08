@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 $configData = Helper::appClasses();
+$configInstitucional = $configInstitucional ?? \App\Models\ConfiguracionInstitucional::first();
 
 $authUser     = Auth::user();
 $userFoto     = $authUser?->profile_photo_path ? Storage::url($authUser->profile_photo_path) : null;

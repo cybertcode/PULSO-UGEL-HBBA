@@ -31,11 +31,7 @@ class AppServiceProvider extends ServiceProvider
         // Compartir configuración institucional con todas las vistas
         View::composer('*', function ($view) {
             try {
-                $configInstitucional = \Illuminate\Support\Facades\Cache::remember(
-                    'config_institucional',
-                    now()->addMinutes(60),
-                    fn () => ConfiguracionInstitucional::first()
-                );
+                $configInstitucional = ConfiguracionInstitucional::cached();
             } catch (\Exception $e) {
                 $configInstitucional = null;
             }

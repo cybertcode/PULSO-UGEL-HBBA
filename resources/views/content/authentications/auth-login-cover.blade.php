@@ -2,11 +2,12 @@
 $customizerHidden = 'customizer-hide';
 $configData = Helper::appClasses();
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Route;
 @endphp
 
 @extends('layouts/layoutMaster')
 
-@section('title', 'Iniciar Sesión - PULSO UGEL')
+@section('title', 'Iniciar Sesión')
 
 @section('vendor-style')
 @vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])
@@ -29,19 +30,17 @@ use Illuminate\Support\Facades\Storage;
 @endsection
 
 @section('content')
+@php $ci = \App\Models\ConfiguracionInstitucional::cached(); @endphp
 <div class="authentication-wrapper authentication-cover">
   <a href="{{ url('/') }}" class="app-brand auth-cover-brand">
-    @if(!empty($configInstit?->logo_ruta))
+    @if(!empty($ci?->logo_ruta))
       <span class="app-brand-logo demo">
-        <img src="{{ Storage::url($configInstit->logo_ruta) }}" height="28" alt="logo" class="rounded">
+        <img src="{{ Storage::url($ci->logo_ruta) }}" height="28" alt="logo" class="rounded">
       </span>
-      <span class="app-brand-text demo text-heading fw-bold">
-        {{ $configInstit->sigla ?? $configInstit->nombre_institucion }}
-      </span>
-    @else
-      <span class="app-brand-logo demo">@include('_partials.macros')</span>
-      <span class="app-brand-text demo text-heading fw-bold">{{ $configInstit->sigla ?? 'PULSO UGEL' }}</span>
     @endif
+    <span class="app-brand-text demo text-heading fw-bold">
+      {{ $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL' }}
+    </span>
   </a>
 
   <div class="authentication-inner row m-0">
@@ -63,7 +62,7 @@ use Illuminate\Support\Facades\Storage;
     <div class="d-flex col-12 col-xl-4 align-items-center authentication-bg p-sm-12 p-6">
       <div class="w-px-400 mx-auto mt-12 pt-5">
 
-        <h4 class="mb-1">Bienvenido a {{ $configInstit->sigla ?? 'PULSO UGEL' }}</h4>
+        <h4 class="mb-1">Bienvenido a {{ $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL' }}</h4>
         <p class="mb-6 text-muted">Ingresa tus credenciales para acceder al Sistema de Control Interno</p>
 
         @if (session('status'))
@@ -125,9 +124,9 @@ use Illuminate\Support\Facades\Storage;
 
         <div class="divider my-6">
           <div class="divider-text">
-            {{ $configInstit->nombre_institucion ?? 'PULSO UGEL' }}
-            @if($configInstit?->distrito || $configInstit?->provincia)
-              &bull; {{ implode(', ', array_filter([$configInstit->distrito, $configInstit->provincia, $configInstit->departamento])) }}
+            {{ $ci?->nombre_institucion ?? 'PULSO UGEL' }}
+            @if($ci?->distrito || $ci?->provincia)
+              &bull; {{ implode(', ', array_filter([$ci->distrito, $ci->provincia, $ci->departamento])) }}
             @endif
           </div>
         </div>

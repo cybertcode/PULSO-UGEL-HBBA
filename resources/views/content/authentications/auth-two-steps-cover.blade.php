@@ -1,6 +1,8 @@
 @php
 $customizerHidden = 'customizer-hide';
 $configData = Helper::appClasses();
+use Illuminate\Support\Facades\Storage;
+$configInstitucional = $configInstitucional ?? \App\Models\ConfiguracionInstitucional::first();
 @endphp
 
 @extends('layouts/layoutMaster')

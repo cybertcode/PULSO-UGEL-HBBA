@@ -21,29 +21,47 @@ class AlertaInstitucion extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $prioridadLabel = match($this->alerta->prioridad) {
-            'alta'  => '🔴 ALTA PRIORIDAD',
-            'media' => '🟡 MEDIA PRIORIDAD',
-            default => '🔵 BAJA PRIORIDAD',
-        };
-
-        $tipoLabel = match($this->alerta->tipo) {
+        $tipo = match($this->alerta->tipo) {
             'vencimiento'     => 'Actividad Vencida',
-            'avance_bajo'     => 'Avance Bajo',
+            'avance_bajo'     => 'Avance Insuficiente',
             'evidencia_falta' => 'Evidencia Faltante',
             default           => 'Notificación del Sistema',
         };
 
+        $colorBorde = match($this->alerta->prioridad) {
+            'alta'  => '#ea5455',
+            'media' => '#ff9f43',
+            default => '#28c76f',
+        };
+
+        $iconoTexto = match($this->alerta->tipo) {
+            'vencimiento'     => '⏰',
+            'avance_bajo'     => '📉',
+            'evidencia_falta' => '📎',
+            default           => '🔔',
+        };
+
+        $prioridadLabel = match($this->alerta->prioridad) {
+            'alta'  => 'ALTA PRIORIDAD',
+            'media' => 'MEDIA PRIORIDAD',
+            default => 'BAJA PRIORIDAD',
+        };
+
+        $actividad = $this->alerta->actividad;
+        $unidad    = $this->alerta->unidadOrganica?->nombre ?? '—';
+
         return (new MailMessage)
-            ->subject("[PULSO UGEL] {$prioridadLabel} — {$tipoLabel}")
-            ->greeting("Estimado/a servidor/a,")
-            ->line("**{$this->alerta->titulo}**")
-            ->line($this->alerta->mensaje)
-            ->line("---")
-            ->line("**Prioridad:** {$prioridadLabel}")
-            ->line("**Fecha:** " . $this->alerta->created_at->format('d/m/Y H:i'))
-            ->action('Ver en el Sistema PULSO', url('/alertas'))
-            ->line('Por favor, tome las acciones necesarias a la brevedad.')
-            ->salutation('Sistema PULSO — Control Interno y Modelo de Integridad');
+            ->subject("{$iconoTexto} [PULSO UGEL] {$tipo} — {$prioridadLabel}")
+            ->view('emails.alerta-institucion', [
+                'alerta'         => $this->alerta,
+                'tipo'           => $tipo,
+                'colorBorde'     => $colorBorde,
+                'iconoTexto'     => $iconoTexto,
+                'prioridadLabel' => $prioridadLabel,
+                'actividad'      => $actividad,
+                'unidad'         => $unidad,
+                'urlSistema'     => url('/mis-actividades'),
+                'urlAlertas'     => url('/alertas'),
+            ]);
     }
 }

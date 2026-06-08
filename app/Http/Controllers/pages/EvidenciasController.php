@@ -24,6 +24,9 @@ class EvidenciasController extends Controller
         $query = Evidencia::with(['actividad.componente', 'subidoPor', 'validadoPor'])
             ->orderByDesc('created_at');
 
+        if ($request->filled('actividad_id')) {
+            $query->where('actividad_id', $request->actividad_id);
+        }
         if ($request->filled('componente_id')) {
             $query->whereHas('actividad', fn($q) => $q->where('componente_id', $request->componente_id));
         }
@@ -36,12 +39,13 @@ class EvidenciasController extends Controller
                 ->orWhere('titulo', 'like', "%$buscar%"));
         }
 
-        $evidencias  = $query->paginate(15)->withQueryString();
-        $actividades = Actividad::whereNotIn('estado', ['cancelada'])->orderBy('nombre')->get();
-        $componentes = Componente::where('activo', true)->orderBy('numero')->get();
+        $evidencias        = $query->paginate(15)->withQueryString();
+        $actividades       = Actividad::whereNotIn('estado', ['cancelada'])->orderBy('nombre')->get();
+        $componentes       = Componente::where('activo', true)->orderBy('numero')->get();
+        $actividadPresel   = $request->input('actividad_id');
 
         return view('content.evidencias.index', compact(
-            'stats', 'evidencias', 'actividades', 'componentes'
+            'stats', 'evidencias', 'actividades', 'componentes', 'actividadPresel'
         ));
     }
 

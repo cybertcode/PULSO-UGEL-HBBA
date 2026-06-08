@@ -1,6 +1,7 @@
 @php
 $customizerHidden = 'customizer-hide';
 $configData = Helper::appClasses();
+use Illuminate\Support\Facades\Storage;
 @endphp
 
 @extends('layouts/layoutMaster')
@@ -28,10 +29,17 @@ $configData = Helper::appClasses();
 @endsection
 
 @section('content')
+@php $ci = \App\Models\ConfiguracionInstitucional::cached(); @endphp
 <div class="authentication-wrapper authentication-cover">
   <a href="{{ url('/') }}" class="app-brand auth-cover-brand">
-    <span class="app-brand-logo demo">@include('_partials.macros')</span>
-    <span class="app-brand-text demo text-heading fw-bold">PULSO UGEL</span>
+    @if(!empty($ci?->logo_ruta))
+      <span class="app-brand-logo demo">
+        <img src="{{ Storage::url($ci->logo_ruta) }}" height="28" alt="logo" class="rounded">
+      </span>
+    @endif
+    <span class="app-brand-text demo text-heading fw-bold">
+      {{ $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL' }}
+    </span>
   </a>
 
   <div class="authentication-inner row m-0">

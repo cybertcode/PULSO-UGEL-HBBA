@@ -28,6 +28,8 @@ use App\Http\Controllers\pages\PerfilController;
 use App\Http\Controllers\pages\BuenasPracticasController;
 use App\Http\Controllers\pages\RecomendacionesController;
 use App\Http\Controllers\pages\AyudaController;
+use App\Http\Controllers\pages\CumplimientoController;
+use App\Http\Controllers\pages\MisActividadesController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
@@ -76,6 +78,17 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::delete('/alertas/{alerta}',       [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.ver');
     Route::get('/ranking-unidades', [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades');
     Route::get('/avance-unidades',  [AvanceUnidadesController::class,  'index'])->name('mon-avance-unidades');
+
+    // --- Cumplimiento SCI ---
+    Route::get('/cumplimiento/panel',          [CumplimientoController::class, 'panelSci'])->name('cumplimiento.panel');
+    Route::get('/cumplimiento/responsables',   [CumplimientoController::class, 'responsables'])->name('cumplimiento.responsables');
+    Route::get('/cumplimiento/sin-evidencia',  [CumplimientoController::class, 'sinEvidencia'])->name('cumplimiento.sin-evidencia');
+    Route::get('/cumplimiento/exportar',       [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar');
+
+    // --- Mis Actividades ---
+    Route::get('/mis-actividades',                          [MisActividadesController::class, 'index'])->name('mis-actividades');
+    Route::patch('/mis-actividades/{actividad}/avance',     [MisActividadesController::class, 'updateAvance'])->name('mis-actividades.avance');
+    Route::get('/mis-actividades/{actividad}/historial',    [MisActividadesController::class, 'historial'])->name('mis-actividades.historial');
 
     // --- Reportes ---
     Route::get('/reportes',        [ReportesController::class,       'index'])->name('rep-reportes')->middleware('can:reportes.ver');

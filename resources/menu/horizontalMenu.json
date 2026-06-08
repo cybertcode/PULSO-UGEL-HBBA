@@ -36,6 +36,13 @@
       "i18n": "Seguimiento detallado"
     },
     {
+      "url": "/cumplimiento/panel",
+      "name": "Panel SCI",
+      "icon": "menu-icon icon-base ti tabler-chart-dots",
+      "slug": "cumplimiento.panel",
+      "i18n": "Cumplimiento y evidencias"
+    },
+    {
       "url": "/reportes",
       "name": "Reportes",
       "icon": "menu-icon icon-base ti tabler-chart-bar",
