@@ -77,6 +77,13 @@
       "i18n": "Registro y seguimiento"
     },
     {
+      "url": "/recomendaciones",
+      "name": "Recomendaciones",
+      "icon": "menu-icon icon-base ti tabler-message-report",
+      "slug": "recomendaciones",
+      "i18n": "Observaciones institucionales"
+    },
+    {
       "url": "/reconocimientos",
       "name": "Reconocimientos",
       "icon": "menu-icon icon-base ti tabler-trophy",

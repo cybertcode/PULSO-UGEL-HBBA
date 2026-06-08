@@ -26,6 +26,7 @@ use App\Http\Controllers\authentications\LoginBasic;
 use App\Http\Controllers\authentications\RegisterBasic;
 use App\Http\Controllers\pages\PerfilController;
 use App\Http\Controllers\pages\BuenasPracticasController;
+use App\Http\Controllers\pages\RecomendacionesController;
 use App\Http\Controllers\pages\AyudaController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
@@ -124,7 +125,18 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::put('/configuracion',  [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
 
     // --- Buenas Prácticas ---
-    Route::get('/buenas-practicas', [BuenasPracticasController::class, 'index'])->name('buenas-practicas');
+    Route::get('/buenas-practicas',                          [BuenasPracticasController::class, 'index'])->name('buenas-practicas');
+    Route::post('/buenas-practicas',                         [BuenasPracticasController::class, 'store'])->name('buenas-practicas.store');
+    Route::put('/buenas-practicas/{buenaPractica}',          [BuenasPracticasController::class, 'update'])->name('buenas-practicas.update');
+    Route::delete('/buenas-practicas/{buenaPractica}',       [BuenasPracticasController::class, 'destroy'])->name('buenas-practicas.destroy');
+    Route::patch('/buenas-practicas/{buenaPractica}/avance', [BuenasPracticasController::class, 'updateAvance'])->name('buenas-practicas.avance');
+
+    // --- Recomendaciones ---
+    Route::get('/recomendaciones',                              [RecomendacionesController::class, 'index'])->name('recomendaciones');
+    Route::post('/recomendaciones',                             [RecomendacionesController::class, 'store'])->name('recomendaciones.store');
+    Route::put('/recomendaciones/{recomendacion}',              [RecomendacionesController::class, 'update'])->name('recomendaciones.update');
+    Route::delete('/recomendaciones/{recomendacion}',           [RecomendacionesController::class, 'destroy'])->name('recomendaciones.destroy');
+    Route::patch('/recomendaciones/{recomendacion}/atender',    [RecomendacionesController::class, 'marcarAtendida'])->name('recomendaciones.atender');
 
     // --- Ayuda ---
     Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda');
