@@ -6,7 +6,9 @@ use App\Exports\ActividadesExport;
 use App\Http\Controllers\Controller;
 use App\Models\Actividad;
 use App\Models\Componente;
+use App\Models\ConfiguracionInstitucional;
 use App\Models\UnidadOrganica;
+use App\Support\SemaforoHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -15,10 +17,10 @@ class ReportesController extends Controller
 {
     public function index(Request $request)
     {
-        $anio       = $request->get('anio', now()->year);
-        $componente = $request->get('componente_id');
-        $estado     = $request->get('estado');
-        $unidad     = $request->get('unidad_organica_id');
+        $anio       = $request->input('anio', now()->year);
+        $componente = $request->input('componente_id');
+        $estado     = $request->input('estado');
+        $unidad     = $request->input('unidad_organica_id');
 
         $query = Actividad::with(['componente', 'unidadOrganica'])
             ->whereYear('created_at', $anio);
@@ -29,14 +31,12 @@ class ReportesController extends Controller
 
         $actividades = $query->orderBy('fecha_limite')->paginate(20)->withQueryString();
 
+        $config = ConfiguracionInstitucional::cached();
+
         $resumen = Componente::withCount([
             'actividades as total'       => fn($q) => $q->whereYear('created_at', $anio),
             'actividades as completadas' => fn($q) => $q->whereYear('created_at', $anio)->where('estado', 'completada'),
-        ])->get()->map(function ($c) {
-            $c->porcentaje = $c->total > 0 ? round(($c->completadas / $c->total) * 100) : 0;
-            $c->color = $c->porcentaje >= 75 ? 'success' : ($c->porcentaje >= 50 ? 'warning' : 'danger');
-            return $c;
-        });
+        ])->get()->map(fn($c) => SemaforoHelper::decorar($c, 'total', 'completadas', $config));
 
         $por_mes = Actividad::selectRaw('MONTH(created_at) as mes, COUNT(*) as total, SUM(estado="completada") as completadas')
             ->whereYear('created_at', $anio)
@@ -57,14 +57,14 @@ class ReportesController extends Controller
 
     public function exportar(Request $request)
     {
-        $anio       = (int) $request->get('anio', now()->year);
-        $componenteId = $request->get('componente_id') ? (int) $request->get('componente_id') : null;
-        $estado     = $request->get('estado');
-        $unidadId   = $request->get('unidad_organica_id') ? (int) $request->get('unidad_organica_id') : null;
-        $formato    = $request->get('formato', 'excel');
+        $anio         = (int) $request->input('anio', now()->year);
+        $componenteId = $request->input('componente_id') ? (int) $request->input('componente_id') : null;
+        $estado       = $request->input('estado');
+        $unidadId     = $request->input('unidad_organica_id') ? (int) $request->input('unidad_organica_id') : null;
+        $formato      = $request->input('formato', 'excel');
 
         if ($formato === 'pdf') {
-            $actividades = Actividad::with(['componente', 'unidadOrganica', 'responsable'])
+            $actividades = Actividad::with(['componente', 'unidadOrganica', 'responsables'])
                 ->whereYear('created_at', $anio)
                 ->when($componenteId, fn($q) => $q->where('componente_id', $componenteId))
                 ->when($estado,       fn($q) => $q->where('estado', $estado))

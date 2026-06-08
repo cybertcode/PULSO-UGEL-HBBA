@@ -194,6 +194,7 @@ class DatosPruebaCompletoSeeder extends Seeder
                 $ts    = Carbon::create($m['anio'], $m['mes'], $dia, rand(7,17), rand(0,59))->toDateTimeString();
                 $usrId = $this->usuariosIds[array_rand($this->usuariosIds)];
 
+                // Alertas históricas (meses anteriores) siempre leídas para evitar constraint único de pendientes
                 DB::table('alertas')->insert([
                     'actividad_id'      => $actId,
                     'usuario_id'        => $usrId,
@@ -202,8 +203,8 @@ class DatosPruebaCompletoSeeder extends Seeder
                     'mensaje'           => sprintf($tpl['tpl_msg'], $actNom, $unom, $avance),
                     'tipo'              => $tpl['tipo'],
                     'prioridad'         => $tpl['prioridad'],
-                    'leida'             => rand(0, 1),
-                    'leida_at'          => rand(0,1) ? Carbon::parse($ts)->addHours(rand(1,48))->toDateTimeString() : null,
+                    'leida'             => 1,
+                    'leida_at'          => Carbon::parse($ts)->addHours(rand(1,48))->toDateTimeString(),
                     'email_enviado'     => rand(0, 1),
                     'email_enviado_at'  => null,
                     'destinatario_email'=> null,

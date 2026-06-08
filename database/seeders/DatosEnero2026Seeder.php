@@ -169,6 +169,7 @@ class DatosEnero2026Seeder extends Seeder
                 $titulo = $tplTitulos[$tipo][array_rand($tplTitulos[$tipo])];
                 $leida  = rand(0,1);
 
+                // Alertas históricas siempre leídas para no violar el constraint único de alertas pendientes
                 DB::table('alertas')->insert([
                     'actividad_id'       => $actId,
                     'usuario_id'         => $usrId,
@@ -177,8 +178,8 @@ class DatosEnero2026Seeder extends Seeder
                     'mensaje'            => "La actividad \"{$actNom}\" requiere atención. Registrado en {$mes['label']}.",
                     'tipo'               => $tipo,
                     'prioridad'          => $prio,
-                    'leida'              => $leida,
-                    'leida_at'           => $leida ? Carbon::parse($ts)->addHours(rand(1,72))->toDateTimeString() : null,
+                    'leida'              => 1,
+                    'leida_at'           => Carbon::parse($ts)->addHours(rand(1,72))->toDateTimeString(),
                     'email_enviado'      => rand(0,1),
                     'email_enviado_at'   => null,
                     'destinatario_email' => null,

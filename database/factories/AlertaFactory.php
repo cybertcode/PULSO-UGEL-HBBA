@@ -51,8 +51,8 @@ class AlertaFactory extends Factory
             'mensaje'           => $mensaje,
             'tipo'              => $tipo,
             'prioridad'         => fake()->randomElement(['alta','media','media','baja']),
-            'leida'             => fake()->boolean(25),
-            'leida_at'          => null,
+            'leida'             => true,
+            'leida_at'          => fake()->dateTimeBetween('-30 days', 'now'),
         ];
     }
 }

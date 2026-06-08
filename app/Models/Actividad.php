@@ -144,23 +144,27 @@ class Actividad extends Model
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     /**
-     * Sincroniza responsables a partir de un array:
-     * [user_id => tipo] o [user_id, user_id, ...] con tipo default
+     * Sincroniza responsables a partir de un array.
+     * Acepta dos formatos:
+     *   - Asociativo: [user_id => 'principal'|'colaborador'|'supervisor']
+     *   - Plano:      [user_id, user_id, ...] → todos como $tipoDefault
      */
-    public function sincronizarResponsables(array $responsables): void
+    public function sincronizarResponsables(array $responsables, string $tipoDefault = 'principal'): void
     {
         $syncData = [];
-        foreach ($responsables as $userId => $tipo) {
-            if (is_int($userId)) {
-                $syncData[$userId] = ['tipo' => $tipo];
+
+        foreach ($responsables as $key => $value) {
+            if (is_string($value) && in_array($value, self::TIPOS_RESPONSABLE)) {
+                // Formato asociativo: [userId => tipo]
+                $syncData[(int) $key] = ['tipo' => $value];
             } else {
-                // array plano de IDs → todos como 'principal'
-                $syncData[$tipo] = ['tipo' => 'principal'];
+                // Formato plano: valor es el user_id
+                $syncData[(int) $value] = ['tipo' => $tipoDefault];
             }
         }
+
         $this->responsables()->sync($syncData);
 
-        // Auditar cambio de responsables
         ActividadHistorial::create([
             'actividad_id'   => $this->id,
             'usuario_id'     => Auth::id(),
