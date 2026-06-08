@@ -1,6 +1,21 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
-## [v1.2.0] - 2026-06-07 (Sesión Actual)
+## [v1.3.0] - 2026-06-08 (Sesión Actual)
+### Módulo de Control Interno (SCI) e Integridad
+- **PACI (Programa Anual de Control Interno)**: Implementación de la gestión del Programa Anual de Control Interno.
+- **Matriz de Riesgos**: Sistema para la identificación, evaluación y respuesta a riesgos institucionales.
+- **Actas de Comité**: Registro y seguimiento de actas del comité de control interno.
+- **Autoevaluación SCI**: Módulo interactivo para la autoevaluación del Sistema de Control Interno.
+- **Modelo de Integridad**: Estructura para el seguimiento de compromisos y pilares de integridad.
+- **Seguridad y Accesos**: Configuración de roles y permisos específicos para los nuevos módulos en `RolesPermisosSeeder.php`.
+
+### Estructura Técnica
+- **Modelos**: `Paci`, `MatrizRiesgo`, `ActaComite`, `Autoevaluacion`, `AutoevaluacionRespuesta`, `IntegridadCompromiso`.
+- **Controladores**: `PaciController`, `MatrizRiesgosController`, `ActasComiteController`, `AutoevaluacionController`.
+- **Migraciones**: Tablas de `paci`, `matriz_riesgos`, `actas_comite`, `autoevaluacion_sci` e `integridad_pilares`.
+- **Rutas**: Definición de rutas seguras para la administración de los nuevos componentes en `web.php`.
+
+## [v1.2.0] - 2026-06-07
 ### Implementación Integral de SATA-QR
 - **Dashboard Ejecutivo**: Panel de control con indicadores de gestión en tiempo real y KPIs institucionales.
 - **Control Interno & Integridad**: Módulos para el seguimiento de actividades, evidencias y cumplimiento del Modelo de Integridad.

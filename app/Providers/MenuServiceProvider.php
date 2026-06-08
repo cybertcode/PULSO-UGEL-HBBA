@@ -172,25 +172,78 @@ class MenuServiceProvider extends ServiceProvider
             }
 
             // ════════════════════════════════════════
+            // PLANIFICACIÓN SCI
+            // ════════════════════════════════════════
+            $hasPlan = Gate::check('paci.ver') || Gate::check('riesgos.ver');
+
+            if ($hasPlan) {
+                $menu[] = (object)['menuHeader' => 'Planificación SCI'];
+
+                if (Gate::check('paci.ver')) {
+                    $menu[] = (object)[
+                        'url'  => '/paci',
+                        'name' => 'PACI',
+                        'icon' => 'menu-icon icon-base ti tabler-file-description',
+                        'slug' => 'paci.index',
+                        'i18n' => 'Plan Anual de Control Interno',
+                    ];
+                }
+
+                if (Gate::check('riesgos.ver')) {
+                    $menu[] = (object)[
+                        'url'  => '/matriz-riesgos',
+                        'name' => 'Matriz de Riesgos',
+                        'icon' => 'menu-icon icon-base ti tabler-shield-exclamation',
+                        'slug' => 'matriz-riesgos.index',
+                        'i18n' => 'Identificación y tratamiento',
+                    ];
+                }
+
+                if (Gate::check('actas.ver')) {
+                    $menu[] = (object)[
+                        'url'  => '/actas-comite',
+                        'name' => 'Actas del Comité',
+                        'icon' => 'menu-icon icon-base ti tabler-notebook',
+                        'slug' => 'actas-comite.index',
+                        'i18n' => 'Sesiones del comité SCI',
+                    ];
+                }
+
+                if (Gate::check('autoevaluacion.ver')) {
+                    $menu[] = (object)[
+                        'url'  => '/autoevaluacion',
+                        'name' => 'Autoevaluación',
+                        'icon' => 'menu-icon icon-base ti tabler-clipboard-list',
+                        'slug' => 'autoevaluacion.index',
+                        'i18n' => 'Cuestionarios COSO',
+                    ];
+                }
+            }
+
+            // ════════════════════════════════════════
             // GESTIÓN
             // ════════════════════════════════════════
             $menu[] = (object)['menuHeader' => 'Gestión'];
 
-            $menu[] = (object)[
-                'url'  => '/recomendaciones',
-                'name' => 'Recomendaciones',
-                'icon' => 'menu-icon icon-base ti tabler-message-report',
-                'slug' => 'recomendaciones',
-                'i18n' => 'Observaciones y mejoras',
-            ];
+            if (Gate::check('recomendaciones.ver')) {
+                $menu[] = (object)[
+                    'url'  => '/recomendaciones',
+                    'name' => 'Recomendaciones',
+                    'icon' => 'menu-icon icon-base ti tabler-message-report',
+                    'slug' => 'recomendaciones',
+                    'i18n' => 'Observaciones y mejoras',
+                ];
+            }
 
-            $menu[] = (object)[
-                'url'  => '/buenas-practicas',
-                'name' => 'Buenas Prácticas',
-                'icon' => 'menu-icon icon-base ti tabler-rosette-discount-check',
-                'slug' => 'buenas-practicas',
-                'i18n' => 'Prácticas positivas',
-            ];
+            if (Gate::check('buenas-practicas.ver')) {
+                $menu[] = (object)[
+                    'url'  => '/buenas-practicas',
+                    'name' => 'Buenas Prácticas',
+                    'icon' => 'menu-icon icon-base ti tabler-rosette-discount-check',
+                    'slug' => 'buenas-practicas',
+                    'i18n' => 'Prácticas positivas',
+                ];
+            }
 
             if (Gate::check('reconocimientos.ver')) {
                 $menu[] = (object)[

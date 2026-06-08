@@ -10,7 +10,6 @@ use App\Http\Controllers\pages\EvidenciasController;
 use App\Http\Controllers\pages\AlertasController;
 use App\Http\Controllers\pages\ReportesController;
 use App\Http\Controllers\pages\ReconocimientosController;
-use App\Models\TrabajadorDestacado;
 use App\Http\Controllers\pages\SemaforoController;
 use App\Http\Controllers\pages\RankingUnidadesController;
 use App\Http\Controllers\pages\AvanceUnidadesController;
@@ -30,6 +29,10 @@ use App\Http\Controllers\pages\RecomendacionesController;
 use App\Http\Controllers\pages\AyudaController;
 use App\Http\Controllers\pages\CumplimientoController;
 use App\Http\Controllers\pages\MisActividadesController;
+use App\Http\Controllers\pages\PaciController;
+use App\Http\Controllers\pages\MatrizRiesgosController;
+use App\Http\Controllers\pages\ActasComiteController;
+use App\Http\Controllers\pages\AutoevaluacionController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
@@ -138,18 +141,49 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::put('/configuracion',  [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
 
     // --- Buenas Prácticas ---
-    Route::get('/buenas-practicas',                          [BuenasPracticasController::class, 'index'])->name('buenas-practicas');
-    Route::post('/buenas-practicas',                         [BuenasPracticasController::class, 'store'])->name('buenas-practicas.store');
-    Route::put('/buenas-practicas/{buenaPractica}',          [BuenasPracticasController::class, 'update'])->name('buenas-practicas.update');
-    Route::delete('/buenas-practicas/{buenaPractica}',       [BuenasPracticasController::class, 'destroy'])->name('buenas-practicas.destroy');
-    Route::patch('/buenas-practicas/{buenaPractica}/avance', [BuenasPracticasController::class, 'updateAvance'])->name('buenas-practicas.avance');
+    Route::get('/buenas-practicas',                          [BuenasPracticasController::class, 'index'])->name('buenas-practicas')->middleware('can:buenas-practicas.ver');
+    Route::post('/buenas-practicas',                         [BuenasPracticasController::class, 'store'])->name('buenas-practicas.store')->middleware('can:buenas-practicas.crear');
+    Route::put('/buenas-practicas/{buenaPractica}',          [BuenasPracticasController::class, 'update'])->name('buenas-practicas.update')->middleware('can:buenas-practicas.editar');
+    Route::delete('/buenas-practicas/{buenaPractica}',       [BuenasPracticasController::class, 'destroy'])->name('buenas-practicas.destroy')->middleware('can:buenas-practicas.editar');
+    Route::patch('/buenas-practicas/{buenaPractica}/avance', [BuenasPracticasController::class, 'updateAvance'])->name('buenas-practicas.avance')->middleware('can:buenas-practicas.editar');
 
     // --- Recomendaciones ---
-    Route::get('/recomendaciones',                              [RecomendacionesController::class, 'index'])->name('recomendaciones');
-    Route::post('/recomendaciones',                             [RecomendacionesController::class, 'store'])->name('recomendaciones.store');
-    Route::put('/recomendaciones/{recomendacion}',              [RecomendacionesController::class, 'update'])->name('recomendaciones.update');
-    Route::delete('/recomendaciones/{recomendacion}',           [RecomendacionesController::class, 'destroy'])->name('recomendaciones.destroy');
-    Route::patch('/recomendaciones/{recomendacion}/atender',    [RecomendacionesController::class, 'marcarAtendida'])->name('recomendaciones.atender');
+    Route::get('/recomendaciones',                              [RecomendacionesController::class, 'index'])->name('recomendaciones')->middleware('can:recomendaciones.ver');
+    Route::post('/recomendaciones',                             [RecomendacionesController::class, 'store'])->name('recomendaciones.store')->middleware('can:recomendaciones.crear');
+    Route::put('/recomendaciones/{recomendacion}',              [RecomendacionesController::class, 'update'])->name('recomendaciones.update')->middleware('can:recomendaciones.editar');
+    Route::delete('/recomendaciones/{recomendacion}',           [RecomendacionesController::class, 'destroy'])->name('recomendaciones.destroy')->middleware('can:recomendaciones.editar');
+    Route::patch('/recomendaciones/{recomendacion}/atender',    [RecomendacionesController::class, 'marcarAtendida'])->name('recomendaciones.atender')->middleware('can:recomendaciones.editar');
+
+    // --- PACI ---
+    Route::get('/paci',         [PaciController::class, 'index'])->name('paci.index')->middleware('can:paci.ver');
+    Route::post('/paci',        [PaciController::class, 'store'])->name('paci.store')->middleware('can:paci.crear');
+    Route::put('/paci/{paci}',  [PaciController::class, 'update'])->name('paci.update')->middleware('can:paci.editar');
+    Route::delete('/paci/{paci}', [PaciController::class, 'destroy'])->name('paci.destroy')->middleware('can:paci.eliminar');
+
+    // --- Matriz de Riesgos ---
+    Route::get('/matriz-riesgos',                    [MatrizRiesgosController::class, 'index'])->name('matriz-riesgos.index')->middleware('can:riesgos.ver');
+    Route::post('/matriz-riesgos',                   [MatrizRiesgosController::class, 'store'])->name('matriz-riesgos.store')->middleware('can:riesgos.crear');
+    Route::put('/matriz-riesgos/{matrizRiesgo}',     [MatrizRiesgosController::class, 'update'])->name('matriz-riesgos.update')->middleware('can:riesgos.editar');
+    Route::delete('/matriz-riesgos/{matrizRiesgo}',  [MatrizRiesgosController::class, 'destroy'])->name('matriz-riesgos.destroy')->middleware('can:riesgos.eliminar');
+
+    // --- Actas del Comité ---
+    Route::get('/actas-comite',                      [ActasComiteController::class, 'index'])->name('actas-comite.index')->middleware('can:actas.ver');
+    Route::post('/actas-comite',                     [ActasComiteController::class, 'store'])->name('actas-comite.store')->middleware('can:actas.crear');
+    Route::put('/actas-comite/{actasComite}',        [ActasComiteController::class, 'update'])->name('actas-comite.update')->middleware('can:actas.editar');
+    Route::delete('/actas-comite/{actasComite}',     [ActasComiteController::class, 'destroy'])->name('actas-comite.destroy')->middleware('can:actas.eliminar');
+
+    // --- Autoevaluación SCI ---
+    Route::get('/autoevaluacion',                             [AutoevaluacionController::class, 'index'])->name('autoevaluacion.index')->middleware('can:autoevaluacion.ver');
+    Route::post('/autoevaluacion',                            [AutoevaluacionController::class, 'store'])->name('autoevaluacion.store')->middleware('can:autoevaluacion.crear');
+    Route::get('/autoevaluacion/{autoevaluacion}',            [AutoevaluacionController::class, 'show'])->name('autoevaluacion.show')->middleware('can:autoevaluacion.ver');
+    Route::patch('/autoevaluacion/{autoevaluacion}/respuestas',[AutoevaluacionController::class, 'guardarRespuestas'])->name('autoevaluacion.respuestas')->middleware('can:autoevaluacion.editar');
+    Route::patch('/autoevaluacion/{autoevaluacion}/cerrar',   [AutoevaluacionController::class, 'cerrar'])->name('autoevaluacion.cerrar')->middleware('can:autoevaluacion.editar');
+    Route::delete('/autoevaluacion/{autoevaluacion}',         [AutoevaluacionController::class, 'destroy'])->name('autoevaluacion.destroy')->middleware('can:autoevaluacion.eliminar');
+
+    // --- Modelo de Integridad — compromisos por pilar ---
+    Route::post('/modelo-integridad/compromiso',                         [ModeloIntegridadController::class, 'storeCompromiso'])->name('integridad.compromiso.store')->middleware('can:integridad.editar');
+    Route::put('/modelo-integridad/compromiso/{compromiso}',             [ModeloIntegridadController::class, 'updateCompromiso'])->name('integridad.compromiso.update')->middleware('can:integridad.editar');
+    Route::delete('/modelo-integridad/compromiso/{compromiso}',          [ModeloIntegridadController::class, 'destroyCompromiso'])->name('integridad.compromiso.destroy')->middleware('can:integridad.editar');
 
     // --- Ayuda ---
     Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda');
