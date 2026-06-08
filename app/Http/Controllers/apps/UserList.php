@@ -60,18 +60,20 @@ class UserList extends Controller
             $initials = strtoupper(substr($u->name, 0, 1));
 
             return [
-                'id'      => $u->id,
-                'name'    => $u->name,
-                'email'   => $u->email,
-                'dni'     => $u->dni ?? '—',
-                'cargo'   => $u->cargo ?? '—',
-                'unidad'  => $u->unidadOrganica->sigla ?? '—',
-                'rol'     => $rolNombre,
+                'id'        => $u->id,
+                'name'      => $u->name,
+                'email'     => $u->email,
+                'dni'       => $u->dni ?? '—',
+                'cargo'     => $u->cargo ?? '—',
+                'unidad'    => $u->unidadOrganica->sigla ?? '—',
+                'unidad_id' => $u->unidad_organica_id ?? '',
+                'rol'       => $rolNombre,
                 'rol_color' => $rolColor,
-                'estado'  => $u->estado ?? 'pendiente',
+                'estado'    => $u->estado ?? 'pendiente',
                 'estado_color' => $estadoColor,
-                'initials'=> $initials,
-                'avatar'  => $u->profile_photo_url ?? null,
+                'initials'  => $initials,
+                'avatar'    => $u->profile_photo_url ?? null,
+                'created_ts'=> $u->created_at?->timestamp ?? 0,
             ];
         });
 
@@ -104,6 +106,10 @@ class UserList extends Controller
 
         $user->assignRole($data['rol']);
 
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Usuario creado correctamente.']);
+        }
+
         return redirect()->route('adm-usuarios')->with('success', 'Usuario creado correctamente.');
     }
 
@@ -135,16 +141,27 @@ class UserList extends Controller
 
         $usuario->syncRoles([$data['rol']]);
 
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Usuario actualizado correctamente.']);
+        }
+
         return redirect()->route('adm-usuarios')->with('success', 'Usuario actualizado correctamente.');
     }
 
     public function destroy(User $usuario)
     {
         if ($usuario->id === auth()->id()) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'No puedes eliminar tu propia cuenta.'], 422);
+            }
             return redirect()->route('adm-usuarios')->with('error', 'No puedes eliminar tu propia cuenta.');
         }
 
         $usuario->delete();
+
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Usuario eliminado correctamente.']);
+        }
 
         return redirect()->route('adm-usuarios')->with('success', 'Usuario eliminado correctamente.');
     }

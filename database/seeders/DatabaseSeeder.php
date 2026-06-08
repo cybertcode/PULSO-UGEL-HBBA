@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UnidadesOrganicasSeeder::class,
+            CargosSeeder::class,
             ComponentesSeeder::class,
             ConfiguracionInstitucionalSeeder::class,
             RolesPermisosSeeder::class,

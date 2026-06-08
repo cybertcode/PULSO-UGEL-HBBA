@@ -8,9 +8,26 @@ use Illuminate\Http\Request;
 
 class CargosController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Cargo::activo()->orderBy('nombre')->get(['id', 'nombre']));
+        if ($request->has('q') || $request->boolean('select')) {
+            return response()->json(
+                Cargo::activo()->orderBy('nombre')
+                    ->when($request->q, fn($q, $v) => $q->where('nombre', 'like', "%$v%"))
+                    ->get(['id', 'nombre'])
+            );
+        }
+        $cargos = Cargo::withCount(['usuarios'])
+            ->orderByDesc('created_at')
+            ->get(['id', 'nombre', 'activo', 'created_at']);
+
+        return response()->json($cargos->map(fn($c) => [
+            'id'              => $c->id,
+            'nombre'          => $c->nombre,
+            'activo'          => $c->activo,
+            'numero_usuarios' => $c->usuarios_count,
+            'created_at'      => $c->created_at?->format('d/m/Y'),
+        ]));
     }
 
     public function store(Request $request)
