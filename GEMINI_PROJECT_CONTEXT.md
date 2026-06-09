@@ -1,5 +1,12 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
+## [v1.4.4] - 2026-06-09
+### Lógica Funcional y Persistencia Institucional
+- **Sembrado de Datos Reales**: Implementación de `NuevosModulosSeeder` que integra datos oficiales del PACI 2026, Matriz de Riesgos, Actas de Comité y Autoevaluaciones, permitiendo dashboards 100% operativos.
+- **Refactorización de Controladores**: Optimización de `ActasComiteController`, `UserList.php` y `PerfilController` para soportar las nuevas micro-interacciones y filtrado dinámico.
+- **Sincronización de Maestros**: Actualización de los seeders de Unidades Orgánicas, Usuarios y Configuración Institucional para reflejar fielmente la estructura jerárquica de la UGEL Huacaybamba.
+- **Mejoras en Perfil y Reportes**: Refinamiento estético de la vista de perfil y optimización del motor de exportación PDF para reportes de cumplimiento.
+
 ## [v1.4.3] - 2026-06-09
 ### Consolidación Documental y Respaldo de Evidencias
 - **Integración de Informe 054**: Incorporación del Informe Nº 054-2026-GRH-GRDS-DRE-UGEL HUACAYBAMBA/UGA-RCAV (MD y PDF) al repositorio como base técnica del sistema.

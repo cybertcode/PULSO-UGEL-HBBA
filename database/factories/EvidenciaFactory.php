@@ -40,16 +40,7 @@ class EvidenciaFactory extends Factory
             'numero_sgd'      => fake()->optional(0.7)->numerify('SGD-' . now()->year . '-####'),
             'titulo'          => fake()->randomElement($this->titulos),
             'descripcion'     => fake()->optional(0.5)->sentence(),
-            'archivo_ruta'    => 'evidencias/' . now()->format('Y/m') . '/' . fake()->uuid() . '.' . $tipo,
-            'archivo_nombre'  => fake()->slug(3) . '.' . $tipo,
-            'archivo_tipo'    => match($tipo) {
-                'pdf'  => 'application/pdf',
-                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'jpg'  => 'image/jpeg',
-                default => 'application/octet-stream',
-            },
-            'archivo_tamanio' => fake()->numberBetween(50000, 5000000),
+            'url_documento'   => fake()->optional(0.8)->url(),
             'estado'          => $estado,
             'validado_por'    => in_array($estado, ['validado','rechazado'])
                 ? User::where('estado','activo')->inRandomOrder()->value('id') : null,

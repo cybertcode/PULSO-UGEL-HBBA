@@ -110,56 +110,60 @@ class MenuServiceProvider extends ServiceProvider
             // ════════════════════════════════════════
             // CUMPLIMIENTO (núcleo del objetivo SCI)
             // ════════════════════════════════════════
-            $menu[] = (object)['menuHeader' => 'Cumplimiento'];
+            if (Gate::check('control-interno.ver')) {
+                $menu[] = (object)['menuHeader' => 'Cumplimiento'];
 
-            $cumSub = [];
-            $cumSub[] = (object)[
-                'url'  => '/cumplimiento/panel',
-                'name' => 'Panel de Control',
-                'slug' => 'cumplimiento.panel',
-                'i18n' => 'Resumen ejecutivo',
-            ];
-            $cumSub[] = (object)[
-                'url'  => '/cumplimiento/responsables',
-                'name' => 'Por Responsable',
-                'slug' => 'cumplimiento.responsables',
-                'i18n' => '¿Quién cumple y quién no?',
-            ];
-            $cumSub[] = (object)[
-                'url'  => '/cumplimiento/sin-evidencia',
-                'name' => 'Sin Evidencia',
-                'slug' => 'cumplimiento.sin-evidencia',
-                'i18n' => 'Actividades sin documentar',
-            ];
-            $menu[] = (object)[
-                'name'    => 'Seguimiento SCI',
-                'icon'    => 'menu-icon icon-base ti tabler-chart-dots',
-                'slug'    => ['cumplimiento.panel', 'cumplimiento.responsables', 'cumplimiento.sin-evidencia'],
-                'i18n'    => 'Plazos y evidencias',
-                'submenu' => $cumSub,
-            ];
+                $cumSub = [];
+                $cumSub[] = (object)[
+                    'url'  => '/cumplimiento/panel',
+                    'name' => 'Panel de Control',
+                    'slug' => 'cumplimiento.panel',
+                    'i18n' => 'Resumen ejecutivo',
+                ];
+                $cumSub[] = (object)[
+                    'url'  => '/cumplimiento/responsables',
+                    'name' => 'Por Responsable',
+                    'slug' => 'cumplimiento.responsables',
+                    'i18n' => '¿Quién cumple y quién no?',
+                ];
+                $cumSub[] = (object)[
+                    'url'  => '/cumplimiento/sin-evidencia',
+                    'name' => 'Sin Evidencia',
+                    'slug' => 'cumplimiento.sin-evidencia',
+                    'i18n' => 'Actividades sin documentar',
+                ];
+                $menu[] = (object)[
+                    'name'    => 'Seguimiento SCI',
+                    'icon'    => 'menu-icon icon-base ti tabler-chart-dots',
+                    'slug'    => ['cumplimiento.panel', 'cumplimiento.responsables', 'cumplimiento.sin-evidencia'],
+                    'i18n'    => 'Plazos y evidencias',
+                    'submenu' => $cumSub,
+                ];
+            }
 
-            // Avance y Ranking fusionados bajo Análisis
-            $analisisSub = [];
-            $analisisSub[] = (object)[
-                'url'  => '/avance-unidades',
-                'name' => 'Avance por Unidades',
-                'slug' => 'mon-avance-unidades',
-                'i18n' => 'Seguimiento por área',
-            ];
-            $analisisSub[] = (object)[
-                'url'  => '/ranking-unidades',
-                'name' => 'Ranking',
-                'slug' => 'mon-ranking-unidades',
-                'i18n' => 'Clasificación mensual',
-            ];
-            $menu[] = (object)[
-                'name'    => 'Análisis',
-                'icon'    => 'menu-icon icon-base ti tabler-chart-bar',
-                'slug'    => ['mon-avance-unidades', 'mon-ranking-unidades'],
-                'i18n'    => 'Avance y ranking',
-                'submenu' => $analisisSub,
-            ];
+            // Avance y Ranking — requiere permiso de reportes
+            if (Gate::check('reportes.ver')) {
+                $analisisSub = [];
+                $analisisSub[] = (object)[
+                    'url'  => '/avance-unidades',
+                    'name' => 'Avance por Unidades',
+                    'slug' => 'mon-avance-unidades',
+                    'i18n' => 'Seguimiento por área',
+                ];
+                $analisisSub[] = (object)[
+                    'url'  => '/ranking-unidades',
+                    'name' => 'Ranking',
+                    'slug' => 'mon-ranking-unidades',
+                    'i18n' => 'Clasificación mensual',
+                ];
+                $menu[] = (object)[
+                    'name'    => 'Análisis',
+                    'icon'    => 'menu-icon icon-base ti tabler-chart-bar',
+                    'slug'    => ['mon-avance-unidades', 'mon-ranking-unidades'],
+                    'i18n'    => 'Avance y ranking',
+                    'submenu' => $analisisSub,
+                ];
+            }
 
             if (Gate::check('alertas.ver')) {
                 $menu[] = (object)[
@@ -223,7 +227,13 @@ class MenuServiceProvider extends ServiceProvider
             // ════════════════════════════════════════
             // GESTIÓN
             // ════════════════════════════════════════
-            $menu[] = (object)['menuHeader' => 'Gestión'];
+            $hasGestion = Gate::check('recomendaciones.ver')
+                       || Gate::check('buenas-practicas.ver')
+                       || Gate::check('reconocimientos.ver');
+
+            if ($hasGestion) {
+                $menu[] = (object)['menuHeader' => 'Gestión'];
+            }
 
             if (Gate::check('recomendaciones.ver')) {
                 $menu[] = (object)[

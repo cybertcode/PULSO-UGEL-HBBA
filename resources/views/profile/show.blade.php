@@ -106,14 +106,16 @@
           @error('dni') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
         <div class="col-md-8">
-          <label class="form-label fw-medium" for="cargo">Cargo</label>
-          <select id="cargo" name="cargo" class="form-select @error('cargo') is-invalid @enderror">
-            @if(old('cargo', $authUser->cargo))
-              <option value="{{ old('cargo', $authUser->cargo) }}" selected>{{ old('cargo', $authUser->cargo) }}</option>
-            @endif
+          <label class="form-label fw-medium" for="cargo_id">Cargo</label>
+          <select id="cargo_id" name="cargo_id" class="form-select @error('cargo_id') is-invalid @enderror">
+            <option value="">— Sin cargo —</option>
+            @foreach($cargos as $c)
+              <option value="{{ $c->id }}" {{ old('cargo_id', $authUser->cargo_id) == $c->id ? 'selected' : '' }}>
+                {{ $c->nombre }}
+              </option>
+            @endforeach
           </select>
-          <div class="form-text">Elige de la lista o escribe uno nuevo.</div>
-          @error('cargo') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+          @error('cargo_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
         </div>
         <div class="col-md-6">
           <label class="form-label fw-medium">Unidad Orgánica</label>

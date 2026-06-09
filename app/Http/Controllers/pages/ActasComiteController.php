@@ -30,7 +30,7 @@ class ActasComiteController extends Controller
             'anio_actual'=> ActaComite::whereYear('fecha_sesion', now()->year)->count(),
         ];
 
-        $usuarios = User::orderBy('name')->get(['id', 'name', 'cargo']);
+        $usuarios = User::with('cargo:id,nombre')->orderBy('name')->get(['id', 'name', 'cargo_id']);
         $anios    = range(now()->year - 2, now()->year + 1);
 
         return view('content.actas-comite.index', compact('actas', 'stats', 'usuarios', 'anios'));
