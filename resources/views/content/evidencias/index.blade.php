@@ -496,10 +496,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Select2 con auto-submit al cambiar
   document.querySelectorAll('.select2-filtro').forEach(el => {
-    $(el).wrap('<div class="position-relative"></div>').select2({
-      dropdownParent: $(el).parent(), width: '100%',
-    });
-    $(el).on('change', () => submitFiltros());
+    const $wrapper = $('<div class="position-relative"></div>');
+    $(el).wrap($wrapper);
+    $(el).select2({ dropdownParent: $(el).parent(), width: '100%' });
+    $(el).on('select2:select select2:unselect', () => submitFiltros());
   });
 
   // Estado: submit inmediato al cambiar
