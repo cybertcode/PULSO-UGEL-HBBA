@@ -1,5 +1,13 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.7] - 2026-06-08
+### Panel de Actividades de Alto Impacto
+- **Filtros Avanzados**: Implementación de un sistema de filtrado dinámico en "Mis Actividades" que incluye búsqueda por código/nombre (debounce), rango de fechas (Flatpickr), estado, prioridad y rango de avance (noUiSlider).
+- **UI/UX Reimagined**: Rediseño completo de la interfaz de actividades utilizando un sistema de tarjetas ejecutivas con indicadores visuales de estado (semaforización), prioridades y roles.
+- **KPIs y Métricas**: Adición de un panel de indicadores rápidos (Total, Completadas, Vencidas, Pendientes) para un seguimiento inmediato del rendimiento individual.
+- **Historial Detallado**: Mejora del modal de historial con una línea de tiempo visual, iconografía por tipo de campo y comparativa clara entre valores anteriores y nuevos.
+- **Interacción Fluida**: Integración de actualizaciones de avance mediante AJAX con notificaciones de SweetAlert2 personalizadas.
+
 ## [v1.3.6] - 2026-06-08
 ### Reportes y Exportación Premium
 - **Customización de DataTables**: Implementación de funciones `customize` para PDF, Excel e Impresión, añadiendo cabeceras oficiales de la UGEL Huánuco y estilos corporativos.

@@ -36,6 +36,31 @@ class MisActividadesController extends Controller
                 ->orWhere('codigo', 'like', "%$b%")
             );
         }
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('fecha_limite', '>=', $request->fecha_desde);
+        }
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('fecha_limite', '<=', $request->fecha_hasta);
+        }
+        if ($request->filled('avance_min')) {
+            $query->where('avance', '>=', (int) $request->avance_min);
+        }
+        if ($request->filled('avance_max')) {
+            $query->where('avance', '<=', (int) $request->avance_max);
+        }
+        if ($request->filled('evidencia')) {
+            if ($request->evidencia === 'con') {
+                $query->whereHas('evidencias');
+            } elseif ($request->evidencia === 'sin') {
+                $query->whereDoesntHave('evidencias');
+            }
+        }
+        if ($request->filled('mi_rol')) {
+            $query->whereHas('responsables', fn($q) => $q
+                ->where('users.id', $user->id)
+                ->where('actividad_responsables.tipo', $request->mi_rol)
+            );
+        }
 
         $actividades = $query->paginate(15)->withQueryString();
 
