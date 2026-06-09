@@ -330,7 +330,7 @@
           <span class="badge bg-label-{{ $c->color }} rounded-pill" style="font-size:11px">
             <i class="ti {{ $icon }} me-1" style="font-size:10px"></i>{{ $c->semaforo }}
           </span>
-          <a href="{{ route('sci-control-interno') }}?componente_id={{ $c->id }}"
+          <a href="{{ route('sci-control-interno', ['componente_id' => $c->id]) }}"
              class="text-{{ $c->color }} text-decoration-none fw-semibold"
              style="font-size:11px">
             <i class="ti tabler-upload me-1" style="font-size:11px"></i>Subir N° SGD

@@ -12,6 +12,19 @@
        'resources/assets/vendor/libs/select2/select2.js'])
 @endsection
 
+@section('page-style')
+<style>
+.kpi-card { border-radius: 14px; border: none; overflow: hidden; transition: transform .18s, box-shadow .18s; }
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,.10); }
+.kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+.kpi-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+.kpi-label { font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; opacity: .75; }
+.filter-card { border-radius: 14px; border: 1px solid rgba(0,0,0,.06); }
+.filter-card .form-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6e6b7b; }
+.resp-table-card { border-radius: 14px; border: 1px solid rgba(0,0,0,.06); overflow: hidden; }
+</style>
+@endsection
+
 @section('content')
 
 <nav aria-label="breadcrumb" class="mb-4">
@@ -24,7 +37,7 @@
 
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h4 class="mb-1">Cumplimiento por Responsable</h4>
+    <h4 class="mb-1 fw-bold">Cumplimiento por Responsable</h4>
     <p class="mb-0 text-muted">¿Quién está cumpliendo con plazos y evidencias?</p>
   </div>
   <div class="d-flex gap-2">
@@ -50,49 +63,53 @@
   </div>
 </div>
 
-{{-- Resumen global --}}
+{{-- KPIs --}}
 <div class="row g-4 mb-4">
   <div class="col-6 col-md-3">
-    <div class="card">
-      <div class="card-body text-center py-3">
-        <h3 class="mb-1 text-primary">{{ $totales['responsables'] }}</h3>
-        <p class="mb-0 text-muted small">Responsables activos</p>
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#667eea,#764ba2)">
+      <div class="card-body p-4">
+        <div class="kpi-icon mb-3" style="background:rgba(255,255,255,.2)"><i class="ti tabler-users" style="color:#fff"></i></div>
+        <div class="kpi-value" style="color:#fff">{{ $totales['responsables'] }}</div>
+        <div class="kpi-label" style="color:rgba(255,255,255,.8)">Responsables</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card border-danger border-opacity-25">
-      <div class="card-body text-center py-3">
-        <h3 class="mb-1 text-danger">{{ $totales['en_riesgo'] }}</h3>
-        <p class="mb-0 text-muted small">En riesgo (< 50%)</p>
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#e52d27,#b31217)">
+      <div class="card-body p-4">
+        <div class="kpi-icon mb-3" style="background:rgba(255,255,255,.2)"><i class="ti tabler-alert-triangle" style="color:#fff"></i></div>
+        <div class="kpi-value" style="color:#fff">{{ $totales['en_riesgo'] }}</div>
+        <div class="kpi-label" style="color:rgba(255,255,255,.8)">En riesgo (&lt;50%)</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card border-warning border-opacity-25">
-      <div class="card-body text-center py-3">
-        <h3 class="mb-1 text-warning">{{ $totales['sin_evidencia'] }}</h3>
-        <p class="mb-0 text-muted small">Actividades sin evidencia</p>
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#f7971e,#ffd200)">
+      <div class="card-body p-4">
+        <div class="kpi-icon mb-3" style="background:rgba(255,255,255,.2)"><i class="ti tabler-file-off" style="color:#fff"></i></div>
+        <div class="kpi-value" style="color:#fff">{{ $totales['sin_evidencia'] }}</div>
+        <div class="kpi-label" style="color:rgba(255,255,255,.8)">Sin Evidencia</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card border-danger border-opacity-25">
-      <div class="card-body text-center py-3">
-        <h3 class="mb-1 text-danger">{{ $totales['vencidas_total'] }}</h3>
-        <p class="mb-0 text-muted small">Actividades vencidas</p>
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#e52d27,#b31217)">
+      <div class="card-body p-4">
+        <div class="kpi-icon mb-3" style="background:rgba(255,255,255,.2)"><i class="ti tabler-clock-x" style="color:#fff"></i></div>
+        <div class="kpi-value" style="color:#fff">{{ $totales['vencidas_total'] }}</div>
+        <div class="kpi-label" style="color:rgba(255,255,255,.8)">Vencidas</div>
       </div>
     </div>
   </div>
 </div>
 
 {{-- Filtros --}}
-<div class="card mb-4">
+<div class="card filter-card mb-4">
   <div class="card-body py-3">
     <form method="GET" action="{{ route('cumplimiento.responsables') }}">
       <div class="row g-3 align-items-end">
         <div class="col-md-4">
-          <label class="form-label form-label-sm">Unidad Orgánica</label>
+          <label class="form-label">Unidad Orgánica</label>
           <select name="unidad_organica_id" class="form-select form-select-sm select2">
             <option value="">Todas las unidades</option>
             @foreach($unidades as $u)
@@ -101,7 +118,7 @@
           </select>
         </div>
         <div class="col-md-3">
-          <label class="form-label form-label-sm">Componente SCI</label>
+          <label class="form-label">Componente SCI</label>
           <select name="componente_id" class="form-select form-select-sm select2">
             <option value="">Todos los componentes</option>
             @foreach($componentes as $c)
@@ -110,7 +127,7 @@
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label form-label-sm">Año</label>
+          <label class="form-label">Año</label>
           <select name="anio" class="form-select form-select-sm">
             @foreach($anios as $a)
             <option value="{{ $a }}" {{ $anio == $a ? 'selected' : '' }}>{{ $a }}</option>
@@ -127,9 +144,10 @@
 </div>
 
 {{-- Tabla de responsables --}}
-<div class="card">
-  <div class="card-header">
-    <h6 class="mb-0">Detalle por persona <small class="text-muted">(ordenado por menor cumplimiento)</small></h6>
+<div class="card resp-table-card">
+  <div class="card-header py-3 d-flex align-items-center justify-content-between">
+    <h6 class="mb-0 fw-semibold">Detalle por persona <small class="text-muted fw-normal">(menor cumplimiento primero)</small></h6>
+    <small class="text-muted">{{ $responsables->count() }} responsables</small>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -139,10 +157,12 @@
             <th>Responsable</th>
             <th>Unidad</th>
             <th class="text-center">Cumplimiento</th>
+            {{-- columna oculta para ordenar numéricamente --}}
+            <th class="d-none">_pct</th>
             <th class="text-center">Completadas</th>
             <th class="text-center">Vencidas</th>
             <th class="text-center">Sin evidencia</th>
-            <th class="text-center">Ev. pendiente validar</th>
+            <th class="text-center">Ev. pendiente</th>
             <th class="text-center">Retraso prom.</th>
             <th class="text-center">Estado</th>
           </tr>
@@ -163,20 +183,22 @@
                 </div>
                 <div>
                   <div class="fw-medium">{{ $u->name }}</div>
-                  <small class="text-muted">{{ $u->cargo ?? 'Sin cargo' }}</small>
+                  <small class="text-muted">{{ $u->cargo?->nombre ?? 'Sin cargo' }}</small>
                 </div>
               </div>
             </td>
             <td><small>{{ $u->unidadOrganica?->sigla ?? '—' }}</small></td>
             <td class="text-center">
               <div class="d-flex align-items-center gap-2 justify-content-center">
-                <div class="progress flex-grow-1" style="height:8px;min-width:60px;max-width:80px">
-                  <div class="progress-bar bg-{{ $u->stat_semaforo }}" style="width:{{ $u->stat_porcentaje }}%"></div>
+                <div class="progress flex-grow-1" style="height:8px;min-width:60px;max-width:80px;border-radius:4px">
+                  <div class="progress-bar bg-{{ $u->stat_semaforo }}" style="width:{{ $u->stat_porcentaje }}%;border-radius:4px"></div>
                 </div>
                 <span class="fw-bold text-{{ $u->stat_semaforo }}">{{ $u->stat_porcentaje }}%</span>
               </div>
               <small class="text-muted">{{ $u->stat_total }} actividades</small>
             </td>
+            {{-- valor numérico oculto para ordenamiento --}}
+            <td class="d-none">{{ $u->stat_porcentaje }}</td>
             <td class="text-center">
               <span class="badge bg-label-success">{{ $u->stat_completadas }}</span>
             </td>
@@ -223,8 +245,8 @@
           </tr>
           @empty
           <tr>
-            <td colspan="9" class="text-center text-muted py-5">
-              <i class="ti tabler-users-off icon-32px d-block mb-2"></i>
+            <td colspan="10" class="text-center text-muted py-5">
+              <i class="ti tabler-users-off icon-36px d-block mb-2"></i>
               No hay responsables con actividades en el período seleccionado
             </td>
           </tr>
@@ -240,7 +262,20 @@
 @section('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.select2').forEach(el => $(el).select2({ width: '100%' }));
+  const form = document.querySelector('form[method="GET"]');
+
+  // Select2 con submit en tiempo real
+  document.querySelectorAll('.select2').forEach(el => {
+    const $w = $('<div class="position-relative"></div>');
+    $(el).wrap($w);
+    $(el).select2({ dropdownParent: $(el).parent(), width: '100%' });
+    $(el).on('select2:select select2:unselect', () => form.submit());
+  });
+
+  // Select nativo (año) en tiempo real
+  document.querySelectorAll('select:not(.select2)').forEach(el => {
+    el.addEventListener('change', () => form.submit());
+  });
 
   if (document.getElementById('tablaResponsables')) {
     $('#tablaResponsables').DataTable({
@@ -254,7 +289,12 @@ document.addEventListener('DOMContentLoaded', function () {
         zeroRecords: 'Sin resultados',
         emptyTable: 'Sin datos',
       },
-      order: [[2, 'asc']], // ordenar por cumplimiento asc por defecto
+      // La col 3 (oculta, numérica) controla el orden de la col 2 (barra de progreso)
+      columnDefs: [
+        { targets: 3, visible: false, searchable: false },
+        { targets: 2, orderData: [3] },
+      ],
+      order: [[3, 'asc']],
     });
   }
 });

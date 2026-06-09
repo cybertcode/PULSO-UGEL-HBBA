@@ -33,7 +33,7 @@ class SemaforoController extends Controller
               return $u;
           })->sortByDesc('porcentaje')->values();
 
-        $avance_global = $componentes->avg('porcentaje');
+        $avance_global = round($componentes->avg('porcentaje') ?? 0);
 
         return view('content.semaforo.index', compact(
             'componentes', 'unidades', 'avance_global', 'umbral_verde', 'umbral_amarillo'

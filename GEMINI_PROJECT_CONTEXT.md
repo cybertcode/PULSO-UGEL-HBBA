@@ -1,5 +1,12 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.4.2] - 2026-06-09
+### Rediseño UI/UX y Optimización de Dashboards
+- **Dashboards de Impacto**: Rediseño completo del Panel SCI y Modelo de Integridad utilizando un sistema de tarjetas (cards) ejecutivas, semaforización avanzada y micro-interacciones.
+- **Gestión de Usuarios Pro**: Actualización estética masiva de la lista de usuarios y catálogo de cargos, implementando un diseño compacto de alta densidad, avatares estilizados y badges de estado con indicadores de pulso.
+- **Optimización de Reportes**: Refinamiento en los cálculos de avance y días de retraso en exportaciones PDF y vistas de cumplimiento.
+- **Interconectividad**: Mejora en la navegación entre módulos mediante el uso de parámetros de filtrado inteligentes en las rutas.
+
 ## [v1.4.1] - 2026-06-09
 ### Normalización Relacional en Unidades Orgánicas
 - **Integración de Cargos**: Actualización de `UnidadesOrganicasController` para utilizar la relación `cargo` (FK) en lugar del campo de texto legacy, asegurando la consistencia con el Catálogo Maestro de Cargos.
