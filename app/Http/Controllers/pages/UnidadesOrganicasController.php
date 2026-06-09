@@ -11,14 +11,15 @@ class UnidadesOrganicasController extends Controller
 {
     private function usuariosParaSelect()
     {
-        return User::whereIn('estado', ['activo', 'pendiente'])
+        return User::with('cargo')
+            ->whereIn('estado', ['activo', 'pendiente'])
             ->orderBy('name')
-            ->get(['id', 'name', 'cargo']);
+            ->get(['id', 'name', 'cargo_id']);
     }
 
     public function index()
     {
-        $unidades = UnidadOrganica::with('responsable')->orderBy('nombre')->get();
+        $unidades = UnidadOrganica::with('responsable.cargo')->orderBy('nombre')->get();
         $usuarios = $this->usuariosParaSelect();
         return view('content.unidades-organicas.index', compact('unidades', 'usuarios'));
     }

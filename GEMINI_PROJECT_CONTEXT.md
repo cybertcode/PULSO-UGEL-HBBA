@@ -1,5 +1,11 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.4.1] - 2026-06-09
+### Normalización Relacional en Unidades Orgánicas
+- **Integración de Cargos**: Actualización de `UnidadesOrganicasController` para utilizar la relación `cargo` (FK) en lugar del campo de texto legacy, asegurando la consistencia con el Catálogo Maestro de Cargos.
+- **Refinamiento de UI**: Ajuste en la vista de Unidades Orgánicas para renderizar correctamente los nombres de los cargos desde la relación, mejorando la visualización de responsables.
+- **Optimización de Consultas**: Implementación de Eager Loading (`with('cargo')`) para optimizar el rendimiento al listar responsables y sus cargos.
+
 ## [v1.4.0] - 2026-06-09
 ### Refinamiento y UX de Evidencias
 - **Preselección Inteligente**: Ajuste en `EvidenciasController` para condicionar la preselección de actividades al parámetro `?nueva=1`, optimizando la experiencia de usuario al navegar desde otros módulos.
