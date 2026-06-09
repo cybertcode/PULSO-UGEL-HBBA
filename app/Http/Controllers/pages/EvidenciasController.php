@@ -50,7 +50,8 @@ class EvidenciasController extends Controller
             ->orderBy('codigo')
             ->get(['id', 'codigo', 'nombre', 'estado']);
 
-        $actividadPresel = $request->input('actividad_id');
+        // Solo preseleccionar y abrir modal cuando se llega con ?nueva=1 (desde otro módulo)
+        $actividadPresel = $request->boolean('nueva') ? $request->input('actividad_id') : null;
 
         return view('content.evidencias.index', compact(
             'stats', 'evidencias', 'actividades', 'componentes', 'actividadPresel'

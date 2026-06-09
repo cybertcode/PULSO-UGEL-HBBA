@@ -1,5 +1,11 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.4.0] - 2026-06-09
+### Refinamiento y UX de Evidencias
+- **Preselección Inteligente**: Ajuste en `EvidenciasController` para condicionar la preselección de actividades al parámetro `?nueva=1`, optimizando la experiencia de usuario al navegar desde otros módulos.
+- **Optimización de Componentes**: Mejora en la inicialización de Select2 en la vista de evidencias, corrigiendo errores de envoltura (wrapper) y asegurando el auto-submit mediante eventos nativos de la librería.
+- **Persistencia de Filtros**: Refactorización del manejo de eventos en filtros para garantizar una respuesta inmediata y precisa del sistema de búsqueda.
+
 ## [v1.3.9] - 2026-06-08
 ### Refactorización de Evidencias y Cargos
 - **Evidencias (URL-based)**: Migración del sistema de evidencias de carga local a almacenamiento basado en URLs, mejorando la compatibilidad con hosting compartido y reduciendo el consumo de almacenamiento local.
