@@ -24,7 +24,7 @@ class CumplimientoController extends Controller
         // Por cada responsable: cuántas actividades tiene, cuántas cumplió, cuántas vencidas, sin evidencia
         $responsables = User::where('estado', 'activo')
             ->whereHas('actividadesResponsable')
-            ->with('unidadOrganica')
+            ->with(['unidadOrganica', 'cargo'])
             ->when($unidadId, fn($q) => $q->where('unidad_organica_id', $unidadId))
             ->get()
             ->map(function (User $user) use ($anio, $componenteId) {

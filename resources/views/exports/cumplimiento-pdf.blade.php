@@ -114,7 +114,7 @@
     @foreach($sinEvidencia as $i => $act)
     @php
       $ec = match($act->estado) { 'vencida'=>'badge-danger', 'observado'=>'badge-warning', default=>'badge-warning' };
-      $retraso = $act->fecha_limite && $act->fecha_limite->lt(now()) ? now()->diffInDays($act->fecha_limite) : null;
+      $retraso = $act->fecha_limite && $act->fecha_limite->lt(now()) ? (int) round(now()->diffInDays($act->fecha_limite)) : null;
     @endphp
     <tr>
       <td>{{ $i + 1 }}</td>

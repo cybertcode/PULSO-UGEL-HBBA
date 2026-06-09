@@ -11,19 +11,33 @@
        'resources/assets/vendor/libs/sweetalert2/sweetalert2.js'])
 @endsection
 
+@section('page-style')
+<style>
+.kpi-card { border-radius: 14px; border: none; overflow: hidden; transition: transform .18s, box-shadow .18s; }
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,.10); }
+.kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+.kpi-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+.kpi-label { font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; opacity: .75; }
+.filter-card { border-radius: 14px; border: 1px solid rgba(0,0,0,.06); }
+.filter-card .form-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6e6b7b; }
+.act-table-card { border-radius: 14px; border: 1px solid rgba(0,0,0,.06); overflow: hidden; }
+.act-row-vencida { background: rgba(234,84,85,.04) !important; }
+</style>
+@endsection
+
 @section('content')
 
 <nav aria-label="breadcrumb" class="mb-4">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti tabler-home icon-14px me-1"></i>Inicio</a></li>
     <li class="breadcrumb-item"><a href="{{ route('cumplimiento.panel') }}">Panel SCI</a></li>
-    <li class="breadcrumb-item active">Actividades sin Evidencia</li>
+    <li class="breadcrumb-item active">Sin Evidencia</li>
   </ol>
 </nav>
 
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h4 class="mb-1">Actividades sin Evidencia</h4>
+    <h4 class="mb-1 fw-bold">Actividades sin Evidencia</h4>
     <p class="mb-0 text-muted">Actividades con avance registrado pero sin documentos de respaldo</p>
   </div>
   <div class="d-flex gap-2">
@@ -38,29 +52,42 @@
 
 {{-- KPIs --}}
 <div class="row g-4 mb-4">
-  @php
-  $kpis_ev = [
-    ['val' => $stats['total'],     'label' => 'Total sin evidencia', 'color' => 'warning', 'icon' => 'tabler-file-off'],
-    ['val' => $stats['vencidas'],  'label' => 'Vencidas sin evidencia', 'color' => 'danger', 'icon' => 'tabler-clock-x'],
-    ['val' => $stats['en_proceso'],'label' => 'En proceso / Observado', 'color' => 'info', 'icon' => 'tabler-file-time'],
-    ['val' => $stats['alta_prio'], 'label' => 'Alta prioridad', 'color' => 'danger', 'icon' => 'tabler-urgent'],
-  ];
-  @endphp
-  @foreach($kpis_ev as $k)
   <div class="col-6 col-md-3">
-    <div class="card {{ $k['val'] > 0 && $k['color'] === 'danger' ? 'border-danger border-opacity-25' : '' }}">
-      <div class="card-body">
-        <div class="d-flex align-items-start justify-content-between mb-3">
-          <div class="badge bg-label-{{ $k['color'] }} rounded p-2">
-            <i class="ti {{ $k['icon'] }} icon-22px"></i>
-          </div>
-        </div>
-        <h3 class="mb-1 text-{{ $k['color'] }}">{{ $k['val'] }}</h3>
-        <p class="mb-0 text-muted small">{{ $k['label'] }}</p>
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#f7971e,#ffd200)">
+      <div class="card-body p-4">
+        <div class="kpi-icon mb-3" style="background:rgba(255,255,255,.22)"><i class="ti tabler-file-off" style="color:#fff"></i></div>
+        <div class="kpi-value" style="color:#fff">{{ $stats['total'] }}</div>
+        <div class="kpi-label" style="color:rgba(255,255,255,.8)">Total sin evidencia</div>
       </div>
     </div>
   </div>
-  @endforeach
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#e52d27,#b31217)">
+      <div class="card-body p-4">
+        <div class="kpi-icon mb-3" style="background:rgba(255,255,255,.22)"><i class="ti tabler-clock-x" style="color:#fff"></i></div>
+        <div class="kpi-value" style="color:#fff">{{ $stats['vencidas'] }}</div>
+        <div class="kpi-label" style="color:rgba(255,255,255,.8)">Vencidas sin evidencia</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#0acffe,#495aff)">
+      <div class="card-body p-4">
+        <div class="kpi-icon mb-3" style="background:rgba(255,255,255,.22)"><i class="ti tabler-file-time" style="color:#fff"></i></div>
+        <div class="kpi-value" style="color:#fff">{{ $stats['en_proceso'] }}</div>
+        <div class="kpi-label" style="color:rgba(255,255,255,.8)">En proceso / Observado</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card kpi-card" style="background:linear-gradient(135deg,#e52d27,#b31217)">
+      <div class="card-body p-4">
+        <div class="kpi-icon mb-3" style="background:rgba(255,255,255,.22)"><i class="ti tabler-urgent" style="color:#fff"></i></div>
+        <div class="kpi-value" style="color:#fff">{{ $stats['alta_prio'] }}</div>
+        <div class="kpi-label" style="color:rgba(255,255,255,.8)">Alta prioridad</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 @if($stats['total'] > 0)
@@ -74,12 +101,12 @@
 @endif
 
 {{-- Filtros --}}
-<div class="card mb-4">
+<div class="card filter-card mb-4">
   <div class="card-body py-3">
     <form method="GET" action="{{ route('cumplimiento.sin-evidencia') }}">
       <div class="row g-3 align-items-end">
         <div class="col-md-3">
-          <label class="form-label form-label-sm">Unidad Orgánica</label>
+          <label class="form-label">Unidad Orgánica</label>
           <select name="unidad_organica_id" class="form-select form-select-sm select2">
             <option value="">Todas</option>
             @foreach($unidades as $u)
@@ -88,7 +115,7 @@
           </select>
         </div>
         <div class="col-md-3">
-          <label class="form-label form-label-sm">Componente SCI</label>
+          <label class="form-label">Componente SCI</label>
           <select name="componente_id" class="form-select form-select-sm select2">
             <option value="">Todos</option>
             @foreach($componentes as $c)
@@ -97,7 +124,7 @@
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label form-label-sm">Responsable</label>
+          <label class="form-label">Responsable</label>
           <select name="responsable_id" class="form-select form-select-sm select2">
             <option value="">Todos</option>
             @foreach($responsables as $r)
@@ -106,7 +133,7 @@
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label form-label-sm">Prioridad</label>
+          <label class="form-label">Prioridad</label>
           <select name="prioridad" class="form-select form-select-sm">
             <option value="">Todas</option>
             <option value="alta"  {{ $prioridad === 'alta'  ? 'selected' : '' }}>Alta</option>
@@ -124,7 +151,11 @@
 </div>
 
 {{-- Tabla --}}
-<div class="card">
+<div class="card act-table-card">
+  <div class="card-header py-3 d-flex align-items-center justify-content-between">
+    <h6 class="mb-0 fw-semibold">Listado de actividades</h6>
+    <small class="text-muted">{{ $actividades->total() }} resultado(s)</small>
+  </div>
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover mb-0">
@@ -158,7 +189,7 @@
             $hoy = now();
             $vencida = $act->fecha_limite && $act->fecha_limite->lt($hoy);
           @endphp
-          <tr class="{{ $act->estado === 'vencida' ? 'table-danger bg-opacity-10' : '' }}">
+          <tr class="{{ $act->estado === 'vencida' ? 'act-row-vencida' : '' }}">
             <td style="max-width:240px">
               <div class="fw-medium text-truncate" title="{{ $act->nombre }}">{{ $act->nombre }}</div>
               @if($act->codigo)<small class="text-muted">{{ $act->codigo }}</small>@endif
@@ -184,8 +215,8 @@
             </td>
             <td class="text-center">
               <div class="d-flex align-items-center gap-2 justify-content-center">
-                <div class="progress" style="height:6px;width:50px">
-                  <div class="progress-bar bg-{{ $ec }}" style="width:{{ $act->avance }}%"></div>
+                <div class="progress" style="height:6px;width:50px;border-radius:3px">
+                  <div class="progress-bar bg-{{ $ec }}" style="width:{{ $act->avance }}%;border-radius:3px"></div>
                 </div>
                 <small>{{ $act->avance }}%</small>
               </div>
@@ -196,14 +227,14 @@
                   {{ $act->fecha_limite->format('d/m/Y') }}
                 </span>
                 @if($vencida)
-                  <br><small class="text-danger">+{{ now()->diffInDays($act->fecha_limite) }}d retraso</small>
+                  <br><small class="text-danger">+{{ (int) round(now()->diffInDays($act->fecha_limite)) }}d retraso</small>
                 @endif
               @else
                 <span class="text-muted">—</span>
               @endif
             </td>
             <td>
-              <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id]) }}"
+              <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id, 'nueva' => 1]) }}"
                  class="btn btn-sm btn-primary" title="Subir evidencia">
                 <i class="ti tabler-upload me-1"></i>Subir
               </a>
@@ -212,7 +243,7 @@
           @empty
           <tr>
             <td colspan="9" class="text-center text-muted py-5">
-              <i class="ti tabler-file-check icon-32px d-block mb-2 text-success"></i>
+              <i class="ti tabler-file-check icon-36px d-block mb-2 text-success"></i>
               <span class="text-success fw-medium">¡Todo en orden! No hay actividades sin evidencia</span>
             </td>
           </tr>
@@ -231,7 +262,18 @@
 @section('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.select2').forEach(el => $(el).select2({ width: '100%' }));
+  const form = document.querySelector('form[method="GET"]');
+
+  document.querySelectorAll('.select2').forEach(el => {
+    const $w = $('<div class="position-relative"></div>');
+    $(el).wrap($w);
+    $(el).select2({ dropdownParent: $(el).parent(), width: '100%' });
+    $(el).on('select2:select select2:unselect', () => form.submit());
+  });
+
+  document.querySelectorAll('select:not(.select2)').forEach(el => {
+    el.addEventListener('change', () => form.submit());
+  });
 });
 </script>
 @endsection

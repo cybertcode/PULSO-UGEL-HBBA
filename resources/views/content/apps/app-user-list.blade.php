@@ -24,6 +24,41 @@
 ])
 @endsection
 
+@section('page-style')
+<style>
+/* ── Tabla compacta ── */
+.datatables-usuarios td,
+.datatables-usuarios th,
+#dtCargos td,
+#dtCargos th { padding: 0.45rem 0.75rem !important; font-size: .845rem; vertical-align: middle; }
+.datatables-usuarios thead th,
+#dtCargos thead th { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #6e6b7b; white-space: nowrap; background: #f8f7fa; }
+.datatables-usuarios tbody tr,
+#dtCargos tbody tr { transition: background .1s; }
+.datatables-usuarios tbody tr:hover,
+#dtCargos tbody tr:hover { background: rgba(105,108,255,.04) !important; }
+
+/* Avatar compacto */
+.user-avatar-xs { width: 30px; height: 30px; font-size: .72rem; font-weight: 700; }
+
+/* Badge estado */
+.badge-estado { font-size: .7rem; padding: .28em .65em; border-radius: 6px; font-weight: 600; }
+
+/* Nombre usuario en tabla */
+.user-name-cell .name  { font-size: .845rem; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.user-name-cell .email { font-size: .72rem; color: #a8a5b5; line-height: 1.2; }
+
+/* Rol chip */
+.rol-chip { display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; font-weight: 500; white-space: nowrap; }
+
+/* Filtros de cabecera */
+.dt-filters-row .form-select { font-size: .78rem; padding: .28rem .55rem; height: 32px; border-radius: 8px; }
+
+/* Card tabla */
+.card-datatable .dt-layout-row { padding: 0.6rem 1rem; }
+</style>
+@endsection
+
 @section('content')
 
 {{-- KPI Cards — mismo diseño que full-version --}}
@@ -112,9 +147,11 @@
 
 {{-- Tabla de Usuarios --}}
 <div class="card">
-  <div class="card-header border-bottom">
-    <h5 class="card-title mb-0">Filtros</h5>
-    <div class="d-flex justify-content-between align-items-center row pt-4 gap-4 gap-md-0">
+  <div class="card-header border-bottom py-3">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h6 class="mb-0 fw-semibold"><i class="ti tabler-filter text-primary me-2" style="font-size:.9rem"></i>Filtros rápidos</h6>
+    </div>
+    <div class="row g-2 dt-filters-row">
       <div class="col-md-4 user_rol"></div>
       <div class="col-md-4 user_unidad"></div>
       <div class="col-md-4 user_estado"></div>
@@ -271,10 +308,10 @@
 </div>
 
 {{-- ===================== SECCIÓN CARGOS ===================== --}}
-<div class="card mt-2">
-  <div class="card-header border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+<div class="card mt-4">
+  <div class="card-header border-bottom py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
     <div>
-      <h5 class="card-title mb-0"><i class="icon-base ti tabler-briefcase me-2 text-primary"></i>Catálogo de Cargos</h5>
+      <h6 class="mb-0 fw-semibold"><i class="ti tabler-briefcase me-2 text-primary" style="font-size:.9rem"></i>Catálogo de Cargos</h6>
       <small class="text-muted">Cargos disponibles para asignar a los usuarios</small>
     </div>
   </div>
@@ -405,26 +442,21 @@ document.addEventListener('DOMContentLoaded', function () {
         checkboxes: { selectAllRender: '<input type="checkbox" class="form-check-input">' }
       },
       {
-        // Usuario (avatar + nombre + email)
+        // Usuario (avatar compacto + nombre + email)
         targets: 2, responsivePriority: 1,
         render: (data, type, row) => {
           const color = colorMap[row.rol] || 'secondary';
-          return `
-            <div class="d-flex justify-content-start align-items-center user-name">
-              <div class="avatar-wrapper">
-                <div class="avatar avatar-sm me-4">
-                  <span class="avatar-initial rounded-circle bg-label-${color}">${row.initials}</span>
-                </div>
-              </div>
-              <div class="d-flex flex-column">
-                <span class="text-heading text-truncate fw-medium">${row.name}</span>
-                <small class="text-muted">${row.email}</small>
+          return `<div class="d-flex align-items-center gap-2 user-name-cell">
+              <span class="avatar-initial rounded-circle bg-label-${color} user-avatar-xs flex-shrink-0">${row.initials}</span>
+              <div>
+                <div class="name">${row.name}</div>
+                <div class="email">${row.email}</div>
               </div>
             </div>`;
         }
       },
       {
-        // Rol
+        // Rol con chip compacto
         targets: 3,
         render: (data, type, row) => {
           const color = colorMap[row.rol] || 'secondary';
@@ -434,40 +466,42 @@ document.addEventListener('DOMContentLoaded', function () {
             'Visualizador': 'tabler-eye'
           };
           const icon = icons[row.rol] || 'tabler-user';
-          return `<span class="d-flex align-items-center gap-1 text-truncate">
-            <i class="icon-base ti ${icon} icon-20px text-${color}"></i> ${row.rol}
-          </span>`;
+          return `<span class="rol-chip text-${color}"><i class="ti ${icon}" style="font-size:.9rem"></i>${row.rol}</span>`;
         }
       },
       {
-        // Estado
+        // Estado badge compacto
         targets: 6,
         render: (data, type, row) => {
-          const map = { activo: 'bg-label-success', inactivo: 'bg-label-secondary', pendiente: 'bg-label-warning' };
-          const cls = map[row.estado] || 'bg-label-warning';
-          const label = { activo: 'Activo', inactivo: 'Inactivo', pendiente: 'Pendiente' }[row.estado] || row.estado;
-          return `<span class="badge ${cls}">${label}</span>`;
+          const cfgs = {
+            activo:    { cls: 'bg-label-success',    label: 'Activo',    dot: '#28c76f' },
+            inactivo:  { cls: 'bg-label-secondary',  label: 'Inactivo',  dot: '#a8aaae' },
+            pendiente: { cls: 'bg-label-warning',    label: 'Pendiente', dot: '#ff9f43' },
+          };
+          const c = cfgs[row.estado] || cfgs.pendiente;
+          return `<span class="badge badge-estado ${c.cls}">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${c.dot};margin-right:4px;vertical-align:middle"></span>${c.label}</span>`;
         }
       },
       {
-        // Acciones (columna 8)
-        targets: 8, title: 'Acciones', orderable: false, searchable: false,
+        // Acciones compactas
+        targets: 8, title: '', orderable: false, searchable: false,
         render: (data, type, row) => {
-          let btns = `<div class="d-flex align-items-center gap-1">`;
+          let btns = `<div class="d-flex align-items-center gap-1 justify-content-end">`;
           if (canEdit) {
-            btns += `<button class="btn btn-icon btn-text-secondary rounded-pill waves-effect btn-edit-user"
+            btns += `<button class="btn btn-icon btn-sm btn-text-secondary rounded-2 btn-edit-user"
               data-id="${row.id}" data-name="${row.name}" data-email="${row.email}"
               data-dni="${row.dni !== '—' ? row.dni : ''}"
               data-cargo-id="${row.cargo_id}" data-cargo-nombre="${row.cargo}"
               data-unidad-id="${row.unidad_id}" data-rol="${row.rol}" data-estado="${row.estado}"
               data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditUser"
-              title="Editar"><i class="icon-base ti tabler-edit icon-md"></i></button>`;
+              title="Editar"><i class="ti tabler-edit" style="font-size:1rem"></i></button>`;
           }
           if (canDelete) {
-            btns += `<button class="btn btn-icon btn-text-secondary rounded-pill waves-effect btn-delete-user"
+            btns += `<button class="btn btn-icon btn-sm btn-text-danger rounded-2 btn-delete-user"
               data-id="${row.id}" data-name="${row.name}"
               data-url="${urlBase}/${row.id}"
-              title="Eliminar"><i class="icon-base ti tabler-trash icon-md"></i></button>`;
+              title="Eliminar"><i class="ti tabler-trash" style="font-size:1rem"></i></button>`;
           }
           btns += `</div>`;
           return btns;
@@ -913,31 +947,35 @@ document.addEventListener('DOMContentLoaded', function () {
     columnDefs: [
       {
         targets: 0,
-        render: (data) => `<strong>${data}</strong>`,
+        render: (data) => `<span class="fw-semibold">${data}</span>`,
       },
       {
         targets: 1,
-        render: (data) => `<span class="badge bg-label-info">${data}</span>`,
+        render: (data) => `<span class="badge bg-label-info badge-estado">${data} usuario${data !== 1 ? 's' : ''}</span>`,
       },
       {
         targets: 2,
-        render: (data) =>
-          `<span class="badge bg-label-${data ? 'success' : 'secondary'}">${data ? 'Activo' : 'Inactivo'}</span>`,
+        render: (data) => {
+          const dot = data ? '#28c76f' : '#a8aaae';
+          const label = data ? 'Activo' : 'Inactivo';
+          const cls = data ? 'bg-label-success' : 'bg-label-secondary';
+          return `<span class="badge badge-estado ${cls}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${dot};margin-right:4px;vertical-align:middle"></span>${label}</span>`;
+        },
       },
       {
         targets: -1,
         render: (data, type, row) => {
-          let btns = `<div class="d-flex align-items-center gap-1">`;
+          let btns = `<div class="d-flex align-items-center gap-1 justify-content-end">`;
           if (canEditCargo) {
-            btns += `<button class="btn btn-icon btn-text-secondary rounded-pill btn-editar-cargo"
+            btns += `<button class="btn btn-icon btn-sm btn-text-secondary rounded-2 btn-editar-cargo"
               data-id="${row.id}" data-nombre="${row.nombre}" data-activo="${row.activo ? 1 : 0}"
               data-bs-toggle="modal" data-bs-target="#modalEditCargo" title="Editar">
-              <i class="icon-base ti tabler-edit icon-md"></i></button>`;
+              <i class="ti tabler-edit" style="font-size:1rem"></i></button>`;
           }
           if (canDeleteCargo) {
-            btns += `<button class="btn btn-icon btn-text-danger rounded-pill btn-eliminar-cargo"
+            btns += `<button class="btn btn-icon btn-sm btn-text-danger rounded-2 btn-eliminar-cargo"
               data-id="${row.id}" data-nombre="${row.nombre}" title="Eliminar">
-              <i class="icon-base ti tabler-trash icon-md"></i></button>`;
+              <i class="ti tabler-trash" style="font-size:1rem"></i></button>`;
           }
           btns += `</div>`;
           return btns;
