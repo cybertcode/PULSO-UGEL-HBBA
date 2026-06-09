@@ -12,6 +12,30 @@ $configData = Helper::appClasses();
 @vite(['resources/assets/vendor/libs/apex-charts/apexcharts.js'])
 @endsection
 
+@section('page-style')
+<style>
+/* Clasificación compacta */
+.ranking-row { transition: background .1s; }
+.ranking-row:hover { background: rgba(105,108,255,.04) !important; }
+.ranking-row .sigla-text { font-size: .845rem; font-weight: 700; }
+.ranking-row .nombre-text { font-size: .75rem; }
+.ranking-row .pct-text { font-size: .78rem; font-weight: 700; min-width: 36px; }
+
+/* Podio responsive */
+@media (max-width: 767px) {
+  .podio-wrap { flex-direction: column !important; align-items: center !important; }
+  .podio-wrap > div { width: 100% !important; max-width: 280px; }
+}
+
+/* Cards laterales */
+.stat-block { border-radius: 12px; padding: .85rem 1rem; }
+
+/* Chart card header compacto */
+.chart-card .card-header { padding: .85rem 1.25rem; }
+.chart-card h5 { font-size: 1rem; }
+</style>
+@endsection
+
 @section('content')
 
 @php
@@ -56,7 +80,7 @@ $configData = Helper::appClasses();
     </div>
 
     {{-- Podio: flex puro, align-items:flex-end garantiza escalonado real --}}
-    <div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;padding:0 16px">
+    <div class="podio-wrap" style="display:flex;justify-content:center;align-items:flex-end;gap:16px;padding:0 16px">
 
       {{-- ── 2° PLATA (altura media) ── --}}
       @if($u2)
@@ -153,7 +177,7 @@ $configData = Helper::appClasses();
 @endif
 
 {{-- ════ GRÁFICO DE BARRAS ════ --}}
-<div class="card mb-6">
+<div class="card mb-6 chart-card">
   <div class="card-header border-bottom d-flex align-items-center justify-content-between py-4">
     <div>
       <h5 class="fw-bold mb-1">Avance por Unidad Orgánica</h5>
@@ -195,7 +219,7 @@ $configData = Helper::appClasses();
           $rgb    = $colorRgb[$u->color];
           $icon   = match($u->color){'success'=>'tabler-circle-check','warning'=>'tabler-clock',default=>'tabler-alert-triangle'};
         @endphp
-        <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom"
+        <div class="d-flex align-items-center gap-3 px-4 py-2 border-bottom ranking-row"
              style="background:{{ $bgMap[$u->posicion_actual] }};border-left:3px solid {{ $bdMap[$u->posicion_actual] }}!important">
           <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
                style="width:30px;height:30px;font-size:12px;
@@ -239,7 +263,7 @@ $configData = Helper::appClasses();
           $hex = $colorHex[$u->color];
           $rgb = $colorRgb[$u->color];
         @endphp
-        <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom"
+        <div class="d-flex align-items-center gap-3 px-4 py-2 border-bottom ranking-row"
              style="border-left:3px solid {{ $hex }}!important">
           <div class="text-center flex-shrink-0" style="width:30px">
             <span class="fw-bold text-muted" style="font-size:12px">{{ $u->posicion_actual }}</span>
@@ -284,7 +308,7 @@ $configData = Helper::appClasses();
         <h6 class="fw-bold mb-0">Resumen</h6>
       </div>
       <div class="card-body pb-2">
-        <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded-3" style="background:rgba(40,199,111,.08);border:1px solid rgba(40,199,111,.2)">
+        <div class="d-flex align-items-center gap-3 mb-3 stat-block" style="background:rgba(40,199,111,.08);border:1px solid rgba(40,199,111,.2)">
           <div class="badge rounded bg-label-success p-2 flex-shrink-0">
             <i class="ti tabler-circle-check icon-20px text-success"></i>
           </div>
@@ -293,7 +317,7 @@ $configData = Helper::appClasses();
             <div class="text-muted" style="font-size:11px">Con avance ≥ 75% en el período</div>
           </div>
         </div>
-        <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded-3" style="background:rgba(255,159,67,.08);border:1px solid rgba(255,159,67,.2)">
+        <div class="d-flex align-items-center gap-3 mb-3 stat-block" style="background:rgba(255,159,67,.08);border:1px solid rgba(255,159,67,.2)">
           <div class="badge rounded bg-label-warning p-2 flex-shrink-0">
             <i class="ti tabler-alert-circle icon-20px text-warning"></i>
           </div>
@@ -302,7 +326,7 @@ $configData = Helper::appClasses();
             <div class="text-muted" style="font-size:11px">Requieren atención urgente</div>
           </div>
         </div>
-        <div class="d-flex align-items-center gap-3 mb-4 p-3 rounded-3" style="background:rgba(234,84,85,.08);border:1px solid rgba(234,84,85,.2)">
+        <div class="d-flex align-items-center gap-3 mb-4 stat-block" style="background:rgba(234,84,85,.08);border:1px solid rgba(234,84,85,.2)">
           <div class="badge rounded bg-label-danger p-2 flex-shrink-0">
             <i class="ti tabler-flame icon-20px text-danger"></i>
           </div>

@@ -6,6 +6,26 @@ $configData = Helper::appClasses();
 @extends('layouts/layoutMaster')
 @section('title', 'Alertas — PULSO UGEL')
 
+@section('page-style')
+<style>
+/* ── Tabla alertas compacta ── */
+.tbl-alertas td, .tbl-alertas th { padding: .5rem .9rem !important; vertical-align: middle; }
+.tbl-alertas thead th { font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #6e6b7b; background: #f8f7fa; white-space: nowrap; border-bottom: 1px solid rgba(0,0,0,.07) !important; }
+.tbl-alertas tbody tr { transition: background .1s; border-bottom: 1px solid rgba(0,0,0,.04) !important; }
+.tbl-alertas tbody tr:hover { background: rgba(105,108,255,.04) !important; }
+
+/* Barra de prioridad */
+.prio-bar { width: 3px; height: 36px; border-radius: 3px; flex-shrink: 0; display: block; }
+
+/* KPI cards */
+.kpi-alerta { border-radius: 12px; border: none; transition: transform .15s, box-shadow .15s; }
+.kpi-alerta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.09); }
+
+/* Filtros pill */
+.filter-pills a { line-height: 1.6; }
+</style>
+@endsection
+
 @section('content')
 
 {{-- Breadcrumb --}}
@@ -43,76 +63,58 @@ $configData = Helper::appClasses();
      TARJETAS DE ESTADÍSTICAS
 ══════════════════════════════════════════════ --}}
 <div class="row g-3 mb-4">
-  {{-- Pendientes --}}
   <div class="col-6 col-md-3">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-body p-3">
+    <div class="card kpi-alerta h-100" style="background:linear-gradient(135deg,#e52d27,#b31217)">
+      <div class="card-body p-4">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing:.5px;font-size:10px">Pendientes</span>
-          <span class="avatar avatar-sm bg-label-danger rounded">
-            <span class="avatar-initial rounded bg-label-danger text-danger"><i class="ti tabler-bell"></i></span>
-          </span>
-        </div>
-        <div class="d-flex align-items-end gap-2">
-          <h3 class="mb-0 fw-bold text-danger">{{ $stats['pendientes'] }}</h3>
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff">
+            <i class="ti tabler-bell"></i>
+          </div>
           @if($stats['pendientes'] > 0)
-          <span class="badge bg-danger mb-1" style="font-size:9px">Requieren atención</span>
+          <span class="badge" style="background:rgba(255,255,255,.25);color:#fff;font-size:.7rem">Activas</span>
           @endif
         </div>
+        <div style="font-size:2rem;font-weight:700;color:#fff;line-height:1">{{ $stats['pendientes'] }}</div>
+        <div style="font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.8)">Pendientes</div>
       </div>
     </div>
   </div>
-
-  {{-- Alta prioridad --}}
   <div class="col-6 col-md-3">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-body p-3">
+    <div class="card kpi-alerta h-100" style="background:linear-gradient(135deg,#f7971e,#ffd200)">
+      <div class="card-body p-4">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing:.5px;font-size:10px">Alta prioridad</span>
-          <span class="avatar avatar-sm bg-label-warning rounded">
-            <span class="avatar-initial rounded bg-label-warning text-warning"><i class="ti tabler-alert-triangle"></i></span>
-          </span>
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff">
+            <i class="ti tabler-alert-triangle"></i>
+          </div>
         </div>
-        <div class="d-flex align-items-end gap-2">
-          <h3 class="mb-0 fw-bold text-warning">{{ $stats['alta'] }}</h3>
-          <span class="text-muted small mb-1">de {{ $stats['pendientes'] }}</span>
-        </div>
+        <div style="font-size:2rem;font-weight:700;color:#fff;line-height:1">{{ $stats['alta'] }}</div>
+        <div style="font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.8)">Alta prioridad</div>
       </div>
     </div>
   </div>
-
-  {{-- Media prioridad --}}
   <div class="col-6 col-md-3">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-body p-3">
+    <div class="card kpi-alerta h-100" style="background:linear-gradient(135deg,#0acffe,#495aff)">
+      <div class="card-body p-4">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing:.5px;font-size:10px">Media prioridad</span>
-          <span class="avatar avatar-sm bg-label-info rounded">
-            <span class="avatar-initial rounded bg-label-info text-info"><i class="ti tabler-info-circle"></i></span>
-          </span>
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff">
+            <i class="ti tabler-info-circle"></i>
+          </div>
         </div>
-        <div class="d-flex align-items-end gap-2">
-          <h3 class="mb-0 fw-bold text-info">{{ $stats['media'] }}</h3>
-          <span class="text-muted small mb-1">alertas</span>
-        </div>
+        <div style="font-size:2rem;font-weight:700;color:#fff;line-height:1">{{ $stats['media'] }}</div>
+        <div style="font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.8)">Media prioridad</div>
       </div>
     </div>
   </div>
-
-  {{-- Resueltas --}}
   <div class="col-6 col-md-3">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-body p-3">
+    <div class="card kpi-alerta h-100" style="background:linear-gradient(135deg,#11998e,#38ef7d)">
+      <div class="card-body p-4">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing:.5px;font-size:10px">Resueltas</span>
-          <span class="avatar avatar-sm bg-label-success rounded">
-            <span class="avatar-initial rounded bg-label-success text-success"><i class="ti tabler-circle-check"></i></span>
-          </span>
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff">
+            <i class="ti tabler-circle-check"></i>
+          </div>
         </div>
-        <div class="d-flex align-items-end gap-2">
-          <h3 class="mb-0 fw-bold text-success">{{ $stats['resueltas'] }}</h3>
-          <span class="text-muted small mb-1">atendidas</span>
-        </div>
+        <div style="font-size:2rem;font-weight:700;color:#fff;line-height:1">{{ $stats['resueltas'] }}</div>
+        <div style="font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.8)">Resueltas</div>
       </div>
     </div>
   </div>
@@ -149,7 +151,7 @@ $configData = Helper::appClasses();
     </ul>
 
     {{-- Filtros en fila separada y visualmente clara --}}
-    <div class="d-flex align-items-center gap-3 flex-wrap pb-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap pb-3 filter-pills">
       {{-- Prioridad --}}
       <div class="d-flex align-items-center gap-1">
         <span class="text-muted small me-1" style="white-space:nowrap;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Prioridad</span>
@@ -189,14 +191,14 @@ $configData = Helper::appClasses();
 
   {{-- Tabla --}}
   <div class="table-responsive">
-    <table class="table align-middle mb-0" style="border-collapse:separate">
+    <table class="table align-middle mb-0 tbl-alertas">
       <thead>
-        <tr style="background:var(--bs-tertiary-bg)">
-          <th class="px-4 py-3 fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px">Alerta</th>
-          <th class="py-3 fw-semibold text-center" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:130px">Días restantes <i class="ti tabler-x icon-10px"></i></th>
-          <th class="py-3 fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:130px">Vencimiento</th>
-          <th class="py-3 fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:190px">Responsable</th>
-          <th class="py-3 fw-semibold text-end px-4" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:130px">Acciones</th>
+        <tr>
+          <th class="ps-3">Alerta</th>
+          <th class="text-center" style="width:120px">Días restantes</th>
+          <th style="width:120px">Vencimiento</th>
+          <th style="width:180px">Responsable</th>
+          <th class="text-end pe-3" style="width:120px">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -221,7 +223,7 @@ $configData = Helper::appClasses();
           };
           $diasRestantes = null;
           if ($alerta->actividad?->fecha_limite) {
-            $diasRestantes = (int) now()->diffInDays($alerta->actividad->fecha_limite, false);
+            $diasRestantes = (int) round(now()->diffInDays($alerta->actividad->fecha_limite, false));
           }
           $dc = $diasRestantes !== null
             ? ($diasRestantes < 0 ? 'danger' : ($diasRestantes <= 7 ? 'warning' : 'success'))
@@ -232,10 +234,9 @@ $configData = Helper::appClasses();
         <tr class="{{ $isLeida ? 'opacity-50' : '' }}"
             style="border-bottom:1px solid #f0f0f0;transition:background .15s">
           {{-- Alerta --}}
-          <td class="px-4 py-3">
+          <td class="ps-3">
             <div class="d-flex align-items-center gap-3">
-              {{-- Barra de prioridad --}}
-              <span class="flex-shrink-0" style="width:4px;height:40px;border-radius:4px;background:{{ $prioColor['hex'] }};display:block"></span>
+              <span class="prio-bar flex-shrink-0" style="background:{{ $prioColor['hex'] }}"></span>
               {{-- Icono de tipo --}}
               <div class="avatar flex-shrink-0 bg-label-{{ $prioColor['label'] }} rounded">
                 <span class="avatar-initial rounded bg-label-{{ $prioColor['label'] }}" style="color:{{ $prioColor['hex'] }}">
@@ -454,10 +455,6 @@ $configData = Helper::appClasses();
 
 @section('page-script')
 <script>
-// Hover effect en filas
-document.querySelectorAll('tbody tr').forEach(row => {
-  row.addEventListener('mouseenter', () => row.style.background = '#fafafa');
-  row.addEventListener('mouseleave', () => row.style.background = '');
-});
+// no inline script needed — hover handled by CSS
 </script>
 @endsection

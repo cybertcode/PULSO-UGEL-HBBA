@@ -12,6 +12,25 @@ $configData = Helper::appClasses();
 @vite(['resources/assets/vendor/libs/apex-charts/apexcharts.js'])
 @endsection
 
+@section('page-style')
+<style>
+/* ── Tabla compacta ── */
+.tbl-avance td, .tbl-avance th { padding: .42rem .75rem !important; font-size: .845rem; vertical-align: middle; }
+.tbl-avance thead th { font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #6e6b7b; background: #f8f7fa; white-space: nowrap; border-bottom: 1px solid rgba(0,0,0,.06) !important; }
+.tbl-avance tbody tr { transition: background .1s; }
+.tbl-avance tbody tr:hover { background: rgba(105,108,255,.04) !important; }
+
+/* ── Filtro compacto ── */
+.filter-strip { border-radius: 14px; border: 1px solid rgba(0,0,0,.06); }
+.filter-strip .form-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6e6b7b; margin-bottom: .2rem; }
+.filter-strip .form-select { font-size: .8rem; height: 34px; padding: .28rem .75rem; border-radius: 8px; }
+
+/* ── Card tabs ── */
+.tab-card .nav-tabs { border-bottom: 1px solid rgba(0,0,0,.08); }
+.tab-card .nav-link { font-size: .82rem; padding: .6rem 1rem; }
+</style>
+@endsection
+
 @section('content')
 
 @php
@@ -42,12 +61,12 @@ $configData = Helper::appClasses();
 </div>
 
 {{-- Filtros de período / dimensión / estado --}}
-<div class="card mb-6">
+<div class="card filter-strip mb-5">
   <div class="card-body py-3">
-    <form method="GET" class="d-flex align-items-center gap-3 flex-wrap">
-      <div>
-        <label class="form-label mb-1" style="font-size:11px;font-weight:600">Período</label>
-        <select name="periodo" class="form-select form-select-sm" style="min-width:180px" onchange="this.form.submit()">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-auto">
+        <label class="form-label">Período</label>
+        <select name="periodo" class="form-select" onchange="this.form.submit()">
           <option value="1T">I Trimestre {{ now()->year }} (Ene – Mar)</option>
           <option value="2T">II Trimestre {{ now()->year }} (Abr – Jun)</option>
           <option value="3T">III Trimestre {{ now()->year }} (Jul – Sep)</option>
@@ -55,18 +74,18 @@ $configData = Helper::appClasses();
           <option value="anual" selected>Año completo {{ now()->year }}</option>
         </select>
       </div>
-      <div>
-        <label class="form-label mb-1" style="font-size:11px;font-weight:600">Dimensión</label>
-        <select name="dimension" class="form-select form-select-sm" style="min-width:160px" onchange="this.form.submit()">
-          <option value="">Todas las dimensiones</option>
+      <div class="col-auto">
+        <label class="form-label">Dimensión</label>
+        <select name="dimension" class="form-select" onchange="this.form.submit()">
+          <option value="">Todas</option>
           <option value="sci">Control Interno</option>
           <option value="integridad">Modelo de Integridad</option>
         </select>
       </div>
-      <div>
-        <label class="form-label mb-1" style="font-size:11px;font-weight:600">Estado</label>
-        <select name="estado" class="form-select form-select-sm" style="min-width:150px" onchange="this.form.submit()">
-          <option value="">Todos los estados</option>
+      <div class="col-auto">
+        <label class="form-label">Estado</label>
+        <select name="estado" class="form-select" onchange="this.form.submit()">
+          <option value="">Todos</option>
           <option value="cumplido">Cumplido</option>
           <option value="en_proceso">En proceso</option>
           <option value="en_riesgo">En riesgo</option>
@@ -184,7 +203,7 @@ $configData = Helper::appClasses();
 
   {{-- Tabla principal con tabs --}}
   <div class="col-xl-8">
-    <div class="card h-100">
+    <div class="card h-100 tab-card">
 
       {{-- Tabs al estilo prototipo --}}
       <div class="card-header border-bottom p-0">
@@ -217,16 +236,16 @@ $configData = Helper::appClasses();
         {{-- Tab: Avance por Unidad --}}
         <div class="tab-pane fade show active" id="tab-avance">
           <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 tbl-avance">
               <thead>
-                <tr style="background:var(--bs-tertiary-bg)">
-                  <th class="ps-4 fw-semibold" style="font-size:11px">UNIDAD ORGÁNICA</th>
-                  <th class="fw-semibold" style="font-size:11px;min-width:140px">AVANCE</th>
-                  <th class="text-center fw-semibold" style="font-size:11px">COMPL.</th>
-                  <th class="text-center fw-semibold" style="font-size:11px">EN PROC.</th>
-                  <th class="text-center fw-semibold" style="font-size:11px">PENDIENT.</th>
-                  <th class="text-center fw-semibold pe-4" style="font-size:11px">ESTADO</th>
-                  <th class="text-center fw-semibold pe-4" style="font-size:11px">ACCIONES</th>
+                <tr>
+                  <th class="ps-4">Unidad Orgánica</th>
+                  <th style="min-width:130px">Avance</th>
+                  <th class="text-center">Compl.</th>
+                  <th class="text-center">En proc.</th>
+                  <th class="text-center">Pendient.</th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-center pe-3">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -291,15 +310,15 @@ $configData = Helper::appClasses();
         {{-- Tab: Medidas de Remediación --}}
         <div class="tab-pane fade" id="tab-remediacion">
           <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 tbl-avance">
               <thead>
-                <tr style="background:var(--bs-tertiary-bg)">
-                  <th class="ps-4 fw-semibold" style="font-size:11px">MEDIDA</th>
-                  <th class="fw-semibold" style="font-size:11px">UNIDAD</th>
-                  <th class="fw-semibold" style="font-size:11px">ACTIVIDAD RELACIONADA</th>
-                  <th class="fw-semibold text-center" style="font-size:11px">ESTADO</th>
-                  <th class="fw-semibold text-center" style="font-size:11px">FECHA LÍMITE</th>
-                  <th class="text-center pe-4 fw-semibold" style="font-size:11px">ACCIONES</th>
+                <tr>
+                  <th class="ps-4">Medida</th>
+                  <th>Unidad</th>
+                  <th>Actividad relacionada</th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-center">Fecha límite</th>
+                  <th class="text-center pe-3">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -337,14 +356,14 @@ $configData = Helper::appClasses();
         {{-- Tab: Medidas de Control --}}
         <div class="tab-pane fade" id="tab-control">
           <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 tbl-avance">
               <thead>
-                <tr style="background:var(--bs-tertiary-bg)">
-                  <th class="ps-4 fw-semibold" style="font-size:11px">MEDIDA DE CONTROL</th>
-                  <th class="fw-semibold" style="font-size:11px">UNIDAD</th>
-                  <th class="fw-semibold" style="font-size:11px">ACTIVIDAD RELACIONADA</th>
-                  <th class="fw-semibold text-center" style="font-size:11px">ESTADO</th>
-                  <th class="text-center pe-4 fw-semibold" style="font-size:11px">ACCIONES</th>
+                <tr>
+                  <th class="ps-4">Medida de control</th>
+                  <th>Unidad</th>
+                  <th>Actividad relacionada</th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-center pe-3">Acciones</th>
                 </tr>
               </thead>
               <tbody>

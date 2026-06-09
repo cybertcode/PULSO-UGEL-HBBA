@@ -1,4 +1,10 @@
-# Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
+# Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
+
+## [v1.4.3] - 2026-06-09
+### Consolidación Documental y Respaldo de Evidencias
+- **Integración de Informe 054**: Incorporación del Informe Nº 054-2026-GRH-GRDS-DRE-UGEL HUACAYBAMBA/UGA-RCAV (MD y PDF) al repositorio como base técnica del sistema.
+- **Evidencias de Implementación**: Inclusión de screenshots de verificación (`verify_*.png`, `ci_*.png`) que validan la fidelidad de la interfaz actual con respecto a los prototipos propuestos.
+- **Documentación de Referencia**: Adición de `documentation.html` al esquema de documentos oficiales del proyecto.
 
 ## [v1.4.2] - 2026-06-09
 ### Rediseño UI/UX y Optimización de Dashboards

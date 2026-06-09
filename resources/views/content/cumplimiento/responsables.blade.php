@@ -263,17 +263,18 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.querySelector('form[method="GET"]');
+  if (!form) return;
 
-  // Select2 con submit en tiempo real
-  document.querySelectorAll('.select2').forEach(el => {
+  // Select2 — solo los del formulario de filtros
+  form.querySelectorAll('.select2').forEach(el => {
     const $w = $('<div class="position-relative"></div>');
     $(el).wrap($w);
     $(el).select2({ dropdownParent: $(el).parent(), width: '100%' });
     $(el).on('select2:select select2:unselect', () => form.submit());
   });
 
-  // Select nativo (año) en tiempo real
-  document.querySelectorAll('select:not(.select2)').forEach(el => {
+  // Selects nativos dentro del form (año, etc.) — no afecta al DataTable
+  form.querySelectorAll('select:not(.select2)').forEach(el => {
     el.addEventListener('change', () => form.submit());
   });
 

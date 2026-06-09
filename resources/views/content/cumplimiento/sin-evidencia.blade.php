@@ -263,15 +263,18 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.querySelector('form[method="GET"]');
+  if (!form) return;
 
-  document.querySelectorAll('.select2').forEach(el => {
+  // Select2 — solo los del form de filtros
+  form.querySelectorAll('.select2').forEach(el => {
     const $w = $('<div class="position-relative"></div>');
     $(el).wrap($w);
     $(el).select2({ dropdownParent: $(el).parent(), width: '100%' });
     $(el).on('select2:select select2:unselect', () => form.submit());
   });
 
-  document.querySelectorAll('select:not(.select2)').forEach(el => {
+  // Selects nativos dentro del form (prioridad, año)
+  form.querySelectorAll('select:not(.select2)').forEach(el => {
     el.addEventListener('change', () => form.submit());
   });
 });
