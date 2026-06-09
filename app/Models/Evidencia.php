@@ -13,8 +13,7 @@ class Evidencia extends Model
 
     protected $fillable = [
         'actividad_id', 'subido_por', 'numero_sgd',
-        'titulo', 'descripcion',
-        'archivo_ruta', 'archivo_nombre', 'archivo_tipo', 'archivo_tamanio',
+        'titulo', 'descripcion', 'url_documento',
         'estado', 'validado_por', 'validado_at', 'motivo_rechazo',
     ];
 
@@ -38,11 +37,4 @@ class Evidencia extends Model
         return $this->belongsTo(User::class, 'validado_por');
     }
 
-    public function getTamanioFormateadoAttribute(): string
-    {
-        $bytes = $this->archivo_tamanio ?? 0;
-        if ($bytes >= 1048576) return round($bytes / 1048576, 2) . ' MB';
-        if ($bytes >= 1024)    return round($bytes / 1024, 1) . ' KB';
-        return $bytes . ' B';
-    }
 }

@@ -1,5 +1,12 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.9] - 2026-06-08
+### Refactorización de Evidencias y Cargos
+- **Evidencias (URL-based)**: Migración del sistema de evidencias de carga local a almacenamiento basado en URLs, mejorando la compatibilidad con hosting compartido y reduciendo el consumo de almacenamiento local.
+- **Normalización de Cargos**: Refactorización del campo `cargo` en la tabla de usuarios de un simple texto a una relación formal de clave foránea (`cargo_id`), integrándose plenamente con el Catálogo Maestro de Cargos.
+- **Listado de Usuarios Pro**: Implementación de paginación y búsqueda del lado del servidor (Server-side) en Datatables para optimizar la carga de grandes volúmenes de usuarios.
+- **Validación y Seguridad**: Inclusión de reglas de validación más estrictas para DNI y control de permisos granulares para el registro de evidencias basado en asignaciones.
+
 ## [v1.3.8] - 2026-06-08
 ### Gestión Avanzada y Auditoría SCI
 - **Asignación Multirrol**: Implementación de un sistema flexible de responsabilidades donde se pueden asignar múltiples usuarios a una actividad, cada uno con un rol distinto (Principal, Colaborador, Supervisor).

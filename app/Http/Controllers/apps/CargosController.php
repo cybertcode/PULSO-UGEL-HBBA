@@ -55,6 +55,12 @@ class CargosController extends Controller
 
     public function destroy(Cargo $cargo)
     {
+        if ($cargo->usuarios()->exists()) {
+            return response()->json([
+                'message' => "No se puede eliminar el cargo \"{$cargo->nombre}\" porque tiene {$cargo->usuarios()->count()} usuario(s) asignado(s). Reasigna o desvincula los usuarios primero.",
+            ], 422);
+        }
+
         $cargo->delete();
 
         return response()->json(['ok' => true]);

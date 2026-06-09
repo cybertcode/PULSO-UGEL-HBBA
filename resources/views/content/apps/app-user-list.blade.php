@@ -166,10 +166,9 @@
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-user-cargo">Cargo</label>
-          <select id="add-user-cargo" name="cargo" class="select2-cargo form-select">
+          <select id="add-user-cargo" name="cargo_id" class="select2-cargo form-select">
             <option value="">Sin cargo</option>
           </select>
-          <div class="form-text">Elige de la lista o escribe uno nuevo.</div>
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-user-unidad">Unidad Orgánica</label>
@@ -233,10 +232,9 @@
         </div>
         <div class="mb-6">
           <label class="form-label" for="edit-user-cargo">Cargo</label>
-          <select id="edit-user-cargo" name="cargo" class="select2-cargo form-select">
+          <select id="edit-user-cargo" name="cargo_id" class="select2-cargo form-select">
             <option value="">Sin cargo</option>
           </select>
-          <div class="form-text">Elige de la lista o escribe uno nuevo.</div>
         </div>
         <div class="mb-6">
           <label class="form-label" for="edit-user-unidad">Unidad Orgánica</label>
@@ -357,10 +355,12 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
-  const dataUrl   = '{{ route("adm-usuarios.data") }}';
-  const canEdit   = {{ auth()->user()->can('usuarios.editar') ? 'true' : 'false' }};
-  const canDelete = {{ auth()->user()->can('usuarios.eliminar') ? 'true' : 'false' }};
-  const canCreate = {{ auth()->user()->can('usuarios.crear') ? 'true' : 'false' }};
+  const dataUrl      = '{{ route("adm-usuarios.data") }}';
+  const urlBase      = '{{ url("usuarios") }}';
+  const canEdit      = {{ auth()->user()->can('usuarios.editar')   ? 'true' : 'false' }};
+  const canDelete    = {{ auth()->user()->can('usuarios.eliminar') ? 'true' : 'false' }};
+  const canCreate    = {{ auth()->user()->can('usuarios.crear')    ? 'true' : 'false' }};
+  const cargosUrl    = '{{ route("cargos.index") }}';
 
   const colorMap = {
     'Super Admin': 'danger', 'Administrador': 'primary',
@@ -369,8 +369,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const dtTable = document.querySelector('.datatables-usuarios');
 
+  // Estado actual de los filtros de cabecera
+  let filtros = { rol: '', unidad_id: '', estado: '' };
+
   const dt = new DataTable(dtTable, {
-    ajax: { url: dataUrl, dataSrc: 'data' },
+    serverSide: true,
+    processing: true,
+    ajax: {
+      url: dataUrl,
+      data: d => Object.assign(d, filtros),
+    },
     columns: [
       { data: null },
       { data: null, orderable: false, render: DataTable.render.select() },
@@ -449,7 +457,8 @@ document.addEventListener('DOMContentLoaded', function () {
           if (canEdit) {
             btns += `<button class="btn btn-icon btn-text-secondary rounded-pill waves-effect btn-edit-user"
               data-id="${row.id}" data-name="${row.name}" data-email="${row.email}"
-              data-dni="${row.dni}" data-cargo="${row.cargo}" data-unidad="${row.unidad}"
+              data-dni="${row.dni !== '—' ? row.dni : ''}"
+              data-cargo-id="${row.cargo_id}" data-cargo-nombre="${row.cargo}"
               data-unidad-id="${row.unidad_id}" data-rol="${row.rol}" data-estado="${row.estado}"
               data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditUser"
               title="Editar"><i class="icon-base ti tabler-edit icon-md"></i></button>`;
@@ -457,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (canDelete) {
             btns += `<button class="btn btn-icon btn-text-secondary rounded-pill waves-effect btn-delete-user"
               data-id="${row.id}" data-name="${row.name}"
-              data-url="/usuarios/${row.id}"
+              data-url="${urlBase}/${row.id}"
               title="Eliminar"><i class="icon-base ti tabler-trash icon-md"></i></button>`;
           }
           btns += `</div>`;
@@ -661,7 +670,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Filtros en el header
+  // Filtros en el header — server-side
   setTimeout(() => {
     // Rol
     const rolDiv = document.querySelector('.user_rol');
@@ -672,20 +681,22 @@ document.addEventListener('DOMContentLoaded', function () {
         @endforeach
       </select>`;
       rolDiv.querySelector('select').addEventListener('change', function () {
-        dt.column(3).search(this.value).draw();
+        filtros.rol = this.value;
+        dt.ajax.reload();
       });
     }
 
-    // Unidad
+    // Unidad — por ID para búsqueda exacta
     const unidadDiv = document.querySelector('.user_unidad');
     if (unidadDiv) {
       unidadDiv.innerHTML = `<select class="form-select">
         <option value="">Filtrar por Unidad</option>
-        @foreach($unidades as $u)<option value="{{ $u->sigla }}">{{ $u->nombre }}</option>
+        @foreach($unidades as $u)<option value="{{ $u->id }}">{{ $u->nombre }}</option>
         @endforeach
       </select>`;
       unidadDiv.querySelector('select').addEventListener('change', function () {
-        dt.column(4).search(this.value).draw();
+        filtros.unidad_id = this.value;
+        dt.ajax.reload();
       });
     }
 
@@ -694,12 +705,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (estadoDiv) {
       estadoDiv.innerHTML = `<select class="form-select">
         <option value="">Filtrar por Estado</option>
-        <option value="Activo">Activo</option>
-        <option value="Inactivo">Inactivo</option>
-        <option value="Pendiente">Pendiente</option>
+        <option value="activo">Activo</option>
+        <option value="inactivo">Inactivo</option>
+        <option value="pendiente">Pendiente</option>
       </select>`;
       estadoDiv.querySelector('select').addEventListener('change', function () {
-        dt.column(6).search(this.value).draw();
+        filtros.estado = this.value;
+        dt.ajax.reload();
       });
     }
 
@@ -719,35 +731,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }, 100);
 
-  // ── Select2: inicializar en shown.bs.offcanvas (jQuery disponible después de Vite) ──
+  // ── Select2: inicializar cargos (valores = ID numérico) ──
   function initCargosSelect2(selector, offcanvasEl) {
     if (!window.$ || !$.fn.select2) return;
     if ($(selector).hasClass('select2-hidden-accessible')) return;
     $(selector).select2({
       dropdownParent: $(offcanvasEl),
-      placeholder: 'Buscar o escribir cargo...',
+      placeholder: 'Buscar cargo...',
       allowClear: true,
-      tags: true,
       ajax: {
-        url: '{{ route("cargos.index") }}?select=1',
+        url: cargosUrl + '?select=1',
         dataType: 'json',
         delay: 200,
         data: p => ({ q: p.term }),
-        processResults: (data, p) => ({
-          results: data
-            .filter(c => !p.term || c.nombre.toLowerCase().includes(p.term.toLowerCase()))
-            .map(c => ({ id: c.nombre, text: c.nombre }))
+        processResults: data => ({
+          results: data.map(c => ({ id: c.id, text: c.nombre }))
         }),
         cache: true,
-      },
-      createTag: p => {
-        const term = $.trim(p.term);
-        if (!term) return null;
-        return { id: term, text: term, newTag: true };
-      },
-      templateResult: data => {
-        if (data.newTag) return $(`<span><i class="ti tabler-plus me-1 text-primary"></i>${data.text} <em class="text-muted">(nuevo)</em></span>`);
-        return data.text;
       },
       minimumInputLength: 0,
     });
@@ -756,16 +756,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // Inicializar Select2 cuando se abre el offcanvas Agregar
   document.getElementById('offcanvasAddUser')?.addEventListener('shown.bs.offcanvas', function () {
     if (!window.$ || !$.fn.select2) return;
-    // Unidad
     $('#add-user-unidad').not('.select2-hidden-accessible').select2({ dropdownParent: $(this), width: '100%', placeholder: 'Sin asignar' });
-    // Cargo
     initCargosSelect2('#add-user-cargo', this);
-    $.get('{{ route("cargos.index") }}?select=1', function(data) {
-      const sel = $('#add-user-cargo');
-      sel.empty().append('<option value="">Sin cargo</option>');
-      data.forEach(c => sel.append(new Option(c.nombre, c.nombre)));
-      sel.trigger('change');
-    });
   });
 
   // Inicializar Select2 cuando se abre el offcanvas Editar
@@ -773,22 +765,22 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!window.$ || !$.fn.select2) return;
     $('#edit-user-unidad').not('.select2-hidden-accessible').select2({ dropdownParent: $(this), width: '100%', placeholder: 'Sin asignar' });
     initCargosSelect2('#edit-user-cargo', this);
-    // Aplicar valores pendientes guardados en el dataset del offcanvas
+
     const unidadId  = this.dataset.pendingUnidad;
-    const cargoVal  = this.dataset.pendingCargo;
-    if (unidadId)  { $('#edit-user-unidad').val(unidadId).trigger('change'); }
-    if (cargoVal && cargoVal !== '—') {
-      $.get('{{ route("cargos.index") }}?select=1', function(data) {
-        const sel = $('#edit-user-cargo');
-        sel.empty().append('<option value="">Sin cargo</option>');
-        data.forEach(c => sel.append(new Option(c.nombre, c.nombre, false, false)));
-        if (!data.find(c => c.nombre === cargoVal)) {
-          sel.append(new Option(cargoVal, cargoVal, true, true));
-        } else {
-          sel.val(cargoVal);
-        }
-        sel.trigger('change');
-      });
+    const cargoId   = this.dataset.pendingCargoId;
+    const cargoNom  = this.dataset.pendingCargoNombre;
+
+    if (unidadId) { $('#edit-user-unidad').val(unidadId).trigger('change'); }
+
+    // Preseleccionar cargo actual por ID — crear opción si no existe aún
+    if (cargoId && cargoId !== '') {
+      const sel = $('#edit-user-cargo');
+      if (!sel.find(`option[value="${cargoId}"]`).length) {
+        sel.append(new Option(cargoNom, cargoId, true, true));
+      } else {
+        sel.val(cargoId);
+      }
+      sel.trigger('change');
     }
   });
 
@@ -799,20 +791,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const offcanvas = document.getElementById('offcanvasEditUser');
 
-    // Campos de texto — no necesitan jQuery
-    document.getElementById('formEditUser').action = '/usuarios/' + btn.dataset.id;
+    document.getElementById('formEditUser').action      = `${urlBase}/${btn.dataset.id}`;
     document.getElementById('edit-user-name').value     = btn.dataset.name;
     document.getElementById('edit-user-email').value    = btn.dataset.email;
-    document.getElementById('edit-user-dni').value      = btn.dataset.dni !== '—' ? btn.dataset.dni : '';
+    document.getElementById('edit-user-dni').value      = btn.dataset.dni || '';
     document.getElementById('edit-user-password').value = '';
     document.getElementById('edit-user-rol').value      = btn.dataset.rol;
     document.getElementById('edit-user-estado').value   = btn.dataset.estado;
 
-    // Guardar valores que requieren Select2 en el dataset para aplicarlos en shown.bs.offcanvas
-    offcanvas.dataset.pendingCargo  = btn.dataset.cargo    || '';
-    offcanvas.dataset.pendingUnidad = btn.dataset.unidadId || '';
+    // Guardar para aplicar en shown.bs.offcanvas (Select2 necesita el elemento visible)
+    offcanvas.dataset.pendingUnidad       = btn.dataset.unidadId      || '';
+    offcanvas.dataset.pendingCargoId      = btn.dataset.cargoId       || '';
+    offcanvas.dataset.pendingCargoNombre  = btn.dataset.cargoNombre   || '';
 
-    // Establecer valor nativo también (para caso sin Select2)
+    // Valor nativo de unidad (fallback sin Select2)
     const unidadSel = document.getElementById('edit-user-unidad');
     if (unidadSel) unidadSel.value = offcanvas.dataset.pendingUnidad;
   });
@@ -883,10 +875,10 @@ document.addEventListener('DOMContentLoaded', function () {
       text: `Se eliminará a "${btn.dataset.name}" del sistema.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#ea5455',
-      cancelButtonColor: '#6e7881',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: '<i class="ti tabler-trash me-1"></i>Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: 'rounded-3', confirmButton: 'btn btn-danger me-2', cancelButton: 'btn btn-label-secondary' },
+      buttonsStyling: false,
     }).then(r => {
       if (!r.isConfirmed) return;
       fetch(btn.dataset.url, {
@@ -1175,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', function () {
     errEl.classList.add('d-none');
     if (!nombre) { errEl.textContent = 'El nombre es requerido.'; errEl.classList.remove('d-none'); return; }
 
-    fetch(`/cargos/${id}`, {
+    fetch(`${cargosUrl}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
       body: JSON.stringify({ nombre, activo }),
@@ -1201,18 +1193,18 @@ document.addEventListener('DOMContentLoaded', function () {
       text: `Se eliminará "${btn.dataset.nombre}" del catálogo.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#ea5455',
-      cancelButtonColor: '#6e7881',
-      confirmButtonText: 'Sí, eliminar',
+      confirmButtonText: '<i class="ti tabler-trash me-1"></i>Sí, eliminar',
       cancelButtonText: 'Cancelar',
+      customClass: { popup: 'rounded-3', confirmButton: 'btn btn-danger me-2', cancelButton: 'btn btn-label-secondary' },
+      buttonsStyling: false,
     }).then(r => {
       if (!r.isConfirmed) return;
-      fetch(`/cargos/${btn.dataset.id}`, {
+      fetch(`${cargosUrl}/${btn.dataset.id}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': csrfToken },
       }).then(async res => {
         const json = await res.json();
-        if (!res.ok) { Swal.fire({ icon: 'error', title: 'Error', text: json.message ?? 'No se pudo eliminar.' }); return; }
+        if (!res.ok) { Swal.fire({ icon: 'error', title: 'No se puede eliminar', text: json.message ?? 'Error al eliminar.', customClass: { popup: 'rounded-3', confirmButton: 'btn btn-primary' }, buttonsStyling: false }); return; }
         dtCargos.ajax.reload(null, false);
         Swal.fire({ icon: 'success', title: 'Eliminado', text: 'Cargo eliminado del catálogo.', timer: 2000, showConfirmButton: false });
       });
