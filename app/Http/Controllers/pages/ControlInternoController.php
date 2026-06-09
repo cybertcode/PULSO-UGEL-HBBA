@@ -74,10 +74,10 @@ class ControlInternoController extends Controller
             'numero_sgd'         => 'nullable|string|max:50',
             'descripcion'        => 'nullable|string',
             'observaciones'      => 'nullable|string',
-            // Responsables múltiples
             'responsables'       => 'nullable|array',
             'responsables.*'     => 'exists:users,id',
-            'tipo_asignacion'    => 'nullable|in:principal,colaborador,supervisor,todos',
+            'tipos'              => 'nullable|array',
+            'tipos.*'            => 'in:principal,colaborador,supervisor',
         ]);
 
         $validated['creado_por'] = Auth::id();
@@ -89,7 +89,7 @@ class ControlInternoController extends Controller
         $validated['codigo'] = 'SCI-' . $anio . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         DB::transaction(function () use ($validated, $request) {
-            $actividad = Actividad::create(\Arr::except($validated, ['responsables', 'tipo_asignacion']));
+            $actividad = Actividad::create(\Arr::except($validated, ['responsables', 'tipos']));
 
             ActividadHistorial::create([
                 'actividad_id'   => $actividad->id,
@@ -100,17 +100,10 @@ class ControlInternoController extends Controller
                 'descripcion'    => 'Actividad creada',
             ]);
 
-            // Asignar responsables
-            $tipoAsignacion = $request->input('tipo_asignacion', 'principal');
-
-            if ($tipoAsignacion === 'todos') {
-                // Asignar todos los usuarios activos como colaboradores
-                $todos = User::where('estado', 'activo')->pluck('id');
-                $sync  = $todos->mapWithKeys(fn($id) => [$id => ['tipo' => 'colaborador']])->toArray();
-                $actividad->responsables()->sync($sync);
-            } elseif (!empty($validated['responsables'])) {
-                $sync = collect($validated['responsables'])
-                    ->mapWithKeys(fn($id) => [$id => ['tipo' => $tipoAsignacion]])
+            if (!empty($validated['responsables'])) {
+                $tipos = $validated['tipos'] ?? [];
+                $sync  = collect($validated['responsables'])
+                    ->mapWithKeys(fn($id) => [$id => ['tipo' => $tipos[$id] ?? 'principal']])
                     ->toArray();
                 $actividad->responsables()->sync($sync);
             }
@@ -131,10 +124,12 @@ class ControlInternoController extends Controller
             'estado'             => 'required|in:pendiente,en_proceso,completada,observado,vencida',
             'prioridad'          => 'required|in:alta,media,baja',
             'numero_sgd'         => 'nullable|string|max:50',
+            'descripcion'        => 'nullable|string',
             'observaciones'      => 'nullable|string',
             'responsables'       => 'nullable|array',
             'responsables.*'     => 'exists:users,id',
-            'tipo_asignacion'    => 'nullable|in:principal,colaborador,supervisor,todos',
+            'tipos'              => 'nullable|array',
+            'tipos.*'            => 'in:principal,colaborador,supervisor',
         ]);
 
         if ($validated['estado'] === 'completada' && !$actividad->fecha_cumplimiento) {
@@ -142,19 +137,13 @@ class ControlInternoController extends Controller
             $validated['avance'] = 100;
         }
 
-        DB::transaction(function () use ($validated, $actividad, $request) {
-            $actividad->update(\Arr::except($validated, ['responsables', 'tipo_asignacion']));
+        DB::transaction(function () use ($validated, $actividad) {
+            $actividad->update(\Arr::except($validated, ['responsables', 'tipos']));
 
-            $tipoAsignacion = $request->input('tipo_asignacion', 'principal');
-
-            if ($request->input('tipo_asignacion') === 'todos') {
-                $todos = User::where('estado', 'activo')->pluck('id');
-                $sync  = $todos->mapWithKeys(fn($id) => [$id => ['tipo' => 'colaborador']])->toArray();
-                $actividad->responsables()->sync($sync);
-            } elseif ($request->has('responsables')) {
-                $ids  = $validated['responsables'] ?? [];
-                $sync = collect($ids)
-                    ->mapWithKeys(fn($id) => [$id => ['tipo' => $tipoAsignacion]])
+            if (!empty($validated['responsables'])) {
+                $tipos = $validated['tipos'] ?? [];
+                $sync  = collect($validated['responsables'])
+                    ->mapWithKeys(fn($id) => [$id => ['tipo' => $tipos[$id] ?? 'principal']])
                     ->toArray();
                 $actividad->responsables()->sync($sync);
             }
@@ -196,7 +185,15 @@ class ControlInternoController extends Controller
             ->where('actividad_id', $actividad->id)
             ->latest()
             ->get()
-            ->map(fn($h) => array_merge($h->toArray(), ['campo_label' => $h->campo_label]));
+            ->map(fn($h) => [
+                'campo'          => $h->campo,
+                'campo_label'    => $h->campo_label,
+                'valor_anterior' => $h->valor_anterior,
+                'valor_nuevo'    => $h->valor_nuevo,
+                'descripcion'    => $h->descripcion,
+                'usuario'        => ['name' => $h->usuario?->name ?? 'Sistema'],
+                'created_at'     => $h->created_at,
+            ]);
 
         return response()->json($historial);
     }

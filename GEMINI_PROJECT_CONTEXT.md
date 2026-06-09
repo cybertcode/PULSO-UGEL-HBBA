@@ -1,5 +1,12 @@
 # Historial de Versiones - Proyecto SATA-QR (UGEL Huacaybamba)
 
+## [v1.3.8] - 2026-06-08
+### Gestión Avanzada y Auditoría SCI
+- **Asignación Multirrol**: Implementación de un sistema flexible de responsabilidades donde se pueden asignar múltiples usuarios a una actividad, cada uno con un rol distinto (Principal, Colaborador, Supervisor).
+- **Builder de Responsables**: Nueva interfaz interactiva en los modales de creación y edición que permite gestionar la lista de responsables de forma dinámica y visual.
+- **Auditoría Estética**: Rediseño del historial de cambios con una línea de tiempo estilizada, iconografía semántica por campo y visualización clara de los responsables involucrados.
+- **UI Premium de Gestión**: Actualización masiva de la vista de Control Interno con KPIs de alto impacto, filtros mejorados y modales con identidad visual institucional reforzada (degradados y tipografía).
+
 ## [v1.3.7] - 2026-06-08
 ### Panel de Actividades de Alto Impacto
 - **Filtros Avanzados**: Implementación de un sistema de filtrado dinámico en "Mis Actividades" que incluye búsqueda por código/nombre (debounce), rango de fechas (Flatpickr), estado, prioridad y rango de avance (noUiSlider).

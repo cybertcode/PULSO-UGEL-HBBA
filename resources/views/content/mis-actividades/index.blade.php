@@ -587,20 +587,20 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
 @endif
 
 {{-- ── Modal: Actualizar Avance ────────────────────────────── --}}
-<div class="modal fade" id="modalAvance" tabindex="-1">
-  <div class="modal-dialog modal-sm">
-    <div class="modal-content" style="border-radius:16px;border:none;overflow:hidden">
+<div class="modal fade" id="modalAvance" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none">
       <form id="formAvance">
-        <div class="modal-header border-0 pb-0">
-          <div>
-            <h6 class="modal-title fw-bold mb-0"><i class="ti tabler-chart-line me-2 text-primary"></i>Actualizar Avance</h6>
-            <p class="text-muted mb-0 mt-1" id="avanceNombre" style="font-size:.8rem"></p>
+        <div class="modal-header" style="background:linear-gradient(135deg,var(--bs-primary),color-mix(in srgb,var(--bs-primary) 70%,var(--bs-info)));border-radius:16px 16px 0 0">
+          <div class="flex-grow-1">
+            <h6 class="modal-title fw-bold mb-0" style="color:#fff"><i class="ti tabler-chart-line me-2"></i>Actualizar Avance</h6>
+            <p class="mb-0 mt-1" id="avanceNombre" style="font-size:.78rem;color:rgba(255,255,255,.75);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></p>
           </div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
-        <div class="modal-body pt-3 pb-2">
+        <div class="modal-body pt-4 pb-2 px-4">
           {{-- Display grande del % --}}
-          <div class="text-center mb-3">
+          <div class="text-center mb-4">
             <div class="avance-display text-primary" id="avanceValorLabel">0%</div>
             <div class="text-muted" style="font-size:.75rem">de completado</div>
           </div>
@@ -608,18 +608,21 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
           <div class="mb-1">
             <input type="range" class="form-range avance-range" name="avance" id="avanceRange" min="0" max="100" step="5" value="0">
           </div>
-          <div class="d-flex justify-content-between text-muted mb-3" style="font-size:.7rem">
+          <div class="d-flex justify-content-between text-muted mb-4" style="font-size:.7rem">
             <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
           </div>
           {{-- Observación --}}
           <div>
             <label class="form-label form-label-sm fw-semibold">Observación <span class="text-muted fw-normal">(opcional)</span></label>
-            <textarea name="observaciones" class="form-control form-control-sm" rows="2" placeholder="Describe brevemente el avance realizado..." style="border-radius:8px"></textarea>
+            <textarea name="observaciones" class="form-control form-control-sm" rows="2"
+              placeholder="Describe brevemente el avance realizado..." style="border-radius:8px"></textarea>
           </div>
         </div>
-        <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal" style="border-radius:8px">Cancelar</button>
-          <button type="submit" class="btn btn-sm btn-primary flex-fill" style="border-radius:8px"><i class="ti tabler-check me-1"></i>Guardar avance</button>
+        <div class="modal-footer border-0 pt-2 px-4 pb-4">
+          <button type="button" class="btn btn-sm btn-label-secondary" data-bs-dismiss="modal" style="border-radius:8px">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary flex-fill" style="border-radius:8px">
+            <i class="ti tabler-check me-1"></i>Guardar avance
+          </button>
         </div>
       </form>
     </div>
@@ -627,21 +630,24 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
 </div>
 
 {{-- ── Modal: Historial ────────────────────────────────────── --}}
-<div class="modal fade" id="modalHistorial" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content" style="border-radius:16px;border:none;overflow:hidden">
-      <div class="modal-header border-0" style="background:rgba(115,103,240,.06)">
-        <div>
-          <h6 class="modal-title fw-bold mb-0"><i class="ti tabler-history me-2 text-primary"></i>Historial de cambios</h6>
-          <p class="text-muted mb-0 mt-1" id="historialNombre" style="font-size:.8rem"></p>
+<div class="modal fade" id="modalHistorial" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <div class="modal-header" style="background:linear-gradient(135deg,var(--bs-primary),color-mix(in srgb,var(--bs-primary) 70%,var(--bs-info)));border-radius:16px 16px 0 0">
+        <div class="flex-grow-1">
+          <h6 class="modal-title fw-bold mb-0" style="color:#fff"><i class="ti tabler-history me-2"></i>Historial de cambios</h6>
+          <p class="mb-0 mt-1" id="historialNombre" style="font-size:.78rem;color:rgba(255,255,255,.75);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></p>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body p-0" id="historialContenido">
         <div class="text-center py-5">
           <div class="spinner-border text-primary" style="width:1.5rem;height:1.5rem"></div>
           <div class="text-muted mt-2 small">Cargando historial...</div>
         </div>
+      </div>
+      <div class="modal-footer border-0 py-3">
+        <button type="button" class="btn btn-sm btn-label-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
