@@ -99,7 +99,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
       <h4 class="mb-0 fw-bold">Mis Actividades</h4>
       <p class="mb-0 text-muted small">
         <i class="ti tabler-user me-1"></i>{{ $user->name }}
-        @if($user->cargo) · <i class="ti tabler-briefcase me-1"></i>{{ $user->cargo }}@endif
+        @if($user->cargo) · <i class="ti tabler-briefcase me-1"></i>{{ $user->cargo->nombre }}@endif
         @if($user->unidadOrganica?->sigla) · <i class="ti tabler-building me-1"></i>{{ $user->unidadOrganica->sigla }}@endif
       </p>
     </div>
@@ -226,7 +226,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
   </div>
   <div class="card-body p-0">
     @foreach($proximas as $prox)
-    @php $dias = (int) now()->diffInDays($prox->fecha_limite, false); @endphp
+    @php $dias = (int) round(now()->diffInDays($prox->fecha_limite, false)); @endphp
     <div class="proximas-item d-flex align-items-center gap-3 px-4 py-3 {{ !$loop->last ? 'border-bottom' : '' }}">
       <div class="d-flex align-items-center justify-content-center flex-shrink-0"
         style="width:44px;height:44px;border-radius:10px;background:{{ $dias <= 3 ? 'rgba(234,84,85,.12)' : 'rgba(255,159,67,.12)' }}">
@@ -446,7 +446,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
     $miRol = $act->responsables->where('id', $user->id)->first()?->pivot->tipo ?? 'principal';
     $rolIcon = match($miRol) { 'principal' => 'tabler-crown', 'supervisor' => 'tabler-eye', default => 'tabler-users' };
     $tieneEvidencias = $act->evidencias->count() > 0;
-    $diasRestantes = $act->fecha_limite ? (int) now()->diffInDays($act->fecha_limite, false) : null;
+    $diasRestantes = $act->fecha_limite ? (int) round(now()->diffInDays($act->fecha_limite, false)) : null;
     $canEdit = !in_array($act->estado, ['completada', 'vencida']);
   @endphp
 

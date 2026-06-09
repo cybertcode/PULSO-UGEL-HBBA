@@ -261,7 +261,7 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
     </div>
     <div class="d-flex flex-wrap gap-2">
       @foreach($proxVencer as $pv)
-      @php $dPv = (int) now()->diffInDays($pv->fecha_limite, false); @endphp
+      @php $dPv = (int) round(now()->diffInDays($pv->fecha_limite, false)); @endphp
       <span class="badge rounded-pill {{ $dPv <= 2 ? 'bg-danger' : 'bg-warning' }}" style="font-size:11px;font-weight:600;padding:5px 10px"
         title="{{ $pv->nombre }}">
         <i class="ti tabler-clock me-1"></i>{{ Str::limit($pv->nombre, 28) }}
@@ -436,7 +436,7 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
           @forelse($actividades as $a)
           @php
             $ec        = $a->estado_color;
-            $dias      = (int) now()->diffInDays($a->fecha_limite, false);
+            $dias      = (int) round(now()->diffInDays($a->fecha_limite, false));
             $prioColor = match($a->prioridad) { 'alta'=>'danger', 'media'=>'warning', default=>'info' };
             $fechaColor = $dias < 0 ? 'danger' : ($dias <= 7 ? 'warning' : 'secondary');
           @endphp

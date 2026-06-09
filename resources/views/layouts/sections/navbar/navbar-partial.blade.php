@@ -9,7 +9,7 @@ $userFoto       = $authUser?->profile_photo_path
                     ? Storage::url($authUser->profile_photo_path)
                     : null;
 $userInitials   = $authUser ? strtoupper(substr($authUser->name, 0, 1) . (strpos($authUser->name,' ')!==false ? substr($authUser->name, strpos($authUser->name,' ')+1, 1) : '')) : 'U';
-$userCargo      = $authUser?->cargo ?? 'Usuario';
+$userCargo      = $authUser?->cargo?->nombre ?? 'Usuario';
 $userUnidad     = $authUser?->unidadOrganica?->nombre ?? null;
 $userRol        = $authUser?->roles->first()?->name ?? null;
 
