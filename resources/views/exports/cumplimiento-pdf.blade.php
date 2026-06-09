@@ -74,7 +74,7 @@
     @endphp
     <tr>
       <td>{{ $i + 1 }}</td>
-      <td><strong>{{ $u->name }}</strong><br><span style="color:#888;font-size:8px">{{ $u->cargo ?? '—' }}</span></td>
+      <td><strong>{{ $u->name }}</strong><br><span style="color:#888;font-size:8px">{{ $u->cargo?->nombre ?? '—' }}</span></td>
       <td>{{ $u->unidadOrganica?->sigla ?? '—' }}</td>
       <td style="text-align:center">{{ $u->stat_total }}</td>
       <td style="text-align:center;color:#28c76f;font-weight:700">{{ $u->stat_completadas }}</td>

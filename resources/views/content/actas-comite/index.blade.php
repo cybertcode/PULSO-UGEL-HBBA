@@ -212,7 +212,7 @@
               <label class="form-label">Participantes</label>
               <select name="participantes[]" class="form-select select2" multiple>
                 @foreach($usuarios as $u)
-                <option value="{{ $u->id }}">{{ $u->name }} — {{ $u->cargo }}</option>
+                <option value="{{ $u->id }}">{{ $u->name }}{{ $u->cargo ? ' — ' . $u->cargo->nombre : '' }}</option>
                 @endforeach
               </select>
             </div>

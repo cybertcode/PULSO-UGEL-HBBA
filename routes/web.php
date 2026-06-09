@@ -50,7 +50,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/diag', fn() => view('content.dashboard.diag'))->name('diag');
+    Route::get('/diag', fn() => view('content.dashboard.diag'))->name('diag')->middleware('can:configuracion.ver');
 
     // --- Control y Seguimiento (permisos: control-interno.*, integridad.*, evidencias.*) ---
     Route::middleware('can:control-interno.ver')->group(function () {
@@ -73,37 +73,41 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.validar');
 
     // --- Monitoreo ---
-    Route::get('/semaforo',          [SemaforoController::class,        'index'])->name('mon-semaforo');
+    Route::get('/semaforo',          [SemaforoController::class,        'index'])->name('mon-semaforo')->middleware('can:integridad.ver');
     Route::middleware('can:alertas.ver')->group(function () {
         Route::get('/alertas', [AlertasController::class, 'index'])->name('mon-alertas');
+        Route::patch('/alertas/{alerta}/leer',  [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
+        Route::patch('/alertas/leer-todas',     [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
     });
-    Route::patch('/alertas/{alerta}/leer',   [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
-    Route::patch('/alertas/leer-todas',      [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
-    Route::post('/alertas',                  [AlertasController::class, 'store'])->name('mon-alertas.store')->middleware('can:alertas.ver');
-    Route::delete('/alertas/{alerta}',       [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.ver');
-    Route::get('/ranking-unidades', [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades');
-    Route::get('/avance-unidades',  [AvanceUnidadesController::class,  'index'])->name('mon-avance-unidades');
+    Route::post('/alertas',    [AlertasController::class, 'store'])->name('mon-alertas.store')->middleware('can:alertas.crear');
+    Route::delete('/alertas/{alerta}', [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.eliminar');
+    Route::get('/ranking-unidades', [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades')->middleware('can:reportes.ver');
+    Route::get('/avance-unidades',  [AvanceUnidadesController::class,  'index'])->name('mon-avance-unidades')->middleware('can:reportes.ver');
 
     // --- Cumplimiento SCI ---
-    Route::get('/cumplimiento/panel',          [CumplimientoController::class, 'panelSci'])->name('cumplimiento.panel');
-    Route::get('/cumplimiento/responsables',   [CumplimientoController::class, 'responsables'])->name('cumplimiento.responsables');
-    Route::get('/cumplimiento/sin-evidencia',  [CumplimientoController::class, 'sinEvidencia'])->name('cumplimiento.sin-evidencia');
-    Route::get('/cumplimiento/exportar',       [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar');
+    Route::middleware('can:control-interno.ver')->group(function () {
+        Route::get('/cumplimiento/panel',         [CumplimientoController::class, 'panelSci'])->name('cumplimiento.panel');
+        Route::get('/cumplimiento/responsables',  [CumplimientoController::class, 'responsables'])->name('cumplimiento.responsables');
+        Route::get('/cumplimiento/sin-evidencia', [CumplimientoController::class, 'sinEvidencia'])->name('cumplimiento.sin-evidencia');
+    });
+    Route::get('/cumplimiento/exportar', [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar')->middleware('can:reportes.exportar');
 
     // --- Mis Actividades ---
-    Route::get('/mis-actividades',                          [MisActividadesController::class, 'index'])->name('mis-actividades');
-    Route::patch('/mis-actividades/{actividad}/avance',     [MisActividadesController::class, 'updateAvance'])->name('mis-actividades.avance');
-    Route::get('/mis-actividades/{actividad}/historial',    [MisActividadesController::class, 'historial'])->name('mis-actividades.historial');
+    Route::middleware('can:control-interno.ver')->group(function () {
+        Route::get('/mis-actividades',                       [MisActividadesController::class, 'index'])->name('mis-actividades');
+        Route::get('/mis-actividades/{actividad}/historial', [MisActividadesController::class, 'historial'])->name('mis-actividades.historial');
+    });
+    Route::patch('/mis-actividades/{actividad}/avance', [MisActividadesController::class, 'updateAvance'])->name('mis-actividades.avance')->middleware('can:control-interno.editar');
 
     // --- Reportes ---
     Route::get('/reportes',        [ReportesController::class,       'index'])->name('rep-reportes')->middleware('can:reportes.ver');
     Route::get('/reportes/exportar', [ReportesController::class, 'exportar'])->name('rep-reportes.exportar')->middleware('can:reportes.ver');
 
     Route::get('/reconocimientos', [ReconocimientosController::class, 'index'])->name('rep-reconocimientos')->middleware('can:reconocimientos.ver');
-    Route::post('/reconocimientos', [ReconocimientosController::class, 'store'])->name('rep-reconocimientos.store')->middleware('can:reconocimientos.ver');
     Route::get('/reconocimientos/{trabajador}', [ReconocimientosController::class, 'show'])->name('rep-reconocimientos.show')->middleware('can:reconocimientos.ver');
-    Route::put('/reconocimientos/{trabajador}', [ReconocimientosController::class, 'update'])->name('rep-reconocimientos.update')->middleware('can:reconocimientos.ver');
-    Route::delete('/reconocimientos/{trabajador}', [ReconocimientosController::class, 'destroy'])->name('rep-reconocimientos.destroy')->middleware('can:reconocimientos.ver');
+    Route::post('/reconocimientos', [ReconocimientosController::class, 'store'])->name('rep-reconocimientos.store')->middleware('can:reconocimientos.crear');
+    Route::put('/reconocimientos/{trabajador}', [ReconocimientosController::class, 'update'])->name('rep-reconocimientos.update')->middleware('can:reconocimientos.editar');
+    Route::delete('/reconocimientos/{trabajador}', [ReconocimientosController::class, 'destroy'])->name('rep-reconocimientos.destroy')->middleware('can:reconocimientos.eliminar');
 
     // --- Administración: Usuarios ---
     Route::get('/usuarios',                   [UserList::class, 'index'])->name('adm-usuarios')->middleware('can:usuarios.ver');
@@ -114,7 +118,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::patch('/usuarios/{usuario}/estado',[UserList::class, 'toggleEstado'])->name('adm-usuarios.estado')->middleware('can:usuarios.editar');
 
     // Cargos (catálogo)
-    Route::get('/cargos',             [CargosController::class, 'index'])->name('cargos.index');
+    Route::get('/cargos',             [CargosController::class, 'index'])->name('cargos.index')->middleware('can:usuarios.ver');
     Route::post('/cargos',            [CargosController::class, 'store'])->name('cargos.store')->middleware('can:usuarios.crear');
     Route::put('/cargos/{cargo}',     [CargosController::class, 'update'])->name('cargos.update')->middleware('can:usuarios.editar');
     Route::delete('/cargos/{cargo}',  [CargosController::class, 'destroy'])->name('cargos.destroy')->middleware('can:usuarios.eliminar');

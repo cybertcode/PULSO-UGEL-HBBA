@@ -49,8 +49,9 @@ class UserList extends Controller
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
-        if ($request->filled('search')) {
-            $s = $request->search;
+        $searchValue = $request->input('search.value', $request->input('search', ''));
+        if (is_string($searchValue) && trim($searchValue) !== '') {
+            $s = trim($searchValue);
             $query->where(fn($q) => $q
                 ->where('name', 'like', "%$s%")
                 ->orWhere('email', 'like', "%$s%")

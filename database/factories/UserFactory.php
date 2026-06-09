@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Cargo;
 use App\Models\User;
 use App\Models\UnidadOrganica;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -17,27 +18,10 @@ class UserFactory extends Factory
 
     protected $model = User::class;
 
-    // Cargos reales de una UGEL peruana
-    private array $cargos = [
-        'Director de UGEL',
-        'Especialista en Gestión Pedagógica',
-        'Especialista Administrativo',
-        'Jefe de Área de Gestión Institucional',
-        'Jefe de Área de Gestión Pedagógica',
-        'Responsable de Contabilidad',
-        'Responsable de Logística',
-        'Responsable de Recursos Humanos',
-        'Responsable de Tesorería',
-        'Técnico Administrativo',
-        'Técnico en Contabilidad',
-        'Auxiliar Administrativo',
-        'Asesor Legal',
-        'Coordinador de Control Interno',
-    ];
-
     public function definition(): array
     {
         $unidadId = UnidadOrganica::inRandomOrder()->value('id');
+        $cargoId  = Cargo::where('activo', true)->inRandomOrder()->value('id');
 
         return [
             'name'                      => fake()->name(),
@@ -45,7 +29,7 @@ class UserFactory extends Factory
             'email_verified_at'         => now(),
             'password'                  => static::$password ??= Hash::make('password'),
             'dni'                       => fake()->numerify('########'),
-            'cargo'                     => fake()->randomElement($this->cargos),
+            'cargo_id'                  => $cargoId,
             'unidad_organica_id'        => $unidadId,
             'estado'                    => fake()->randomElement(['activo', 'activo', 'activo', 'inactivo']),
             'two_factor_secret'         => null,

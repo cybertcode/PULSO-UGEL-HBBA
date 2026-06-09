@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Cargo;
 use App\Models\User;
 use App\Models\UnidadOrganica;
 use Illuminate\Database\Seeder;
@@ -9,16 +10,16 @@ use Illuminate\Database\Seeder;
 class UsuariosSeeder extends Seeder
 {
     /**
-     * Usuarios fijos representativos de una UGEL peruana.
+     * Usuarios representativos de la UGEL Huacaybamba — Huánuco, Perú.
      * Clave 'rol' corresponde exactamente a los nombres en RolesPermisosSeeder.
      */
     private array $usuariosFijos = [
         // ── Dirección ─────────────────────────────────────────────────────────
         [
-            'name'   => 'María Elena Quispe Huamán',
-            'email'  => 'director@ugel.gob.pe',
+            'name'   => 'Mg. Julio Luis Lozano Yllatopa',
+            'email'  => 'director@ugelhuacaybamba.edu.pe',
             'dni'    => '42185634',
-            'cargo'  => 'Directora de UGEL',
+            'cargo'  => 'Director(a) de UGEL',
             'unidad' => 'DIR',
             'rol'    => 'Administrador',
             'estado' => 'activo',
@@ -26,19 +27,19 @@ class UsuariosSeeder extends Seeder
         // ── Coordinación SCI ──────────────────────────────────────────────────
         [
             'name'   => 'Carlos Alberto Flores Mendoza',
-            'email'  => 'sci@ugel.gob.pe',
+            'email'  => 'sci@ugelhuacaybamba.edu.pe',
             'dni'    => '43297851',
-            'cargo'  => 'Coordinador de Control Interno',
+            'cargo'  => 'Coordinador(a) de Control Interno',
             'unidad' => 'AGI',
             'rol'    => 'Coordinador SCI',
             'estado' => 'activo',
         ],
-        // ── Administración ────────────────────────────────────────────────────
+        // ── Gestión Administrativa ────────────────────────────────────────────
         [
             'name'   => 'Rosa Isabel Vargas Tarazona',
-            'email'  => 'administracion@ugel.gob.pe',
+            'email'  => 'administracion@ugelhuacaybamba.edu.pe',
             'dni'    => '44512378',
-            'cargo'  => 'Jefa de Oficina de Administración',
+            'cargo'  => 'Jefe(a) de Oficina de Administración',
             'unidad' => 'OAD',
             'rol'    => 'Responsable de Unidad',
             'estado' => 'activo',
@@ -46,9 +47,9 @@ class UsuariosSeeder extends Seeder
         // ── Área de Gestión Pedagógica ────────────────────────────────────────
         [
             'name'   => 'Jorge Luis Ramírez Castillo',
-            'email'  => 'pedagogia@ugel.gob.pe',
+            'email'  => 'pedagogia@ugelhuacaybamba.edu.pe',
             'dni'    => '45623894',
-            'cargo'  => 'Jefe de Área de Gestión Pedagógica',
+            'cargo'  => 'Jefe(a) de Área de Gestión Pedagógica',
             'unidad' => 'AGP',
             'rol'    => 'Responsable de Unidad',
             'estado' => 'activo',
@@ -56,7 +57,7 @@ class UsuariosSeeder extends Seeder
         // ── Contabilidad ──────────────────────────────────────────────────────
         [
             'name'   => 'Ana Lucía Torres Espinoza',
-            'email'  => 'contabilidad@ugel.gob.pe',
+            'email'  => 'contabilidad@ugelhuacaybamba.edu.pe',
             'dni'    => '46734521',
             'cargo'  => 'Responsable de Contabilidad',
             'unidad' => 'CONT',
@@ -66,7 +67,7 @@ class UsuariosSeeder extends Seeder
         // ── Logística ─────────────────────────────────────────────────────────
         [
             'name'   => 'Pedro Antonio Huanca Mamani',
-            'email'  => 'logistica@ugel.gob.pe',
+            'email'  => 'logistica@ugelhuacaybamba.edu.pe',
             'dni'    => '47845632',
             'cargo'  => 'Responsable de Logística',
             'unidad' => 'LOG',
@@ -76,7 +77,7 @@ class UsuariosSeeder extends Seeder
         // ── Recursos Humanos ──────────────────────────────────────────────────
         [
             'name'   => 'Lucía Fernández Ríos',
-            'email'  => 'rrhh@ugel.gob.pe',
+            'email'  => 'rrhh@ugelhuacaybamba.edu.pe',
             'dni'    => '48956743',
             'cargo'  => 'Responsable de Recursos Humanos',
             'unidad' => 'RR_HH',
@@ -86,7 +87,7 @@ class UsuariosSeeder extends Seeder
         // ── Tesorería ─────────────────────────────────────────────────────────
         [
             'name'   => 'Juan Carlos Soto Benites',
-            'email'  => 'tesoreria@ugel.gob.pe',
+            'email'  => 'tesoreria@ugelhuacaybamba.edu.pe',
             'dni'    => '49067854',
             'cargo'  => 'Responsable de Tesorería',
             'unidad' => 'TESOR',
@@ -96,7 +97,7 @@ class UsuariosSeeder extends Seeder
         // ── Infraestructura ───────────────────────────────────────────────────
         [
             'name'   => 'Sandra Milagros León Coronado',
-            'email'  => 'infraestructura@ugel.gob.pe',
+            'email'  => 'infraestructura@ugelhuacaybamba.edu.pe',
             'dni'    => '40178965',
             'cargo'  => 'Responsable de Infraestructura',
             'unidad' => 'INF',
@@ -106,17 +107,17 @@ class UsuariosSeeder extends Seeder
         // ── Asesoría Jurídica ─────────────────────────────────────────────────
         [
             'name'   => 'Roberto Enrique Chávez Palacios',
-            'email'  => 'asesor@ugel.gob.pe',
+            'email'  => 'asesoria@ugelhuacaybamba.edu.pe',
             'dni'    => '41289076',
-            'cargo'  => 'Asesor Jurídico',
+            'cargo'  => 'Asesor(a) Jurídico(a)',
             'unidad' => 'ASESOR',
             'rol'    => 'Visualizador',
             'estado' => 'activo',
         ],
-        // ── Especialistas adicionales ─────────────────────────────────────────
+        // ── Especialistas ─────────────────────────────────────────────────────
         [
             'name'   => 'Patricia Soledad Mejía Sánchez',
-            'email'  => 'especialista.agi@ugel.gob.pe',
+            'email'  => 'especialista.agi@ugelhuacaybamba.edu.pe',
             'dni'    => '47123456',
             'cargo'  => 'Especialista en Gestión Institucional',
             'unidad' => 'AGI',
@@ -125,7 +126,7 @@ class UsuariosSeeder extends Seeder
         ],
         [
             'name'   => 'Marco Antonio Príncipe López',
-            'email'  => 'especialista.agp@ugel.gob.pe',
+            'email'  => 'especialista.agp@ugelhuacaybamba.edu.pe',
             'dni'    => '44512367',
             'cargo'  => 'Especialista en Gestión Pedagógica',
             'unidad' => 'AGP',
@@ -134,7 +135,7 @@ class UsuariosSeeder extends Seeder
         ],
         [
             'name'   => 'Sofía Alejandra Vega Castillo',
-            'email'  => 'especialista.inf@ugel.gob.pe',
+            'email'  => 'especialista.inf@ugelhuacaybamba.edu.pe',
             'dni'    => '48234567',
             'cargo'  => 'Especialista en Infraestructura',
             'unidad' => 'INF',
@@ -143,7 +144,7 @@ class UsuariosSeeder extends Seeder
         ],
         [
             'name'   => 'Luis Alberto Quispe Mamani',
-            'email'  => 'contador@ugel.gob.pe',
+            'email'  => 'contador@ugelhuacaybamba.edu.pe',
             'dni'    => '43125698',
             'cargo'  => 'Contador Público',
             'unidad' => 'CONT',
@@ -153,7 +154,7 @@ class UsuariosSeeder extends Seeder
         // ── Visualizadores institucionales ────────────────────────────────────
         [
             'name'   => 'Karina Beatriz Huanca Quispe',
-            'email'  => 'monitor@ugel.gob.pe',
+            'email'  => 'monitor@ugelhuacaybamba.edu.pe',
             'dni'    => '46321987',
             'cargo'  => 'Monitora de Integridad',
             'unidad' => 'AGI',
@@ -162,17 +163,47 @@ class UsuariosSeeder extends Seeder
         ],
         [
             'name'   => 'Fernando José Ramos Delgado',
-            'email'  => 'secretaria@ugel.gob.pe',
+            'email'  => 'secretaria@ugelhuacaybamba.edu.pe',
             'dni'    => '45789231',
-            'cargo'  => 'Secretario de Dirección',
+            'cargo'  => 'Secretario(a) de Dirección',
             'unidad' => 'DIR',
             'rol'    => 'Visualizador',
+            'estado' => 'activo',
+        ],
+        // ── Especialistas pedagógicos adicionales (zona rural) ────────────────
+        [
+            'name'   => 'Yolanda Esperanza Condori Huanca',
+            'email'  => 'especialista.inicial@ugelhuacaybamba.edu.pe',
+            'dni'    => '44398712',
+            'cargo'  => 'Especialista en Educación Inicial',
+            'unidad' => 'AGP',
+            'rol'    => 'Operador',
+            'estado' => 'activo',
+        ],
+        [
+            'name'   => 'Raúl Ernesto Meza Tucto',
+            'email'  => 'especialista.primaria@ugelhuacaybamba.edu.pe',
+            'dni'    => '46587234',
+            'cargo'  => 'Especialista en Educación Primaria',
+            'unidad' => 'AGP',
+            'rol'    => 'Operador',
+            'estado' => 'activo',
+        ],
+        [
+            'name'   => 'Mirtha Jacqueline Soto Villanueva',
+            'email'  => 'especialista.secundaria@ugelhuacaybamba.edu.pe',
+            'dni'    => '47891234',
+            'cargo'  => 'Especialista en Educación Secundaria',
+            'unidad' => 'AGP',
+            'rol'    => 'Operador',
             'estado' => 'activo',
         ],
     ];
 
     public function run(): void
     {
+        $cargoMap = Cargo::pluck('id', 'nombre');
+
         // ── Super Admin de desarrollo ──────────────────────────────────────────
         $devAdmin = User::updateOrCreate(
             ['email' => 'admin@admin.com'],
@@ -181,7 +212,7 @@ class UsuariosSeeder extends Seeder
                 'password'          => \Illuminate\Support\Facades\Hash::make('Admin123'),
                 'email_verified_at' => now(),
                 'dni'               => '00000000',
-                'cargo'             => 'Administrador del Sistema',
+                'cargo_id'          => null,
                 'estado'            => 'activo',
             ]
         );
@@ -189,7 +220,8 @@ class UsuariosSeeder extends Seeder
 
         // ── Usuarios fijos institucionales ─────────────────────────────────────
         foreach ($this->usuariosFijos as $datos) {
-            $unidad = UnidadOrganica::where('codigo', $datos['unidad'])->first();
+            $unidad  = UnidadOrganica::where('codigo', $datos['unidad'])->first();
+            $cargoId = $cargoMap->get($datos['cargo']);
 
             $user = User::updateOrCreate(
                 ['email' => $datos['email']],
@@ -198,7 +230,7 @@ class UsuariosSeeder extends Seeder
                     'password'           => \Illuminate\Support\Facades\Hash::make('Ugel@2024'),
                     'email_verified_at'  => now(),
                     'dni'                => $datos['dni'],
-                    'cargo'              => $datos['cargo'],
+                    'cargo_id'           => $cargoId,
                     'unidad_organica_id' => $unidad?->id,
                     'estado'             => $datos['estado'],
                 ]
@@ -208,12 +240,11 @@ class UsuariosSeeder extends Seeder
         }
 
         // ── Usuarios faker adicionales ─────────────────────────────────────────
-        // Distribución realista de roles para una institución educativa
         $rolesAdicionales = [
-            'Operador'             => 10,
-            'Visualizador'         => 8,
-            'Responsable de Unidad'=> 3,
-            'Coordinador SCI'      => 1,
+            'Operador'              => 8,
+            'Visualizador'          => 6,
+            'Responsable de Unidad' => 2,
+            'Coordinador SCI'       => 1,
         ];
 
         foreach ($rolesAdicionales as $rol => $cantidad) {
@@ -222,12 +253,12 @@ class UsuariosSeeder extends Seeder
             );
         }
 
-        // ── 2 usuarios inactivos/pendientes para pruebas de estado ────────────
+        // ── 2 usuarios pendientes de verificación ─────────────────────────────
         User::factory(2)->unverified()->create()->each(
             fn($user) => $user->syncRoles(['Visualizador'])
         );
 
-        // ── 1 usuario suspendido ───────────────────────────────────────────────
+        // ── 1 usuario inactivo ─────────────────────────────────────────────────
         $suspendido = User::factory()->create([
             'estado' => 'inactivo',
             'email_verified_at' => now(),
