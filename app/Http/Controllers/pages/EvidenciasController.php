@@ -8,12 +8,13 @@ use App\Models\Actividad;
 use App\Models\Componente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class EvidenciasController extends Controller
 {
     public function index(Request $request)
     {
+        $user = Auth::user();
+
         $stats = [
             'total'      => Evidencia::count(),
             'validadas'  => Evidencia::where('estado', 'validado')->count(),
@@ -35,14 +36,21 @@ class EvidenciasController extends Controller
         }
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
-            $query->where(fn($q) => $q->where('numero_sgd', 'like', "%$buscar%")
-                ->orWhere('titulo', 'like', "%$buscar%"));
+            $query->where(fn($q) => $q
+                ->where('numero_sgd', 'like', "%$buscar%")
+                ->orWhere('titulo', 'like', "%$buscar%")
+            );
         }
 
-        $evidencias        = $query->paginate(15)->withQueryString();
-        $actividades       = Actividad::whereNotIn('estado', ['cancelada'])->orderBy('nombre')->get();
-        $componentes       = Componente::where('activo', true)->orderBy('numero')->get();
-        $actividadPresel   = $request->input('actividad_id');
+        $evidencias = $query->paginate(15)->withQueryString();
+        $componentes = Componente::where('activo', true)->orderBy('numero')->get();
+
+        // Solo actividades asignadas al usuario (sin importar estado)
+        $actividades = Actividad::whereHas('responsables', fn($q) => $q->where('users.id', $user->id))
+            ->orderBy('codigo')
+            ->get(['id', 'codigo', 'nombre', 'estado']);
+
+        $actividadPresel = $request->input('actividad_id');
 
         return view('content.evidencias.index', compact(
             'stats', 'evidencias', 'actividades', 'componentes', 'actividadPresel'
@@ -51,31 +59,61 @@ class EvidenciasController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'actividad_id' => 'required|exists:actividades,id',
-            'titulo'       => 'required|string|max:255',
-            'numero_sgd'   => 'nullable|string|max:50',
-            'descripcion'  => 'nullable|string',
-            'archivo'      => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp,gif,bmp',
-        ]);
+        $user = Auth::user();
 
-        $file = $request->file('archivo');
-        $ruta = $file->store('evidencias/' . now()->format('Y/m'), 'public');
+        $request->validate([
+            'actividad_id'  => [
+                'required',
+                'exists:actividades,id',
+                // Solo puede registrar evidencia de actividades que le fueron asignadas
+                fn($attr, $val, $fail) => Actividad::whereHas('responsables', fn($q) => $q->where('users.id', $user->id))
+                    ->where('id', $val)->exists() ?: $fail('No tienes permiso para registrar evidencias en esta actividad.'),
+            ],
+            'titulo'        => 'required|string|max:255',
+            'numero_sgd'    => 'nullable|string|max:50',
+            'descripcion'   => 'nullable|string',
+            'url_documento' => 'nullable|url|max:500',
+        ]);
 
         Evidencia::create([
-            'actividad_id'   => $request->actividad_id,
-            'subido_por'     => Auth::id(),
-            'titulo'         => $request->titulo,
-            'numero_sgd'     => $request->numero_sgd,
-            'descripcion'    => $request->descripcion,
-            'archivo_ruta'   => $ruta,
-            'archivo_nombre' => $file->getClientOriginalName(),
-            'archivo_tipo'   => $file->getMimeType(),
-            'archivo_tamanio'=> $file->getSize(),
-            'estado'         => 'pendiente',
+            'actividad_id'  => $request->actividad_id,
+            'subido_por'    => $user->id,
+            'titulo'        => $request->titulo,
+            'numero_sgd'    => $request->numero_sgd,
+            'descripcion'   => $request->descripcion,
+            'url_documento' => $request->url_documento ?: null,
+            'estado'        => 'pendiente',
         ]);
 
-        return back()->with('success', 'Evidencia subida correctamente. Pendiente de validación.');
+        return back()->with('success', 'Evidencia registrada correctamente. Pendiente de validación.');
+    }
+
+    public function update(Request $request, Evidencia $evidencia)
+    {
+        $user = Auth::user();
+
+        // Solo puede editar si la subió él mismo y está pendiente
+        abort_unless(
+            $evidencia->subido_por === $user->id && $evidencia->estado === 'pendiente',
+            403,
+            'Solo puedes editar evidencias pendientes que registraste tú.'
+        );
+
+        $request->validate([
+            'titulo'        => 'required|string|max:255',
+            'numero_sgd'    => 'nullable|string|max:50',
+            'descripcion'   => 'nullable|string',
+            'url_documento' => 'nullable|url|max:500',
+        ]);
+
+        $evidencia->update([
+            'titulo'        => $request->titulo,
+            'numero_sgd'    => $request->numero_sgd,
+            'descripcion'   => $request->descripcion,
+            'url_documento' => $request->url_documento ?: null,
+        ]);
+
+        return back()->with('success', 'Evidencia actualizada correctamente.');
     }
 
     public function validar(Request $request, Evidencia $evidencia)
@@ -98,7 +136,6 @@ class EvidenciasController extends Controller
 
     public function destroy(Evidencia $evidencia)
     {
-        Storage::disk('public')->delete($evidencia->archivo_ruta);
         $evidencia->delete();
         return back()->with('success', 'Evidencia eliminada.');
     }
