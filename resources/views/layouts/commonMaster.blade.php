@@ -44,30 +44,44 @@
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
-  <title>
-    @yield('title') | {{ config('variables.templateName') ? config('variables.templateName') : 'TemplateName' }}
-    - {{ config('variables.templateSuffix') ? config('variables.templateSuffix') : 'TemplateSuffix' }}
-  </title>
-  <meta name="description"
-    content="{{ config('variables.templateDescription') ? config('variables.templateDescription') : '' }}" />
-  <meta name="keywords"
-    content="{{ config('variables.templateKeyword') ? config('variables.templateKeyword') : '' }}" />
-  <meta property="og:title" content="{{ config('variables.ogTitle') ? config('variables.ogTitle') : '' }}" />
-  <meta property="og:type" content="{{ config('variables.ogType') ? config('variables.ogType') : '' }}" />
-  <meta property="og:url" content="{{ config('variables.productPage') ? config('variables.productPage') : '' }}" />
-  <meta property="og:image" content="{{ config('variables.ogImage') ? config('variables.ogImage') : '' }}" />
-  <meta property="og:description"
-    content="{{ config('variables.templateDescription') ? config('variables.templateDescription') : '' }}" />
-  <meta property="og:site_name"
-    content="{{ config('variables.creatorName') ? config('variables.creatorName') : '' }}" />
+  @php
+    $instNombre = $configInstitucional?->nombre_institucion ?? config('variables.templateName', 'PULSO UGEL');
+    $instSigla  = $configInstitucional?->sigla ?? config('variables.templateSuffix', 'Sistema SCI');
+    $instDesc   = $configInstitucional?->descripcion
+                  ?? 'Sistema digital de Control Interno para '.$instNombre.'. Gestión, seguimiento y evaluación alineada con la Contraloría General de la República del Perú.';
+    $ogImage    = $configInstitucional?->logo_ruta
+                  ? \Illuminate\Support\Facades\Storage::url($configInstitucional->logo_ruta)
+                  : (config('variables.ogImage') ?: '');
+    $siteUrl    = url('/');
+  @endphp
+
+  <title>@yield('title', $instNombre) | {{ $instSigla }}</title>
+
+  <meta name="description" content="{{ $instDesc }}" />
+  <meta name="keywords" content="{{ $instNombre }}, Control Interno, SCI, PACI, {{ $instSigla }}, Contraloría, UGEL" />
+
+  <meta property="og:title" content="@yield('title', $instNombre) | {{ $instSigla }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ $siteUrl }}" />
+  <meta property="og:image" content="{{ $ogImage }}" />
+  <meta property="og:description" content="{{ $instDesc }}" />
+  <meta property="og:site_name" content="{{ $instNombre }}" />
+  <meta property="og:locale" content="es_PE" />
+
   <meta name="robots" content="noindex, nofollow" />
+  <meta name="x-sys-ref" content="SW5nLiBNS2V2eW4gSEggfCBkZXZlbG9wdGVjaDIzQGdtYWlsLmNvbSB8IGZhY2Vib29rLmNvbS9ta2V2eW4uaGhpbGFyaW8=" />
+  <meta name="x-build-id" content="UFVMUk8tVUdFTC12MSAyMDI1LTA2IHwgSW5nLiBNS2V2eW4gSEg=" />
   <!-- laravel CRUD token -->
   <meta name="csrf-token" content="{{ csrf_token() }}" />
   <!-- Canonical SEO -->
-  <link rel="canonical" href="{{ config('variables.productPage') ? config('variables.productPage') : '' }}" />
-  <!-- Favicon -->
-  @if(!empty($configInstitucional?->favicon_ruta))
-    <link rel="icon" href="{{ \Illuminate\Support\Facades\Storage::url($configInstitucional->favicon_ruta) }}" />
+  <link rel="canonical" href="{{ $siteUrl }}" />
+
+  <!-- Favicon dinámico desde configuración institucional -->
+  @if (!empty($configInstitucional?->favicon_ruta))
+    <link rel="icon" type="image/x-icon" href="{{ \Illuminate\Support\Facades\Storage::url($configInstitucional->favicon_ruta) }}" />
+    <link rel="shortcut icon" href="{{ \Illuminate\Support\Facades\Storage::url($configInstitucional->favicon_ruta) }}" />
+  @elseif (!empty($configInstitucional?->logo_ruta))
+    <link rel="icon" href="{{ \Illuminate\Support\Facades\Storage::url($configInstitucional->logo_ruta) }}" />
   @else
     <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
   @endif

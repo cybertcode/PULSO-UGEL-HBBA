@@ -16,13 +16,40 @@
             background-color: var(--bg);
         }
 
-        /* Envoltorio principal para centrar todo el contenido al 90% */
+        /* Elementos que se centran al 90% pero SIN fondo de color */
         .ugel-topbar,
         .ugel-nav,
-        section,
-        .ugel-footer {
+        .ugel-hero,
+        .ugel-section,
+        .ugel-section--alt,
+        .ugel-cta {
             width: 90% !important;
             max-width: 1800px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        /* Sección contacto — full-width con fondo propio */
+        .ugel-contact-section {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        /* Contenedor interno contacto — centrado al 90% */
+        .ugel-contact-section .container {
+            width: 90% !important;
+            max-width: 1700px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        /* Módulos y footer — card centrada al 90% */
+        .ugel-mods-section,
+        .ugel-footer-new {
+            width: 90% !important;
+            max-width: 1700px !important;
             margin-left: auto !important;
             margin-right: auto !important;
         }
@@ -31,10 +58,11 @@
         .ugel-nav {
             border-radius: 0 0 12px 12px;
         }
-        
-        .ugel-hero__grid, 
+
+        .ugel-hero__grid,
         .ugel-hero__stats {
-            width: 100% !important; /* Ocupan todo el ancho de su padre (que ya es 90%) */
+            width: 100% !important;
+            /* Ocupan todo el ancho de su padre (que ya es 90%) */
             max-width: none !important;
         }
 
@@ -56,15 +84,20 @@
         .ugel-section--alt {
             background-color: var(--bg);
         }
-        
+
         .ugel-cta {
             border-radius: 16px;
         }
 
         @media (max-width: 991px) {
-            .ugel-topbar, .ugel-nav, section, .ugel-footer {
+
+            .ugel-topbar,
+            .ugel-nav,
+            section,
+            .ugel-footer {
                 width: 96% !important;
             }
+
             .container {
                 width: 92% !important;
             }
@@ -99,11 +132,16 @@
                         <line x1="8" y1="2" x2="8" y2="6" />
                         <line x1="3" y1="10" x2="21" y2="10" />
                     </svg>
-                    Lun – Vie: 8:00 am – 4:30 pm
+                    Lun – Vie: 8:00 am – 6:00 pm
+                    <span class="ugel-topbar__sep">|</span>
+                    <span class="">
+                        <marquee>ÍNDICE DE CAPACIDAD PREVENTIVA FRENTE A LA CORRUPCIÓN</marquee>
+                    </span>
+
                 </div>
                 <div class="ugel-topbar__right">
                     <span class="ugel-topbar__live">
-                        <span class="ugel-topbar__dot"></span> Sistema en línea
+                        <span class="ugel-topbar__dot"></span> En línea
                     </span>
                     <a href="{{ route('login') }}" class="ugel-topbar__login">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -175,18 +213,17 @@
 
     {{-- ════ HERO — Layout split full-bleed ════ --}}
     <section class="ugel-hero" id="inicio">
-        <div class="ugel-hero__grid">
+        <div class="ugel-hero__grid mb-4">
 
             {{-- Columna izquierda: texto institucional fijo --}}
             <div class="ugel-hero__left">
-
                 <div class="ugel-pill">
                     <span class="ugel-pill__dot"></span>
                     {{ $config?->sigla ?? 'UGEL Huacaybamba' }} · Sistema de Control Interno
                 </div>
 
                 <h1 class="ugel-hero__title">
-                    Sistema <em>PULSO UGEL</em><br>Control Interno
+                    Sistema <em>PULSO</em><br>Control Interno
                 </h1>
 
                 <p class="ugel-hero__desc">
@@ -205,7 +242,7 @@
                         Entrar al Sistema
                     </a>
                     <a href="#modulos" class="ugel-btn ugel-btn--outline ugel-btn--lg">
-                        Ver módulos
+                        Explorar
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="9 18 15 12 9 6" />
@@ -265,7 +302,7 @@
                                     <div class="ugel-slide__overlay"></div>
                                     <div class="ugel-slide__content">
                                         <span class="ugel-slide__tipo ugel-tipo--noticia">Sistema</span>
-                                        <h3 class="ugel-slide__title">PULSO UGEL en línea</h3>
+                                        <h3 class="ugel-slide__title">PULSO en línea</h3>
                                         <p class="ugel-slide__desc">Sistema activo y disponible para todos los usuarios
                                             institucionales.</p>
                                     </div>
@@ -330,10 +367,10 @@
             <div class="ugel-about-grid">
 
                 <div class="ugel-about__text">
-                    <span class="ugel-label">¿Qué es PULSO UGEL?</span>
+                    <span class="ugel-label">¿Qué es PULSO?</span>
                     <h2 class="ugel-section__title">Sistema de Control Interno para la <span
                             class="ugel-text-accent">{{ $config?->sigla ?? 'UGEL Huacaybamba' }}</span></h2>
-                    <p class="ugel-section__sub">PULSO UGEL es la plataforma digital oficial de la
+                    <p class="ugel-section__sub">PULSO es la plataforma digital oficial de la
                         {{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local de Huacaybamba' }} para la
                         implementación y seguimiento del Sistema de Control Interno (SCI), en cumplimiento de la Ley N°
                         28716 y los lineamientos de la Contraloría General de la República.</p>
@@ -373,29 +410,47 @@
                         <div class="ugel-about__card-body">
                             <div class="ugel-mock-row">
                                 <div class="ugel-mock-kpi" style="--c:#1a237e">
-                                    <span class="ugel-mock-kpi__n">85%</span>
+                                    <span class="ugel-mock-kpi__n">{{ $stats['avance'] }}%</span>
                                     <span class="ugel-mock-kpi__l">Avance SCI</span>
                                 </div>
                                 <div class="ugel-mock-kpi" style="--c:#28c76f">
-                                    <span class="ugel-mock-kpi__n">142</span>
-                                    <span class="ugel-mock-kpi__l">Actividades</span>
+                                    <span class="ugel-mock-kpi__n">{{ $stats['componentes'] }}</span>
+                                    <span class="ugel-mock-kpi__l">Componentes</span>
                                 </div>
                                 <div class="ugel-mock-kpi" style="--c:#ff9f43">
-                                    <span class="ugel-mock-kpi__n">12</span>
-                                    <span class="ugel-mock-kpi__l">Alertas</span>
+                                    <span class="ugel-mock-kpi__n">{{ $stats['unidades'] }}</span>
+                                    <span class="ugel-mock-kpi__l">Unidades</span>
                                 </div>
                             </div>
                             <div class="ugel-mock-bar-row">
-                                @foreach ([['Componente A', '92%', '#28c76f'], ['Componente B', '78%', '#7367f0'], ['Componente C', '65%', '#ff9f43'], ['Componente D', '88%', '#00cfe8']] as $b)
+                                @php
+                                    $barColors = ['#28c76f', '#7367f0', '#ff9f43', '#00cfe8'];
+                                    $modBars = $modulos->take(4);
+                                @endphp
+                                @forelse ($modBars as $bi => $mb)
                                     <div class="ugel-mock-bar">
-                                        <span>{{ $b[0] }}</span>
+                                        <span>{{ Str::limit($mb->nombre, 14) }}</span>
                                         <div class="ugel-mock-bar__track">
                                             <div class="ugel-mock-bar__fill"
-                                                style="width:{{ $b[1] }};background:{{ $b[2] }}"></div>
+                                                style="width:{{ $stats['avance'] + ($bi % 2 == 0 ? 5 : -8) }}%;background:{{ $barColors[$bi] }}">
+                                            </div>
                                         </div>
-                                        <span class="ugel-mock-bar__pct">{{ $b[1] }}</span>
+                                        <span
+                                            class="ugel-mock-bar__pct">{{ $stats['avance'] + ($bi % 2 == 0 ? 5 : -8) }}%</span>
                                     </div>
-                                @endforeach
+                                @empty
+                                    @foreach ([['SCI Comp. I', '92%', '#28c76f'], ['SCI Comp. II', '78%', '#7367f0'], ['SCI Comp. III', '65%', '#ff9f43']] as $b)
+                                        <div class="ugel-mock-bar">
+                                            <span>{{ $b[0] }}</span>
+                                            <div class="ugel-mock-bar__track">
+                                                <div class="ugel-mock-bar__fill"
+                                                    style="width:{{ $b[1] }};background:{{ $b[2] }}">
+                                                </div>
+                                            </div>
+                                            <span class="ugel-mock-bar__pct">{{ $b[1] }}</span>
+                                        </div>
+                                    @endforeach
+                                @endforelse
                             </div>
                         </div>
                     </div>
@@ -422,38 +477,141 @@
 
 
     {{-- ════ MÓDULOS DE GESTIÓN ════ --}}
-    <section class="ugel-section ugel-section--alt" id="modulos">
-        <div class="container">
-            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end mb-4 ugel-reveal">
-                <div style="max-width: 600px;">
-                    <span class="ugel-label">Ecosistema Digital</span>
-                    <h2 class="ugel-section__title mb-0">Módulos de Gestión <span class="ugel-text-accent">PULSO</span></h2>
-                </div>
-                <div class="mt-3 mt-lg-0 text-lg-end" style="max-width: 450px;">
-                    <p class="ugel-section__sub mb-0" style="font-size: 0.95rem;">
-                        Herramientas integradas gestionadas desde el panel administrativo para el fortalecimiento del Control Interno institucional.
-                    </p>
-                </div>
-            </div>
+    <section class="ugel-mods-section" id="modulos">
 
-            <div class="ugel-components-grid">
-                @if($modulos && $modulos->count() > 0)
-                    @foreach($modulos as $index => $mod)
-                        <div class="ugel-comp-card ugel-reveal" style="transition-delay: {{ $index * 50 }}ms;">
-                            <div class="ugel-comp-card__icon">
-                                <i class="ti {{ str_replace('tabler-', 'ti-', $mod->icono ?? 'ti-check') }}"></i>
+        {{-- Cabecera split --}}
+        <div class="ugel-mods-head">
+            <div class="container">
+                <div class="ugel-mods-head__inner">
+                    <div class="ugel-mods-head__left ugel-reveal">
+                        <div class="ugel-mods-eyebrow">
+                            <span class="ugel-mods-eyebrow__dot"></span>
+                            Ecosistema Digital
+                        </div>
+                        <h2 class="ugel-mods-head__title">
+                            Módulos de<br>Gestión <em>PULSO</em>
+                        </h2>
+                    </div>
+                    <div class="ugel-mods-head__right ugel-reveal" style="transition-delay:120ms">
+                        <p class="ugel-mods-head__desc">Herramientas integradas para la implementación y seguimiento
+                            del Sistema de Control Interno, alineadas con los lineamientos de la Contraloría General
+                            de la República.</p>
+                        <div class="ugel-mods-head__stats">
+                            <div class="ugel-mods-stat">
+                                <span class="ugel-mods-stat__n">{{ $modulos->count() }}</span>
+                                <span class="ugel-mods-stat__l">Módulos</span>
                             </div>
-                            <div class="ugel-comp-card__body">
-                                <h5 class="ugel-comp-card__title">{{ $mod->nombre }}</h5>
-                                <p class="ugel-comp-card__desc">{{ Str::limit($mod->descripcion ?? 'Monitoreo continuo del componente.', 95) }}</p>
+                            <div class="ugel-mods-stat">
+                                <span class="ugel-mods-stat__n">{{ $stats['avance'] }}%</span>
+                                <span class="ugel-mods-stat__l">Avance SCI</span>
+                            </div>
+                            <div class="ugel-mods-stat">
+                                <span class="ugel-mods-stat__n">{{ $stats['paci'] }}</span>
+                                <span class="ugel-mods-stat__l">Plan activo</span>
                             </div>
                         </div>
-                    @endforeach
-                @else
-                    <div class="col-12 text-center text-muted">No hay componentes configurados en el sistema.</div>
-                @endif
+                    </div>
+                </div>
             </div>
         </div>
+
+        {{-- Cards showcase --}}
+        @if ($modulos && $modulos->count() > 0)
+            @php
+                $paleta = [
+                    ['a' => '#3B82F6', 'b' => '#1D4ED8', 'glow' => '59,130,246'] /* Blue principal */,
+                    ['a' => '#0EA5E9', 'b' => '#0284C7', 'glow' => '14,165,233'] /* Sky */,
+                    ['a' => '#10B981', 'b' => '#059669', 'glow' => '16,185,129'] /* Emerald acento */,
+                    ['a' => '#F59E0B', 'b' => '#D97706', 'glow' => '245,158,11'] /* Dorado institucional */,
+                    ['a' => '#60A5FA', 'b' => '#2563EB', 'glow' => '96,165,250'] /* Blue claro */,
+                    ['a' => '#38BDF8', 'b' => '#0369A1', 'glow' => '56,189,248'] /* Cyan azul */,
+                    ['a' => '#34D399', 'b' => '#059669', 'glow' => '52,211,153'] /* Verde */,
+                    ['a' => '#93C5FD', 'b' => '#3B82F6', 'glow' => '147,197,253'] /* Blue pálido */,
+                ];
+            @endphp
+            <div class="ugel-mods-track" id="ugelModsTrack">
+                <div class="ugel-mods-cards" id="ugelModsCards">
+                    @foreach ($modulos as $i => $mod)
+                        @php $p = $paleta[$i % count($paleta)]; @endphp
+                        <article class="ugel-xcard" data-glow="{{ $p['glow'] }}"
+                            style="--xa:{{ $p['a'] }};--xb:{{ $p['b'] }};--xglow:{{ $p['glow'] }};">
+                            {{-- Orbe de luz de fondo --}}
+                            <div class="ugel-xcard__orb"></div>
+                            {{-- Línea superior de color --}}
+                            <div class="ugel-xcard__stripe"></div>
+                            {{-- Número decorativo --}}
+                            <span
+                                class="ugel-xcard__num">{{ str_pad($mod->numero ?? $i + 1, 2, '0', STR_PAD_LEFT) }}</span>
+                            {{-- Ícono --}}
+                            <div class="ugel-xcard__icon">
+                                <i class="ti {{ str_replace('tabler-', 'ti-', $mod->icono ?? 'ti-layout-grid') }}"></i>
+                            </div>
+                            {{-- Contenido --}}
+                            <div class="ugel-xcard__body">
+                                <h4 class="ugel-xcard__title">{{ $mod->nombre }}</h4>
+                                <p class="ugel-xcard__desc">
+                                    {{ Str::limit($mod->descripcion ?? 'Seguimiento, registro y evaluación continua del componente del Sistema de Control Interno institucional.', 120) }}
+                                </p>
+                            </div>
+                            {{-- Badge tipo --}}
+                            <div class="ugel-xcard__foot">
+                                <span class="ugel-xcard__badge">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                    </svg>
+                                    {{ $mod->tipo ? ucfirst($mod->tipo) : 'SCI' }}
+                                </span>
+                                <div class="ugel-xcard__arrow">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                        <polyline points="12 5 19 12 12 19" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+
+                {{-- Controles de navegación --}}
+                @if ($modulos->count() > 3)
+                    <div class="ugel-mods-nav">
+                        <button class="ugel-mods-nav__btn" id="ugelModsPrev" aria-label="Anterior">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6" />
+                            </svg>
+                        </button>
+                        <div class="ugel-mods-nav__dots" id="ugelModsDots"></div>
+                        <button class="ugel-mods-nav__btn" id="ugelModsNext" aria-label="Siguiente">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </button>
+                    </div>
+                @endif
+            </div>
+        @else
+            <div class="container">
+                <div class="ugel-mods-empty ugel-reveal">
+                    <div class="ugel-mods-empty__icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                    </div>
+                    <p>Los módulos serán configurados desde el panel administrativo.</p>
+                </div>
+            </div>
+        @endif
+
     </section>
 
 
@@ -465,7 +623,7 @@
                 <div>
                     <span class="ugel-label">Marco Legal</span>
                     <h2 class="ugel-section__title">Sustento Normativo</h2>
-                    <p class="ugel-section__sub">PULSO UGEL está alineado con las disposiciones vigentes del Estado peruano
+                    <p class="ugel-section__sub">PULSO está alineado con las disposiciones vigentes del Estado peruano
                         para el Sistema de Control Interno.</p>
 
                     <div class="ugel-norm-list">
@@ -508,7 +666,7 @@
 
 
     {{-- ════ CTA ════ --}}
-    <section class="ugel-cta">
+    <section class="ugel-cta mb-4">
         <div class="container">
             <div class="ugel-cta__inner">
                 <div>
@@ -535,75 +693,225 @@
     </section>
 
 
-    {{-- ════ CONTACTO ════ --}}
-    <section class="ugel-section ugel-section--alt" id="contacto">
+    {{-- ════ CONTACTO v3 — Layout split premium ════ --}}
+    <section class="ugel-contact-section" id="contacto">
         <div class="container">
-            <div class="text-center mb-5">
-                <span class="ugel-label">Información de contacto</span>
-                <h2 class="ugel-section__title">{{ $config?->nombre_institucion ?? 'UGEL Huacaybamba' }}</h2>
-                @if ($config?->director)
-                    <p class="ugel-section__sub">Director: <strong>{{ $config->director }}</strong>
-                        @if ($config->coordinador_sci)
-                            · Coordinador SCI: <strong>{{ $config->coordinador_sci }}</strong>
+            <div class="ugel-ct-wrap ugel-reveal">
+
+                {{-- ── COLUMNA IZQUIERDA: ID Card institucional ── --}}
+                <div class="ugel-ct-left">
+
+                    {{-- Eyebrow --}}
+                    <div class="ugel-ct-eyebrow">
+                        <span class="ugel-ct-eyebrow__dot"></span>
+                        Información de Contacto
+                    </div>
+
+                    {{-- Nombre institución --}}
+                    <h2 class="ugel-ct-title">
+                        {{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local de Huacaybamba' }}
+                    </h2>
+
+                    {{-- Ubicación --}}
+                    @if ($config?->direccion || $config?->region)
+                        <div class="ugel-ct-loc">
+                            <div class="ugel-ct-loc__icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="ugel-ct-loc__addr">{{ $config?->direccion ?? 'Jr. Huacaybamba S/N' }}</p>
+                                <p class="ugel-ct-loc__city">
+                                    {{ implode(', ', array_filter([$config?->distrito, $config?->provincia, $config?->region])) }}
+                                    — Perú</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Divisor --}}
+                    <div class="ugel-ct-divider"></div>
+
+                    {{-- Autoridades --}}
+                    @if ($config?->director || $config?->coordinador_sci)
+                        <div class="ugel-ct-people">
+                            @if ($config?->director)
+                                <div class="ugel-ct-person">
+                                    <div class="ugel-ct-person__av ugel-ct-person__av--blue">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                            <circle cx="12" cy="7" r="4" />
+                                        </svg>
+                                    </div>
+                                    <div class="ugel-ct-person__info">
+                                        <span class="ugel-ct-person__role">Director</span>
+                                        <strong class="ugel-ct-person__name">{{ $config->director }}</strong>
+                                    </div>
+                                </div>
+                            @endif
+                            @if ($config?->coordinador_sci)
+                                <div class="ugel-ct-person">
+                                    <div class="ugel-ct-person__av ugel-ct-person__av--navy">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                        </svg>
+                                    </div>
+                                    <div class="ugel-ct-person__info">
+                                        <span class="ugel-ct-person__role">Coordinador SCI</span>
+                                        <strong class="ugel-ct-person__name">{{ $config->coordinador_sci }}</strong>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Tags institucionales --}}
+                    <div class="ugel-ct-tags">
+                        @if ($config?->ugel_codigo)
+                            <span class="ugel-ct-tag">Cód. {{ $config->ugel_codigo }}</span>
                         @endif
-                    </p>
-                @endif
-            </div>
-            <div class="ugel-contact-grid">
-                <div class="ugel-contact-card">
-                    <div class="ugel-contact-card__ico" style="--c:#1a237e">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                        </svg>
+                        @if ($config?->ubigeo)
+                            <span class="ugel-ct-tag">Ubigeo {{ $config->ubigeo }}</span>
+                        @endif
+                        <span class="ugel-ct-tag">Sector Educación</span>
+                        <span class="ugel-ct-tag ugel-ct-tag--green">
+                            <span class="ugel-ct-tag__dot"></span> Sistema activo
+                        </span>
                     </div>
-                    <div>
-                        <h6>Dirección</h6>
-                        <p>{{ $config?->direccion ?? 'Jr. Huacaybamba S/N' }}<br>{{ $config?->distrito ?? 'Huacaybamba' }},
-                            {{ $config?->region ?? 'Huánuco' }} — Perú</p>
-                    </div>
+
                 </div>
-                <div class="ugel-contact-card">
-                    <div class="ugel-contact-card__ico" style="--c:#c62828">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                            <polyline points="22,6 12,13 2,6" />
-                        </svg>
+
+                {{-- ── COLUMNA DERECHA: datos de contacto ── --}}
+                <div class="ugel-ct-right">
+
+                    {{-- Item correo --}}
+                    @if ($config?->correo_institucional)
+                        <a href="mailto:{{ $config->correo_institucional }}" class="ugel-ct-item ugel-ct-item--link">
+                            <div class="ugel-ct-item__icon" style="--cti:#DC2626;--ctil:#FFF1F3">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                    <polyline points="22,6 12,13 2,6" />
+                                </svg>
+                            </div>
+                            <div class="ugel-ct-item__body">
+                                <span class="ugel-ct-item__label">Correo institucional</span>
+                                <strong class="ugel-ct-item__val">{{ $config->correo_institucional }}</strong>
+                            </div>
+                            <div class="ugel-ct-item__arr">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    <polyline points="12 5 19 12 12 19" />
+                                </svg>
+                            </div>
+                        </a>
+                    @endif
+
+                    {{-- Item teléfono --}}
+                    <div class="ugel-ct-item {{ $config?->telefono ? 'ugel-ct-item--link' : '' }}"
+                        @if ($config?->telefono) onclick="window.location='tel:{{ $config->telefono }}'" style="cursor:pointer" @endif>
+                        <div class="ugel-ct-item__icon" style="--cti:#EA580C;--ctil:#FFF7ED">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.59 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                            </svg>
+                        </div>
+                        <div class="ugel-ct-item__body">
+                            <span class="ugel-ct-item__label">Teléfono / Soporte</span>
+                            <strong class="ugel-ct-item__val">{{ $config?->telefono ?? 'No configurado' }}</strong>
+                        </div>
+                        @if ($config?->telefono)
+                            <div class="ugel-ct-item__arr">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    <polyline points="12 5 19 12 12 19" />
+                                </svg>
+                            </div>
+                        @endif
                     </div>
-                    <div>
-                        <h6>Correo Electrónico</h6>
-                        <p>{{ $config?->correo_institucional ?? 'noreply@ugel-huacaybamba.gob.pe' }}</p>
+
+                    {{-- Item horario --}}
+                    <div class="ugel-ct-item">
+                        <div class="ugel-ct-item__icon" style="--cti:#059669;--ctil:#ECFDF5">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <div class="ugel-ct-item__body">
+                            <span class="ugel-ct-item__label">Horario de atención</span>
+                            <strong class="ugel-ct-item__val">Lun – Vie · 8:00 am — 6:00 pm</strong>
+                        </div>
+                        <div class="ugel-ct-item__badge ugel-ct-item__badge--open">Abierto</div>
                     </div>
-                </div>
-                <div class="ugel-contact-card">
-                    <div class="ugel-contact-card__ico" style="--c:#1b5e20">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" />
-                            <line x1="16" y1="2" x2="16" y2="6" />
-                            <line x1="8" y1="2" x2="8" y2="6" />
-                            <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
+
+                    {{-- Item sitio web --}}
+                    @if ($config?->sitio_web)
+                        <a href="{{ $config->sitio_web }}" target="_blank" rel="noopener noreferrer"
+                            class="ugel-ct-item ugel-ct-item--link">
+                            <div class="ugel-ct-item__icon" style="--cti:#3B82F6;--ctil:#EFF6FF">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="2" y1="12" x2="22" y2="12" />
+                                    <path
+                                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                </svg>
+                            </div>
+                            <div class="ugel-ct-item__body">
+                                <span class="ugel-ct-item__label">Portal institucional</span>
+                                <strong
+                                    class="ugel-ct-item__val">{{ parse_url($config->sitio_web, PHP_URL_HOST) ?? $config->sitio_web }}</strong>
+                            </div>
+                            <div class="ugel-ct-item__arr">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    <polyline points="12 5 19 12 12 19" />
+                                </svg>
+                            </div>
+                        </a>
+                    @endif
+
+                    {{-- Item dirección (mini mapa placeholder) --}}
+                    <div class="ugel-ct-map">
+                        <div class="ugel-ct-map__pin">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                        </div>
+                        <div class="ugel-ct-map__body">
+                            <span class="ugel-ct-item__label">Dirección</span>
+                            <strong class="ugel-ct-item__val" style="font-size:.9rem">
+                                {{ $config?->direccion ?? 'Jr. Huacaybamba S/N' }}
+                                @if ($config?->distrito)
+                                    , {{ $config->distrito }}
+                                @endif
+                            </strong>
+                            @if ($config?->region)
+                                <span style="font-size:.78rem;color:var(--muted)">{{ $config->region }} — Perú</span>
+                            @endif
+                        </div>
                     </div>
-                    <div>
-                        <h6>Horario de Atención</h6>
-                        <p>Lunes a Viernes<br>8:00 am — 4:30 pm</p>
-                    </div>
-                </div>
-                <div class="ugel-contact-card">
-                    <div class="ugel-contact-card__ico" style="--c:#e65100">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.59 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h6>Teléfono / Soporte</h6>
-                        <p>{{ $config?->telefono ?? '—' }}<br>Coordinación de Tecnología</p>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -611,80 +919,174 @@
 
 
     {{-- ════ FOOTER ════ --}}
-    <footer class="ugel-footer">
-        <div class="ugel-footer__top">
+    <footer class="ugel-footer-new">
+        {{-- Franja superior oscura con datos --}}
+        <div class="ugel-footer-new__top">
             <div class="container">
-                <div class="ugel-footer__grid">
+                <div class="ugel-footer-new__grid">
 
-                    <div class="ugel-footer__col ugel-footer__col--brand">
-                        <div class="d-flex align-items-center gap-2 mb-3">
+                    {{-- Col 1: Brand --}}
+                    <div class="ugel-fn-brand">
+                        <div class="ugel-fn-brand__logo">
                             @if ($config?->logo_ruta)
-                                <img src="{{ Storage::url($config->logo_ruta) }}" alt="{{ $config->sigla ?? 'UGEL' }}" style="width:28px;height:28px;object-fit:contain;">
+                                <img src="{{ Storage::url($config->logo_ruta) }}" alt="{{ $config?->sigla ?? 'UGEL' }}">
                             @else
-                                <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-                                    <path d="M24 4 L44 12 L44 28 C44 38 34 44 24 47 C14 44 4 38 4 28 L4 12 Z" fill="#c62828" opacity=".9" />
+                                <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+                                    <path d="M24 4 L44 12 L44 28 C44 38 34 44 24 47 C14 44 4 38 4 28 L4 12 Z"
+                                        fill="#c62828" opacity=".9" />
                                     <path d="M24 4 L24 47 C14 44 4 38 4 28 L4 12 Z" fill="#1a237e" opacity=".85" />
-                                    <path d="M18 20 L22 26 L30 18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                                    <path d="M18 20 L22 26 L30 18" stroke="white" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" fill="none" />
                                 </svg>
                             @endif
                             <div>
-                                <div class="fw-bold text-white" style="font-size:.9rem;">{{ $config?->sigla ?? 'Ugel Huacaybamba' }}</div>
-                                <div style="font-size:.6rem;color:rgba(255,255,255,.4);">{{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local' }}</div>
+                                <strong>{{ $config?->sigla ?? 'UGEL Huacaybamba' }}</strong>
+                                <span>{{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local' }}</span>
                             </div>
                         </div>
-                        <p class="ugel-footer__about">{{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local de Huacaybamba' }} — Región {{ $config?->region ?? 'Huánuco' }}, Perú. Comprometidos con la calidad educativa y el control institucional.</p>
-                        <div class="ugel-footer__tags">
-                            <span>{{ $config?->departamento ?? 'Huánuco' }}, Perú</span>
-                            <span>{{ $stats['paci'] }}</span>
-                            <span>Sector Educación</span>
+                        <p class="ugel-fn-brand__desc">
+                            {{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local de Huacaybamba' }},
+                            Región {{ $config?->region ?? 'Huánuco' }}, Perú.
+                            Comprometidos con la calidad educativa y el control institucional.
+                        </p>
+                        {{-- Datos clave --}}
+                        <div class="ugel-fn-brand__data">
+                            @if ($config?->correo_institucional)
+                                <a href="mailto:{{ $config->correo_institucional }}" class="ugel-fn-data-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                        <polyline points="22,6 12,13 2,6" />
+                                    </svg>
+                                    {{ $config->correo_institucional }}
+                                </a>
+                            @endif
+                            @if ($config?->telefono)
+                                <a href="tel:{{ $config->telefono }}" class="ugel-fn-data-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.59 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                                    </svg>
+                                    {{ $config->telefono }}
+                                </a>
+                            @endif
+                            @if ($config?->sitio_web)
+                                <a href="{{ $config->sitio_web }}" target="_blank" rel="noopener noreferrer"
+                                    class="ugel-fn-data-item">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="2" y1="12" x2="22" y2="12" />
+                                        <path
+                                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                    </svg>
+                                    {{ parse_url($config->sitio_web, PHP_URL_HOST) ?? 'Sitio web' }}
+                                </a>
+                            @endif
                         </div>
                     </div>
 
-                    <div class="ugel-footer__col">
-                        <h6 class="ugel-footer__col-title">Navegación</h6>
+                    {{-- Col 2: Navegación --}}
+                    <div class="ugel-fn-col">
+                        <h6 class="ugel-fn-col__title">Navegación</h6>
                         <ul>
                             <li><a href="#inicio">Inicio</a></li>
                             <li><a href="#sistema">Sistema PULSO</a></li>
                             <li><a href="#modulos">Módulos</a></li>
                             <li><a href="#normativa">Normativa</a></li>
                             <li><a href="#contacto">Contacto</a></li>
+                            <li><a href="{{ route('login') }}">Acceso al Sistema</a></li>
                         </ul>
                     </div>
 
-                    <div class="ugel-footer__col">
-                        <h6 class="ugel-footer__col-title">Instituciones</h6>
+                    {{-- Col 3: Instituciones --}}
+                    <div class="ugel-fn-col">
+                        <h6 class="ugel-fn-col__title">Instituciones</h6>
                         <ul>
-                            @if(isset($instituciones) && $instituciones->count() > 0)
-                                @foreach($instituciones->take(5) as $inst)
-                                    <li><a href="{{ $inst->url_sitio ?? '#' }}" target="{{ $inst->url_sitio ? '_blank' : '_self' }}">{{ $inst->nombre }}</a></li>
-                                @endforeach
-                            @else
+                            @forelse ($instituciones->take(6) as $inst)
+                                <li>
+                                    <a href="{{ $inst->url_sitio ?? '#' }}"
+                                        @if ($inst->url_sitio) target="_blank" rel="noopener noreferrer" @endif>
+                                        <span class="ugel-fn-col__abbr">{{ $inst->sigla }}</span>
+                                        {{ $inst->nombre }}
+                                    </a>
+                                </li>
+                            @empty
                                 <li><a href="#">Contraloría General de la Rep.</a></li>
                                 <li><a href="#">Ministerio de Educación</a></li>
                                 <li><a href="#">Gobierno Regional Huánuco</a></li>
-                            @endif
+                            @endforelse
                         </ul>
                     </div>
 
-                    <div class="ugel-footer__col">
-                        <h6 class="ugel-footer__col-title">Normativa SCI</h6>
+                    {{-- Col 4: Normativa + info institucional --}}
+                    <div class="ugel-fn-col">
+                        <h6 class="ugel-fn-col__title">Normativa SCI</h6>
                         <ul>
-                            <li><a href="#">Ley N° 28716 — Control Interno</a></li>
-                            <li><a href="#">R.C. N° 320-2006-CG</a></li>
-                            <li><a href="#">Directiva N° 006-2019-CG</a></li>
-                            <li><a href="#">R.C. N° 004-2017-CG</a></li>
-                            <li><a href="#">Plan Anual SCI {{ $stats['paci'] }}</a></li>
+                            <li><a href="#normativa">Ley N° 28716 — Control Interno</a></li>
+                            <li><a href="#normativa">R.C. N° 320-2006-CG</a></li>
+                            <li><a href="#normativa">Directiva N° 006-2019-CG</a></li>
+                            <li><a href="#normativa">R.C. N° 004-2017-CG</a></li>
+                            <li><a href="#normativa">Plan Anual SCI {{ $stats['paci'] }}</a></li>
                         </ul>
+                        {{-- Mini datos institucionales --}}
+                        <div class="ugel-fn-inst-data">
+                            @if ($config?->ugel_codigo)
+                                <div class="ugel-fn-inst-row">
+                                    <span>Cód. UGEL</span>
+                                    <strong>{{ $config->ugel_codigo }}</strong>
+                                </div>
+                            @endif
+                            @if ($config?->ubigeo)
+                                <div class="ugel-fn-inst-row">
+                                    <span>Ubigeo</span>
+                                    <strong>{{ $config->ubigeo }}</strong>
+                                </div>
+                            @endif
+                            <div class="ugel-fn-inst-row">
+                                <span>Región</span>
+                                <strong>{{ $config?->region ?? 'Huánuco' }}</strong>
+                            </div>
+                            <div class="ugel-fn-inst-row">
+                                <span>Sector</span>
+                                <strong>Educación</strong>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
             </div>
         </div>
-        <div class="ugel-footer__bottom">
+
+        {{-- Barra inferior --}}
+        <div class="ugel-footer-new__bottom">
             <div class="container">
-                <div class="ugel-footer__bottom-inner">
-                    <span>© {{ date('Y') }} {{ $config?->sigla ?? 'UGEL Huacaybamba' }} — Gobierno Regional {{ $config?->region ?? 'Huánuco' }}. Todos los derechos reservados.</span>
-                    <span>Sistema PULSO UGEL · Control Interno</span>
+                <div class="ugel-footer-new__bottom-inner">
+                    <span>© {{ date('Y') }} {{ $config?->sigla ?? 'UGEL Huacaybamba' }}
+                        {{ $config?->region ?? 'Huánuco' }}, Perú. Todos los derechos reservados.</span>
+                    <div class="ugel-footer-new__bottom-right">
+                        <span class="ugel-fn-status">
+                            <span class="ugel-fn-status__dot"></span>
+                            Sistema PULSO · Control Interno
+                        </span>
+                        @if ($config?->sitio_web)
+                            <a href="{{ $config->sitio_web }}" target="_blank" rel="noopener noreferrer">Portal
+                                Institucional</a>
+                        @endif
+                        <span class="ugel-fn-dev" id="__sysref_a1">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.55">
+                                <polyline points="16 18 22 12 16 6" />
+                                <polyline points="8 6 2 12 8 18" />
+                            </svg>
+                            <span id="__sysref_b2"></span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
