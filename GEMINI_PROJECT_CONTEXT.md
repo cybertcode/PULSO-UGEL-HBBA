@@ -1,5 +1,13 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
+## [v1.5.4] - 2026-06-10
+### Automatización y Portal de Publicaciones
+- **Portal de Todas las Publicaciones**: Creación de la vista `publicaciones.blade.php` y su ruta correspondiente, permitiendo a los ciudadanos explorar el historial completo de noticias, eventos y normativas con filtrado dinámico.
+- **Automatización de Autoría**: El sistema ahora detecta automáticamente al usuario logueado en el panel administrativo y lo asigna como autor por defecto de las nuevas publicaciones, manteniendo la trazabilidad.
+- **Selector de Color Dinámico**: Implementación de un campo de selección de color en el formulario de Sliders que genera automáticamente degradados CSS profesionales (`linear-gradient`) para las tarjetas del landing.
+- **Mejoras de UX en Panel**: Refinamiento de los controladores para mejorar la retroalimentación al usuario (mensajes de éxito personalizados) y optimización de las relaciones de modelos.
+- **Respaldo de Estructura**: Generación de `mysql-schema.sql` para facilitar la replicación del entorno de base de datos en el hosting compartido.
+
 ## [v1.5.3] - 2026-06-10
 ### Sistema de Contenido Enriquecido y Detalle de Noticias
 - **Editor Quill Integrado**: Implementación de un editor de texto enriquecido (WYSIWYG) en el panel administrativo para la gestión de contenidos con formato profesional.

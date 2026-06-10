@@ -90,18 +90,173 @@
         }
 
         @media (max-width: 991px) {
-
             .ugel-topbar,
             .ugel-nav,
-            section,
-            .ugel-footer {
+            .ugel-hero,
+            .ugel-section,
+            .ugel-section--alt,
+            .ugel-cta {
                 width: 96% !important;
             }
-
             .container {
-                width: 92% !important;
+                width: 94% !important;
             }
         }
+
+        @media (max-width: 767px) {
+            .ugel-topbar,
+            .ugel-nav,
+            .ugel-hero,
+            .ugel-section,
+            .ugel-section--alt,
+            .ugel-cta,
+            .ugel-mods-section,
+            .ugel-footer-new {
+                width: 100% !important;
+                border-radius: 0 !important;
+            }
+            .ugel-footer-new,
+            .ugel-mods-section {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+            .ugel-hero__grid {
+                width: 100% !important;
+                border-radius: 0 !important;
+                margin-top: 0 !important;
+            }
+            .ugel-hero__stats {
+                width: 100% !important;
+                border-radius: 0 !important;
+            }
+            .ugel-contact-section .container {
+                width: 100% !important;
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .ugel-topbar { display: none; }
+        }
+
+        /* ─── PUBLICACIONES RECIENTES ─── */
+        .ugel-pub-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        @media (max-width: 991px) { .ugel-pub-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 575px) { .ugel-pub-grid { grid-template-columns: 1fr; } }
+
+        .ugel-pub-card {
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,.07);
+            box-shadow: 0 2px 12px rgba(0,0,0,.06);
+            display: flex;
+            flex-direction: column;
+            transition: transform .22s ease, box-shadow .22s ease;
+        }
+        .ugel-pub-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(19,64,160,.13);
+        }
+        .ugel-pub-card__img-wrap {
+            position: relative;
+            display: block;
+            overflow: hidden;
+        }
+        .ugel-pub-card__img {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+            display: block;
+            transition: transform .4s ease;
+        }
+        .ugel-pub-card__img--gradient { height: 190px; }
+        .ugel-pub-card__img-wrap:hover .ugel-pub-card__img { transform: scale(1.04); }
+        .ugel-pub-card__badge {
+            position: absolute;
+            top: .75rem;
+            left: .75rem;
+            padding: .2rem .65rem;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+        }
+        .ugel-pub-card__body {
+            padding: 1.1rem 1.25rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .ugel-pub-card__eye {
+            font-size: .7rem;
+            font-weight: 700;
+            color: #1340A0;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin: 0 0 .35rem;
+        }
+        .ugel-pub-card__title {
+            font-size: .97rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            line-height: 1.4;
+            margin: 0 0 .5rem;
+            flex: 1;
+        }
+        .ugel-pub-card__title a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .ugel-pub-card__title a:hover { color: #1340A0; }
+        .ugel-pub-card__desc {
+            font-size: .82rem;
+            color: #64748b;
+            line-height: 1.5;
+            margin: 0 0 .9rem;
+        }
+        .ugel-pub-card__foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            padding-top: .75rem;
+            border-top: 1px solid #f1f5f9;
+        }
+        .ugel-pub-card__author {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .75rem;
+            color: #64748b;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ugel-pub-card__av {
+            width: 22px; height: 22px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: .62rem; font-weight: 800; color: #fff; flex-shrink: 0;
+        }
+        .ugel-pub-card__read {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            font-size: .76rem;
+            font-weight: 700;
+            color: #1340A0;
+            text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .ugel-pub-card__read:hover { color: #0c2d80; }
     </style>
 @endsection
 @section('vendor-script')
@@ -191,11 +346,72 @@
 
                 {{-- Nav links --}}
                 <ul class="ugel-nav__links" id="ugelNavLinks">
-                    <li><a href="#inicio" class="ugel-nav__link active">Inicio</a></li>
-                    <li><a href="#sistema" class="ugel-nav__link">Sistema PULSO</a></li>
-                    <li><a href="#modulos" class="ugel-nav__link">Módulos</a></li>
-                    <li><a href="#normativa" class="ugel-nav__link">Normativa</a></li>
-                    <li><a href="#contacto" class="ugel-nav__link">Contacto</a></li>
+                    {{-- Botón cerrar (solo mobile) --}}
+                    <li class="ugel-nav__close-item">
+                        <button class="ugel-nav__close-btn" id="ugelNavClose" aria-label="Cerrar menú">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </li>
+                    <li>
+                        <a href="#inicio" class="ugel-nav__link active">
+                            <span class="ugel-nav__link-ico">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                                </svg>
+                            </span>
+                            Inicio
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#sistema" class="ugel-nav__link">
+                            <span class="ugel-nav__link-ico">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                </svg>
+                            </span>
+                            Sistema PULSO
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#modulos" class="ugel-nav__link">
+                            <span class="ugel-nav__link-ico">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                                </svg>
+                            </span>
+                            Módulos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#publicaciones" class="ugel-nav__link">
+                            <span class="ugel-nav__link-ico">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                                </svg>
+                            </span>
+                            Publicaciones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#normativa" class="ugel-nav__link">
+                            <span class="ugel-nav__link-ico">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                                </svg>
+                            </span>
+                            Normativa
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#contacto" class="ugel-nav__link">
+                            <span class="ugel-nav__link-ico">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                                </svg>
+                            </span>
+                            Contacto
+                        </a>
+                    </li>
                 </ul>
 
                 {{-- End --}}
@@ -544,7 +760,7 @@
                                 class="ugel-xcard__num">{{ str_pad($mod->numero ?? $i + 1, 2, '0', STR_PAD_LEFT) }}</span>
                             {{-- Ícono --}}
                             <div class="ugel-xcard__icon">
-                                <i class="ti {{ str_replace('tabler-', 'ti-', $mod->icono ?? 'ti-layout-grid') }}"></i>
+                                <i class="ti {{ $mod->icono ?? 'tabler-layout-grid' }}"></i>
                             </div>
                             {{-- Contenido --}}
                             <div class="ugel-xcard__body">
@@ -664,6 +880,68 @@
         </div>
     </section>
 
+
+    {{-- ════ PUBLICACIONES RECIENTES ════ --}}
+    @if($slides->count() > 0)
+    <section class="ugel-section" id="publicaciones">
+        <div class="container">
+
+            <div class="d-flex align-items-end justify-content-between mb-4 flex-wrap gap-3">
+                <div>
+                    <span class="ugel-label">Noticias · Eventos · Normativas</span>
+                    <h2 class="ugel-section__title mb-0">Últimas Publicaciones</h2>
+                </div>
+                <a href="{{ route('landing.publicaciones') }}" class="ugel-btn ugel-btn--outline" style="white-space:nowrap;">
+                    Ver todas
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+
+            <div class="ugel-pub-grid">
+                @foreach($slides->take(3) as $pub)
+                @php
+                    $tipoColor = match($pub->tipo) { 'evento' => '#28c76f', 'normativa' => '#ff9f43', default => '#1340A0' };
+                    $tipoBg    = match($pub->tipo) { 'evento' => '#f0fdf4', 'normativa' => '#fff7ed', default => '#eff6ff' };
+                @endphp
+                <article class="ugel-pub-card">
+                    <a href="{{ route('landing.noticia', $pub->id) }}" class="ugel-pub-card__img-wrap">
+                        @if($pub->imagen_url)
+                            <img src="{{ $pub->imagen_url }}" alt="{{ $pub->titulo }}" class="ugel-pub-card__img" loading="lazy">
+                        @else
+                            <div class="ugel-pub-card__img ugel-pub-card__img--gradient" style="background:{{ $pub->color_gradiente ?? 'linear-gradient(135deg,#1340A0,#7367f0)' }};"></div>
+                        @endif
+                        <span class="ugel-pub-card__badge" style="background:{{ $tipoBg }};color:{{ $tipoColor }};border:1px solid {{ $tipoColor }}22;">{{ ucfirst($pub->tipo) }}</span>
+                    </a>
+                    <div class="ugel-pub-card__body">
+                        @if($pub->etiqueta)
+                            <p class="ugel-pub-card__eye">{{ $pub->etiqueta }}</p>
+                        @endif
+                        <h3 class="ugel-pub-card__title">
+                            <a href="{{ route('landing.noticia', $pub->id) }}">{{ Str::limit($pub->titulo, 70) }}</a>
+                        </h3>
+                        @if($pub->descripcion)
+                            <p class="ugel-pub-card__desc">{{ Str::limit($pub->descripcion, 110) }}</p>
+                        @endif
+                        <div class="ugel-pub-card__foot">
+                            @if($pub->autor)
+                                <span class="ugel-pub-card__author">
+                                    <span class="ugel-pub-card__av" style="background:linear-gradient(135deg,#1340A0,#28c76f);">{{ strtoupper(substr($pub->autor,0,1)) }}</span>
+                                    {{ $pub->autor }}
+                                </span>
+                            @endif
+                            <a href="{{ route('landing.noticia', $pub->id) }}" class="ugel-pub-card__read">
+                                Leer más
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+                @endforeach
+            </div>
+
+        </div>
+    </section>
+    @endif
 
     {{-- ════ CTA ════ --}}
     <section class="ugel-cta mb-4">
@@ -993,67 +1271,119 @@
 
                     {{-- Col 2: Navegación --}}
                     <div class="ugel-fn-col">
-                        <h6 class="ugel-fn-col__title">Navegación</h6>
+                        <h6 class="ugel-fn-col__title">
+                            <span class="ugel-fn-col__title-ico">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                            </span>
+                            Navegación
+                        </h6>
                         <ul>
-                            <li><a href="#inicio">Inicio</a></li>
-                            <li><a href="#sistema">Sistema PULSO</a></li>
-                            <li><a href="#modulos">Módulos</a></li>
-                            <li><a href="#normativa">Normativa</a></li>
-                            <li><a href="#contacto">Contacto</a></li>
-                            <li><a href="{{ route('login') }}">Acceso al Sistema</a></li>
+                            <li>
+                                <a href="#inicio">
+                                    <span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                                    Inicio
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#sistema">
+                                    <span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                                    Sistema PULSO
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#modulos">
+                                    <span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+                                    Módulos
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#publicaciones">
+                                    <span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+                                    Publicaciones
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#normativa">
+                                    <span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+                                    Normativa
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#contacto">
+                                    <span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+                                    Contacto
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('login') }}" class="ugel-fn-link--accent">
+                                    <span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                                    Acceso al Sistema
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
                     {{-- Col 3: Instituciones --}}
                     <div class="ugel-fn-col">
-                        <h6 class="ugel-fn-col__title">Instituciones</h6>
+                        <h6 class="ugel-fn-col__title">
+                            <span class="ugel-fn-col__title-ico">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </span>
+                            Instituciones
+                        </h6>
                         <ul>
                             @forelse ($instituciones->take(6) as $inst)
                                 <li>
                                     <a href="{{ $inst->url_sitio ?? '#' }}"
                                         @if ($inst->url_sitio) target="_blank" rel="noopener noreferrer" @endif>
+                                        <span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
                                         <span class="ugel-fn-col__abbr">{{ $inst->sigla }}</span>
                                         {{ $inst->nombre }}
                                     </a>
                                 </li>
                             @empty
-                                <li><a href="#">Contraloría General de la Rep.</a></li>
-                                <li><a href="#">Ministerio de Educación</a></li>
-                                <li><a href="#">Gobierno Regional Huánuco</a></li>
+                                <li><a href="#"><span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>Contraloría General de la Rep.</a></li>
+                                <li><a href="#"><span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>Ministerio de Educación</a></li>
+                                <li><a href="#"><span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>Gobierno Regional Huánuco</a></li>
                             @endforelse
                         </ul>
                     </div>
 
                     {{-- Col 4: Normativa + info institucional --}}
                     <div class="ugel-fn-col">
-                        <h6 class="ugel-fn-col__title">Normativa SCI</h6>
+                        <h6 class="ugel-fn-col__title">
+                            <span class="ugel-fn-col__title-ico">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            </span>
+                            Normativa SCI
+                        </h6>
                         <ul>
-                            <li><a href="#normativa">Ley N° 28716 — Control Interno</a></li>
-                            <li><a href="#normativa">R.C. N° 320-2006-CG</a></li>
-                            <li><a href="#normativa">Directiva N° 006-2019-CG</a></li>
-                            <li><a href="#normativa">R.C. N° 004-2017-CG</a></li>
-                            <li><a href="#normativa">Plan Anual SCI {{ $stats['paci'] }}</a></li>
+                            <li><a href="#normativa"><span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>Ley N° 28716 — Control Interno</a></li>
+                            <li><a href="#normativa"><span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>R.C. N° 320-2006-CG</a></li>
+                            <li><a href="#normativa"><span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>Directiva N° 006-2019-CG</a></li>
+                            <li><a href="#normativa"><span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>R.C. N° 004-2017-CG</a></li>
+                            <li><a href="#normativa"><span class="ugel-fn-link-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Plan Anual SCI {{ $stats['paci'] }}</a></li>
                         </ul>
                         {{-- Mini datos institucionales --}}
                         <div class="ugel-fn-inst-data">
                             @if ($config?->ugel_codigo)
                                 <div class="ugel-fn-inst-row">
-                                    <span>Cód. UGEL</span>
+                                    <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;margin-right:.3rem"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>Cód. UGEL</span>
                                     <strong>{{ $config->ugel_codigo }}</strong>
                                 </div>
                             @endif
                             @if ($config?->ubigeo)
                                 <div class="ugel-fn-inst-row">
-                                    <span>Ubigeo</span>
+                                    <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;margin-right:.3rem"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Ubigeo</span>
                                     <strong>{{ $config->ubigeo }}</strong>
                                 </div>
                             @endif
                             <div class="ugel-fn-inst-row">
-                                <span>Región</span>
+                                <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;margin-right:.3rem"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Región</span>
                                 <strong>{{ $config?->region ?? 'Huánuco' }}</strong>
                             </div>
                             <div class="ugel-fn-inst-row">
-                                <span>Sector</span>
+                                <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;margin-right:.3rem"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Sector</span>
                                 <strong>Educación</strong>
                             </div>
                         </div>

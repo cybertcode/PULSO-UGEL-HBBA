@@ -1,5 +1,7 @@
 @php
   $configData = Helper::appClasses();
+  $configData['hasCustomizer'] = false;
+  $configData['displayCustomizer'] = false;
   $isFront = true;
 @endphp
 

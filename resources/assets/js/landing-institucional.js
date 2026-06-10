@@ -31,6 +31,7 @@
     links?.classList.contains('open') ? closeMenu() : openMenu()
   );
   overlay?.addEventListener('click', closeMenu);
+  document.getElementById('ugelNavClose')?.addEventListener('click', closeMenu);
 
   /* ── Smooth scroll (offset topbar + nav) ── */
   document.querySelectorAll('a[href^="#"]').forEach(a => {

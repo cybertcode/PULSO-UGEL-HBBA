@@ -1,10 +1,20 @@
-@php $uid = $slide?->id ?? 'new'; @endphp
+@php
+  $uid        = $slide?->id ?? 'new';
+  $autoAutor  = $autorName ?? auth()->user()?->name ?? '';
+  $autoCargo  = $autorCargo ?? auth()->user()?->cargo?->nombre ?? null;
+  // Extraer color hex del degradado guardado para mostrarlo en el color picker
+  $hexActual = '#1340A0';
+  if (!empty($slide?->color_gradiente)) {
+      preg_match('/#([0-9a-fA-F]{6})/', $slide->color_gradiente, $m);
+      if (!empty($m[0])) $hexActual = $m[0];
+  }
+@endphp
 
 <div class="row g-3">
 
-  {{-- ── FILA 1: Tipo + Etiqueta + Autor ── --}}
-  <div class="col-md-4">
-    <label class="form-label fw-semibold">Tipo <span class="text-danger">*</span></label>
+  {{-- ── Fila 1: Tipo + Etiqueta ── --}}
+  <div class="col-md-5">
+    <label class="form-label fw-semibold">Tipo de publicación <span class="text-danger">*</span></label>
     <select name="tipo" class="form-select" required>
       <option value="noticia"   {{ old('tipo', $slide?->tipo) === 'noticia'   ? 'selected' : '' }}>📰 Noticia</option>
       <option value="evento"    {{ old('tipo', $slide?->tipo) === 'evento'    ? 'selected' : '' }}>📅 Evento</option>
@@ -12,155 +22,196 @@
     </select>
   </div>
 
-  <div class="col-md-4">
-    <label class="form-label fw-semibold">Etiqueta <small class="text-muted fw-normal">(badge en el slide)</small></label>
+  <div class="col-md-7">
+    <label class="form-label fw-semibold">
+      Etiqueta
+      <small class="text-muted fw-normal">— texto que aparece sobre el título en el slide</small>
+    </label>
     <input type="text" name="etiqueta" class="form-control"
-      placeholder="Ej: Próximo Evento, Normativa Vigente…"
+      placeholder="Ej: Próximo Evento · Normativa Vigente · Comunicado"
       value="{{ old('etiqueta', $slide?->etiqueta) }}" maxlength="80">
-  </div>
-
-  <div class="col-md-4">
-    <label class="form-label fw-semibold">Autor <small class="text-muted fw-normal">(opcional)</small></label>
-    <input type="text" name="autor" class="form-control"
-      placeholder="Ej: Oficina SCI — UGEL Huacaybamba"
-      value="{{ old('autor', $slide?->autor) }}" maxlength="100">
   </div>
 
   {{-- ── Título ── --}}
   <div class="col-12">
     <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
-    <input type="text" name="titulo" class="form-control form-control-lg" required
-      placeholder="Ej: Taller Regional de Control Interno 2025"
+    <input type="text" name="titulo" class="form-control" required
+      placeholder="Ej: Taller Regional de Control Interno — GORE Huánuco 2025"
       value="{{ old('titulo', $slide?->titulo) }}" maxlength="255">
   </div>
 
-  {{-- ── Resumen / Descripción ── --}}
+  {{-- ── Resumen ── --}}
   <div class="col-12">
-    <label class="form-label fw-semibold">Resumen <small class="text-muted fw-normal">(aparece en el slide del carousel)</small></label>
+    <label class="form-label fw-semibold">
+      Resumen
+      <small class="text-muted fw-normal">— se muestra en el slide del carousel principal</small>
+    </label>
     <textarea name="descripcion" class="form-control" rows="2"
-      placeholder="Texto breve que se ve en la tarjeta del slider…" maxlength="1000">{{ old('descripcion', $slide?->descripcion) }}</textarea>
-    <div class="form-text">Máx. 1000 caracteres — este texto se muestra en el slide principal.</div>
+      placeholder="Breve descripción visible en la tarjeta del slider (máx. 2 líneas)…"
+      maxlength="1000">{{ old('descripcion', $slide?->descripcion) }}</textarea>
   </div>
 
-  {{-- ── EDITOR QUILL ── --}}
+  {{-- ── EDITOR QUILL (Vuexy nativo) ── --}}
   <div class="col-12">
-    <label class="form-label fw-semibold">Contenido completo del artículo <small class="text-muted fw-normal">(página de detalle)</small></label>
+    <label class="form-label fw-semibold">
+      <i class="ti tabler-article me-1 text-primary"></i>
+      Contenido del artículo
+      <small class="text-muted fw-normal">— página completa al hacer clic en «Leer más»</small>
+    </label>
 
-    <div id="quill-editor-{{ $uid }}" style="min-height:260px;border:1px solid #d9dee3;border-radius:0 0 6px 6px;background:#fff;font-size:.92rem;"></div>
-    <textarea name="contenido" id="quill-content-{{ $uid }}" style="display:none;">{{ old('contenido', $slide?->contenido) }}</textarea>
-
-    <div class="form-text mt-1">
-      <i class="ti tabler-info-circle me-1"></i>
-      Este contenido se muestra en la página de detalle al hacer clic en «Leer más» desde el landing.
+    {{-- Toolbar HTML estilo Vuexy --}}
+    <div id="quill-toolbar-{{ $uid }}" class="border rounded-top px-2 py-1 bg-light">
+      <span class="ql-formats">
+        <select class="ql-header">
+          <option value="2">Título 2</option>
+          <option value="3">Título 3</option>
+          <option value="4">Título 4</option>
+          <option selected>Normal</option>
+        </select>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-bold"></button>
+        <button class="ql-italic"></button>
+        <button class="ql-underline"></button>
+        <button class="ql-strike"></button>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-list" value="ordered"></button>
+        <button class="ql-list" value="bullet"></button>
+        <button class="ql-indent" value="-1"></button>
+        <button class="ql-indent" value="+1"></button>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-blockquote"></button>
+        <button class="ql-code-block"></button>
+      </span>
+      <span class="ql-formats">
+        <select class="ql-color"></select>
+        <select class="ql-background"></select>
+      </span>
+      <span class="ql-formats">
+        <button class="ql-link"></button>
+        <button class="ql-clean"></button>
+      </span>
     </div>
+
+    <div id="quill-editor-{{ $uid }}"
+         data-quill-uid="{{ $uid }}"
+         style="min-height:240px;border-radius:0 0 6px 6px;font-size:.92rem;"></div>
+
+    <textarea name="contenido" id="quill-content-{{ $uid }}" class="d-none">{{ old('contenido', $slide?->contenido) }}</textarea>
   </div>
 
   {{-- ── DIVIDER ── --}}
-  <div class="col-12"><hr class="my-1"></div>
+  <div class="col-12"><hr class="my-1 text-muted"></div>
 
-  {{-- ── IMÁGENES ── --}}
-  <div class="col-md-6">
+  {{-- ── Imagen + Color de fondo ── --}}
+  <div class="col-md-8">
     <label class="form-label fw-semibold">
-      <i class="ti tabler-slideshow me-1"></i>
-      Imagen del Slide <small class="text-muted fw-normal">(fondo del carousel)</small>
+      <i class="ti tabler-photo me-1"></i>
+      Imagen
+      <small class="text-muted fw-normal">— se usa tanto en el slide como en la página del artículo</small>
     </label>
 
     @if(!empty($slide?->imagen_url))
-    <div class="mb-2 position-relative d-inline-block">
-      <img src="{{ $slide->imagen_url }}" alt="Imagen actual" class="rounded border"
-           style="height:90px;width:220px;object-fit:cover;display:block;">
-      <span class="badge bg-success position-absolute top-0 start-0 m-1" style="font-size:.6rem;">Actual</span>
-    </div>
-    <div class="mb-2">
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="eliminar_imagen"
-               id="chkEliminarImagen{{ $uid }}" value="1">
-        <label class="form-check-label text-danger small" for="chkEliminarImagen{{ $uid }}">
-          Eliminar imagen (usará degradado CSS)
-        </label>
+    <div class="mb-2 d-flex align-items-center gap-3">
+      <img src="{{ $slide->imagen_url }}" alt=""
+           class="rounded border" style="height:72px;width:180px;object-fit:cover;">
+      <div>
+        <div class="badge bg-label-success mb-1">Imagen actual</div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="eliminar_imagen"
+                 id="chkElim{{ $uid }}" value="1">
+          <label class="form-check-label text-danger small" for="chkElim{{ $uid }}">
+            Quitar imagen
+          </label>
+        </div>
       </div>
     </div>
     @endif
 
-    <input type="file" name="imagen_file" id="inputSliderFile{{ $uid }}"
+    <input type="file" name="imagen_file" id="imgFile{{ $uid }}"
            class="form-control" accept="image/jpeg,image/png,image/webp">
-    <div id="previewSlider{{ $uid }}" class="mt-2" style="display:none;">
-      <img id="previewSliderImg{{ $uid }}" src="" alt="" class="rounded border"
-           style="height:90px;width:220px;object-fit:cover;">
+    <div id="imgPreviewWrap{{ $uid }}" class="mt-2" style="display:none;">
+      <img id="imgPreview{{ $uid }}" src="" alt=""
+           class="rounded border" style="height:72px;width:180px;object-fit:cover;">
+      <small class="text-muted d-block">Vista previa</small>
     </div>
-    <div class="form-text">JPG/PNG/WebP · máx 4MB · Recomendado: 1920×1080</div>
+    <div class="form-text">JPG / PNG / WebP · máx 4 MB · Resolución recomendada: 1280×720</div>
   </div>
 
+  <div class="col-md-4">
+    <label class="form-label fw-semibold">
+      <i class="ti tabler-palette me-1"></i>
+      Color de fondo
+      <small class="text-muted fw-normal">— si no hay imagen</small>
+    </label>
+    <div class="d-flex align-items-center gap-2">
+      <input type="color" name="color_fondo" id="colorPicker{{ $uid }}"
+             class="form-control form-control-color"
+             style="width:48px;height:38px;padding:2px;"
+             value="{{ old('color_fondo', $hexActual) }}"
+             title="Elige un color de fondo">
+      <div id="colorPreviewBox{{ $uid }}"
+           style="flex:1;height:38px;border-radius:6px;border:1px solid #d9dee3;
+                  background:linear-gradient(135deg, {{ $hexActual }}dd, {{ $hexActual }}, {{ $hexActual }}bb);
+                  transition:background .3s;"></div>
+    </div>
+    <div class="form-text">Se genera un degradado automático con este color.</div>
+  </div>
+
+  {{-- ── Autor (usuario logueado, no editable) ── --}}
   <div class="col-md-6">
     <label class="form-label fw-semibold">
-      <i class="ti tabler-photo me-1"></i>
-      Imagen de portada <small class="text-muted fw-normal">(hero del artículo)</small>
+      <i class="ti tabler-user-check me-1 text-success"></i>
+      Autor
     </label>
-
-    @if(!empty($slide?->imagen_portada_url))
-    <div class="mb-2 position-relative d-inline-block">
-      <img src="{{ $slide->imagen_portada_url }}" alt="Portada actual" class="rounded border"
-           style="height:90px;width:220px;object-fit:cover;display:block;">
-      <span class="badge bg-info position-absolute top-0 start-0 m-1" style="font-size:.6rem;">Portada actual</span>
+    {{-- Hidden para enviar el valor --}}
+    <input type="hidden" name="autor" value="{{ $autoAutor }}">
+    {{-- Visual solo lectura --}}
+    <div class="d-flex align-items-center gap-2 px-3 py-2 rounded"
+         style="background:#f0fdf4;border:1px solid #bbf7d0;">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1340A0,#28c76f);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem;font-weight:800;color:#fff;">
+        {{ strtoupper(substr($autoAutor, 0, 1)) }}
+      </div>
+      <div style="min-width:0;">
+        <div style="font-size:.85rem;font-weight:700;color:#166534;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $autoAutor }}</div>
+        <div style="font-size:.68rem;color:#16a34a;">
+          {{ $autoCargo ?? 'Usuario del Sistema PULSO UGEL' }}
+        </div>
+      </div>
+      <i class="ti tabler-lock ms-auto" style="color:#86efac;font-size:.82rem;flex-shrink:0;" title="Asignado automáticamente al usuario logueado"></i>
     </div>
-    @endif
-
-    <input type="file" name="imagen_portada_file" id="inputPortadaFile{{ $uid }}"
-           class="form-control" accept="image/jpeg,image/png,image/webp">
-    <div id="previewPortada{{ $uid }}" class="mt-2" style="display:none;">
-      <img id="previewPortadaImg{{ $uid }}" src="" alt="" class="rounded border"
-           style="height:90px;width:220px;object-fit:cover;">
-    </div>
-    <div class="form-text">Se muestra como imagen grande en la página del artículo.</div>
   </div>
 
-  {{-- ── Degradado CSS ── --}}
-  <div class="col-12">
+  {{-- ── URL de acción ── --}}
+  <div class="col-md-4">
     <label class="form-label fw-semibold">
-      Degradado de fondo <small class="text-muted fw-normal">(si no hay imagen de slide)</small>
+      <i class="ti tabler-link me-1"></i>
+      Enlace externo
+      <small class="text-muted fw-normal">(opcional)</small>
     </label>
-    <div class="input-group">
-      <input type="text" name="color_gradiente" id="inputGradiente{{ $uid }}" class="form-control font-monospace"
-        placeholder="linear-gradient(135deg,#0a0a2e 0%,#1a1a6e 40%,#7367f0 100%)"
-        value="{{ old('color_gradiente', $slide?->color_gradiente) }}" maxlength="300">
-      <span class="input-group-text p-1">
-        <div id="gradPreview{{ $uid }}" style="width:40px;height:30px;border-radius:4px;
-          background:{{ $slide?->color_gradiente ?? 'linear-gradient(135deg,#1340A0,#7367f0)' }};"></div>
-      </span>
-    </div>
-    <div class="form-text">
-      <code>linear-gradient(135deg,#0a0a2e,#1a1a6e 40%,#7367f0)</code> azul ·
-      <code>linear-gradient(135deg,#0a2e1a,#28c76f)</code> verde
-    </div>
-  </div>
-
-  {{-- ── Botón CTA ── --}}
-  <div class="col-md-8">
-    <label class="form-label fw-semibold">URL del botón de acción</label>
     <input type="url" name="url_accion" class="form-control"
       placeholder="https://…"
       value="{{ old('url_accion', $slide?->url_accion) }}" maxlength="255">
   </div>
-  <div class="col-md-4">
+
+  <div class="col-md-2">
     <label class="form-label fw-semibold">Texto del botón</label>
     <input type="text" name="texto_accion" class="form-control"
-      placeholder="Ej: Más información"
+      placeholder="Ej: Ver más"
       value="{{ old('texto_accion', $slide?->texto_accion) }}" maxlength="80">
   </div>
 
-  {{-- ── Orden + Activo ── --}}
-  <div class="col-md-3">
-    <label class="form-label fw-semibold">Orden</label>
-    <input type="number" name="orden" class="form-control" min="0"
-      value="{{ old('orden', $slide?->orden ?? 0) }}">
-    <div class="form-text">Menor = aparece primero.</div>
-  </div>
-  <div class="col-md-9 d-flex align-items-end pb-2">
+  {{-- ── Activo ── --}}
+  <input type="hidden" name="orden" value="{{ $slide?->orden ?? (\App\Models\SliderLanding::max('orden') + 1) }}">
+  <div class="col-12 d-flex align-items-end pb-1">
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="activo" id="checkActivo{{ $uid }}" value="1"
-        {{ old('activo', $slide?->activo ?? true) ? 'checked' : '' }}>
-      <label class="form-check-label fw-semibold" for="checkActivo{{ $uid }}">
-        Slide activo (visible en el landing)
+      <input class="form-check-input" type="checkbox" name="activo"
+             id="chkActivo{{ $uid }}" value="1"
+             {{ old('activo', $slide?->activo ?? true) ? 'checked' : '' }}>
+      <label class="form-check-label fw-semibold" for="chkActivo{{ $uid }}">
+        Publicación activa y visible en el landing
       </label>
     </div>
   </div>
@@ -168,90 +219,24 @@
 </div>
 
 <script>
-(function(){
+(function () {
   var uid = '{{ $uid }}';
 
-  // Preview imagen slide
-  var sliderInput = document.getElementById('inputSliderFile' + uid);
-  if (sliderInput) {
-    sliderInput.addEventListener('change', function () {
-      var file = this.files[0];
-      var wrap = document.getElementById('previewSlider' + uid);
-      var img  = document.getElementById('previewSliderImg' + uid);
-      if (file && wrap && img) { img.src = URL.createObjectURL(file); wrap.style.display = 'block'; }
-    });
-  }
+  // Preview imagen
+  var fi = document.getElementById('imgFile' + uid);
+  if (fi) fi.addEventListener('change', function () {
+    var f = this.files[0];
+    var w = document.getElementById('imgPreviewWrap' + uid);
+    var i = document.getElementById('imgPreview' + uid);
+    if (f && w && i) { i.src = URL.createObjectURL(f); w.style.display = 'block'; }
+  });
 
-  // Preview imagen portada
-  var portadaInput = document.getElementById('inputPortadaFile' + uid);
-  if (portadaInput) {
-    portadaInput.addEventListener('change', function () {
-      var file = this.files[0];
-      var wrap = document.getElementById('previewPortada' + uid);
-      var img  = document.getElementById('previewPortadaImg' + uid);
-      if (file && wrap && img) { img.src = URL.createObjectURL(file); wrap.style.display = 'block'; }
-    });
-  }
-
-  // Preview degradado en tiempo real
-  var gradInput = document.getElementById('inputGradiente' + uid);
-  var gradPrev  = document.getElementById('gradPreview' + uid);
-  if (gradInput && gradPrev) {
-    gradInput.addEventListener('input', function () {
-      gradPrev.style.background = this.value || 'linear-gradient(135deg,#1340A0,#7367f0)';
-    });
-  }
-
-  // Inicializar Quill cuando el modal esté visible
-  function initQuill() {
-    var editorEl = document.getElementById('quill-editor-' + uid);
-    var textarea = document.getElementById('quill-content-' + uid);
-    if (!editorEl || !textarea || editorEl._quillInited) return;
-    editorEl._quillInited = true;
-
-    var quill = new Quill('#quill-editor-' + uid, {
-      theme: 'snow',
-      placeholder: 'Escribe el contenido completo del artículo aquí…',
-      modules: {
-        toolbar: [
-          [{ 'header': [2, 3, 4, false] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ 'color': [] }, { 'background': [] }],
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          [{ 'indent': '-1'}, { 'indent': '+1' }],
-          ['blockquote', 'code-block'],
-          ['link', 'image'],
-          ['clean']
-        ]
-      }
-    });
-
-    // Cargar contenido existente
-    if (textarea.value) {
-      quill.root.innerHTML = textarea.value;
-    }
-
-    // Sincronizar al enviar el formulario
-    var form = editorEl.closest('form');
-    if (form) {
-      form.addEventListener('submit', function () {
-        textarea.value = quill.root.innerHTML;
-      });
-    }
-  }
-
-  // Intentar inicializar inmediatamente (si el modal ya está abierto)
-  if (typeof Quill !== 'undefined') {
-    // Esperar un tick para que el modal termine de renderizar
-    setTimeout(initQuill, 80);
-  } else {
-    // Quill todavía no cargó — reintentar cuando el modal se abra
-    document.addEventListener('shown.bs.modal', function handler(e) {
-      if (e.target.contains(document.getElementById('quill-editor-' + uid))) {
-        if (typeof Quill !== 'undefined') initQuill();
-        document.removeEventListener('shown.bs.modal', handler);
-      }
-    });
-  }
+  // Color picker → preview degradado
+  var cp = document.getElementById('colorPicker' + uid);
+  var cb = document.getElementById('colorPreviewBox' + uid);
+  if (cp && cb) cp.addEventListener('input', function () {
+    var h = this.value;
+    cb.style.background = 'linear-gradient(135deg, ' + h + 'dd, ' + h + ', ' + h + 'bb)';
+  });
 })();
 </script>
