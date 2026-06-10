@@ -421,84 +421,37 @@
     </section>
 
 
-    {{-- ════ MÓDULOS ════ --}}
+    {{-- ════ MÓDULOS DE GESTIÓN ════ --}}
     <section class="ugel-section ugel-section--alt" id="modulos">
         <div class="container">
-            <div class="text-center mb-5">
-                <span class="ugel-label">Funcionalidades</span>
-                <h2 class="ugel-section__title">Módulos del Sistema</h2>
-                <p class="ugel-section__sub mx-auto" style="max-width:500px;">Herramientas especializadas para cada
-                    componente del Control Interno.</p>
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end mb-4 ugel-reveal">
+                <div style="max-width: 600px;">
+                    <span class="ugel-label">Ecosistema Digital</span>
+                    <h2 class="ugel-section__title mb-0">Módulos de Gestión <span class="ugel-text-accent">PULSO</span></h2>
+                </div>
+                <div class="mt-3 mt-lg-0 text-lg-end" style="max-width: 450px;">
+                    <p class="ugel-section__sub mb-0" style="font-size: 0.95rem;">
+                        Herramientas integradas gestionadas desde el panel administrativo para el fortalecimiento del Control Interno institucional.
+                    </p>
+                </div>
             </div>
 
-            <div class="ugel-modules-grid">
-                @foreach ($modulos as $mod)
-                    <div class="ugel-module">
-                        <div class="ugel-module__icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                @switch($mod['icono'])
-                                    @case('ti-shield-check')
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                        <path d="M9 12l2 2 4-4" />
-                                    @break
-
-                                    @case('ti-award')
-                                        <circle cx="12" cy="8" r="6" />
-                                        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
-                                    @break
-
-                                    @case('ti-file-upload')
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                        <polyline points="14 2 14 8 20 8" />
-                                        <line x1="12" y1="18" x2="12" y2="12" />
-                                        <polyline points="9 15 12 12 15 15" />
-                                    @break
-
-                                    @case('ti-alert-triangle')
-                                        <path
-                                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                                        <line x1="12" y1="9" x2="12" y2="13" />
-                                        <line x1="12" y1="17" x2="12.01" y2="17" />
-                                    @break
-
-                                    @case('ti-chart-pie')
-                                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
-                                        <path d="M22 12A10 10 0 0 0 12 2v10z" />
-                                    @break
-
-                                    @case('ti-sitemap')
-                                        <rect x="9" y="3" width="6" height="4" rx="1" />
-                                        <rect x="3" y="17" width="6" height="4" rx="1" />
-                                        <rect x="15" y="17" width="6" height="4" rx="1" />
-                                        <path d="M12 7v4M6 17v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4" />
-                                    @break
-
-                                    @case('ti-traffic-lights')
-                                        <rect x="6" y="2" width="12" height="20" rx="2" />
-                                        <circle cx="12" cy="7" r="1.5" fill="currentColor" />
-                                        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                                        <circle cx="12" cy="17" r="1.5" fill="currentColor" />
-                                    @break
-
-                                    @case('ti-clipboard-list')
-                                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                                        <rect x="8" y="2" width="8" height="4" rx="1" />
-                                        <line x1="9" y1="12" x2="15" y2="12" />
-                                        <line x1="9" y1="16" x2="13" y2="16" />
-                                    @break
-
-                                    @default
-                                        <circle cx="12" cy="12" r="10" />
-                                @endswitch
-                            </svg>
+            <div class="ugel-components-grid">
+                @if($modulos && $modulos->count() > 0)
+                    @foreach($modulos as $index => $mod)
+                        <div class="ugel-comp-card ugel-reveal" style="transition-delay: {{ $index * 50 }}ms;">
+                            <div class="ugel-comp-card__icon">
+                                <i class="ti {{ str_replace('tabler-', 'ti-', $mod->icono ?? 'ti-check') }}"></i>
+                            </div>
+                            <div class="ugel-comp-card__body">
+                                <h5 class="ugel-comp-card__title">{{ $mod->nombre }}</h5>
+                                <p class="ugel-comp-card__desc">{{ Str::limit($mod->descripcion ?? 'Monitoreo continuo del componente.', 95) }}</p>
+                            </div>
                         </div>
-                        <div class="ugel-module__body">
-                            <h5 class="ugel-module__name">{{ $mod['nombre'] }}</h5>
-                            <p class="ugel-module__desc">{{ $mod['desc'] }}</p>
-                        </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                @else
+                    <div class="col-12 text-center text-muted">No hay componentes configurados en el sistema.</div>
+                @endif
             </div>
         </div>
     </section>
@@ -519,7 +472,7 @@
                         @foreach ([['01', 'Ley N° 28716', 'Ley de Control Interno de las Entidades del Estado — Congreso de la República'], ['02', 'R.C. N° 320-2006-CG', 'Normas de Control Interno — Contraloría General de la República'], ['03', 'Directiva N° 006-2019-CG', 'Modelo de Integridad para el Sector Público Peruano'], ['04', 'R.C. N° 004-2017-CG', 'Guía para la Implementación y Fortalecimiento del SCI']] as $n)
                             <div class="ugel-norm">
                                 <div class="ugel-norm__num">{{ $n[0] }}</div>
-                                <div>
+                                <div class="ugel-norm__content">
                                     <strong>{{ $n[1] }}</strong>
                                     <p>{{ $n[2] }}</p>
                                 </div>
@@ -665,24 +618,24 @@
 
                     <div class="ugel-footer__col ugel-footer__col--brand">
                         <div class="d-flex align-items-center gap-2 mb-3">
-                            <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-                                <path d="M24 4 L44 12 L44 28 C44 38 34 44 24 47 C14 44 4 38 4 28 L4 12 Z" fill="#c62828"
-                                    opacity=".9" />
-                                <path d="M24 4 L24 47 C14 44 4 38 4 28 L4 12 Z" fill="#1a237e" opacity=".85" />
-                                <path d="M18 20 L22 26 L30 18" stroke="white" stroke-width="2.5" stroke-linecap="round"
-                                    stroke-linejoin="round" fill="none" />
-                            </svg>
+                            @if ($config?->logo_ruta)
+                                <img src="{{ Storage::url($config->logo_ruta) }}" alt="{{ $config->sigla ?? 'UGEL' }}" style="width:28px;height:28px;object-fit:contain;">
+                            @else
+                                <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                                    <path d="M24 4 L44 12 L44 28 C44 38 34 44 24 47 C14 44 4 38 4 28 L4 12 Z" fill="#c62828" opacity=".9" />
+                                    <path d="M24 4 L24 47 C14 44 4 38 4 28 L4 12 Z" fill="#1a237e" opacity=".85" />
+                                    <path d="M18 20 L22 26 L30 18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                                </svg>
+                            @endif
                             <div>
-                                <div class="fw-bold text-white" style="font-size:.9rem;">Ugel Huacaybamba</div>
-                                <div style="font-size:.6rem;color:rgba(255,255,255,.4);">Unidad de Gestión Educativa Local
-                                </div>
+                                <div class="fw-bold text-white" style="font-size:.9rem;">{{ $config?->sigla ?? 'Ugel Huacaybamba' }}</div>
+                                <div style="font-size:.6rem;color:rgba(255,255,255,.4);">{{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local' }}</div>
                             </div>
                         </div>
-                        <p class="ugel-footer__about">Unidad de Gestión Educativa Local de Huacaybamba — Región Huánuco,
-                            Perú. Comprometidos con la calidad educativa y el control institucional.</p>
+                        <p class="ugel-footer__about">{{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local de Huacaybamba' }} — Región {{ $config?->region ?? 'Huánuco' }}, Perú. Comprometidos con la calidad educativa y el control institucional.</p>
                         <div class="ugel-footer__tags">
-                            <span>Huánuco, Perú</span>
-                            <span>{{ date('Y') }}</span>
+                            <span>{{ $config?->departamento ?? 'Huánuco' }}, Perú</span>
+                            <span>{{ $stats['paci'] }}</span>
                             <span>Sector Educación</span>
                         </div>
                     </div>
@@ -701,11 +654,15 @@
                     <div class="ugel-footer__col">
                         <h6 class="ugel-footer__col-title">Instituciones</h6>
                         <ul>
-                            <li><a href="#">Contraloría General de la Rep.</a></li>
-                            <li><a href="#">Ministerio de Educación</a></li>
-                            <li><a href="#">Gobierno Regional Huánuco</a></li>
-                            <li><a href="#">DRE Huánuco</a></li>
-                            <li><a href="#">PCM</a></li>
+                            @if(isset($instituciones) && $instituciones->count() > 0)
+                                @foreach($instituciones->take(5) as $inst)
+                                    <li><a href="{{ $inst->url_sitio ?? '#' }}" target="{{ $inst->url_sitio ? '_blank' : '_self' }}">{{ $inst->nombre }}</a></li>
+                                @endforeach
+                            @else
+                                <li><a href="#">Contraloría General de la Rep.</a></li>
+                                <li><a href="#">Ministerio de Educación</a></li>
+                                <li><a href="#">Gobierno Regional Huánuco</a></li>
+                            @endif
                         </ul>
                     </div>
 
@@ -716,7 +673,7 @@
                             <li><a href="#">R.C. N° 320-2006-CG</a></li>
                             <li><a href="#">Directiva N° 006-2019-CG</a></li>
                             <li><a href="#">R.C. N° 004-2017-CG</a></li>
-                            <li><a href="#">Plan Anual SCI 2025</a></li>
+                            <li><a href="#">Plan Anual SCI {{ $stats['paci'] }}</a></li>
                         </ul>
                     </div>
 
@@ -726,8 +683,7 @@
         <div class="ugel-footer__bottom">
             <div class="container">
                 <div class="ugel-footer__bottom-inner">
-                    <span>© {{ date('Y') }} UGEL Huacaybamba — Gobierno Regional Huánuco. Todos los derechos
-                        reservados.</span>
+                    <span>© {{ date('Y') }} {{ $config?->sigla ?? 'UGEL Huacaybamba' }} — Gobierno Regional {{ $config?->region ?? 'Huánuco' }}. Todos los derechos reservados.</span>
                     <span>Sistema PULSO UGEL · Control Interno</span>
                 </div>
             </div>

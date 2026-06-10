@@ -1,5 +1,25 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
+## [v1.5.2] - 2026-06-09
+### Rediseño Integral de UI/UX (Landing Page Premium)
+- **Paleta de Colores Gubernamental**: Transición a una gama cromática ejecutiva (Azul Confianza `#1E3A8A`, Rojo Crimson `#E31B54`, Ámbar `#F59E0B`) con contrastes accesibles y fondos Slate.
+- **Estructura Dinámica**:
+  - Sustitución del listado estático por un **Components Grid** (Bento Grid optimizado) que extrae los módulos oficiales (`\App\Models\Componente`) directamente de la base de datos con iconos Tabler dinámicos.
+  - El **Footer** ahora se alimenta directamente de `ConfiguracionInstitucional` y de las entidades guardadas en `InstitucionVinculada`, mostrando datos 100% reales.
+- **Micro-interacciones y Estética (Apple/Vercel Style)**:
+  - Implementación de **Glassmorphism** extremo (filtros de desenfoque de fondo en el Nav y estadísticas superpuestas).
+  - Sombras multinivel orgánicas (`Soft Shadows`) en todos los elementos interactivos.
+  - Botones principales con efecto interno de reflejo de luz.
+  - La sección *Acerca del Sistema* ahora exhibe un **Mock UI estilo ventana macOS**.
+  - La *Normativa Legal* se presenta como un **Timeline** interactivo conectado por un hilo visual.
+  - Tarjetas de *Instituciones Vinculadas* con carga de logotipos en escala de grises y revelado de color en hover.
+
+## [v1.5.1] - 2026-06-09
+### Refinamiento de Layout y Estabilidad
+- **Ajuste de Proporciones**: Rediseño del ancho global del portal al 90% de la ventana con contenedores internos al 95%, logrando un diseño centrado y moderno.
+- **Corrección de Estadísticas**: Reparación de error SQL en `LandingController` mediante la sincronización de campos con la tabla `paci` (cambio de `periodo` a `anio`) y adición de fallbacks de seguridad.
+- **Optimización UI**: Remoción de componentes no solicitados y forzado de estilos críticos para evitar problemas de caché en el despliegue.
+
 ## [v1.5.0] - 2026-06-09
 ### Portal Institucional y Landing Page de Alto Impacto
 - **Landing Page Pública**: Implementación de una interfaz moderna y atractiva para el portal principal, integrando secciones de noticias, banners dinámicos e indicadores de impacto.

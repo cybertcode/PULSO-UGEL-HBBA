@@ -38,16 +38,10 @@ class LandingController extends Controller
             'gestion'     => 5,
         ];
 
-        $modulos = [
-            ['icono' => 'ti-shield-check',   'nombre' => 'Control Interno',      'desc' => 'Seguimiento de actividades SCI con semáforo de avance en tiempo real.'],
-            ['icono' => 'ti-award',           'nombre' => 'Modelo de Integridad', 'desc' => 'Gestión de compromisos y componentes del Modelo de Integridad.'],
-            ['icono' => 'ti-file-upload',     'nombre' => 'Evidencias',           'desc' => 'Repositorio centralizado con validación de responsables.'],
-            ['icono' => 'ti-alert-triangle',  'nombre' => 'Alertas',              'desc' => 'Notificaciones automáticas de vencimientos y actividades críticas.'],
-            ['icono' => 'ti-chart-pie',       'nombre' => 'Reportes',             'desc' => 'Dashboards e informes exportables para toma de decisiones.'],
-            ['icono' => 'ti-sitemap',         'nombre' => 'Unidades Orgánicas',   'desc' => 'Administración de la estructura organizacional y responsables.'],
-            ['icono' => 'ti-traffic-lights',  'nombre' => 'Semáforo SCI',         'desc' => 'Estado de cumplimiento por unidad orgánica en tiempo real.'],
-            ['icono' => 'ti-clipboard-list',  'nombre' => 'PACI',                 'desc' => 'Plan Anual de Control Interno con seguimiento por periodos.'],
-        ];
+        // Componentes (Módulos) desde la base de datos
+        $modulos = class_exists('\App\Models\Componente') 
+            ? \App\Models\Componente::where('activo', true)->orderBy('numero')->limit(6)->get()
+            : collect();
 
         return view('content.landing.index', compact('config', 'slides', 'modulos', 'instituciones', 'stats'));
     }
