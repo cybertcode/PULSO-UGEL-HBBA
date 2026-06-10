@@ -36,7 +36,7 @@ class MenuServiceProvider extends ServiceProvider
             $menu[] = (object)['menuHeader' => 'General'];
 
             $menu[] = (object)[
-                'url'  => '/',
+                'url'  => '/dashboard',
                 'name' => 'Inicio',
                 'icon' => 'menu-icon icon-base ti tabler-smart-home',
                 'slug' => 'dashboard',
@@ -350,6 +350,22 @@ class MenuServiceProvider extends ServiceProvider
                         'icon' => 'menu-icon icon-base ti tabler-settings',
                         'slug' => 'adm-configuracion',
                         'i18n' => 'Parámetros del sistema',
+                    ];
+
+                    $menu[] = (object)[
+                        'url'  => '/slider-landing',
+                        'name' => 'Slider del Landing',
+                        'icon' => 'menu-icon icon-base ti tabler-slideshow',
+                        'slug' => 'slider-landing',
+                        'i18n' => 'Slides de la página principal',
+                    ];
+
+                    $menu[] = (object)[
+                        'url'  => '/instituciones-vinculadas',
+                        'name' => 'Instituciones Vinculadas',
+                        'icon' => 'menu-icon icon-base ti tabler-building-community',
+                        'slug' => 'instituciones-vinculadas',
+                        'i18n' => 'Logos e instituciones del landing',
                     ];
                 }
             }

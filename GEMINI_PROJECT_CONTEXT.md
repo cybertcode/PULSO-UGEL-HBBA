@@ -1,5 +1,19 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
+## [v1.5.0] - 2026-06-09
+### Portal Institucional y Landing Page de Alto Impacto
+- **Landing Page Pública**: Implementación de una interfaz moderna y atractiva para el portal principal, integrando secciones de noticias, banners dinámicos e indicadores de impacto.
+- **Gestión de Sliders**: Nuevo módulo administrativo para el control total de los banners del landing, permitiendo subida de imágenes, gestión de títulos, descripciones y estados de activación.
+- **Instituciones Vinculadas**: Sistema de gestión para enlaces institucionales y aliados estratégicos, con soporte para logos dinámicos y categorización.
+- **Arquitectura de Layouts**: Creación de `layoutLanding.blade.php` optimizado para SEO y carga rápida, separando la lógica del portal público del panel administrativo.
+- **Vite & Assets**: Integración de bundles específicos (`landing-institucional.css/js`) para optimizar el rendimiento y aislamiento de estilos.
+
+### Estructura Técnica
+- **Modelos**: `SliderLanding`, `InstitucionVinculada`.
+- **Controladores**: `LandingController`, `SliderLandingController`, `InstitucionVinculadaController`.
+- **Migraciones**: `create_slider_landing_table`, `create_instituciones_vinculadas_table`.
+- **Rutas**: Definición de rutas públicas para el portal y rutas protegidas para la administración del landing en `web.php`.
+
 ## [v1.4.4] - 2026-06-09
 ### Lógica Funcional y Persistencia Institucional
 - **Sembrado de Datos Reales**: Implementación de `NuevosModulosSeeder` que integra datos oficiales del PACI 2026, Matriz de Riesgos, Actas de Comité y Autoevaluaciones, permitiendo dashboards 100% operativos.

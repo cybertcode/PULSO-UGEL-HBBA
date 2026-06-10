@@ -34,8 +34,13 @@ use App\Http\Controllers\pages\PaciController;
 use App\Http\Controllers\pages\MatrizRiesgosController;
 use App\Http\Controllers\pages\ActasComiteController;
 use App\Http\Controllers\pages\AutoevaluacionController;
+use App\Http\Controllers\pages\LandingController;
+use App\Http\Controllers\pages\SliderLandingController;
+use App\Http\Controllers\pages\InstitucionVinculadaController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
+Route::get('/',                    [LandingController::class, 'index'])->name('landing');
+Route::get('/noticias/{id}',       [LandingController::class, 'show'])->name('landing.noticia');
 Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
 Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('auth-register-basic');
 Route::get('/pages/misc-error',    [MiscError::class,     'index'])->name('pages-misc-error');
@@ -49,8 +54,22 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::delete('/user/profile/photo',  [PerfilController::class, 'deletePhoto'])->name('profile.delete-photo');
 
     // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/diag', fn() => view('content.dashboard.diag'))->name('diag')->middleware('can:configuracion.ver');
+
+    // Slider del Landing (administrado desde el panel)
+    Route::get('/slider-landing',                          [SliderLandingController::class, 'index'])->name('slider-landing.index');
+    Route::post('/slider-landing',                         [SliderLandingController::class, 'store'])->name('slider-landing.store');
+    Route::put('/slider-landing/{sliderLanding}',          [SliderLandingController::class, 'update'])->name('slider-landing.update');
+    Route::delete('/slider-landing/{sliderLanding}',       [SliderLandingController::class, 'destroy'])->name('slider-landing.destroy');
+    Route::patch('/slider-landing/{sliderLanding}/toggle', [SliderLandingController::class, 'toggleActivo'])->name('slider-landing.toggle');
+
+    // Instituciones Vinculadas del Landing
+    Route::get('/instituciones-vinculadas',                                    [InstitucionVinculadaController::class, 'index'])->name('instituciones-vinculadas.index');
+    Route::post('/instituciones-vinculadas',                                   [InstitucionVinculadaController::class, 'store'])->name('instituciones-vinculadas.store');
+    Route::put('/instituciones-vinculadas/{institucionVinculada}',             [InstitucionVinculadaController::class, 'update'])->name('instituciones-vinculadas.update');
+    Route::delete('/instituciones-vinculadas/{institucionVinculada}',          [InstitucionVinculadaController::class, 'destroy'])->name('instituciones-vinculadas.destroy');
+    Route::patch('/instituciones-vinculadas/{institucionVinculada}/toggle',    [InstitucionVinculadaController::class, 'toggleActivo'])->name('instituciones-vinculadas.toggle');
 
     // --- Control y Seguimiento (permisos: control-interno.*, integridad.*, evidencias.*) ---
     Route::middleware('can:control-interno.ver')->group(function () {
