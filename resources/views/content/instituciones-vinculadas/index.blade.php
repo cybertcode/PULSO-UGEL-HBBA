@@ -103,8 +103,9 @@ $breadcrumbs = [
                       title="Editar">
                 <i class="icon-base ti tabler-edit"></i>
               </button>
-              <form method="POST" action="{{ route('instituciones-vinculadas.destroy', $inst) }}"
-                    class="d-inline" onsubmit="return confirm('¿Eliminar «{{ addslashes($inst->nombre) }}»?')">
+                <form method="POST" action="{{ route('instituciones-vinculadas.destroy', $inst) }}"
+                    class="d-inline form-eliminar"
+                    data-nombre="{{ e($inst->nombre) }}">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-sm btn-icon btn-text-danger" title="Eliminar">
                   <i class="icon-base ti tabler-trash"></i>
@@ -192,31 +193,87 @@ $breadcrumbs = [
 
 @endsection
 
+@section('vendor-style')
+  @vite(['resources/assets/vendor/libs/sweetalert2/sweetalert2.scss'])
+  <style>
+    .swal2-container.swal2-top-end { right:1rem !important; top:1rem !important; left:auto !important; padding:0 !important; width:auto !important; background:transparent !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast { display:flex !important; flex-direction:row !important; align-items:center !important; gap:.6rem !important; padding:.6rem 1rem !important; min-width:260px; max-width:380px; border-radius:.5rem !important; box-shadow:0 4px 20px rgba(0,0,0,.15) !important; font-size:.875rem !important; margin-bottom:.5rem !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-title { margin:0 !important; padding:0 !important; font-size:.875rem !important; font-weight:500 !important; flex:1 !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-icon { width:1.5rem !important; height:1.5rem !important; min-width:1.5rem !important; margin:0 !important; border-width:2px !important; font-size:.5rem !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-html-container,
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-actions,
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-close { display:none !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-timer-progress-bar-container { position:absolute !important; bottom:0 !important; left:0 !important; right:0 !important; height:3px !important; border-radius:0 0 .5rem .5rem !important; overflow:hidden !important; }
+  </style>
+@endsection
+
+@section('vendor-script')
+  @vite(['resources/assets/vendor/libs/sweetalert2/sweetalert2.js'])
+@endsection
+
 @section('page-script')
 <script>
+  var iconColors = { success:'#28c76f', error:'#ea5455', warning:'#ff9f43', info:'#00cfe8' };
+  function toast(icon, title, timer) {
+    Swal.fire({
+      toast: true, position: 'top-end', icon: icon, title: title,
+      showConfirmButton: false, timer: timer || 2800, timerProgressBar: true,
+      customClass: { popup: 'pulso-toast' },
+      iconColor: iconColors[icon] || iconColors.info,
+    });
+  }
+
 document.addEventListener('DOMContentLoaded', function () {
 
-  // Toggle activo
+  // ── Toggle activo con toast ──
   document.querySelectorAll('.toggle-activo').forEach(function (el) {
     el.addEventListener('change', function () {
+      var checkbox = this;
+      var activo = this.checked;
       fetch(this.dataset.url, {
         method: 'PATCH',
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
       })
-      .then(r => r.json())
-      .then(d => { this.checked = d.activo; })
-      .catch(() => { this.checked = !this.checked; });
+      .then(function(r) {
+        if (r.ok) {
+          r.json().then(function(d) { checkbox.checked = d.activo; });
+          toast(activo ? 'success' : 'info', activo ? 'Institución activada' : 'Institución desactivada', 2000);
+        } else {
+          checkbox.checked = !checkbox.checked;
+          toast('error', 'No se pudo cambiar el estado', 3000);
+        }
+      })
+      .catch(function() {
+        checkbox.checked = !checkbox.checked;
+        toast('error', 'Error de conexión', 3000);
+      });
     });
   });
 
-  // Botones editar
+  // ── Eliminar con SweetAlert2 ──
+  document.querySelectorAll('.form-eliminar').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var nombre = this.dataset.nombre || 'esta institución';
+      Swal.fire({
+        title: '¿Eliminar institución?',
+        html: '<strong>' + nombre + '</strong><br><small class="text-muted">Esta acción no se puede deshacer.</small>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '<i class="ti tabler-trash me-1"></i>Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#ea5455',
+      }).then(function(r) { if (r.isConfirmed) form.submit(); });
+    });
+  });
+
+  // ── Botones editar ──
   document.querySelectorAll('.btn-editar').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var d = this.dataset;
       var form = document.getElementById('formEditar');
       form.action = d.route;
 
-      // Logo actual
       var wrap = document.getElementById('logoActualWrap');
       var img  = document.getElementById('logoActualImg');
       if (d.logoSrc && d.logoSrc !== 'null' && d.logoSrc !== '') {
@@ -227,7 +284,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       document.getElementById('eliminarLogo').checked = false;
 
-      // Llenar campos
       form.querySelector('[name="nombre"]').value       = d.nombre || '';
       form.querySelector('[name="sigla"]').value        = d.sigla  || '';
       form.querySelector('[name="color_acento"]').value = d.color  || '#1e3a8a';
@@ -235,11 +291,9 @@ document.addEventListener('DOMContentLoaded', function () {
       form.querySelector('[name="descripcion"]').value  = d.descripcion || '';
       form.querySelector('[name="orden"]').value        = d.orden  || 0;
 
-      // logo_url externo
       var logoUrlField = form.querySelector('[name="logo_url"]');
       if (logoUrlField) logoUrlField.value = d.logoUrlExt || '';
 
-      // Limpiar file input
       var fileInput = form.querySelector('[name="logo_file"]');
       if (fileInput) fileInput.value = '';
 

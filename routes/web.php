@@ -41,6 +41,7 @@ use App\Http\Controllers\pages\InstitucionVinculadaController;
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/',                    [LandingController::class, 'index'])->name('landing');
 Route::get('/noticias/{id}',       [LandingController::class, 'show'])->name('landing.noticia');
+Route::get('/publicaciones',       [LandingController::class, 'publicaciones'])->name('landing.publicaciones');
 Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
 Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('auth-register-basic');
 Route::get('/pages/misc-error',    [MiscError::class,     'index'])->name('pages-misc-error');

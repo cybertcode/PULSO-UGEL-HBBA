@@ -356,7 +356,7 @@ class MenuServiceProvider extends ServiceProvider
                         'url'  => '/slider-landing',
                         'name' => 'Slider del Landing',
                         'icon' => 'menu-icon icon-base ti tabler-slideshow',
-                        'slug' => 'slider-landing',
+                        'slug' => 'slider-landing.index',
                         'i18n' => 'Slides de la página principal',
                     ];
 
@@ -364,7 +364,7 @@ class MenuServiceProvider extends ServiceProvider
                         'url'  => '/instituciones-vinculadas',
                         'name' => 'Instituciones Vinculadas',
                         'icon' => 'menu-icon icon-base ti tabler-building-community',
-                        'slug' => 'instituciones-vinculadas',
+                        'slug' => 'instituciones-vinculadas.index',
                         'i18n' => 'Logos e instituciones del landing',
                     ];
                 }

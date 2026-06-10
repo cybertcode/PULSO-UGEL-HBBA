@@ -40,7 +40,6 @@
                             <th style="width:80px;">Imagen</th>
                             <th>Título</th>
                             <th style="width:110px;">Tipo</th>
-                            <th style="width:80px;" class="text-center">Orden</th>
                             <th style="width:90px;" class="text-center">Estado</th>
                             <th style="width:110px;" class="text-center">Acciones</th>
                         </tr>
@@ -77,9 +76,6 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-label-secondary">{{ $slide->orden }}</span>
-                                </td>
-                                <td class="text-center">
                                     <div class="form-check form-switch d-flex justify-content-center mb-0">
                                         <input class="form-check-input toggle-activo" type="checkbox"
                                             data-id="{{ $slide->id }}" {{ $slide->activo ? 'checked' : '' }}>
@@ -98,7 +94,8 @@
                                         <i class="icon-base ti tabler-pencil"></i>
                                     </button>
                                     <form method="POST" action="{{ route('slider-landing.destroy', $slide) }}"
-                                        class="d-inline form-eliminar">
+                                        class="d-inline form-eliminar"
+                                        data-titulo="{{ e(Str::limit($slide->titulo, 50)) }}">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-icon btn-sm btn-label-danger"
                                             title="Eliminar">
@@ -187,6 +184,7 @@
 
 @section('vendor-style')
   @vite([
+    'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
     'resources/assets/vendor/libs/quill/typography.scss',
     'resources/assets/vendor/libs/quill/katex.scss',
     'resources/assets/vendor/libs/quill/editor.scss'
@@ -195,11 +193,21 @@
     .ql-editor { min-height: 220px; font-size: .92rem; }
     .ql-container { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
     .ql-toolbar { border-top-left-radius: 6px; border-top-right-radius: 6px; }
+    /* ── Toast pulso (igual que el resto del sistema) ── */
+    .swal2-container.swal2-top-end { right: 1rem !important; top: 1rem !important; left: auto !important; padding: 0 !important; width: auto !important; background: transparent !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast { display:flex !important; flex-direction:row !important; align-items:center !important; gap:.6rem !important; padding:.6rem 1rem !important; min-width:260px; max-width:380px; border-radius:.5rem !important; box-shadow:0 4px 20px rgba(0,0,0,.15) !important; font-size:.875rem !important; margin-bottom:.5rem !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-title { margin:0 !important; padding:0 !important; font-size:.875rem !important; font-weight:500 !important; flex:1 !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-icon { width:1.5rem !important; height:1.5rem !important; min-width:1.5rem !important; margin:0 !important; border-width:2px !important; font-size:.5rem !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-html-container,
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-actions,
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-close { display:none !important; }
+    .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-timer-progress-bar-container { position:absolute !important; bottom:0 !important; left:0 !important; right:0 !important; height:3px !important; border-radius:0 0 .5rem .5rem !important; overflow:hidden !important; }
   </style>
 @endsection
 
 @section('vendor-script')
   @vite([
+    'resources/assets/vendor/libs/sweetalert2/sweetalert2.js',
     'resources/assets/vendor/libs/quill/katex.js',
     'resources/assets/vendor/libs/quill/quill.js'
   ])
@@ -207,6 +215,22 @@
 
 @section('page-script')
     <script>
+        // ── Toast helper (mismo patrón que el resto del sistema) ──
+        var iconColors = { success:'#28c76f', error:'#ea5455', warning:'#ff9f43', info:'#00cfe8' };
+        function toast(icon, title, timer) {
+            Swal.fire({
+                toast             : true,
+                position          : 'top-end',
+                icon              : icon,
+                title             : title,
+                showConfirmButton : false,
+                timer             : timer || 2800,
+                timerProgressBar  : true,
+                customClass       : { popup: 'pulso-toast' },
+                iconColor         : iconColors[icon] || iconColors.info,
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
 
             // ── Quill helper ──
@@ -216,8 +240,7 @@
                     editorEl._quillDone = true;
                     var uid      = editorEl.dataset.quillUid;
                     var textarea = document.getElementById('quill-content-' + uid);
-                    var toolbar  = document.getElementById('quill-toolbar-' + uid);
-                    if (!textarea || !toolbar) return;
+                    if (!textarea) return;
 
                     var quill = new Quill(editorEl, {
                         theme: 'snow',
@@ -238,7 +261,7 @@
                 });
             }
 
-            // Inicializar al abrir cualquier modal
+            // Inicializar Quill al abrir cualquier modal
             document.addEventListener('shown.bs.modal', function (e) {
                 initQuillInModal(e.target);
             });
@@ -251,13 +274,22 @@
                 });
             });
 
-            // ── Confirmar eliminación ──
+            // ── Eliminar con SweetAlert2 (patrón del sistema) ──
             document.querySelectorAll('.form-eliminar').forEach(function (form) {
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
-                    if (confirm('¿Eliminar este slide del landing? Esta acción no se puede deshacer.')) {
-                        this.submit();
-                    }
+                    var titulo = this.dataset.titulo || 'esta publicación';
+                    Swal.fire({
+                        title            : '¿Eliminar publicación?',
+                        html             : '<strong>' + titulo + '</strong><br><small class="text-muted">Esta acción no se puede deshacer.</small>',
+                        icon             : 'warning',
+                        showCancelButton : true,
+                        confirmButtonText: '<i class="ti tabler-trash me-1"></i>Sí, eliminar',
+                        cancelButtonText : 'Cancelar',
+                        confirmButtonColor: '#ea5455',
+                    }).then(function (r) {
+                        if (r.isConfirmed) form.submit();
+                    });
                 });
             });
 
@@ -265,14 +297,23 @@
             document.querySelectorAll('.toggle-activo').forEach(function (chk) {
                 chk.addEventListener('change', function () {
                     var checkbox = this;
+                    var activo   = this.checked;
                     fetch('/slider-landing/' + this.dataset.id + '/toggle', {
                         method: 'PATCH',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                             'Accept': 'application/json'
                         }
+                    }).then(function (r) {
+                        if (r.ok) {
+                            toast(activo ? 'success' : 'info', activo ? 'Publicación activada' : 'Publicación desactivada', 2000);
+                        } else {
+                            checkbox.checked = !checkbox.checked;
+                            toast('error', 'No se pudo cambiar el estado', 3000);
+                        }
                     }).catch(function () {
                         checkbox.checked = !checkbox.checked;
+                        toast('error', 'Error de conexión', 3000);
                     });
                 });
             });

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
-use App\Models\ConfiguracionInstitucional;
 use App\Models\InstitucionVinculada;
 use App\Models\SliderLanding;
 
@@ -24,7 +23,7 @@ class LandingController extends Controller
             $this->seedInstituciones();
         }
 
-        $slides        = SliderLanding::activos()->orderBy('orden')->get();
+        $slides        = SliderLanding::activos()->latest()->limit(5)->get();
         $instituciones = InstitucionVinculada::activas()->orderBy('orden')->get();
 
         // Estadísticas reales
@@ -46,13 +45,40 @@ class LandingController extends Controller
         return view('content.landing.index', compact('config', 'slides', 'modulos', 'instituciones', 'stats'));
     }
 
+    public function publicaciones()
+    {
+        $config = null;
+        try { $config = \App\Models\ConfiguracionInstitucional::first(); } catch (\Exception $e) {}
+
+        $tipo = request('tipo');
+        $query = SliderLanding::activos()->latest();
+        if ($tipo && in_array($tipo, ['noticia', 'evento', 'normativa'])) {
+            $query->where('tipo', $tipo);
+        }
+        $publicaciones = $query->paginate(9)->withQueryString();
+        $totales = [
+            'noticia'   => SliderLanding::activos()->where('tipo', 'noticia')->count(),
+            'evento'    => SliderLanding::activos()->where('tipo', 'evento')->count(),
+            'normativa' => SliderLanding::activos()->where('tipo', 'normativa')->count(),
+        ];
+        $instituciones = InstitucionVinculada::activas()->orderBy('orden')->get();
+
+        return view('content.landing.publicaciones', compact('publicaciones', 'totales', 'tipo', 'config', 'instituciones'));
+    }
+
     public function show($id)
     {
         $noticia = SliderLanding::where('activo', true)->findOrFail($id);
         $relacionadas = SliderLanding::activos()
             ->where('id', '!=', $id)
             ->limit(3)->get();
-        return view('content.landing.noticia', compact('noticia', 'relacionadas'));
+
+        $config = null;
+        try { $config = \App\Models\ConfiguracionInstitucional::first(); } catch (\Exception $e) {}
+
+        $instituciones = InstitucionVinculada::activas()->orderBy('orden')->get();
+
+        return view('content.landing.noticia', compact('noticia', 'relacionadas', 'config', 'instituciones'));
     }
 
     private function seedInstituciones(): void
