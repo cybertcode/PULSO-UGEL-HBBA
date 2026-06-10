@@ -23,7 +23,7 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
   <!-- Brand -->
   @if (!isset($navbarFull))
   <div class="app-brand demo">
-    <a href="{{ url('/') }}" class="app-brand-link">
+    <a href="{{ route('dashboard') }}" class="app-brand-link">
       @if(!empty($configInstitucional?->logo_ruta))
         <span class="app-brand-logo demo">
           <img src="{{ Storage::url($configInstitucional->logo_ruta) }}" height="28" alt="logo" class="rounded">

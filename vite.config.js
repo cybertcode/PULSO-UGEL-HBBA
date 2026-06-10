@@ -57,6 +57,7 @@ export default defineConfig({
         'resources/css/app.css',
         'resources/assets/css/demo.css',
         'resources/assets/css/pulso-ugel.css',
+        'resources/assets/css/landing-institucional.css',
         'resources/js/app.js',
         ...pageJsFiles,
         ...vendorJsFiles,

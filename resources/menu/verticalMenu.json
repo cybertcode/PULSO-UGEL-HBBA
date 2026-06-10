@@ -177,6 +177,13 @@
       "slug": "adm-configuracion",
       "i18n": "Parámetros del sistema"
     },
+    {
+      "url": "/slider-landing",
+      "name": "Slider del Landing",
+      "icon": "menu-icon icon-base ti tabler-slideshow",
+      "slug": "slider-landing",
+      "i18n": "Slides de la página principal"
+    },
 
     { "menuHeader": "Soporte" },
     {
