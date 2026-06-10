@@ -204,7 +204,7 @@
                     e.preventDefault();
                     if (confirm(
                             '¿Eliminar este slide del landing? Esta acción no se puede deshacer.'
-                            )) {
+                        )) {
                         this.submit();
                     }
                 });

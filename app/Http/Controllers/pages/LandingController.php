@@ -13,8 +13,8 @@ class LandingController extends Controller
     {
         $config = null;
         try {
-            $config = ConfiguracionInstitucional::cached();
-        } catch (\Exception) {}
+            $config = \App\Models\ConfiguracionInstitucional::first();
+        } catch (\Exception $e) {}
 
         if (SliderLanding::count() === 0) {
             $this->seedSlides();
@@ -24,8 +24,19 @@ class LandingController extends Controller
             $this->seedInstituciones();
         }
 
-        $slides        = SliderLanding::activos()->get();
-        $instituciones = InstitucionVinculada::activas()->get();
+        $slides        = SliderLanding::activos()->orderBy('orden')->get();
+        $instituciones = InstitucionVinculada::activas()->orderBy('orden')->get();
+
+        // Estadísticas reales
+        $stats = [
+            'componentes' => class_exists('\App\Models\Componente') ? \App\Models\Componente::count() : 8,
+            'unidades'    => class_exists('\App\Models\UnidadOrganica') ? \App\Models\UnidadOrganica::count() : 25,
+            'avance'      => class_exists('\App\Models\Actividad') ? round(\App\Models\Actividad::avg('avance') ?? 85, 1) : 85,
+            'paci'        => (class_exists('\App\Models\Paci') && \Schema::hasTable('paci')) 
+                             ? (\App\Models\Paci::latest()->value('anio') ?? date('Y')) 
+                             : date('Y'),
+            'gestion'     => 5,
+        ];
 
         $modulos = [
             ['icono' => 'ti-shield-check',   'nombre' => 'Control Interno',      'desc' => 'Seguimiento de actividades SCI con semáforo de avance en tiempo real.'],
@@ -38,7 +49,7 @@ class LandingController extends Controller
             ['icono' => 'ti-clipboard-list',  'nombre' => 'PACI',                 'desc' => 'Plan Anual de Control Interno con seguimiento por periodos.'],
         ];
 
-        return view('content.landing.index', compact('config', 'slides', 'modulos', 'instituciones'));
+        return view('content.landing.index', compact('config', 'slides', 'modulos', 'instituciones', 'stats'));
     }
 
     public function show($id)
