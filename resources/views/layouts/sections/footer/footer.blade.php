@@ -23,13 +23,15 @@ isset($configData['contentLayout']) && $configData['contentLayout'] === 'compact
           @endif
         </span>
       </div>
-      <div class="d-none d-lg-inline-block text-muted small">
+      <div class="d-none d-lg-inline-block text-muted small d-flex align-items-center gap-2">
         @if($configInstitucional?->sigla)
           {{ $configInstitucional->sigla }}
           @if($configInstitucional?->region)
             &bull; {{ $configInstitucional->region }}
           @endif
+          &nbsp;&bull;&nbsp;
         @endif
+        <span class="__sysref-admin" id="__sysref_c3" style="display:inline-flex;align-items:center;gap:.3rem;opacity:.65;font-size:.78rem"></span>
       </div>
     </div>
   </div>

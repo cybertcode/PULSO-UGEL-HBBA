@@ -8,7 +8,7 @@
 return [
   'custom' => [
     'myLayout' => 'vertical', // Layout type: 'vertical' (default), 'horizontal'
-    // 'primaryColor' => '#FF4646', // Set the primary color
+    'primaryColor' => '#1340A0', // Azul Gobierno PULSO UGEL
     'myTheme' => 'light', // Theme options: 'light' (default), 'dark', 'system'
     'mySkins' => 'default', // Skin options: 'default', 'bordered'
     'hasSemiDark' => false, // Semi-dark mode: true/false (false by default)
