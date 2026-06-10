@@ -1,6 +1,7 @@
 @php
     $configData = Helper::appClasses();
     $isFront = true;
+    $customizerHidden = 'customizer-hide'; // Ocultar customizer en el landing
 @endphp
 @extends('layouts/layoutLanding')
 @section('title', 'PULSO UGEL — Sistema de Control Interno')
@@ -9,6 +10,66 @@
 @endsection
 @section('page-style')
     @vite(['resources/assets/css/landing-institucional.css'])
+    <style>
+        /* ─── ESTRUCTURA GLOBAL (90% VENTANA) ─── */
+        body {
+            background-color: var(--bg);
+        }
+
+        /* Envoltorio principal para centrar todo el contenido al 90% */
+        .ugel-topbar,
+        .ugel-nav,
+        section,
+        .ugel-footer {
+            width: 90% !important;
+            max-width: 1800px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        /* Ajustes específicos para elementos pegajosos y bordes */
+        .ugel-nav {
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .ugel-hero__grid, 
+        .ugel-hero__stats {
+            width: 100% !important; /* Ocupan todo el ancho de su padre (que ya es 90%) */
+            max-width: none !important;
+        }
+
+        /* ─── CONTENEDORES INTERNOS (95% DEL PADRE) ─── */
+        .container,
+        .ugel-topbar__inner,
+        .ugel-nav__inner,
+        .ugel-footer__grid,
+        .ugel-footer__bottom-inner {
+            width: 95% !important;
+            max-width: 1700px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        /* Corrección para secciones con fondo completo */
+        .ugel-section--alt {
+            background-color: var(--bg);
+        }
+        
+        .ugel-cta {
+            border-radius: 16px;
+        }
+
+        @media (max-width: 991px) {
+            .ugel-topbar, .ugel-nav, section, .ugel-footer {
+                width: 96% !important;
+            }
+            .container {
+                width: 92% !important;
+            }
+        }
+    </style>
 @endsection
 @section('vendor-script')
     @vite(['resources/assets/vendor/libs/swiper/swiper.js'])
@@ -238,23 +299,23 @@
             <div class="container">
                 <div class="ugel-stats-row">
                     <div class="ugel-stat">
-                        <span class="ugel-stat__n" data-target="8">0</span>
+                        <span class="ugel-stat__n" data-target="{{ $stats['componentes'] }}">0</span>
                         <span class="ugel-stat__l">Componentes SCI</span>
                     </div>
                     <div class="ugel-stat">
-                        <span class="ugel-stat__n" data-target="25" data-suffix="+">0</span>
+                        <span class="ugel-stat__n" data-target="{{ $stats['unidades'] }}" data-suffix="+">0</span>
                         <span class="ugel-stat__l">Unidades Orgánicas</span>
                     </div>
                     <div class="ugel-stat">
-                        <span class="ugel-stat__n" data-target="85" data-suffix="%">0</span>
-                        <span class="ugel-stat__l">Avance SCI 2025</span>
+                        <span class="ugel-stat__n" data-target="{{ $stats['avance'] }}" data-suffix="%">0</span>
+                        <span class="ugel-stat__l">Avance SCI {{ $stats['paci'] }}</span>
                     </div>
                     <div class="ugel-stat">
-                        <span class="ugel-stat__n">2025</span>
+                        <span class="ugel-stat__n">{{ $stats['paci'] }}</span>
                         <span class="ugel-stat__l">Plan Anual Activo</span>
                     </div>
                     <div class="ugel-stat">
-                        <span class="ugel-stat__n">5</span>
+                        <span class="ugel-stat__n">{{ $stats['gestion'] }}</span>
                         <span class="ugel-stat__l">Años de Gestión</span>
                     </div>
                 </div>

@@ -30,6 +30,13 @@ body {
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: linear-gradient(var(--red), var(--navy)); border-radius: 4px; }
 
+.container {
+  width: 95% !important;
+  max-width: 1650px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 /* ─── TOPBAR ─── */
 .ugel-topbar {
   background: linear-gradient(90deg, #0c1130, #1e3a8a);
@@ -136,20 +143,20 @@ body {
 .ugel-hero { background: var(--bg); padding: 0; }
 .ugel-hero__grid {
   display: flex; align-items: stretch;
-  height: min(460px, 95vh);
+  height: min(480px, 95vh);
   position: relative; z-index: 1;
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 8px 40px rgba(0,0,0,.10), 0 1px 4px rgba(0,0,0,.06);
   border: 1px solid var(--border);
-  max-width: 1280px;
+  width: 95%;
+  max-width: 1650px;
   margin: 1.5rem auto 1.75rem;
-  width: calc(100% - 3rem);
 }
 .ugel-hero__left {
   flex: 0 0 auto;
-  width: clamp(340px, 44%, 520px);
-  padding: 1.75rem 2.25rem;
+  width: clamp(340px, 42%, 580px);
+  padding: 2.25rem 3.5rem;
   display: flex; flex-direction: column; justify-content: center; gap: 0;
   background: var(--white); border-right: 1px solid var(--border);
   overflow: hidden;
@@ -230,8 +237,8 @@ body {
   background: linear-gradient(90deg, #050d1e, #1e3a8a 50%, #050d1e);
   padding: 1.5rem 0;
   position: relative; overflow: hidden;
-  width: calc(100% - 3rem);
-  max-width: 1280px;
+  width: 95%;
+  max-width: 1650px;
   margin: 0 auto 1.75rem;
   border-radius: 14px;
 }
@@ -393,8 +400,20 @@ body {
 .ugel-footer__bottom-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; font-size: .76rem; color: rgba(255,255,255,.22); }
 
 /* ─── ANIMACIONES ─── */
+/* ─── EFECTOS DE PULIDO ─── */
+.ugel-nav.scrolled { background: rgba(255,255,255,.8); backdrop-filter: blur(12px) saturate(160%); }
+.ugel-module:hover { border-color: var(--navy); box-shadow: 0 20px 48px rgba(30,58,138,.18); }
+.ugel-norm:hover { border-left-width: 8px; background: var(--navy-l); }
+.ugel-inst:hover { transform: translateY(-8px) scale(1.02); }
+
+@media (max-width: 575px) {
+  .ugelito-chat { bottom: 1rem; right: 1rem; }
+  .ugelito-chat__window { width: calc(100vw - 2rem); right: 0; }
+}
+
 .ugel-anim-pending.ugel-anim-in { animation: fadeUp .5s var(--ease) var(--delay,0ms) both; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
 .ugel-reveal { opacity: 0; transform: translateY(20px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
 .ugel-reveal.visible { opacity: 1; transform: none; }
 
