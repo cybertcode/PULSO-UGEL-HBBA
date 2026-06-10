@@ -228,7 +228,7 @@
 
                 <p class="ugel-hero__desc">
                     Plataforma digital para la gestión, seguimiento y evaluación del Sistema de Control Interno
-                    de la {{ $config?->nombre_institucion ?? 'UGEL Huacaybamba' }},
+                    de la {{ $config?->nombre_institucion ?? 'UGEL HUACAYBAMBA' }},
                     alineada con los lineamientos de la Contraloría General de la República del Perú.
                 </p>
 

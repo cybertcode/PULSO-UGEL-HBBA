@@ -185,44 +185,94 @@
 
 @endsection
 
+@section('vendor-style')
+  @vite([
+    'resources/assets/vendor/libs/quill/typography.scss',
+    'resources/assets/vendor/libs/quill/katex.scss',
+    'resources/assets/vendor/libs/quill/editor.scss'
+  ])
+  <style>
+    .ql-editor { min-height: 220px; font-size: .92rem; }
+    .ql-container { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+    .ql-toolbar { border-top-left-radius: 6px; border-top-right-radius: 6px; }
+  </style>
+@endsection
+
+@section('vendor-script')
+  @vite([
+    'resources/assets/vendor/libs/quill/katex.js',
+    'resources/assets/vendor/libs/quill/quill.js'
+  ])
+@endsection
+
 @section('page-script')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
 
-            // Botón editar → abrir el modal correspondiente al slide
-            document.querySelectorAll('.btn-editar').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.dataset.id;
-                    const modal = document.getElementById('modalEditar' + id);
+            // ── Quill helper ──
+            function initQuillInModal(modalEl) {
+                modalEl.querySelectorAll('[data-quill-uid]').forEach(function (editorEl) {
+                    if (editorEl._quillDone) return;
+                    editorEl._quillDone = true;
+                    var uid      = editorEl.dataset.quillUid;
+                    var textarea = document.getElementById('quill-content-' + uid);
+                    var toolbar  = document.getElementById('quill-toolbar-' + uid);
+                    if (!textarea || !toolbar) return;
+
+                    var quill = new Quill(editorEl, {
+                        theme: 'snow',
+                        placeholder: 'Escribe el contenido completo del artículo aquí…',
+                        modules: { toolbar: '#quill-toolbar-' + uid }
+                    });
+
+                    if (textarea.value.trim()) {
+                        quill.root.innerHTML = textarea.value;
+                    }
+
+                    var form = editorEl.closest('form');
+                    if (form) {
+                        form.addEventListener('submit', function () {
+                            textarea.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
+                        });
+                    }
+                });
+            }
+
+            // Inicializar al abrir cualquier modal
+            document.addEventListener('shown.bs.modal', function (e) {
+                initQuillInModal(e.target);
+            });
+
+            // ── Botón editar → abrir modal ──
+            document.querySelectorAll('.btn-editar').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var modal = document.getElementById('modalEditar' + this.dataset.id);
                     if (modal) new bootstrap.Modal(modal).show();
                 });
             });
 
-            // Confirmar eliminación
-            document.querySelectorAll('.form-eliminar').forEach(form => {
-                form.addEventListener('submit', function(e) {
+            // ── Confirmar eliminación ──
+            document.querySelectorAll('.form-eliminar').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
                     e.preventDefault();
-                    if (confirm(
-                            '¿Eliminar este slide del landing? Esta acción no se puede deshacer.'
-                        )) {
+                    if (confirm('¿Eliminar este slide del landing? Esta acción no se puede deshacer.')) {
                         this.submit();
                     }
                 });
             });
 
-            // Toggle activo via AJAX
-            document.querySelectorAll('.toggle-activo').forEach(chk => {
-                chk.addEventListener('change', function() {
-                    const checkbox = this;
-                    fetch(`/slider-landing/${this.dataset.id}/toggle`, {
+            // ── Toggle activo via AJAX ──
+            document.querySelectorAll('.toggle-activo').forEach(function (chk) {
+                chk.addEventListener('change', function () {
+                    var checkbox = this;
+                    fetch('/slider-landing/' + this.dataset.id + '/toggle', {
                         method: 'PATCH',
                         headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')
-                                .content,
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                             'Accept': 'application/json'
                         }
-                    }).catch(() => {
-                        checkbox.checked = !checkbox.checked; // revertir si falla
+                    }).catch(function () {
+                        checkbox.checked = !checkbox.checked;
                     });
                 });
             });

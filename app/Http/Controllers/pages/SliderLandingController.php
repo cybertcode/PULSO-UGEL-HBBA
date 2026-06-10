@@ -18,16 +18,19 @@ class SliderLandingController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'tipo'            => 'required|in:noticia,evento,normativa',
-            'titulo'          => 'required|string|max:255',
-            'descripcion'     => 'nullable|string|max:1000',
-            'etiqueta'        => 'nullable|string|max:80',
-            'color_gradiente' => 'nullable|string|max:300',
-            'imagen_file'     => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-            'url_accion'      => 'nullable|url|max:255',
-            'texto_accion'    => 'nullable|string|max:80',
-            'orden'           => 'nullable|integer|min:0',
-            'activo'          => 'boolean',
+            'tipo'               => 'required|in:noticia,evento,normativa',
+            'titulo'             => 'required|string|max:255',
+            'descripcion'        => 'nullable|string|max:1000',
+            'contenido'          => 'nullable|string',
+            'autor'              => 'nullable|string|max:100',
+            'etiqueta'           => 'nullable|string|max:80',
+            'color_gradiente'    => 'nullable|string|max:300',
+            'imagen_file'        => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'imagen_portada_file'=> 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'url_accion'         => 'nullable|url|max:255',
+            'texto_accion'       => 'nullable|string|max:80',
+            'orden'              => 'nullable|integer|min:0',
+            'activo'             => 'boolean',
         ]);
 
         if ($request->hasFile('imagen_file')) {
@@ -35,7 +38,12 @@ class SliderLandingController extends Controller
                 $request->file('imagen_file')->store('slider-landing', 'public')
             );
         }
-        unset($data['imagen_file']);
+        if ($request->hasFile('imagen_portada_file')) {
+            $data['imagen_portada_url'] = Storage::url(
+                $request->file('imagen_portada_file')->store('slider-landing', 'public')
+            );
+        }
+        unset($data['imagen_file'], $data['imagen_portada_file']);
 
         $data['orden'] ??= SliderLanding::max('orden') + 1;
         $data['activo'] = $request->boolean('activo', true);
@@ -49,41 +57,46 @@ class SliderLandingController extends Controller
     public function update(Request $request, SliderLanding $sliderLanding)
     {
         $data = $request->validate([
-            'tipo'            => 'required|in:noticia,evento,normativa',
-            'titulo'          => 'required|string|max:255',
-            'descripcion'     => 'nullable|string|max:1000',
-            'etiqueta'        => 'nullable|string|max:80',
-            'color_gradiente' => 'nullable|string|max:300',
-            'imagen_file'     => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-            'eliminar_imagen' => 'nullable|boolean',
-            'url_accion'      => 'nullable|url|max:255',
-            'texto_accion'    => 'nullable|string|max:80',
-            'orden'           => 'nullable|integer|min:0',
-            'activo'          => 'boolean',
+            'tipo'               => 'required|in:noticia,evento,normativa',
+            'titulo'             => 'required|string|max:255',
+            'descripcion'        => 'nullable|string|max:1000',
+            'contenido'          => 'nullable|string',
+            'autor'              => 'nullable|string|max:100',
+            'etiqueta'           => 'nullable|string|max:80',
+            'color_gradiente'    => 'nullable|string|max:300',
+            'imagen_file'        => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'eliminar_imagen'    => 'nullable|boolean',
+            'imagen_portada_file'=> 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'url_accion'         => 'nullable|url|max:255',
+            'texto_accion'       => 'nullable|string|max:80',
+            'orden'              => 'nullable|integer|min:0',
+            'activo'             => 'boolean',
         ]);
 
-        // Subir nueva imagen
         if ($request->hasFile('imagen_file')) {
-            // Eliminar imagen anterior del storage si existe y fue subida localmente
             if ($sliderLanding->imagen_url && str_starts_with($sliderLanding->imagen_url, '/storage/')) {
-                Storage::disk('public')->delete(
-                    str_replace('/storage/', '', $sliderLanding->imagen_url)
-                );
+                Storage::disk('public')->delete(str_replace('/storage/', '', $sliderLanding->imagen_url));
             }
             $data['imagen_url'] = Storage::url(
                 $request->file('imagen_file')->store('slider-landing', 'public')
             );
         } elseif ($request->boolean('eliminar_imagen')) {
-            // Eliminar imagen sin reemplazar
             if ($sliderLanding->imagen_url && str_starts_with($sliderLanding->imagen_url, '/storage/')) {
-                Storage::disk('public')->delete(
-                    str_replace('/storage/', '', $sliderLanding->imagen_url)
-                );
+                Storage::disk('public')->delete(str_replace('/storage/', '', $sliderLanding->imagen_url));
             }
             $data['imagen_url'] = null;
         }
 
-        unset($data['imagen_file'], $data['eliminar_imagen']);
+        if ($request->hasFile('imagen_portada_file')) {
+            if ($sliderLanding->imagen_portada_url && str_starts_with($sliderLanding->imagen_portada_url, '/storage/')) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $sliderLanding->imagen_portada_url));
+            }
+            $data['imagen_portada_url'] = Storage::url(
+                $request->file('imagen_portada_file')->store('slider-landing', 'public')
+            );
+        }
+
+        unset($data['imagen_file'], $data['eliminar_imagen'], $data['imagen_portada_file']);
         $data['activo'] = $request->boolean('activo');
         $sliderLanding->update($data);
 

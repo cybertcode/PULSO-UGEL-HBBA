@@ -9,7 +9,8 @@ class SliderLanding extends Model
     protected $table = 'slider_landing';
 
     protected $fillable = [
-        'tipo', 'titulo', 'descripcion', 'imagen_url',
+        'tipo', 'titulo', 'descripcion', 'contenido', 'autor',
+        'imagen_url', 'imagen_portada_url',
         'color_gradiente', 'etiqueta', 'url_accion',
         'texto_accion', 'orden', 'activo',
     ];

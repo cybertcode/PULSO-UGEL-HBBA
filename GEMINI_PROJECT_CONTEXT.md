@@ -1,5 +1,15 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
+## [v1.5.3] - 2026-06-10
+### Sistema de Contenido Enriquecido y Detalle de Noticias
+- **Editor Quill Integrado**: Implementación de un editor de texto enriquecido (WYSIWYG) en el panel administrativo para la gestión de contenidos con formato profesional.
+- **Rediseño de Página de Detalle**: Transformación de `noticia.blade.php` en un portal de lectura inmersivo con:
+    - **Hero Header**: Gradientes dinámicos y meta-información estilizada (autor, fecha traducida, tiempo estimado de lectura).
+    - **Cuerpo del Artículo**: Tipografía optimizada para lectura, soporte para HTML enriquecido y bloques de resumen destacados.
+    - **Sidebar Ejecutivo**: Acceso rápido al sistema PULSO y carrusel vertical de publicaciones relacionadas.
+- **Gestión Multimedia**: Soporte para imágenes de portada (`imagen_portada_url`) independientes del slider y sistema de previsualización en tiempo real durante la carga.
+- **Estructura de Datos**: Extensión de la tabla `slider_landing` mediante migración para soportar los nuevos campos de contenido y metadatos.
+
 ## [v1.5.2] - 2026-06-09
 ### Rediseño Integral de UI/UX (Landing Page Premium)
 - **Paleta de Colores Gubernamental**: Transición a una gama cromática ejecutiva (Azul Confianza `#1E3A8A`, Rojo Crimson `#E31B54`, Ámbar `#F59E0B`) con contrastes accesibles y fondos Slate.
