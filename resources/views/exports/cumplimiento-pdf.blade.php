@@ -44,7 +44,7 @@
 <div class="meta">
   <span>Período: {{ $anio }}</span>
   @if($filtro_unidad)<span>Unidad: {{ $filtro_unidad }}</span>@endif
-  @if($filtro_componente)<span>Componente: {{ $filtro_componente }}</span>@endif
+  @if(!empty($filtro_modulo))<span>Módulo: {{ ucfirst($filtro_modulo) }}</span>@endif
 </div>
 
 {{-- KPIs --}}

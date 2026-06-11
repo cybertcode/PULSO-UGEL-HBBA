@@ -168,18 +168,38 @@ $configData = Helper::appClasses();
 
       <div class="vr opacity-25 d-none d-md-block"></div>
 
+      <div class="vr opacity-25 d-none d-md-block"></div>
+
+      {{-- Módulo --}}
+      <div class="d-flex align-items-center gap-1 flex-wrap">
+        <span class="text-muted small me-1" style="white-space:nowrap;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Módulo</span>
+        @foreach([
+          ''=>['label'=>'Todos','color'=>'secondary'],
+          'sci'=>['label'=>'SCI','color'=>'primary'],
+          'integridad'=>['label'=>'Integridad','color'=>'warning'],
+        ] as $val => $meta)
+        @php $isActive = ($modulo ?? '') === $val; @endphp
+        <a href="{{ route('mon-alertas', ['tab'=>$tab,'prioridad'=>$prioridad,'tipo'=>$tipo,'modulo'=>$val ?: null]) }}"
+           class="badge rounded-pill text-decoration-none px-2 py-1 {{ $isActive ? 'bg-'.$meta['color'] : 'bg-label-secondary text-secondary' }}"
+           style="font-size:11px;font-weight:500">{{ $meta['label'] }}</a>
+        @endforeach
+      </div>
+
+      <div class="vr opacity-25 d-none d-md-block"></div>
+
       {{-- Tipo --}}
       <div class="d-flex align-items-center gap-1 flex-wrap">
         <span class="text-muted small me-1" style="white-space:nowrap;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Tipo</span>
         @foreach([
           ''=>['label'=>'Todos','icon'=>'tabler-list'],
           'vencimiento'=>['label'=>'Vencimiento','icon'=>'tabler-calendar-x'],
+          'vencimiento_proximo'=>['label'=>'Por vencer','icon'=>'tabler-clock-alert'],
           'avance_bajo'=>['label'=>'Avance bajo','icon'=>'tabler-trending-down'],
           'evidencia_falta'=>['label'=>'Sin evidencia','icon'=>'tabler-file-off'],
           'sistema'=>['label'=>'Sistema','icon'=>'tabler-bell'],
         ] as $val => $meta)
         @php $isActive = ($tipo ?? '') === $val; @endphp
-        <a href="{{ route('mon-alertas', ['tab'=>$tab,'prioridad'=>$prioridad,'tipo'=>$val ?: null]) }}"
+        <a href="{{ route('mon-alertas', ['tab'=>$tab,'prioridad'=>$prioridad,'tipo'=>$val ?: null,'modulo'=>$modulo]) }}"
            class="badge rounded-pill text-decoration-none px-2 py-1 {{ $isActive ? 'bg-primary' : 'bg-label-secondary text-secondary' }}"
            style="font-size:11px;font-weight:500">
           <i class="ti {{ $meta['icon'] }} me-1" style="font-size:10px"></i>{{ $meta['label'] }}
@@ -216,11 +236,13 @@ $configData = Helper::appClasses();
             default           => 'tabler-bell',
           };
           $tipoLabel = match($alerta->tipo) {
-            'vencimiento'     => 'Vencimiento',
-            'avance_bajo'     => 'Avance bajo',
-            'evidencia_falta' => 'Sin evidencia',
-            default           => 'Sistema',
+            'vencimiento'         => 'Vencimiento',
+            'vencimiento_proximo' => 'Por vencer (' . ($alerta->dias_anticipacion ?? '?') . 'd)',
+            'avance_bajo'         => 'Avance bajo',
+            'evidencia_falta'     => 'Sin evidencia',
+            default               => 'Sistema',
           };
+          $moduloColor = $alerta->modulo === 'integridad' ? 'warning' : 'primary';
           $diasRestantes = null;
           if ($alerta->actividad?->fecha_limite) {
             $diasRestantes = (int) round(now()->diffInDays($alerta->actividad->fecha_limite, false));
@@ -254,6 +276,11 @@ $configData = Helper::appClasses();
                   <span class="badge bg-label-secondary text-secondary" style="font-size:10px">
                     <i class="ti {{ $tipoIcon }} me-1" style="font-size:9px"></i>{{ $tipoLabel }}
                   </span>
+                  @if($alerta->modulo)
+                  <span class="badge bg-label-{{ $moduloColor }}" style="font-size:10px">
+                    {{ strtoupper($alerta->modulo) }}
+                  </span>
+                  @endif
                   @if($alerta->actividad)
                   <span class="text-muted" style="font-size:11px">
                     <i class="ti tabler-link me-1" style="font-size:10px"></i>{{ Str::limit($alerta->actividad->nombre, 50) }}
@@ -330,11 +357,20 @@ $configData = Helper::appClasses();
           {{-- Acciones --}}
           <td class="text-end px-4 py-3">
             <div class="d-flex align-items-center justify-content-end gap-2">
+              {{-- Enviar email manual --}}
+              <form method="POST" action="{{ route('mon-alertas.email', $alerta) }}" class="d-inline"
+                title="{{ $alerta->email_enviado ? 'Email ya enviado el '.$alerta->email_enviado_at?->format('d/m/Y') : 'Enviar email al responsable' }}">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-icon btn-label-info"
+                  {{ $alerta->email_enviado ? 'disabled' : '' }}>
+                  <i class="ti tabler-mail icon-14px"></i>
+                </button>
+              </form>
               @if(!$isLeida)
               <form method="POST" action="{{ route('mon-alertas.leer', $alerta) }}" class="d-inline">
                 @csrf @method('PATCH')
                 <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size:12px">
-                  <i class="ti tabler-eye me-1" style="font-size:11px"></i>Ver alerta
+                  <i class="ti tabler-eye me-1" style="font-size:11px"></i>Marcar leída
                 </button>
               </form>
               @else
@@ -409,10 +445,18 @@ $configData = Helper::appClasses();
               <input type="text" name="titulo" class="form-control" required placeholder="Resumen claro de la alerta">
             </div>
             <div class="col-md-6">
+              <label class="form-label fw-semibold">Módulo <span class="text-danger">*</span></label>
+              <select name="modulo" class="form-select" required>
+                <option value="sci">Sistema de Control Interno</option>
+                <option value="integridad">Modelo de Integridad</option>
+              </select>
+            </div>
+            <div class="col-md-6">
               <label class="form-label fw-semibold">Tipo</label>
               <select name="tipo" class="form-select">
                 <option value="sistema">Sistema</option>
                 <option value="vencimiento">Vencimiento</option>
+                <option value="vencimiento_proximo">Por vencer</option>
                 <option value="avance_bajo">Avance Bajo</option>
                 <option value="evidencia_falta">Evidencia Faltante</option>
               </select>

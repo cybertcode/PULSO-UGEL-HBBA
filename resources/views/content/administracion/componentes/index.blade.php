@@ -2,15 +2,6 @@
 use Illuminate\Support\Str;
 $configData = Helper::appClasses();
 
-$categoriasSCI = [
-    'Ambiente de Control',
-    'Evaluación de Riesgos',
-    'Actividades de Control',
-    'Información y Comunicación',
-    'Supervisión y Monitoreo',
-];
-
-// Incluye todos los íconos usados en BD más opciones adicionales
 $iconosSCI = [
     'tabler-crown'            => 'Alta Dirección',
     'tabler-shield-check'     => 'Integridad',
@@ -51,113 +42,63 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
 @section('vendor-style')
 @vite([
   'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
-  'resources/assets/vendor/libs/select2/select2.scss',
 ])
 @endsection
 @section('vendor-script')
 @vite([
   'resources/assets/vendor/libs/sweetalert2/sweetalert2.js',
-  'resources/assets/vendor/libs/select2/select2.js',
 ])
 @endsection
 
 @section('page-style')
 <style>
-/* ── Toast compacto (fix Vuexy mixin — !important necesario por orden de carga) ── */
 .swal2-container.swal2-top-end {
-  top: 1rem !important;
-  right: 1rem !important;
-  left: auto !important;
-  padding: 0 !important;
-  width: auto !important;
-  background: transparent !important;
+  top: 1rem !important; right: 1rem !important;
+  left: auto !important; padding: 0 !important;
+  width: auto !important; background: transparent !important;
 }
 .swal2-container.swal2-top-end .swal2-popup.pulso-toast {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: .6rem !important;
-  padding: .6rem 1rem !important;
-  width: auto !important;
-  min-width: 240px !important;
-  max-width: 340px !important;
+  display: flex !important; flex-direction: row !important;
+  align-items: center !important; gap: .6rem !important;
+  padding: .6rem 1rem !important; width: auto !important;
+  min-width: 240px !important; max-width: 340px !important;
   border-radius: .5rem !important;
   box-shadow: 0 4px 20px rgba(0,0,0,.15) !important;
-  font-size: .875rem !important;
-  margin-bottom: .5rem !important;
+  font-size: .875rem !important; margin-bottom: .5rem !important;
 }
 .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-title {
-  margin: 0 !important;
-  padding: 0 !important;
-  font-size: .875rem !important;
-  font-weight: 500 !important;
-  line-height: 1.3 !important;
-  flex: 1 !important;
+  margin: 0 !important; padding: 0 !important;
+  font-size: .875rem !important; font-weight: 500 !important;
+  line-height: 1.3 !important; flex: 1 !important;
 }
 .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-icon {
-  width: 1.5rem !important;
-  height: 1.5rem !important;
-  min-width: 1.5rem !important;
-  margin: 0 !important;
-  border-width: 2px !important;
-  font-size: .5rem !important;
+  width: 1.5rem !important; height: 1.5rem !important;
+  min-width: 1.5rem !important; margin: 0 !important;
+  border-width: 2px !important; font-size: .5rem !important;
 }
-.swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-html-container {
-  display: none !important;
-}
+.swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-html-container,
 .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-actions,
-.swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-close {
-  display: none !important;
-}
+.swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-close { display: none !important; }
 .swal2-container.swal2-top-end .swal2-popup.pulso-toast .swal2-timer-progress-bar-container {
-  position: absolute !important;
-  bottom: 0 !important; left: 0 !important; right: 0 !important;
-  height: 3px !important;
-  border-radius: 0 0 .5rem .5rem !important;
-  overflow: hidden !important;
+  position: absolute !important; bottom: 0 !important; left: 0 !important;
+  right: 0 !important; height: 3px !important;
+  border-radius: 0 0 .5rem .5rem !important; overflow: hidden !important;
 }
-/* quitar backdrop del toast */
-.swal2-container.swal2-top-end.swal2-backdrop-show {
-  background: transparent !important;
-}
+.swal2-container.swal2-top-end.swal2-backdrop-show { background: transparent !important; }
 
-/* ── Icon picker ──────────────────────────────────────────────────── */
-.icon-picker-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: .35rem;
-}
+.icon-picker-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: .35rem; }
 .icon-picker-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: .4rem;
-    border: 2px solid transparent;
-    border-radius: .5rem;
-    cursor: pointer;
-    background: var(--bs-body-bg);
-    transition: all .15s;
+    display: flex; align-items: center; justify-content: center;
+    padding: .4rem; border: 2px solid transparent; border-radius: .5rem;
+    cursor: pointer; background: var(--bs-body-bg); transition: all .15s;
     color: var(--bs-secondary-color);
 }
-.icon-picker-btn:hover {
-    border-color: var(--bs-primary);
-    background: var(--bs-primary-bg-subtle);
-    color: var(--bs-primary);
-}
-.icon-picker-btn.selected {
-    border-color: var(--bs-primary);
-    background: var(--bs-primary);
-    color: #fff;
-}
+.icon-picker-btn:hover { border-color: var(--bs-primary); background: var(--bs-primary-bg-subtle); color: var(--bs-primary); }
+.icon-picker-btn.selected { border-color: var(--bs-primary); background: var(--bs-primary); color: #fff; }
 .icon-picker-btn i { font-size: 1.3rem; }
 .comp-card { transition: transform .15s, box-shadow .15s; }
 .comp-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
-.comp-icon-wrap {
-    width: 48px; height: 48px;
-    border-radius: .75rem;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-}
+.comp-icon-wrap { width: 48px; height: 48px; border-radius: .75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 </style>
 @endsection
 
@@ -171,11 +112,10 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
   </ol>
 </nav>
 
-{{-- Cabecera --}}
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
   <div>
     <h4 class="mb-1"><i class="ti tabler-layout-grid me-2"></i>Componentes del Sistema de Control Interno</h4>
-    <p class="mb-0 text-muted">Gestión de los componentes del Modelo de Integridad Institucional</p>
+    <p class="mb-0 text-muted">Catálogo de componentes SCI</p>
   </div>
   @can('componentes.editar')
   <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoComponente">
@@ -184,7 +124,6 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
   @endcan
 </div>
 
-{{-- Estadísticas --}}
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-3">
     <div class="card text-center h-100">
@@ -232,7 +171,6 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
   </div>
 </div>
 
-{{-- Tarjetas --}}
 <div class="row g-4" id="componentes-grid">
   @forelse($componentes as $comp)
   @php
@@ -250,12 +188,7 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
             <div class="comp-icon-wrap bg-label-primary">
               <i class="ti {{ $icono }} text-primary" style="font-size:1.4rem"></i>
             </div>
-            <div>
-              <span class="badge bg-label-secondary rounded-pill fw-bold mb-1">N° {{ $comp->numero }}</span>
-              @if($comp->tipo)
-              <div><span class="badge bg-label-info rounded-pill" style="font-size:.7rem">{{ $comp->tipo }}</span></div>
-              @endif
-            </div>
+            <span class="badge bg-label-secondary rounded-pill fw-bold">N° {{ $comp->numero }}</span>
           </div>
           <div class="d-flex gap-1 align-items-center">
             @if(!$comp->activo)
@@ -268,7 +201,6 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
               data-numero="{{ $comp->numero }}"
               data-nombre="{{ $comp->nombre }}"
               data-icono="{{ $comp->icono ?? 'tabler-puzzle' }}"
-              data-tipo="{{ $comp->tipo ?? '' }}"
               data-descripcion="{{ e($comp->descripcion ?? '') }}"
               data-activo="{{ $comp->activo ? '1' : '0' }}"
               title="Editar">
@@ -350,15 +282,6 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
               <input type="text" name="nombre" class="form-control" placeholder="Ej: Compromiso de Alta Dirección" required autofocus>
             </div>
             <div class="col-12">
-              <label class="form-label">Categoría SCI</label>
-              <select name="tipo" class="form-select">
-                <option value="">— Sin categoría —</option>
-                @foreach($categoriasSCI as $cat)
-                <option value="{{ $cat }}">{{ $cat }}</option>
-                @endforeach
-              </select>
-            </div>
-            <div class="col-12">
               <label class="form-label">Ícono</label>
               <input type="hidden" name="icono" id="nuevo_icono_val" value="tabler-puzzle">
               <div class="icon-picker-grid" id="nuevo_icon_picker">
@@ -415,15 +338,6 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
               <input type="text" name="nombre" id="edit_comp_nombre" class="form-control" required>
             </div>
             <div class="col-12">
-              <label class="form-label">Categoría SCI</label>
-              <select name="tipo" id="edit_comp_tipo" class="form-select">
-                <option value="">— Sin categoría —</option>
-                @foreach($categoriasSCI as $cat)
-                <option value="{{ $cat }}">{{ $cat }}</option>
-                @endforeach
-              </select>
-            </div>
-            <div class="col-12">
               <label class="form-label">Ícono</label>
               <input type="hidden" name="icono" id="edit_icono_val" value="tabler-puzzle">
               <div class="icon-picker-grid" id="edit_icon_picker">
@@ -464,53 +378,19 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  // ─── Toast helper (fix Vuexy mixin — usa customClass para forzar estilos toast) ──
   function toast(icon, title, timer) {
-    const iconColors = {
-      success : '#28c76f',
-      error   : '#ea5455',
-      warning : '#ff9f43',
-      info    : '#00cfe8',
-      question: '#7367f0',
-    };
+    const iconColors = { success:'#28c76f', error:'#ea5455', warning:'#ff9f43', info:'#00cfe8' };
     Swal.fire({
-      toast             : true,
-      position          : 'top-end',
-      icon              : icon,
-      title             : title,
-      showConfirmButton : false,
-      timer             : timer || 2800,
-      timerProgressBar  : true,
-      customClass       : { popup: 'pulso-toast' },
-      iconColor         : iconColors[icon] || iconColors.info,
+      toast: true, position: 'top-end', icon, title,
+      showConfirmButton: false, timer: timer || 2800, timerProgressBar: true,
+      customClass: { popup: 'pulso-toast' }, iconColor: iconColors[icon] || iconColors.info,
     });
   }
 
-  // ─── Flash session ──────────────────────────────────────────────────────────
-  @if(session('success'))
-  toast('success', @json(session('success')), 3000);
-  @endif
-  @if(session('error'))
-  toast('error', @json(session('error')), 4500);
-  @endif
+  @if(session('success')) toast('success', @json(session('success')), 3000); @endif
+  @if(session('error'))   toast('error',   @json(session('error')),   4500); @endif
 
-  // ─── Select2 para Categoría SCI ────────────────────────────────────────────
-  if (typeof $ !== 'undefined' && $.fn.select2) {
-    $('#modalNuevoComponente select[name="tipo"]').select2({
-      dropdownParent: $('#modalNuevoComponente'),
-      placeholder: '— Sin categoría —',
-      allowClear: true,
-      width: '100%',
-    });
-    $('#modalEditarComponente select[name="tipo"]').select2({
-      dropdownParent: $('#modalEditarComponente'),
-      placeholder: '— Sin categoría —',
-      allowClear: true,
-      width: '100%',
-    });
-  }
-
-  // ─── Icon Picker ────────────────────────────────────────────────────────────
+  // Icon Picker
   document.querySelectorAll('.icon-picker-btn').forEach(btn => {
     btn.addEventListener('click', function () {
       const picker = document.getElementById(this.dataset.picker);
@@ -520,23 +400,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // ─── Modal Editar ───────────────────────────────────────────────────────────
+  // Modal Editar
   document.querySelectorAll('.btn-editar-comp').forEach(btn => {
     btn.addEventListener('click', function () {
       const form = document.getElementById('formEditarComponente');
       form.action = '/administracion/componentes/' + this.dataset.id;
-
       document.getElementById('edit_comp_numero_display').value = 'N° ' + this.dataset.numero;
       document.getElementById('edit_comp_nombre').value         = this.dataset.nombre;
       document.getElementById('edit_comp_descripcion').value    = this.dataset.descripcion || '';
       document.getElementById('edit_comp_activo').checked       = this.dataset.activo === '1';
-
-      // Select2 o select nativo
-      const selTipo = document.getElementById('edit_comp_tipo');
-      selTipo.value = this.dataset.tipo || '';
-      if (typeof $ !== 'undefined' && $.fn.select2) {
-        $(selTipo).val(this.dataset.tipo || '').trigger('change');
-      }
 
       const icono = this.dataset.icono || 'tabler-puzzle';
       document.getElementById('edit_icono_val').value = icono;
@@ -548,18 +420,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // ─── Toggle AJAX ────────────────────────────────────────────────────────────
+  // Toggle AJAX
   document.querySelectorAll('.btn-toggle-comp').forEach(btn => {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      const id    = this.dataset.id;
+      const id = this.dataset.id;
       const btnEl = this;
-
       fetch('/administracion/componentes/' + id + '/toggle', {
         method: 'PATCH',
         headers: {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-          'Accept'      : 'application/json',
+          'Accept': 'application/json',
         },
       })
       .then(r => r.json())
@@ -570,9 +441,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btnEl.classList.add(activo ? 'btn-label-warning' : 'btn-label-success');
         btnEl.title = activo ? 'Desactivar' : 'Activar';
         btnEl.querySelector('i').className = 'ti ' + (activo ? 'tabler-eye-off' : 'tabler-eye');
-
         document.querySelector('#comp-card-' + id + ' .card').classList.toggle('opacity-60', !activo);
-
         const badge = document.querySelector('#comp-card-' + id + ' .comp-badge-inactivo');
         if (!activo && !badge) {
           const nb = document.createElement('span');
@@ -582,35 +451,31 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (activo && badge) {
           badge.remove();
         }
-
-        toast(activo ? 'success' : 'warning',
-              activo ? 'Componente activado' : 'Componente desactivado');
+        toast(activo ? 'success' : 'warning', activo ? 'Componente activado' : 'Componente desactivado');
       })
       .catch(() => toast('error', 'Error al cambiar estado', 4000));
     });
   });
 
-  // ─── Eliminar ───────────────────────────────────────────────────────────────
+  // Eliminar
   document.querySelectorAll('.btn-eliminar-comp').forEach(btn => {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      const id     = this.dataset.id;
+      const id = this.dataset.id;
       const nombre = this.dataset.nombre;
       Swal.fire({
-        title             : '¿Eliminar componente?',
-        html              : `<strong>${nombre}</strong><br><small class="text-muted">Esta acción no se puede deshacer.</small>`,
-        icon              : 'warning',
-        showCancelButton  : true,
-        confirmButtonText : '<i class="ti tabler-trash me-1"></i>Sí, eliminar',
-        cancelButtonText  : 'Cancelar',
+        title: '¿Eliminar componente?',
+        html: `<strong>${nombre}</strong><br><small class="text-muted">Esta acción no se puede deshacer.</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '<i class="ti tabler-trash me-1"></i>Sí, eliminar',
+        cancelButtonText: 'Cancelar',
       }).then(r => {
         if (!r.isConfirmed) return;
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/administracion/componentes/' + id;
-        form.innerHTML = `
-          <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').content}">
-          <input type="hidden" name="_method" value="DELETE">`;
+        form.innerHTML = `<input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').content}"><input type="hidden" name="_method" value="DELETE">`;
         document.body.appendChild(form);
         form.submit();
       });

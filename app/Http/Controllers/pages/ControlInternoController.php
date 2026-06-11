@@ -5,7 +5,9 @@ namespace App\Http\Controllers\pages;
 use App\Http\Controllers\Controller;
 use App\Models\Actividad;
 use App\Models\ActividadHistorial;
-use App\Models\Componente;
+use App\Models\SciEje;
+use App\Models\SciComponente;
+use App\Models\SciPregunta;
 use App\Models\UnidadOrganica;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,20 +18,37 @@ class ControlInternoController extends Controller
 {
     public function index(Request $request)
     {
+        $anio = $request->input('anio', now()->year);
+
         $stats = [
-            'total'       => Actividad::count(),
-            'completadas' => Actividad::where('estado', 'completada')->count(),
-            'en_proceso'  => Actividad::where('estado', 'en_proceso')->count(),
-            'observados'  => Actividad::where('estado', 'observado')->count(),
-            'vencidas'    => Actividad::whereNotIn('estado', ['completada', 'observado'])
+            'total'       => Actividad::where('modulo', 'sci')->count(),
+            'completadas' => Actividad::where('modulo', 'sci')->where('estado', 'completada')->count(),
+            'en_proceso'  => Actividad::where('modulo', 'sci')->where('estado', 'en_proceso')->count(),
+            'observados'  => Actividad::where('modulo', 'sci')->where('estado', 'observado')->count(),
+            'vencidas'    => Actividad::where('modulo', 'sci')
+                              ->whereNotIn('estado', ['completada', 'observado'])
                               ->whereDate('fecha_limite', '<', now())->count(),
         ];
 
-        $query = Actividad::with(['componente', 'unidadOrganica', 'responsables'])
+        $query = Actividad::with([
+                'sciPregunta.componente.eje',
+                'unidadOrganica',
+                'responsables',
+            ])
+            ->where('modulo', 'sci')
             ->orderBy('fecha_limite');
 
+        if ($request->filled('anio')) {
+            $query->where('anio', $request->anio);
+        }
+        if ($request->filled('eje_id')) {
+            $query->whereHas('sciPregunta.componente', fn($q) => $q->where('eje_id', $request->eje_id));
+        }
         if ($request->filled('componente_id')) {
-            $query->where('componente_id', $request->componente_id);
+            $query->whereHas('sciPregunta', fn($q) => $q->where('componente_id', $request->componente_id));
+        }
+        if ($request->filled('pregunta_id')) {
+            $query->where('sci_pregunta_id', $request->pregunta_id);
         }
         if ($request->filled('unidad_id')) {
             $query->where('unidad_organica_id', $request->unidad_id);
@@ -53,40 +72,62 @@ class ControlInternoController extends Controller
         }
 
         $actividades  = $query->paginate(15)->withQueryString();
-        $componentes  = Componente::where('activo', true)->orderBy('numero')->get();
+        $ejes         = SciEje::where('activo', true)->orderBy('anio', 'desc')->orderBy('orden')->get();
+        $componentes  = $request->filled('eje_id')
+                        ? SciComponente::where('eje_id', $request->eje_id)->where('activo', true)->orderBy('orden')->get()
+                        : collect();
         $unidades     = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
         $responsables = User::where('estado', 'activo')->orderBy('name')->get();
+        $anios        = Actividad::where('modulo', 'sci')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'html'  => view('content.control-interno._tabla', compact('actividades'))->render(),
+                'stats' => $stats,
+                'total' => $actividades->total(),
+                'from'  => $actividades->firstItem() ?? 0,
+                'to'    => $actividades->lastItem() ?? 0,
+                'pages' => $actividades->hasPages()
+                    ? $actividades->links()->toHtml()
+                    : '',
+            ]);
+        }
 
         return view('content.control-interno.index', compact(
-            'stats', 'actividades', 'componentes', 'unidades', 'responsables'
+            'stats', 'actividades', 'ejes', 'componentes', 'unidades', 'responsables', 'anio', 'anios'
         ));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nombre'             => 'required|string|max:255',
-            'componente_id'      => 'required|exists:componentes,id',
-            'unidad_organica_id' => 'nullable|exists:unidades_organicas,id',
-            'fecha_limite'       => 'required|date',
-            'fecha_inicio'       => 'nullable|date|before_or_equal:fecha_limite',
-            'prioridad'          => 'required|in:alta,media,baja',
-            'numero_sgd'         => 'nullable|string|max:50',
-            'descripcion'        => 'nullable|string',
-            'observaciones'      => 'nullable|string',
-            'responsables'       => 'nullable|array',
-            'responsables.*'     => 'exists:users,id',
-            'tipos'              => 'nullable|array',
-            'tipos.*'            => 'in:principal,colaborador,supervisor',
+            'nombre'              => 'required|string|max:255',
+            'modulo'              => 'required|in:sci,integridad',
+            'anio'                => 'required|integer|min:2020|max:2099',
+            'sci_pregunta_id'     => 'required_if:modulo,sci|nullable|exists:sci_preguntas,id',
+            'integridad_pregunta_id' => 'required_if:modulo,integridad|nullable|exists:integridad_preguntas,id',
+            'unidad_organica_id'  => 'nullable|exists:unidades_organicas,id',
+            'fecha_limite'        => 'required|date',
+            'fecha_inicio'        => 'nullable|date|before_or_equal:fecha_limite',
+            'prioridad'           => 'required|in:alta,media,baja',
+            'numero_sgd'          => 'nullable|string|max:50',
+            'descripcion'         => 'nullable|string',
+            'observaciones'       => 'nullable|string',
+            'responsables'        => 'nullable|array',
+            'responsables.*'      => 'exists:users,id',
+            'tipos'               => 'nullable|array',
+            'tipos.*'             => 'in:principal,colaborador,supervisor',
         ]);
 
         $validated['creado_por'] = Auth::id();
         $validated['estado']     = 'pendiente';
         $validated['avance']     = 0;
 
-        $anio  = now()->year;
-        $count = Actividad::whereYear('created_at', $anio)->withTrashed()->count() + 1;
-        $validated['codigo'] = 'SCI-' . $anio . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $anio  = $validated['anio'];
+        $modulo = $validated['modulo'];
+        $prefix = strtoupper($modulo);
+        $count = Actividad::where('modulo', $modulo)->whereYear('created_at', $anio)->withTrashed()->count() + 1;
+        $validated['codigo'] = $prefix . '-' . $anio . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         DB::transaction(function () use ($validated, $request) {
             $actividad = Actividad::create(\Arr::except($validated, ['responsables', 'tipos']));
@@ -115,21 +156,22 @@ class ControlInternoController extends Controller
     public function update(Request $request, Actividad $actividad)
     {
         $validated = $request->validate([
-            'nombre'             => 'required|string|max:255',
-            'componente_id'      => 'required|exists:componentes,id',
-            'unidad_organica_id' => 'nullable|exists:unidades_organicas,id',
-            'fecha_limite'       => 'required|date',
-            'fecha_inicio'       => 'nullable|date|before_or_equal:fecha_limite',
-            'avance'             => 'nullable|integer|min:0|max:100',
-            'estado'             => 'required|in:pendiente,en_proceso,completada,observado,vencida',
-            'prioridad'          => 'required|in:alta,media,baja',
-            'numero_sgd'         => 'nullable|string|max:50',
-            'descripcion'        => 'nullable|string',
-            'observaciones'      => 'nullable|string',
-            'responsables'       => 'nullable|array',
-            'responsables.*'     => 'exists:users,id',
-            'tipos'              => 'nullable|array',
-            'tipos.*'            => 'in:principal,colaborador,supervisor',
+            'nombre'              => 'required|string|max:255',
+            'sci_pregunta_id'     => 'nullable|exists:sci_preguntas,id',
+            'integridad_pregunta_id' => 'nullable|exists:integridad_preguntas,id',
+            'unidad_organica_id'  => 'nullable|exists:unidades_organicas,id',
+            'fecha_limite'        => 'required|date',
+            'fecha_inicio'        => 'nullable|date|before_or_equal:fecha_limite',
+            'avance'              => 'nullable|integer|min:0|max:100',
+            'estado'              => 'required|in:pendiente,en_proceso,completada,observado,vencida',
+            'prioridad'           => 'required|in:alta,media,baja',
+            'numero_sgd'          => 'nullable|string|max:50',
+            'descripcion'         => 'nullable|string',
+            'observaciones'       => 'nullable|string',
+            'responsables'        => 'nullable|array',
+            'responsables.*'      => 'exists:users,id',
+            'tipos'               => 'nullable|array',
+            'tipos.*'             => 'in:principal,colaborador,supervisor',
         ]);
 
         if ($validated['estado'] === 'completada' && !$actividad->fecha_cumplimiento) {
@@ -155,7 +197,6 @@ class ControlInternoController extends Controller
     public function destroy(Actividad $actividad)
     {
         $actividad->delete();
-
         return back()->with('success', 'Actividad eliminada.');
     }
 

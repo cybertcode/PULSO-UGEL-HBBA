@@ -15,7 +15,6 @@ use App\Http\Controllers\pages\RankingUnidadesController;
 use App\Http\Controllers\pages\AvanceUnidadesController;
 use App\Http\Controllers\pages\ConfiguracionController;
 use App\Http\Controllers\pages\UnidadesOrganicasController;
-use App\Http\Controllers\pages\ComponenteController;
 use App\Http\Controllers\apps\UserList;
 use App\Http\Controllers\apps\CargosController;
 use App\Http\Controllers\apps\UserViewAccount;
@@ -30,13 +29,14 @@ use App\Http\Controllers\pages\RecomendacionesController;
 use App\Http\Controllers\pages\AyudaController;
 use App\Http\Controllers\pages\CumplimientoController;
 use App\Http\Controllers\pages\MisActividadesController;
-use App\Http\Controllers\pages\PaciController;
-use App\Http\Controllers\pages\MatrizRiesgosController;
-use App\Http\Controllers\pages\ActasComiteController;
-use App\Http\Controllers\pages\AutoevaluacionController;
+use App\Http\Controllers\pages\SciEstructuraController;
+use App\Http\Controllers\pages\IntegridadEstructuraController;
 use App\Http\Controllers\pages\LandingController;
 use App\Http\Controllers\pages\SliderLandingController;
 use App\Http\Controllers\pages\InstitucionVinculadaController;
+use App\Http\Controllers\pages\EncuestaController;
+use App\Http\Controllers\pages\EncuestaRespuestaController;
+use App\Http\Controllers\pages\EncuestaResultadoController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/',                    [LandingController::class, 'index'])->name('landing');
@@ -83,6 +83,13 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('/control-interno/{actividad}/historial',  [ControlInternoController::class, 'historial'])->name('sci-control-interno.historial')->middleware('can:control-interno.ver');
 
     Route::get('/modelo-integridad', [ModeloIntegridadController::class, 'index'])->name('sci-modelo-integridad')->middleware('can:integridad.ver');
+    Route::post('/modelo-integridad',                        [ModeloIntegridadController::class, 'store'])->name('integridad.store')->middleware('can:integridad.crear');
+    Route::put('/modelo-integridad/{actividad}',             [ModeloIntegridadController::class, 'update'])->name('integridad.update')->middleware('can:integridad.editar');
+    Route::delete('/modelo-integridad/{actividad}',          [ModeloIntegridadController::class, 'destroy'])->name('integridad.destroy')->middleware('can:integridad.editar');
+    Route::patch('/modelo-integridad/{actividad}/avance',    [ModeloIntegridadController::class, 'updateAvance'])->name('integridad.avance')->middleware('can:integridad.editar');
+    Route::get('/modelo-integridad/{actividad}/historial',   [ModeloIntegridadController::class, 'historial'])->name('integridad.historial')->middleware('can:integridad.ver');
+    Route::get('/integridad/componentes',                    [ModeloIntegridadController::class, 'componentesPorEtapa'])->name('integridad.componentes');
+    Route::get('/integridad/preguntas',                      [ModeloIntegridadController::class, 'preguntasPorComponente'])->name('integridad.preguntas');
 
     Route::middleware('can:evidencias.ver')->group(function () {
         Route::get('/evidencias', [EvidenciasController::class, 'index'])->name('sci-evidencias');
@@ -92,14 +99,22 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::patch('/evidencias/{evidencia}/validar',   [EvidenciasController::class, 'validar'])->name('sci-evidencias.validar')->middleware('can:evidencias.validar');
     Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.validar');
 
+    // Notificaciones
+    Route::patch('/notifications/{id}/read', function (string $id) {
+        $notif = auth()->user()->notifications()->findOrFail($id);
+        $notif->markAsRead();
+        return back();
+    })->name('notifications.read');
+
     // --- Monitoreo ---
-    Route::get('/semaforo',          [SemaforoController::class,        'index'])->name('mon-semaforo')->middleware('can:integridad.ver');
+    Route::get('/semaforo',          [SemaforoController::class,        'index'])->name('sci-semaforo');
     Route::middleware('can:alertas.ver')->group(function () {
         Route::get('/alertas', [AlertasController::class, 'index'])->name('mon-alertas');
         Route::patch('/alertas/{alerta}/leer',  [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
         Route::patch('/alertas/leer-todas',     [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
     });
     Route::post('/alertas',    [AlertasController::class, 'store'])->name('mon-alertas.store')->middleware('can:alertas.crear');
+    Route::post('/alertas/{alerta}/email', [AlertasController::class, 'enviarEmail'])->name('mon-alertas.email')->middleware('can:alertas.ver');
     Route::delete('/alertas/{alerta}', [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.eliminar');
     Route::get('/ranking-unidades', [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades')->middleware('can:reportes.ver');
     Route::get('/avance-unidades',  [AvanceUnidadesController::class,  'index'])->name('mon-avance-unidades')->middleware('can:reportes.ver');
@@ -157,27 +172,67 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::delete('/roles/{role}', [AccessRoles::class, 'destroy'])->name('adm-roles.destroy');
     });
 
-    // --- Administración: Componentes SCI ---
+    // --- Administración: Estructura SCI (Ejes → Componentes → Preguntas) ---
     Route::middleware('can:componentes.ver')->group(function () {
-        Route::get('/administracion/componentes', [ComponenteController::class, 'index'])->name('adm-componentes');
+        Route::get('/administracion/sci', [SciEstructuraController::class, 'index'])->name('adm-sci-estructura');
     });
     Route::middleware('can:componentes.editar')->group(function () {
-        Route::post('/administracion/componentes',                    [ComponenteController::class, 'store'])->name('adm-componentes.store');
-        Route::put('/administracion/componentes/{componente}',        [ComponenteController::class, 'update'])->name('adm-componentes.update');
-        Route::patch('/administracion/componentes/{componente}/toggle',[ComponenteController::class, 'toggle'])->name('adm-componentes.toggle');
-        Route::delete('/administracion/componentes/{componente}',     [ComponenteController::class, 'destroy'])->name('adm-componentes.destroy');
+        // Ejes
+        Route::post('/administracion/sci/eje',              [SciEstructuraController::class, 'storeEje'])->name('adm-sci.eje.store');
+        Route::put('/administracion/sci/eje/{eje}',         [SciEstructuraController::class, 'updateEje'])->name('adm-sci.eje.update');
+        Route::delete('/administracion/sci/eje/{eje}',      [SciEstructuraController::class, 'destroyEje'])->name('adm-sci.eje.destroy');
+        // Componentes SCI
+        Route::post('/administracion/sci/componente',                    [SciEstructuraController::class, 'storeComponente'])->name('adm-sci.componente.store');
+        Route::put('/administracion/sci/componente/{componente}',        [SciEstructuraController::class, 'updateComponente'])->name('adm-sci.componente.update');
+        Route::delete('/administracion/sci/componente/{componente}',     [SciEstructuraController::class, 'destroyComponente'])->name('adm-sci.componente.destroy');
+        // Preguntas SCI
+        Route::post('/administracion/sci/pregunta',                  [SciEstructuraController::class, 'storePregunta'])->name('adm-sci.pregunta.store');
+        Route::put('/administracion/sci/pregunta/{pregunta}',        [SciEstructuraController::class, 'updatePregunta'])->name('adm-sci.pregunta.update');
+        Route::delete('/administracion/sci/pregunta/{pregunta}',     [SciEstructuraController::class, 'destroyPregunta'])->name('adm-sci.pregunta.destroy');
     });
+    // API cascada SCI (sin middleware de permiso extra — requiere auth)
+    Route::get('/api/sci/ejes',        [SciEstructuraController::class, 'apiEjes'])->name('api.sci.ejes');
+    Route::get('/api/sci/componentes', [SciEstructuraController::class, 'apiComponentes'])->name('api.sci.componentes');
+    Route::get('/api/sci/preguntas',   [SciEstructuraController::class, 'apiPreguntas'])->name('api.sci.preguntas');
+
+    // --- Administración: Estructura Integridad (Etapas → Componentes → Preguntas) ---
+    Route::middleware('can:integridad.ver')->group(function () {
+        Route::get('/administracion/integridad', [IntegridadEstructuraController::class, 'index'])->name('adm-integridad-estructura');
+    });
+    Route::middleware('can:integridad.editar')->group(function () {
+        // Etapas
+        Route::post('/administracion/integridad/etapa',             [IntegridadEstructuraController::class, 'storeEtapa'])->name('adm-integridad.etapa.store');
+        Route::put('/administracion/integridad/etapa/{etapa}',      [IntegridadEstructuraController::class, 'updateEtapa'])->name('adm-integridad.etapa.update');
+        Route::delete('/administracion/integridad/etapa/{etapa}',   [IntegridadEstructuraController::class, 'destroyEtapa'])->name('adm-integridad.etapa.destroy');
+        // Componentes Integridad
+        Route::post('/administracion/integridad/componente',                    [IntegridadEstructuraController::class, 'storeComponente'])->name('adm-integridad.componente.store');
+        Route::put('/administracion/integridad/componente/{componente}',        [IntegridadEstructuraController::class, 'updateComponente'])->name('adm-integridad.componente.update');
+        Route::delete('/administracion/integridad/componente/{componente}',     [IntegridadEstructuraController::class, 'destroyComponente'])->name('adm-integridad.componente.destroy');
+        // Preguntas Integridad
+        Route::post('/administracion/integridad/pregunta',                  [IntegridadEstructuraController::class, 'storePregunta'])->name('adm-integridad.pregunta.store');
+        Route::put('/administracion/integridad/pregunta/{pregunta}',        [IntegridadEstructuraController::class, 'updatePregunta'])->name('adm-integridad.pregunta.update');
+        Route::delete('/administracion/integridad/pregunta/{pregunta}',     [IntegridadEstructuraController::class, 'destroyPregunta'])->name('adm-integridad.pregunta.destroy');
+    });
+    // API cascada Integridad
+    Route::get('/api/integridad/etapas',      [IntegridadEstructuraController::class, 'apiEtapas'])->name('api.integridad.etapas');
+    Route::get('/api/integridad/componentes', [IntegridadEstructuraController::class, 'apiComponentes'])->name('api.integridad.componentes');
+    Route::get('/api/integridad/preguntas',   [IntegridadEstructuraController::class, 'apiPreguntas'])->name('api.integridad.preguntas');
 
     // --- Configuración Institucional ---
     Route::get('/configuracion',  [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
     Route::put('/configuracion',  [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
 
     // --- Buenas Prácticas ---
-    Route::get('/buenas-practicas',                          [BuenasPracticasController::class, 'index'])->name('buenas-practicas')->middleware('can:buenas-practicas.ver');
-    Route::post('/buenas-practicas',                         [BuenasPracticasController::class, 'store'])->name('buenas-practicas.store')->middleware('can:buenas-practicas.crear');
-    Route::put('/buenas-practicas/{buenaPractica}',          [BuenasPracticasController::class, 'update'])->name('buenas-practicas.update')->middleware('can:buenas-practicas.editar');
-    Route::delete('/buenas-practicas/{buenaPractica}',       [BuenasPracticasController::class, 'destroy'])->name('buenas-practicas.destroy')->middleware('can:buenas-practicas.editar');
-    Route::patch('/buenas-practicas/{buenaPractica}/avance', [BuenasPracticasController::class, 'updateAvance'])->name('buenas-practicas.avance')->middleware('can:buenas-practicas.editar');
+    // Cualquier autenticado puede ver el listado y proponer
+    Route::get('/buenas-practicas',                            [BuenasPracticasController::class, 'index'])->name('buenas-practicas');
+    Route::post('/buenas-practicas/proponer',                  [BuenasPracticasController::class, 'proponer'])->name('buenas-practicas.proponer');
+    // Solo gestor puede crear/editar/gestionar propuestas
+    Route::post('/buenas-practicas',                           [BuenasPracticasController::class, 'store'])->name('buenas-practicas.store')->middleware('can:buenas-practicas.ver');
+    Route::put('/buenas-practicas/{buenaPractica}',            [BuenasPracticasController::class, 'update'])->name('buenas-practicas.update')->middleware('can:buenas-practicas.ver');
+    Route::delete('/buenas-practicas/{buenaPractica}',         [BuenasPracticasController::class, 'destroy'])->name('buenas-practicas.destroy')->middleware('can:buenas-practicas.ver');
+    Route::patch('/buenas-practicas/{buenaPractica}/avance',   [BuenasPracticasController::class, 'updateAvance'])->name('buenas-practicas.avance')->middleware('can:buenas-practicas.ver');
+    Route::patch('/buenas-practicas/{buenaPractica}/aprobar',  [BuenasPracticasController::class, 'aprobar'])->name('buenas-practicas.aprobar')->middleware('can:buenas-practicas.ver');
+    Route::patch('/buenas-practicas/{buenaPractica}/rechazar', [BuenasPracticasController::class, 'rechazar'])->name('buenas-practicas.rechazar')->middleware('can:buenas-practicas.ver');
 
     // --- Recomendaciones ---
     Route::get('/recomendaciones',                              [RecomendacionesController::class, 'index'])->name('recomendaciones')->middleware('can:recomendaciones.ver');
@@ -186,39 +241,26 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::delete('/recomendaciones/{recomendacion}',           [RecomendacionesController::class, 'destroy'])->name('recomendaciones.destroy')->middleware('can:recomendaciones.editar');
     Route::patch('/recomendaciones/{recomendacion}/atender',    [RecomendacionesController::class, 'marcarAtendida'])->name('recomendaciones.atender')->middleware('can:recomendaciones.editar');
 
-    // --- PACI ---
-    Route::get('/paci',         [PaciController::class, 'index'])->name('paci.index')->middleware('can:paci.ver');
-    Route::post('/paci',        [PaciController::class, 'store'])->name('paci.store')->middleware('can:paci.crear');
-    Route::put('/paci/{paci}',  [PaciController::class, 'update'])->name('paci.update')->middleware('can:paci.editar');
-    Route::delete('/paci/{paci}', [PaciController::class, 'destroy'])->name('paci.destroy')->middleware('can:paci.eliminar');
-
-    // --- Matriz de Riesgos ---
-    Route::get('/matriz-riesgos',                    [MatrizRiesgosController::class, 'index'])->name('matriz-riesgos.index')->middleware('can:riesgos.ver');
-    Route::post('/matriz-riesgos',                   [MatrizRiesgosController::class, 'store'])->name('matriz-riesgos.store')->middleware('can:riesgos.crear');
-    Route::put('/matriz-riesgos/{matrizRiesgo}',     [MatrizRiesgosController::class, 'update'])->name('matriz-riesgos.update')->middleware('can:riesgos.editar');
-    Route::delete('/matriz-riesgos/{matrizRiesgo}',  [MatrizRiesgosController::class, 'destroy'])->name('matriz-riesgos.destroy')->middleware('can:riesgos.eliminar');
-
-    // --- Actas del Comité ---
-    Route::get('/actas-comite',                      [ActasComiteController::class, 'index'])->name('actas-comite.index')->middleware('can:actas.ver');
-    Route::post('/actas-comite',                     [ActasComiteController::class, 'store'])->name('actas-comite.store')->middleware('can:actas.crear');
-    Route::put('/actas-comite/{actasComite}',        [ActasComiteController::class, 'update'])->name('actas-comite.update')->middleware('can:actas.editar');
-    Route::delete('/actas-comite/{actasComite}',     [ActasComiteController::class, 'destroy'])->name('actas-comite.destroy')->middleware('can:actas.eliminar');
-
-    // --- Autoevaluación SCI ---
-    Route::get('/autoevaluacion',                             [AutoevaluacionController::class, 'index'])->name('autoevaluacion.index')->middleware('can:autoevaluacion.ver');
-    Route::post('/autoevaluacion',                            [AutoevaluacionController::class, 'store'])->name('autoevaluacion.store')->middleware('can:autoevaluacion.crear');
-    Route::get('/autoevaluacion/{autoevaluacion}',            [AutoevaluacionController::class, 'show'])->name('autoevaluacion.show')->middleware('can:autoevaluacion.ver');
-    Route::patch('/autoevaluacion/{autoevaluacion}/respuestas',[AutoevaluacionController::class, 'guardarRespuestas'])->name('autoevaluacion.respuestas')->middleware('can:autoevaluacion.editar');
-    Route::patch('/autoevaluacion/{autoevaluacion}/cerrar',   [AutoevaluacionController::class, 'cerrar'])->name('autoevaluacion.cerrar')->middleware('can:autoevaluacion.editar');
-    Route::delete('/autoevaluacion/{autoevaluacion}',         [AutoevaluacionController::class, 'destroy'])->name('autoevaluacion.destroy')->middleware('can:autoevaluacion.eliminar');
-
-    // --- Modelo de Integridad — compromisos por pilar ---
-    Route::post('/modelo-integridad/compromiso',                         [ModeloIntegridadController::class, 'storeCompromiso'])->name('integridad.compromiso.store')->middleware('can:integridad.editar');
-    Route::put('/modelo-integridad/compromiso/{compromiso}',             [ModeloIntegridadController::class, 'updateCompromiso'])->name('integridad.compromiso.update')->middleware('can:integridad.editar');
-    Route::delete('/modelo-integridad/compromiso/{compromiso}',          [ModeloIntegridadController::class, 'destroyCompromiso'])->name('integridad.compromiso.destroy')->middleware('can:integridad.editar');
-
     // --- Ayuda ---
     Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda');
+
+    // ── ENCUESTAS ──────────────────────────────────────────────────────────────
+    Route::prefix('encuestas')->name('encuestas.')->group(function () {
+        Route::get('/',                              [EncuestaController::class, 'index'])    ->name('index')             ->middleware('can:encuesta.ver');
+        Route::get('/data',                          [EncuestaController::class, 'data'])     ->name('data');
+        Route::get('/crear',                         [EncuestaController::class, 'create'])   ->name('crear')             ->middleware('can:encuesta.crear');
+        Route::post('/',                             [EncuestaController::class, 'store'])    ->name('store')             ->middleware('can:encuesta.crear');
+        Route::get('/{encuesta}/editar',             [EncuestaController::class, 'edit'])     ->name('editar')            ->middleware('can:encuesta.editar');
+        Route::put('/{encuesta}',                    [EncuestaController::class, 'update'])   ->name('update')            ->middleware('can:encuesta.editar');
+        Route::delete('/{encuesta}',                 [EncuestaController::class, 'destroy'])  ->name('destroy')           ->middleware('can:encuesta.eliminar');
+        Route::post('/{encuesta}/publicar',          [EncuestaController::class, 'publicar']) ->name('publicar')          ->middleware('can:encuesta.publicar');
+        Route::post('/{encuesta}/cerrar',            [EncuestaController::class, 'cerrar'])   ->name('cerrar')            ->middleware('can:encuesta.publicar');
+        Route::get('/{encuesta}/responder',          [EncuestaRespuestaController::class, 'show'])   ->name('responder')         ->middleware('can:encuesta.responder');
+        Route::post('/{encuesta}/responder',         [EncuestaRespuestaController::class, 'store'])  ->name('responder.store')   ->middleware('can:encuesta.responder');
+        Route::get('/{encuesta}/resultados',         [EncuestaResultadoController::class, 'index'])  ->name('resultados')        ->middleware('can:encuesta.resultados');
+        Route::get('/{encuesta}/resultados/datos',   [EncuestaResultadoController::class, 'datos'])  ->name('resultados.datos')  ->middleware('can:encuesta.resultados');
+        Route::get('/{encuesta}/exportar',           [EncuestaResultadoController::class, 'exportar'])->name('exportar')        ->middleware('can:encuesta.exportar');
+    });
 
     // --- Unidades Orgánicas ---
     Route::middleware('can:configuracion.ver')->group(function () {

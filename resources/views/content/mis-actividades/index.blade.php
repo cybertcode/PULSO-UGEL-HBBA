@@ -126,7 +126,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div>
             <div class="kpi-label text-white-50">Total</div>
-            <div class="kpi-value">{{ $stats['total'] }}</div>
+            <div class="kpi-value" id="kpi-total">{{ $stats['total'] }}</div>
           </div>
           <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
             <i class="ti tabler-clipboard-list"></i>
@@ -143,7 +143,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div>
             <div class="kpi-label text-white-50">Completadas</div>
-            <div class="kpi-value">{{ $stats['completadas'] }}</div>
+            <div class="kpi-value" id="kpi-completadas">{{ $stats['completadas'] }}</div>
           </div>
           <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
             <i class="ti tabler-circle-check"></i>
@@ -151,9 +151,9 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
         </div>
         <div class="d-flex align-items-center gap-2">
           <div class="progress flex-grow-1" style="height:4px;background:rgba(255,255,255,.25)">
-            <div class="progress-bar bg-white" style="width:{{ $stats['porcentaje'] }}%"></div>
+            <div class="progress-bar bg-white" id="kpi-bar" style="width:{{ $stats['porcentaje'] }}%"></div>
           </div>
-          <span class="kpi-sub text-white-75">{{ $stats['porcentaje'] }}%</span>
+          <span class="kpi-sub text-white-75" id="kpi-pct">{{ $stats['porcentaje'] }}%</span>
         </div>
       </div>
     </div>
@@ -165,7 +165,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div>
             <div class="kpi-label text-white-50">En Proceso</div>
-            <div class="kpi-value">{{ $stats['en_proceso'] }}</div>
+            <div class="kpi-value" id="kpi-en_proceso">{{ $stats['en_proceso'] }}</div>
           </div>
           <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
             <i class="ti tabler-loader-2"></i>
@@ -182,7 +182,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div>
             <div class="kpi-label text-white-50">Vencidas</div>
-            <div class="kpi-value">{{ $stats['vencidas'] }}</div>
+            <div class="kpi-value" id="kpi-vencidas">{{ $stats['vencidas'] }}</div>
           </div>
           <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
             <i class="ti tabler-alarm-off"></i>
@@ -201,7 +201,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div>
             <div class="kpi-label text-white-50">Sin Evidencia</div>
-            <div class="kpi-value">{{ $stats['sin_ev'] }}</div>
+            <div class="kpi-value" id="kpi-sin_ev">{{ $stats['sin_ev'] }}</div>
           </div>
           <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
             <i class="ti tabler-file-off"></i>
@@ -235,7 +235,8 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
       <div class="flex-grow-1 min-w-0">
         <div class="fw-semibold text-truncate" style="font-size:.88rem">{{ Str::limit($prox->nombre, 55) }}</div>
         <div class="text-muted" style="font-size:.75rem">
-          <i class="ti tabler-component me-1"></i>{{ $prox->componente?->nombre ?? '—' }}
+          @php $proxComp = $prox->modulo === 'integridad' ? $prox->integridadPregunta?->componente?->nombre : $prox->sciPregunta?->componente?->nombre; @endphp
+          <i class="ti tabler-layout-grid me-1"></i>{{ $proxComp ?? '—' }}
           · <i class="ti tabler-calendar me-1"></i>Vence {{ $prox->fecha_limite->format('d/m/Y') }}
         </div>
       </div>
@@ -253,9 +254,9 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
 
 {{-- ── Filtros ──────────────────────────────────────────────── --}}
 @php
-  $hayFiltros       = request()->hasAny(['estado','componente_id','prioridad','buscar','fecha_desde','fecha_hasta','avance_min','avance_max','evidencia','mi_rol']);
+  $hayFiltros       = request()->hasAny(['modulo','estado','prioridad','buscar','fecha_desde','fecha_hasta','avance_min','avance_max','evidencia','mi_rol']);
   $filtrosAvanzados = request()->hasAny(['fecha_desde','fecha_hasta','avance_min','avance_max','evidencia','mi_rol']);
-  $nFiltros = collect(['estado','componente_id','prioridad','buscar','fecha_desde','fecha_hasta','avance_min','avance_max','evidencia','mi_rol'])->filter(fn($k) => request()->filled($k))->count();
+  $nFiltros = collect(['modulo','estado','prioridad','buscar','fecha_desde','fecha_hasta','avance_min','avance_max','evidencia','mi_rol'])->filter(fn($k) => request()->filled($k))->count();
 @endphp
 <div class="card filter-card mb-4">
   <div class="card-body p-3">
@@ -277,14 +278,13 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
           </select>
         </div>
 
-        {{-- Componente (Select2) --}}
+        {{-- Módulo --}}
         <div class="col-md-3 col-sm-6">
-          <label class="form-label"><i class="ti tabler-layout-grid me-1"></i>Componente</label>
-          <select id="filtroComponente" name="componente_id" class="form-select select2">
-            <option value="">Todos los componentes</option>
-            @foreach($componentes as $c)
-            <option value="{{ $c->id }}" {{ request('componente_id') == $c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
-            @endforeach
+          <label class="form-label"><i class="ti tabler-layers-difference me-1"></i>Módulo</label>
+          <select id="filtroModulo" name="modulo" class="form-select">
+            <option value="">SCI e Integridad</option>
+            <option value="sci"        {{ request('modulo') === 'sci'        ? 'selected' : '' }}>Sistema de Control Interno</option>
+            <option value="integridad" {{ request('modulo') === 'integridad' ? 'selected' : '' }}>Modelo de Integridad</option>
           </select>
         </div>
 
@@ -407,184 +407,31 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
 <div class="d-flex align-items-center justify-content-between mb-3 px-1">
   <div class="text-muted small">
     <i class="ti tabler-list me-1"></i>
-    Mostrando <strong class="text-body">{{ $actividades->firstItem() ?? 0 }}–{{ $actividades->lastItem() ?? 0 }}</strong>
-    de <strong class="text-body">{{ $actividades->total() }}</strong> actividad(es)
-    @if($hayFiltros)<span class="ms-2 badge bg-label-primary">con filtros activos</span>@endif
+    <span id="actContador">
+      Mostrando <strong class="text-body">{{ $actividades->firstItem() ?? 0 }}–{{ $actividades->lastItem() ?? 0 }}</strong>
+      de <strong class="text-body">{{ $actividades->total() }}</strong> actividad(es)
+    </span>
+    <span id="badgeFiltrosActivos" class="ms-2 badge bg-label-primary" style="{{ $hayFiltros ? '' : 'display:none' }}">con filtros activos</span>
   </div>
-  <div class="text-muted small">
-    <i class="ti tabler-sort-descending me-1"></i>Ordenado por urgencia
+  <div class="d-flex align-items-center gap-2">
+    <a href="javascript:void(0)" id="btnLimpiarFiltros"
+      class="btn btn-sm btn-outline-danger px-2 py-1 {{ $hayFiltros ? '' : 'invisible' }}"
+      title="Limpiar todos los filtros" style="font-size:.75rem">
+      <i class="ti tabler-x me-1"></i>Limpiar
+    </a>
+    <span class="text-muted small"><i class="ti tabler-sort-descending me-1"></i>Ordenado por urgencia</span>
   </div>
 </div>
 
 {{-- ── Lista de actividades ─────────────────────────────────── --}}
-<div class="row g-3">
-  @forelse($actividades as $act)
-  @php
-    $ec = match($act->estado) {
-      'completada' => 'success',
-      'vencida'    => 'danger',
-      'observado'  => 'info',
-      'en_proceso' => 'warning',
-      default      => 'secondary',
-    };
-    $ecHex = match($act->estado) {
-      'completada' => '#28c76f',
-      'vencida'    => '#ea5455',
-      'observado'  => '#00cfe8',
-      'en_proceso' => '#ff9f43',
-      default      => '#a8aaae',
-    };
-    $estadoIcon = match($act->estado) {
-      'completada' => 'tabler-circle-check',
-      'vencida'    => 'tabler-clock-x',
-      'observado'  => 'tabler-eye',
-      'en_proceso' => 'tabler-loader-2',
-      default      => 'tabler-clock-pause',
-    };
-    $pc = match($act->prioridad) { 'alta' => 'danger', 'media' => 'warning', default => 'secondary' };
-    $prioIcon = match($act->prioridad) { 'alta' => 'tabler-flag-3', 'media' => 'tabler-flag-2', default => 'tabler-flag' };
-    $miRol = $act->responsables->where('id', $user->id)->first()?->pivot->tipo ?? 'principal';
-    $rolIcon = match($miRol) { 'principal' => 'tabler-crown', 'supervisor' => 'tabler-eye', default => 'tabler-users' };
-    $tieneEvidencias = $act->evidencias->count() > 0;
-    $diasRestantes = $act->fecha_limite ? (int) round(now()->diffInDays($act->fecha_limite, false)) : null;
-    $canEdit = !in_array($act->estado, ['completada', 'vencida']);
-  @endphp
-
-  <div class="col-md-6 col-xl-4">
-    <div class="card act-card is-{{ $act->estado }} h-100">
-
-      {{-- Header --}}
-      <div class="act-header">
-        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-          {{-- Estado --}}
-          <span class="estado-pill bg-label-{{ $ec }} text-{{ $ec }}">
-            <i class="ti {{ $estadoIcon }} me-1" style="font-size:.75rem"></i>{{ $act->estado_label }}
-          </span>
-          {{-- Prioridad + Rol --}}
-          <div class="d-flex gap-1">
-            <span class="rol-badge bg-label-{{ $pc }} text-{{ $pc }}">
-              <i class="ti {{ $prioIcon }} me-1" style="font-size:.7rem"></i>{{ ucfirst($act->prioridad) }}
-            </span>
-            <span class="rol-badge bg-label-secondary text-secondary text-capitalize">
-              <i class="ti {{ $rolIcon }} me-1" style="font-size:.7rem"></i>{{ $miRol }}
-            </span>
-          </div>
-        </div>
-
-        {{-- Nombre --}}
-        <h6 class="mb-0 fw-bold lh-sm" title="{{ $act->nombre }}" style="font-size:.9rem">{{ Str::limit($act->nombre, 65) }}</h6>
-      </div>
-
-      {{-- Body --}}
-      <div class="act-body flex-grow-1">
-        <p class="text-muted mb-3 d-flex align-items-center gap-1" style="font-size:.78rem">
-          <i class="ti tabler-layout-grid" style="font-size:.8rem"></i>
-          {{ $act->componente?->nombre ?? '—' }}
-          <span class="mx-1">·</span>
-          <code class="text-muted" style="font-size:.72rem">{{ $act->codigo }}</code>
-        </p>
-
-        {{-- Barra de avance --}}
-        <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="text-muted" style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Avance</span>
-            <span class="fw-bold text-{{ $ec }}" style="font-size:.88rem">{{ $act->avance }}%</span>
-          </div>
-          <div class="progress progress-thin">
-            <div class="progress-bar bg-{{ $ec }}" style="width:{{ $act->avance }}%;border-radius:3px" role="progressbar"></div>
-          </div>
-        </div>
-
-        {{-- Fecha + Evidencia --}}
-        <div class="d-flex justify-content-between align-items-center" style="font-size:.78rem">
-          <div class="d-flex align-items-center gap-1 text-muted">
-            <i class="ti tabler-calendar" style="font-size:.85rem"></i>
-            @if($act->fecha_limite)
-              <span>{{ $act->fecha_limite->format('d/m/Y') }}</span>
-              @if($diasRestantes !== null && $act->estado !== 'completada')
-                <span class="dias-chip ms-1 {{ $diasRestantes < 0 ? 'bg-label-danger text-danger' : ($diasRestantes <= 7 ? 'bg-label-warning text-warning' : 'bg-label-secondary text-secondary') }}">
-                  {{ $diasRestantes < 0 ? abs($diasRestantes).'d tarde' : $diasRestantes.'d' }}
-                </span>
-              @elseif($act->estado === 'completada')
-                <span class="dias-chip ms-1 bg-label-success text-success"><i class="ti tabler-check" style="font-size:.7rem"></i>OK</span>
-              @endif
-            @else
-              <span class="text-muted">Sin fecha límite</span>
-            @endif
-          </div>
-          <div class="d-flex align-items-center gap-1">
-            @if($tieneEvidencias)
-              <span class="dias-chip bg-label-success text-success">
-                <i class="ti tabler-file-check" style="font-size:.75rem"></i>
-                {{ $act->evidencias->count() }} ev.
-              </span>
-            @elseif(!in_array($act->estado, ['pendiente']))
-              <span class="dias-chip bg-label-warning text-warning">
-                <i class="ti tabler-file-off" style="font-size:.75rem"></i>
-                Sin evidencia
-              </span>
-            @endif
-          </div>
-        </div>
-      </div>
-
-      {{-- Acciones --}}
-      <div class="act-actions">
-        @if($canEdit)
-        <button class="btn btn-sm btn-primary btn-act flex-fill btn-actualizar-avance"
-          data-id="{{ $act->id }}"
-          data-avance="{{ $act->avance }}"
-          data-nombre="{{ Str::limit($act->nombre, 50) }}"
-          data-url="{{ route('mis-actividades.avance', $act) }}">
-          <i class="ti tabler-pencil me-1"></i>Actualizar
-        </button>
-        @endif
-        <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id]) }}"
-           class="btn btn-sm btn-act {{ $tieneEvidencias ? 'btn-outline-success' : 'btn-outline-warning' }}"
-           title="{{ $tieneEvidencias ? 'Ver/subir evidencias' : 'Subir evidencia' }}">
-          <i class="ti {{ $tieneEvidencias ? 'tabler-file-check' : 'tabler-upload' }}"></i>
-        </a>
-        <button class="btn btn-sm btn-act btn-outline-secondary btn-ver-historial"
-          data-id="{{ $act->id }}"
-          data-nombre="{{ Str::limit($act->nombre, 50) }}"
-          data-url="{{ route('mis-actividades.historial', $act) }}"
-          title="Ver historial de cambios">
-          <i class="ti tabler-history"></i>
-        </button>
-      </div>
-
-    </div>
-  </div>
-  @empty
-  <div class="col-12">
-    <div class="card" style="border-radius:14px;border:none">
-      <div class="card-body text-center py-5">
-        <div class="empty-icon bg-label-secondary mx-auto mb-3">
-          <i class="ti tabler-clipboard-off text-muted"></i>
-        </div>
-        <h5 class="fw-bold">No hay actividades que mostrar</h5>
-        <p class="text-muted mb-3">
-          @if($hayFiltros)
-            Ninguna actividad coincide con los filtros aplicados.
-          @else
-            Cuando el Coordinador SCI te asigne una actividad, aparecerá aquí.
-          @endif
-        </p>
-        @if($hayFiltros)
-        <a href="{{ route('mis-actividades') }}" class="btn btn-label-primary btn-sm">
-          <i class="ti tabler-x me-1"></i>Limpiar filtros
-        </a>
-        @endif
-      </div>
-    </div>
-  </div>
-  @endforelse
+<div class="row g-3" id="actGrid">
+  @include('content.mis-actividades._cards')
 </div>
 
 {{-- ── Paginación ──────────────────────────────────────────── --}}
-@if($actividades->hasPages())
-<div class="mt-4 d-flex justify-content-center">{{ $actividades->links() }}</div>
-@endif
+<div class="mt-4 d-flex justify-content-center" id="actPaginacion">
+  @if($actividades->hasPages()){{ $actividades->links() }}@endif
+</div>
 
 {{-- ── Modal: Actualizar Avance ────────────────────────────── --}}
 <div class="modal fade" id="modalAvance" tabindex="-1" aria-hidden="true">
@@ -659,47 +506,131 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  // ── Select2 ───────────────────────────────────────────────
-  document.querySelectorAll('.select2').forEach(el => {
-    $(el).wrap('<div class="position-relative"></div>').select2({
-      placeholder: el.dataset.placeholder || '',
-      dropdownParent: $(el).parent(),
-      width: '100%',
-    });
-  });
-
-  // ── Filtros en tiempo real ────────────────────────────────
-  const form        = document.getElementById('formFiltros');
+  const BASE_URL   = '{{ route('mis-actividades') }}';
+  const CSRF       = '{{ csrf_token() }}';
+  const gridEl     = document.getElementById('actGrid');
+  const paginaEl   = document.getElementById('actPaginacion');
+  const contadorEl = document.getElementById('actContador');
   const buscarInput = document.getElementById('filtroBuscar');
   const spinner     = document.getElementById('filtroBuscarSpinner');
+  let fetchAborter  = null;
 
-  function submitFiltros() {
+  // ── Recolectar parámetros actuales ───────────────────────
+  function getParams() {
+    const form = document.getElementById('formFiltros');
     const params = new URLSearchParams();
     new FormData(form).forEach((v, k) => {
       if (!v) return;
-      // Omitir campos hidden duplicados de flatpickr (el visible no tiene name)
-      if (k === 'fecha_desde' && !v) return;
-      if (k === 'fecha_hasta' && !v) return;
       if (k === 'avance_min' && v === '0') return;
       if (k === 'avance_max' && v === '100') return;
       params.set(k, v);
     });
-    window.location.href = '{{ route('mis-actividades') }}' + (params.toString() ? '?' + params.toString() : '');
+    return params;
   }
 
-  // Selects nativos
-  ['filtroEstado', 'filtroPrioridad', 'filtroEvidencia', 'filtroMiRol'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', submitFiltros);
+  // ── Actualizar KPI cards en DOM ──────────────────────────
+  function updateStats(stats) {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('kpi-total',       stats.total);
+    set('kpi-completadas', stats.completadas);
+    set('kpi-en_proceso',  stats.en_proceso);
+    set('kpi-vencidas',    stats.vencidas);
+    set('kpi-sin_ev',      stats.sin_ev);
+    set('kpi-pct',         stats.porcentaje + '%');
+    const bar = document.getElementById('kpi-bar');
+    if (bar) bar.style.width = stats.porcentaje + '%';
+  }
+
+  // ── Actualizar URL sin recargar ──────────────────────────
+  function pushUrl(params) {
+    const url = BASE_URL + (params.toString() ? '?' + params.toString() : '');
+    history.pushState(null, '', url);
+  }
+
+  // ── Fetch AJAX principal ─────────────────────────────────
+  function cargarActividades(params) {
+    if (fetchAborter) fetchAborter.abort();
+    fetchAborter = new AbortController();
+
+    gridEl.style.opacity = '0.45';
+    gridEl.style.pointerEvents = 'none';
+
+    fetch(BASE_URL + '?' + params.toString(), {
+      signal: fetchAborter.signal,
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+    })
+    .then(r => r.json())
+    .then(data => {
+      gridEl.innerHTML = data.html;
+      paginaEl.innerHTML = data.pages;
+      contadorEl.innerHTML =
+        `Mostrando <strong class="text-body">${data.from}–${data.to}</strong> de <strong class="text-body">${data.total}</strong> actividad(es)`;
+
+      // badge filtros activos
+      const hayFiltros = params.toString().length > 0;
+      const badge = document.getElementById('badgeFiltrosActivos');
+      if (badge) badge.style.display = hayFiltros ? '' : 'none';
+      const btnLimpiar = document.getElementById('btnLimpiarFiltros');
+      if (btnLimpiar) btnLimpiar.classList.toggle('invisible', !hayFiltros);
+
+      updateStats(data.stats);
+      bindCardEvents();
+      pushUrl(params);
+      gridEl.style.opacity = '1';
+      gridEl.style.pointerEvents = '';
+      spinner.style.display = 'none';
+    })
+    .catch(err => {
+      if (err.name !== 'AbortError') {
+        gridEl.style.opacity = '1';
+        gridEl.style.pointerEvents = '';
+        spinner.style.display = 'none';
+      }
+    });
+  }
+
+  // ── Disparar filtros ─────────────────────────────────────
+  function submitFiltros() {
+    cargarActividades(getParams());
+  }
+
+  // ── Selects: cambio inmediato ────────────────────────────
+  ['filtroEstado','filtroModulo','filtroPrioridad','filtroEvidencia','filtroMiRol'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', submitFiltros);
   });
 
-  // Select2 componente
-  $('#filtroComponente').on('select2:select select2:unselect', submitFiltros);
+  // ── Buscar: debounce 500ms ───────────────────────────────
+  let debBuscar;
+  buscarInput.addEventListener('input', function () {
+    clearTimeout(debBuscar);
+    spinner.style.display = '';
+    debBuscar = setTimeout(submitFiltros, 500);
+  });
 
-  // ── Flatpickr ─────────────────────────────────────────────
+  // ── Limpiar filtros ──────────────────────────────────────
+  document.getElementById('btnLimpiarFiltros')?.addEventListener('click', () => {
+    document.getElementById('formFiltros').reset();
+    document.getElementById('filtroFechaDesdeVal').value = '';
+    document.getElementById('filtroFechaHastaVal').value = '';
+    fpDesde?.clear(); fpHasta?.clear();
+    if (sliderEl?.noUiSlider) sliderEl.noUiSlider.set([0, 100]);
+    cargarActividades(new URLSearchParams());
+  });
+
+  // ── Paginación delegada ──────────────────────────────────
+  paginaEl.addEventListener('click', function (e) {
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+    e.preventDefault();
+    const url = new URL(link.href);
+    const params = getParams();
+    params.set('page', url.searchParams.get('page') || 1);
+    cargarActividades(params);
+  });
+
+  // ── Flatpickr ────────────────────────────────────────────
   const fpOpts = {
-    dateFormat: 'd/m/Y',        // display
-    altInput: false,
+    dateFormat: 'd/m/Y',
     locale: {
       firstDayOfWeek: 1,
       months: { shorthand: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], longhand: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] },
@@ -709,93 +640,125 @@ document.addEventListener('DOMContentLoaded', function () {
     static: true,
   };
 
-  // Fecha desde
-  flatpickr('#filtroFechaDesde', {
+  const fpDesde = flatpickr('#filtroFechaDesde', {
     ...fpOpts,
     onClose(dates) {
-      const hidden = document.getElementById('filtroFechaDesdeVal');
-      hidden.value = dates[0] ? dates[0].toISOString().slice(0,10) : '';
-      if (dates[0]) submitFiltros();
+      document.getElementById('filtroFechaDesdeVal').value = dates[0] ? dates[0].toISOString().slice(0,10) : '';
+      submitFiltros();
     },
-    onReady(dates, str, fp) {
-      // Limpiar al click en el icono X del input
-      fp._input.addEventListener('keydown', e => { if (e.key === 'Delete' || e.key === 'Backspace') { fp.clear(); document.getElementById('filtroFechaDesdeVal').value = ''; submitFiltros(); } });
-    }
   });
-
-  // Fecha hasta
-  flatpickr('#filtroFechaHasta', {
+  const fpHasta = flatpickr('#filtroFechaHasta', {
     ...fpOpts,
     onClose(dates) {
-      const hidden = document.getElementById('filtroFechaHastaVal');
-      hidden.value = dates[0] ? dates[0].toISOString().slice(0,10) : '';
-      if (dates[0]) submitFiltros();
+      document.getElementById('filtroFechaHastaVal').value = dates[0] ? dates[0].toISOString().slice(0,10) : '';
+      submitFiltros();
     },
-    onReady(dates, str, fp) {
-      fp._input.addEventListener('keydown', e => { if (e.key === 'Delete' || e.key === 'Backspace') { fp.clear(); document.getElementById('filtroFechaHastaVal').value = ''; submitFiltros(); } });
-    }
   });
 
-  // ── noUiSlider: rango de avance ───────────────────────────
-  const sliderEl  = document.getElementById('sliderAvance');
-  const minInput  = document.getElementById('filtroAvanceMin');
-  const maxInput  = document.getElementById('filtroAvanceMax');
+  // ── noUiSlider ───────────────────────────────────────────
+  const sliderEl   = document.getElementById('sliderAvance');
+  const minInput   = document.getElementById('filtroAvanceMin');
+  const maxInput   = document.getElementById('filtroAvanceMax');
   const rangeLabel = document.getElementById('avanceRangeLabel');
-  let debounceSlider;
+  let debSlider;
 
   noUiSlider.create(sliderEl, {
-    start: [parseInt(minInput.value, 10) || 0, parseInt(maxInput.value, 10) || 100],
-    connect: true,
-    step: 5,
+    start: [parseInt(minInput.value)||0, parseInt(maxInput.value)||100],
+    connect: true, step: 5,
     range: { min: 0, max: 100 },
-    tooltips: [
-      { to: v => Math.round(v) + '%' },
-      { to: v => Math.round(v) + '%' },
-    ],
+    tooltips: [{ to: v => Math.round(v)+'%' }, { to: v => Math.round(v)+'%' }],
   });
-
   sliderEl.noUiSlider.on('update', (values) => {
-    const min = Math.round(values[0]);
-    const max = Math.round(values[1]);
-    minInput.value  = min;
-    maxInput.value  = max;
-    rangeLabel.textContent = min + '% — ' + max + '%';
+    minInput.value = Math.round(values[0]);
+    maxInput.value = Math.round(values[1]);
+    rangeLabel.textContent = Math.round(values[0]) + '% — ' + Math.round(values[1]) + '%';
   });
+  sliderEl.noUiSlider.on('change', () => { clearTimeout(debSlider); debSlider = setTimeout(submitFiltros, 400); });
 
-  sliderEl.noUiSlider.on('change', () => {
-    clearTimeout(debounceSlider);
-    debounceSlider = setTimeout(submitFiltros, 400);
-  });
-
-  // ── Buscar con debounce ───────────────────────────────────
-  let debounce;
-  buscarInput.addEventListener('input', function () {
-    clearTimeout(debounce);
-    spinner.style.display = '';
-    debounce = setTimeout(() => { spinner.style.display = 'none'; submitFiltros(); }, 500);
-  });
-
-  // ── Modal: Actualizar avance ──────────────────────────────
-  const modalAvance = new bootstrap.Modal(document.getElementById('modalAvance'));
-  const formAvance  = document.getElementById('formAvance');
-  const avanceRange = document.getElementById('avanceRange');
-  const avanceLabel = document.getElementById('avanceValorLabel');
+  // ── Bind eventos a tarjetas (re-bind tras cada fetch) ────
+  const modalAvance    = new bootstrap.Modal(document.getElementById('modalAvance'));
+  const modalHistorial = new bootstrap.Modal(document.getElementById('modalHistorial'));
+  const formAvance     = document.getElementById('formAvance');
+  const avanceRange    = document.getElementById('avanceRange');
+  const avanceLabel    = document.getElementById('avanceValorLabel');
   let avanceUrl = '';
 
-  avanceRange.addEventListener('input', () => {
-    avanceLabel.textContent = avanceRange.value + '%';
-  });
+  avanceRange.addEventListener('input', () => { avanceLabel.textContent = avanceRange.value + '%'; });
 
-  document.querySelectorAll('.btn-actualizar-avance').forEach(btn => {
-    btn.addEventListener('click', function () {
-      avanceUrl = this.dataset.url;
-      document.getElementById('avanceNombre').textContent = this.dataset.nombre;
-      avanceRange.value = this.dataset.avance;
-      avanceLabel.textContent = this.dataset.avance + '%';
-      modalAvance.show();
+  function bindCardEvents() {
+    // Botón limpiar en empty state
+    document.getElementById('btnLimpiarEmpty')?.addEventListener('click', () => {
+      document.getElementById('formFiltros').reset();
+      document.getElementById('filtroFechaDesdeVal').value = '';
+      document.getElementById('filtroFechaHastaVal').value = '';
+      fpDesde?.clear(); fpHasta?.clear();
+      if (sliderEl?.noUiSlider) sliderEl.noUiSlider.set([0, 100]);
+      cargarActividades(new URLSearchParams());
     });
-  });
 
+    // Actualizar avance
+    document.querySelectorAll('.btn-actualizar-avance').forEach(btn => {
+      btn.addEventListener('click', function () {
+        avanceUrl = this.dataset.url;
+        document.getElementById('avanceNombre').textContent = this.dataset.nombre;
+        avanceRange.value = this.dataset.avance;
+        avanceLabel.textContent = this.dataset.avance + '%';
+        formAvance.querySelector('[name="observaciones"]').value = '';
+        modalAvance.show();
+      });
+    });
+
+    // Historial
+    document.querySelectorAll('.btn-ver-historial').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.getElementById('historialNombre').textContent = this.dataset.nombre;
+        document.getElementById('historialContenido').innerHTML =
+          '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:1.5rem;height:1.5rem"></div><div class="text-muted mt-2 small">Cargando historial...</div></div>';
+        modalHistorial.show();
+        fetch(this.dataset.url, { headers: { 'Accept': 'application/json' } })
+          .then(r => r.json())
+          .then(data => {
+            if (!data.length) {
+              document.getElementById('historialContenido').innerHTML =
+                '<div class="text-center py-5"><i class="ti tabler-history-off text-muted d-block mb-2" style="font-size:2rem"></i><p class="text-muted mb-0">Sin historial registrado aún.</p></div>';
+              return;
+            }
+            const iconMap = { estado:'tabler-circle-dot', avance:'tabler-percentage', observaciones:'tabler-note', nombre:'tabler-pencil', prioridad:'tabler-flag', fecha_limite:'tabler-calendar', responsables:'tabler-users' };
+            let html = '<div class="p-3">';
+            data.forEach((h, i) => {
+              const icon = iconMap[h.campo] || 'tabler-edit';
+              html += `<div class="d-flex gap-3 mb-3">
+                <div class="flex-shrink-0 d-flex align-items-center justify-content-center" style="width:36px;height:36px;border-radius:10px;background:rgba(115,103,240,.08)">
+                  <i class="ti ${icon} text-primary" style="font-size:.9rem"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-start flex-wrap gap-1">
+                    <div>
+                      <span class="badge bg-label-secondary me-1" style="font-size:.7rem">${h.campo}</span>
+                      <span class="text-muted" style="font-size:.75rem">${h.descripcion||''}</span>
+                    </div>
+                    <small class="text-muted" style="font-size:.7rem"><i class="ti tabler-clock me-1"></i>${h.fecha}</small>
+                  </div>
+                  <div class="mt-1 d-flex align-items-center gap-2 flex-wrap" style="font-size:.8rem">
+                    <span class="text-muted text-decoration-line-through">${h.valor_anterior??'—'}</span>
+                    <i class="ti tabler-arrow-right text-muted" style="font-size:.7rem"></i>
+                    <span class="fw-semibold">${h.valor_nuevo??'—'}</span>
+                  </div>
+                  <div class="mt-1 text-muted" style="font-size:.72rem"><i class="ti tabler-user me-1"></i>${h.usuario}</div>
+                </div>
+              </div>${i < data.length-1 ? '<hr class="my-2 opacity-25">' : ''}`;
+            });
+            document.getElementById('historialContenido').innerHTML = html + '</div>';
+          })
+          .catch(() => {
+            document.getElementById('historialContenido').innerHTML =
+              '<div class="text-center py-4 text-danger"><i class="ti tabler-wifi-off d-block mb-2" style="font-size:2rem"></i>Error al cargar el historial.</div>';
+          });
+      });
+    });
+  }
+
+  // ── Submit avance ────────────────────────────────────────
   formAvance.addEventListener('submit', function (e) {
     e.preventDefault();
     const obs = this.querySelector('[name="observaciones"]').value;
@@ -805,95 +768,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
     fetch(avanceUrl, {
       method: 'PATCH',
-      headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
+      headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ avance: parseInt(avanceRange.value, 10), observaciones: obs }),
     })
     .then(r => r.json())
     .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti tabler-check me-1"></i>Guardar avance';
       if (data.success) {
         modalAvance.hide();
         Swal.fire({
           icon: 'success',
           title: 'Avance actualizado',
           html: `<span class="fw-bold fs-4 text-primary">${data.avance}%</span><br><small class="text-muted">${data.estado_label}</small>`,
-          timer: 2000,
+          timer: 1800,
           showConfirmButton: false,
           timerProgressBar: true,
-        }).then(() => location.reload());
+        }).then(() => cargarActividades(getParams()));
       } else {
         Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'No se pudo guardar.' });
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ti tabler-check me-1"></i>Guardar avance';
       }
     })
     .catch(() => {
-      Swal.fire({ icon: 'error', title: 'Error de conexión', text: 'No se pudo conectar con el servidor.' });
       btn.disabled = false;
       btn.innerHTML = '<i class="ti tabler-check me-1"></i>Guardar avance';
+      Swal.fire({ icon: 'error', title: 'Error de conexión', text: 'No se pudo conectar con el servidor.' });
     });
   });
 
-  // ── Modal: Historial ─────────────────────────────────────
-  const modalHistorial = new bootstrap.Modal(document.getElementById('modalHistorial'));
-
-  document.querySelectorAll('.btn-ver-historial').forEach(btn => {
-    btn.addEventListener('click', function () {
-      document.getElementById('historialNombre').textContent = this.dataset.nombre;
-      document.getElementById('historialContenido').innerHTML =
-        '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:1.5rem;height:1.5rem"></div><div class="text-muted mt-2 small">Cargando historial...</div></div>';
-      modalHistorial.show();
-
-      fetch(this.dataset.url, { headers: { 'Accept': 'application/json' } })
-        .then(r => r.json())
-        .then(data => {
-          if (!data.length) {
-            document.getElementById('historialContenido').innerHTML =
-              '<div class="text-center py-5"><i class="ti tabler-history-off text-muted d-block mb-2" style="font-size:2rem"></i><p class="text-muted mb-0">Sin historial registrado aún.</p></div>';
-            return;
-          }
-          const iconMap = { estado: 'tabler-circle-dot', avance: 'tabler-percentage', observaciones: 'tabler-note', nombre: 'tabler-pencil', prioridad: 'tabler-flag', fecha_limite: 'tabler-calendar', responsables: 'tabler-users' };
-          let html = `<div class="p-3">`;
-          data.forEach(h => {
-            const icon = iconMap[h.campo] || 'tabler-edit';
-            html += `
-              <div class="d-flex gap-3 mb-3">
-                <div class="flex-shrink-0 d-flex align-items-center justify-content-center"
-                  style="width:36px;height:36px;border-radius:10px;background:rgba(115,103,240,.08)">
-                  <i class="ti ${icon} text-primary" style="font-size:.9rem"></i>
-                </div>
-                <div class="flex-grow-1">
-                  <div class="d-flex justify-content-between align-items-start flex-wrap gap-1">
-                    <div>
-                      <span class="badge bg-label-secondary me-1" style="font-size:.7rem">${h.campo}</span>
-                      <span class="text-muted" style="font-size:.75rem">${h.descripcion || ''}</span>
-                    </div>
-                    <small class="text-muted" style="font-size:.7rem"><i class="ti tabler-clock me-1"></i>${h.fecha}</small>
-                  </div>
-                  <div class="mt-1 d-flex align-items-center gap-2 flex-wrap" style="font-size:.8rem">
-                    <span class="text-muted text-decoration-line-through">${h.valor_anterior ?? '—'}</span>
-                    <i class="ti tabler-arrow-right text-muted" style="font-size:.7rem"></i>
-                    <span class="fw-semibold">${h.valor_nuevo ?? '—'}</span>
-                  </div>
-                  <div class="mt-1 text-muted" style="font-size:.72rem">
-                    <i class="ti tabler-user me-1"></i>${h.usuario}
-                  </div>
-                </div>
-              </div>
-              ${data.indexOf(h) < data.length - 1 ? '<hr class="my-2 opacity-25">' : ''}`;
-          });
-          html += `</div>`;
-          document.getElementById('historialContenido').innerHTML = html;
-        })
-        .catch(() => {
-          document.getElementById('historialContenido').innerHTML =
-            '<div class="text-center py-4 text-danger"><i class="ti tabler-wifi-off d-block mb-2" style="font-size:2rem"></i>Error al cargar el historial.</div>';
-        });
-    });
-  });
+  // ── Bind inicial ─────────────────────────────────────────
+  bindCardEvents();
 
 });
 </script>

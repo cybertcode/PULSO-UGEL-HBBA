@@ -4,143 +4,351 @@ namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
 use App\Models\Actividad;
-use App\Models\Alerta;
-use App\Models\Componente;
-use App\Models\ConfiguracionInstitucional;
+use App\Models\ActividadHistorial;
 use App\Models\Evidencia;
-use App\Models\IntegridadCompromiso;
+use App\Models\Alerta;
+use App\Models\IntegridadEtapa;
+use App\Models\IntegridadComponente;
+use App\Models\IntegridadPregunta;
 use App\Models\UnidadOrganica;
 use App\Models\User;
-use App\Support\SemaforoHelper;
+use App\Models\ConfiguracionInstitucional;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ModeloIntegridadController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $config = ConfiguracionInstitucional::cached();
-        [$umbral_verde, $umbral_amarillo] = SemaforoHelper::umbrales($config);
+        $anio = $request->input('anio', now()->year);
 
-        $componentes = Componente::withCount([
-            'actividades',
-            'actividades as completadas_count' => fn($q) => $q->where('estado', 'completada'),
-            'actividades as en_proceso_count'  => fn($q) => $q->where('estado', 'en_proceso'),
-            'actividades as vencidas_count'    => fn($q) => $q->whereNotIn('estado', ['completada', 'observado'])
-                                                               ->whereDate('fecha_limite', '<', now()),
-        ])->where('activo', true)->orderBy('numero')->get()
-          ->map(function ($c) use ($config) {
-              SemaforoHelper::decorar($c, 'actividades_count', 'completadas_count', $config, 'Cumplido', 'En proceso', 'En riesgo');
-              $c->nivel            = $c->porcentaje >= $config->umbral_verde ? 'Bueno' : ($c->porcentaje >= $config->umbral_amarillo ? 'Regular' : 'En riesgo');
-              $c->evidencias_count = Evidencia::whereHas('actividad', fn($q) => $q->where('componente_id', $c->id))->count();
-              return $c;
-          });
+        $config          = ConfiguracionInstitucional::cached();
+        $umbral_verde    = (int) ($config->umbral_verde    ?? 70);
+        $umbral_amarillo = (int) ($config->umbral_amarillo ?? 40);
 
-        $avance_global = round($componentes->avg('porcentaje') ?? 0);
+        // ── Actividades ───────────────────────────────────────────────────────
+        $actQuery = Actividad::with([
+                'integridadPregunta.componente.etapa',
+                'evidencias',
+                'responsables',
+                'unidadOrganica',
+            ])
+            ->where('modulo', 'integridad')
+            ->where('anio', $anio);
 
-        $en_avance = $componentes->where('porcentaje', '>=', $umbral_amarillo)->count();
-        $en_riesgo = $componentes->where('porcentaje', '<', $umbral_amarillo)->where('porcentaje', '>', 0)->count();
-        $criticos  = $componentes->where('porcentaje', 0)->count();
+        // Filtros adicionales (para listado AJAX)
+        if ($request->filled('etapa_id')) {
+            $actQuery->whereHas('integridadPregunta.componente', fn($q) => $q->where('etapa_id', $request->etapa_id));
+        }
+        if ($request->filled('componente_id')) {
+            $actQuery->whereHas('integridadPregunta', fn($q) => $q->where('componente_id', $request->componente_id));
+        }
+        if ($request->filled('pregunta_id')) {
+            $actQuery->where('integridad_pregunta_id', $request->pregunta_id);
+        }
+        if ($request->filled('unidad_id')) {
+            $actQuery->where('unidad_organica_id', $request->unidad_id);
+        }
+        if ($request->filled('estado')) {
+            $actQuery->where('estado', $request->estado);
+        }
+        if ($request->filled('buscar')) {
+            $b = $request->buscar;
+            $actQuery->where(fn($q) => $q->where('nombre', 'like', "%$b%")->orWhere('codigo', 'like', "%$b%"));
+        }
 
-        $alertas_activas = Alerta::with(['actividad.componente', 'unidadOrganica'])
-            ->where('leida', false)
+        $actividades = $actQuery->orderBy('fecha_limite')->get();
+
+        // ── Si es petición AJAX de listado ────────────────────────────────────
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'actividades' => $actividades->map(fn($a) => $this->actividadToArray($a)),
+                'total'       => $actividades->count(),
+            ]);
+        }
+
+        // ── Métricas globales ─────────────────────────────────────────────────
+        $total         = $actividades->count();
+        $completadas_n = $actividades->where('estado', 'completada')->count();
+        $avance_global = $total > 0 ? round($actividades->avg('avance')) : 0;
+
+        // ── Componentes con métricas ──────────────────────────────────────────
+        $componentesBase = IntegridadComponente::with(['etapa', 'preguntas'])
+            ->where('activo', true)
+            ->orderBy('orden')
+            ->get();
+
+        $componentes = $componentesBase->map(function ($comp) use ($actividades, $umbral_verde, $umbral_amarillo) {
+            $acts        = $actividades->filter(fn($a) => $a->integridadPregunta?->componente_id === $comp->id);
+            $total       = $acts->count();
+            $porcentaje  = $total > 0 ? (int) round($acts->avg('avance')) : 0;
+            $completadas = $acts->where('estado', 'completada')->count();
+            $vencidas    = $acts->where('estado', 'vencida')->count();
+            $en_proceso  = $acts->whereIn('estado', ['en_proceso', 'pendiente'])->count();
+            $evidencias  = $acts->sum(fn($a) => $a->evidencias->count());
+            $color       = $porcentaje >= $umbral_verde ? 'success'
+                         : ($porcentaje >= $umbral_amarillo ? 'warning' : 'danger');
+
+            return (object) [
+                'id'               => $comp->id,
+                'numero'           => $comp->orden,
+                'nombre'           => $comp->nombre,
+                'icono'            => $comp->icono ?? 'tabler-circle',
+                'etapa'            => $comp->etapa?->nombre ?? '—',
+                'porcentaje'       => $porcentaje,
+                'color'            => $color,
+                'total'            => $total,
+                'completadas'      => $completadas,
+                'completadas_count'=> $completadas,
+                'en_proceso_count' => $en_proceso,
+                'vencidas'         => $vencidas,
+                'evidencias_count' => $evidencias,
+                'con_ev'           => $acts->filter(fn($a) => $a->evidencias->count() > 0)->count(),
+            ];
+        });
+
+        $en_avance = $componentes->where('color', 'success')->count();
+        $en_riesgo = $componentes->where('color', 'warning')->count();
+        $criticos  = $componentes->where('color', 'danger')->count();
+
+        // ── Evidencias recientes ──────────────────────────────────────────────
+        $idsIntegridad = $actividades->pluck('id');
+        $evidencias_recientes = Evidencia::with(['actividad.integridadPregunta.componente', 'subidoPor'])
+            ->whereIn('actividad_id', $idsIntegridad)
+            ->latest()->limit(10)->get()
+            ->map(function ($ev) {
+                if ($ev->actividad?->integridadPregunta) {
+                    $comp = $ev->actividad->integridadPregunta->componente;
+                    $ev->actividad->componente = $comp ? (object)['numero'=>$comp->orden,'nombre'=>$comp->nombre] : null;
+                } else {
+                    if ($ev->actividad) $ev->actividad->componente = null;
+                }
+                return $ev;
+            });
+
+        // ── Alertas activas ───────────────────────────────────────────────────
+        $alertas_activas = Alerta::with(['actividad.integridadPregunta.componente'])
+            ->whereIn('actividad_id', $idsIntegridad)
             ->orderByRaw("FIELD(prioridad,'alta','media','baja')")
-            ->limit(5)->get();
+            ->limit(5)->get()
+            ->map(function ($al) {
+                if ($al->actividad?->integridadPregunta) {
+                    $comp = $al->actividad->integridadPregunta->componente;
+                    $al->actividad->componente = $comp ? (object)['nombre'=>$comp->nombre] : null;
+                } else {
+                    if ($al->actividad) $al->actividad->componente = null;
+                }
+                return $al;
+            });
 
-        $proximas_acciones = Actividad::with('componente')
-            ->whereNotIn('estado', ['completada', 'observado'])
-            ->whereDate('fecha_limite', '>=', now())
-            ->orderBy('fecha_limite')
-            ->limit(5)->get();
+        // ── Próximas acciones ─────────────────────────────────────────────────
+        $proximas_acciones = $actividades
+            ->whereIn('estado', ['pendiente', 'en_proceso'])
+            ->filter(fn($a) => $a->fecha_limite !== null)
+            ->sortBy('fecha_limite')->take(5)
+            ->map(function ($act) {
+                $comp = $act->integridadPregunta?->componente;
+                $act->componente = $comp ? (object)['nombre' => $comp->nombre] : null;
+                return $act;
+            });
 
-        $evidencias_recientes = Evidencia::with(['actividad.componente', 'subidoPor'])
-            ->latest()
-            ->limit(8)->get();
-
-        // Compromisos del Modelo de Integridad agrupados por pilar
-        $compromisos_por_pilar = IntegridadCompromiso::with('responsable')
-            ->orderBy('pilar')
-            ->orderByDesc('avance')
-            ->get()
-            ->groupBy('pilar');
-
-        $pilares = ['compromiso', 'cultura', 'regulacion', 'control'];
-
-        $avance_integridad = IntegridadCompromiso::count() > 0
-            ? (int) round(IntegridadCompromiso::avg('avance'))
-            : 0;
-
-        $usuarios  = User::orderBy('name')->get(['id', 'name']);
-        $anio      = now()->year;
+        // ── Para formulario nueva actividad ───────────────────────────────────
+        $etapas    = IntegridadEtapa::where('activo', true)->orderBy('anio','desc')->orderBy('orden')->get();
+        $unidades  = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
+        $usuarios  = User::where('estado', 'activo')->orderBy('name')->get();
+        $anios_opt = Actividad::where('modulo','integridad')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
 
         return view('content.modelo-integridad.index', compact(
-            'componentes', 'avance_global',
-            'umbral_verde', 'umbral_amarillo',
-            'en_avance', 'en_riesgo', 'criticos',
-            'alertas_activas', 'proximas_acciones', 'evidencias_recientes',
-            'compromisos_por_pilar', 'pilares', 'avance_integridad', 'usuarios', 'anio'
+            'avance_global', 'umbral_verde', 'umbral_amarillo',
+            'componentes', 'en_avance', 'en_riesgo', 'criticos',
+            'evidencias_recientes', 'alertas_activas', 'proximas_acciones',
+            'actividades', 'etapas', 'unidades', 'usuarios', 'anio', 'anios_opt'
         ));
     }
 
-    public function storeCompromiso(Request $request)
+    // ── AJAX: componentes por etapa ───────────────────────────────────────────
+    public function componentesPorEtapa(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'pilar'          => 'required|in:compromiso,cultura,regulacion,control',
-            'titulo'         => 'required|string|max:255',
-            'descripcion'    => 'nullable|string',
-            'avance'         => 'required|integer|min:0|max:100',
-            'estado'         => 'required|in:pendiente,en_proceso,completado',
-            'fecha_inicio'   => 'nullable|date',
-            'fecha_fin'      => 'nullable|date|after_or_equal:fecha_inicio',
-            'responsable_id' => 'nullable|exists:users,id',
-            'evidencia'      => 'nullable|string',
-            'observaciones'  => 'nullable|string',
-            'anio'           => 'nullable|integer',
-        ]);
+        $componentes = IntegridadComponente::where('etapa_id', $request->etapa_id)
+            ->where('activo', true)
+            ->orderBy('orden')
+            ->get(['id','nombre','orden','icono']);
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('error', 'Corrija los errores.');
-        }
-
-        IntegridadCompromiso::create($request->only([
-            'pilar', 'titulo', 'descripcion', 'avance', 'estado',
-            'fecha_inicio', 'fecha_fin', 'responsable_id', 'evidencia', 'observaciones', 'anio',
-        ]));
-
-        return back()->with('success', 'Compromiso registrado correctamente.');
+        return response()->json($componentes);
     }
 
-    public function updateCompromiso(Request $request, IntegridadCompromiso $compromiso)
+    // ── AJAX: preguntas por componente ────────────────────────────────────────
+    public function preguntasPorComponente(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'pilar'          => 'required|in:compromiso,cultura,regulacion,control',
-            'titulo'         => 'required|string|max:255',
-            'descripcion'    => 'nullable|string',
-            'avance'         => 'required|integer|min:0|max:100',
-            'estado'         => 'required|in:pendiente,en_proceso,completado',
-            'fecha_inicio'   => 'nullable|date',
-            'fecha_fin'      => 'nullable|date',
-            'responsable_id' => 'nullable|exists:users,id',
-            'evidencia'      => 'nullable|string',
-            'observaciones'  => 'nullable|string',
-            'anio'           => 'nullable|integer',
-        ]);
+        $preguntas = IntegridadPregunta::where('componente_id', $request->componente_id)
+            ->where('activo', true)
+            ->orderBy('orden')
+            ->get(['id','nombre','link_ficha','orden']);
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('error', 'Corrija los errores.');
-        }
-
-        $compromiso->update($request->only([
-            'pilar', 'titulo', 'descripcion', 'avance', 'estado',
-            'fecha_inicio', 'fecha_fin', 'responsable_id', 'evidencia', 'observaciones', 'anio',
-        ]));
-
-        return back()->with('success', 'Compromiso actualizado.');
+        return response()->json($preguntas);
     }
 
-    public function destroyCompromiso(IntegridadCompromiso $compromiso)
+    // ── Crear actividad ───────────────────────────────────────────────────────
+    public function store(Request $request)
     {
-        $compromiso->delete();
-        return back()->with('success', 'Compromiso eliminado.');
+        $validated = $request->validate([
+            'nombre'                 => 'required|string|max:255',
+            'anio'                   => 'required|integer|min:2020|max:2099',
+            'integridad_pregunta_id' => 'required|exists:integridad_preguntas,id',
+            'unidad_organica_id'     => 'nullable|exists:unidades_organicas,id',
+            'fecha_limite'           => 'required|date',
+            'fecha_inicio'           => 'nullable|date|before_or_equal:fecha_limite',
+            'prioridad'              => 'required|in:alta,media,baja',
+            'numero_sgd'             => 'nullable|string|max:50',
+            'descripcion'            => 'nullable|string',
+            'observaciones'          => 'nullable|string',
+            'responsables'           => 'nullable|array',
+            'responsables.*'         => 'exists:users,id',
+            'tipos'                  => 'nullable|array',
+            'tipos.*'                => 'in:principal,colaborador,supervisor',
+        ]);
+
+        $validated['modulo']     = 'integridad';
+        $validated['creado_por'] = Auth::id();
+        $validated['estado']     = 'pendiente';
+        $validated['avance']     = 0;
+
+        $anio  = $validated['anio'];
+        $count = Actividad::where('modulo','integridad')->whereYear('created_at', $anio)->withTrashed()->count() + 1;
+        $validated['codigo'] = 'INTEGRIDAD-' . $anio . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+
+        DB::transaction(function () use ($validated, $request) {
+            $actividad = Actividad::create(\Arr::except($validated, ['responsables','tipos']));
+
+            ActividadHistorial::create([
+                'actividad_id'   => $actividad->id,
+                'usuario_id'     => Auth::id(),
+                'campo'          => 'estado',
+                'valor_anterior' => null,
+                'valor_nuevo'    => 'pendiente',
+                'descripcion'    => 'Actividad creada',
+            ]);
+
+            if (!empty($validated['responsables'])) {
+                $tipos = $validated['tipos'] ?? [];
+                $sync  = collect($validated['responsables'])
+                    ->mapWithKeys(fn($id) => [$id => ['tipo' => $tipos[$id] ?? 'principal']])
+                    ->toArray();
+                $actividad->responsables()->sync($sync);
+            }
+        });
+
+        return back()->with('success', "Actividad «{$validated['nombre']}» creada correctamente.");
+    }
+
+    // ── Actualizar actividad ──────────────────────────────────────────────────
+    public function update(Request $request, Actividad $actividad)
+    {
+        $validated = $request->validate([
+            'nombre'                 => 'required|string|max:255',
+            'integridad_pregunta_id' => 'required|exists:integridad_preguntas,id',
+            'unidad_organica_id'     => 'nullable|exists:unidades_organicas,id',
+            'fecha_limite'           => 'required|date',
+            'fecha_inicio'           => 'nullable|date|before_or_equal:fecha_limite',
+            'avance'                 => 'nullable|integer|min:0|max:100',
+            'estado'                 => 'required|in:pendiente,en_proceso,completada,observado,vencida',
+            'prioridad'              => 'required|in:alta,media,baja',
+            'numero_sgd'             => 'nullable|string|max:50',
+            'descripcion'            => 'nullable|string',
+            'observaciones'          => 'nullable|string',
+            'responsables'           => 'nullable|array',
+            'responsables.*'         => 'exists:users,id',
+            'tipos'                  => 'nullable|array',
+            'tipos.*'                => 'in:principal,colaborador,supervisor',
+        ]);
+
+        if ($validated['estado'] === 'completada' && !$actividad->fecha_cumplimiento) {
+            $validated['fecha_cumplimiento'] = now();
+            $validated['avance'] = 100;
+        }
+
+        DB::transaction(function () use ($validated, $actividad) {
+            $actividad->update(\Arr::except($validated, ['responsables','tipos']));
+
+            if (!empty($validated['responsables'])) {
+                $tipos = $validated['tipos'] ?? [];
+                $sync  = collect($validated['responsables'])
+                    ->mapWithKeys(fn($id) => [$id => ['tipo' => $tipos[$id] ?? 'principal']])
+                    ->toArray();
+                $actividad->responsables()->sync($sync);
+            }
+        });
+
+        return back()->with('success', 'Actividad actualizada correctamente.');
+    }
+
+    public function destroy(Actividad $actividad)
+    {
+        $actividad->delete();
+        return back()->with('success', 'Actividad eliminada.');
+    }
+
+    public function updateAvance(Request $request, Actividad $actividad)
+    {
+        $request->validate(['avance' => 'required|integer|min:0|max:100']);
+
+        $avance = $request->avance;
+        $estado = match(true) {
+            $avance >= 100 => 'completada',
+            $avance > 0    => 'en_proceso',
+            default        => $actividad->estado,
+        };
+
+        $actividad->update([
+            'avance'             => $avance,
+            'estado'             => $estado,
+            'fecha_cumplimiento' => $avance >= 100 ? now() : $actividad->fecha_cumplimiento,
+        ]);
+
+        return response()->json(['ok' => true, 'avance' => $avance, 'estado' => $estado]);
+    }
+
+    public function historial(Actividad $actividad)
+    {
+        $historial = ActividadHistorial::with('usuario')
+            ->where('actividad_id', $actividad->id)
+            ->latest()->get()
+            ->map(fn($h) => [
+                'campo'          => $h->campo,
+                'campo_label'    => $h->campo_label,
+                'valor_anterior' => $h->valor_anterior,
+                'valor_nuevo'    => $h->valor_nuevo,
+                'descripcion'    => $h->descripcion,
+                'usuario'        => ['name' => $h->usuario?->name ?? 'Sistema'],
+                'created_at'     => $h->created_at,
+            ]);
+
+        return response()->json($historial);
+    }
+
+    // ── Helper: mapear actividad a array para JSON ────────────────────────────
+    private function actividadToArray(Actividad $a): array
+    {
+        $comp = $a->integridadPregunta?->componente;
+        $hoy  = now();
+        return [
+            'id'          => $a->id,
+            'codigo'      => $a->codigo,
+            'nombre'      => $a->nombre,
+            'componente'  => $comp?->nombre ?? '—',
+            'pregunta'    => $a->integridadPregunta?->nombre ?? '—',
+            'link_ficha'  => $a->integridadPregunta?->link_ficha,
+            'unidad'      => $a->unidadOrganica?->sigla ?? '—',
+            'responsable' => $a->responsables->where('pivot.tipo','principal')->first()?->name
+                          ?? $a->responsables->first()?->name ?? '—',
+            'avance'      => $a->avance,
+            'estado'      => $a->estado,
+            'prioridad'   => $a->prioridad,
+            'fecha_limite'=> $a->fecha_limite?->format('d/m/Y'),
+            'vencida'     => $a->fecha_limite && $a->fecha_limite->lt($hoy) && $a->estado !== 'completada',
+            'dias_retraso'=> $a->fecha_limite && $a->fecha_limite->lt($hoy)
+                ? (int) $hoy->diffInDays($a->fecha_limite) : 0,
+        ];
     }
 }

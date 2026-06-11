@@ -12,6 +12,7 @@ class Alerta extends Model
 
     protected $fillable = [
         'actividad_id', 'usuario_id', 'unidad_organica_id',
+        'modulo', 'dias_anticipacion', 'notificacion_enviada', 'notificacion_enviada_at',
         'titulo', 'mensaje', 'tipo', 'prioridad',
         'leida', 'leida_at',
         'email_enviado', 'email_enviado_at', 'destinatario_email',
@@ -20,10 +21,12 @@ class Alerta extends Model
     protected function casts(): array
     {
         return [
-            'leida'            => 'boolean',
-            'leida_at'         => 'datetime',
-            'email_enviado'    => 'boolean',
-            'email_enviado_at' => 'datetime',
+            'leida'                   => 'boolean',
+            'leida_at'                => 'datetime',
+            'email_enviado'           => 'boolean',
+            'email_enviado_at'        => 'datetime',
+            'notificacion_enviada'    => 'boolean',
+            'notificacion_enviada_at' => 'datetime',
         ];
     }
 

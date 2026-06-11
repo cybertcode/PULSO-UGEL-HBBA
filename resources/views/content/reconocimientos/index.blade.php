@@ -396,6 +396,7 @@ $configData = Helper::appClasses();
                   </a>
                   <button class="btn btn-icon btn-sm btn-label-primary btn-editar-reconocimiento"
                     data-id="{{ $t->id }}"
+                    data-user="{{ $t->user_id }}"
                     data-nombre="{{ $t->nombre }}"
                     data-cargo="{{ $t->cargo }}"
                     data-unidad="{{ $t->unidad_organica_id }}"
@@ -529,9 +530,24 @@ $configData = Helper::appClasses();
         </div>
         <div class="modal-body">
           <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Vincular a usuario del sistema</label>
+              <select name="user_id" class="form-select select2-rec" id="nuevo_user_id">
+                <option value="">— Sin vincular (ingresar manualmente) —</option>
+                @foreach($usuarios as $usr)
+                <option value="{{ $usr->id }}"
+                  data-nombre="{{ $usr->name }}"
+                  data-correo="{{ $usr->email }}"
+                  data-unidad="{{ $usr->unidad_organica_id }}">
+                  {{ $usr->name }} · {{ $usr->email }}
+                </option>
+                @endforeach
+              </select>
+              <div class="form-text">Al seleccionar un usuario, los campos se completarán automáticamente.</div>
+            </div>
             <div class="col-md-8">
               <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
-              <input type="text" name="nombre" class="form-control" required placeholder="Nombres y apellidos">
+              <input type="text" name="nombre" id="nuevo_nombre" class="form-control" required placeholder="Nombres y apellidos">
             </div>
             <div class="col-md-4">
               <label class="form-label">DNI</label>
@@ -641,6 +657,19 @@ $configData = Helper::appClasses();
         </div>
         <div class="modal-body">
           <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Usuario del sistema vinculado</label>
+              <select name="user_id" id="rec_user_id" class="form-select select2-edit-rec">
+                <option value="">— Sin vincular —</option>
+                @foreach($usuarios as $usr)
+                <option value="{{ $usr->id }}"
+                  data-nombre="{{ $usr->name }}"
+                  data-correo="{{ $usr->email }}">
+                  {{ $usr->name }} · {{ $usr->email }}
+                </option>
+                @endforeach
+              </select>
+            </div>
             <div class="col-md-8">
               <label class="form-label">Nombre completo <span class="text-danger">*</span></label>
               <input type="text" name="nombre" id="rec_nombre" class="form-control" required>
@@ -716,6 +745,24 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.select2-rec').forEach(el =>
     $(el).select2({ dropdownParent: el.closest('.modal'), width: '100%' })
   );
+  document.querySelectorAll('.select2-edit-rec').forEach(el =>
+    $(el).select2({ dropdownParent: el.closest('.modal'), width: '100%' })
+  );
+
+  // Auto-completar nombre/correo al seleccionar usuario en modal Nuevo
+  $('#nuevo_user_id').on('select2:select', function () {
+    const opt = this.options[this.selectedIndex];
+    const nombre = opt.dataset.nombre || '';
+    const correo = opt.dataset.correo || '';
+    document.getElementById('nuevo_nombre').value = nombre;
+    const correoEl = document.querySelector('#modalNuevoReconocimiento input[name="correo"]');
+    if (correoEl) correoEl.value = correo;
+  });
+  $('#nuevo_user_id').on('select2:unselect select2:clear', function () {
+    document.getElementById('nuevo_nombre').value = '';
+    const correoEl = document.querySelector('#modalNuevoReconocimiento input[name="correo"]');
+    if (correoEl) correoEl.value = '';
+  });
 
   // Select2 con tags para cargo en reconocimientos
   function initCargosSelect2Rec(selector, modalEl) {
@@ -752,6 +799,9 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', function () {
       const form = document.getElementById('formEditarRec');
       form.action = '/reconocimientos/' + this.dataset.id;
+      // Vincular usuario del sistema
+      const recUserId = $('#rec_user_id');
+      recUserId.val(this.dataset.user || '').trigger('change');
       document.getElementById('rec_nombre').value          = this.dataset.nombre;
 
       // Cargo — poblar Select2

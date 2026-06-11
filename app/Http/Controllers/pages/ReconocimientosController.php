@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Reconocimiento;
 use App\Models\TrabajadorDestacado;
 use App\Models\UnidadOrganica;
+use App\Models\User;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -49,6 +50,7 @@ class ReconocimientosController extends Controller
         ];
 
         $unidades = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
+        $usuarios = User::orderBy('name')->get();
         $anios    = range(now()->year, now()->year - 3);
         $meses    = [
             1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',
@@ -59,7 +61,7 @@ class ReconocimientosController extends Controller
 
         return view('content.reconocimientos.index', compact(
             'rankingUnidades', 'trabajadores', 'top3', 'resto',
-            'stats', 'unidades', 'anios', 'meses', 'anio', 'mes',
+            'stats', 'unidades', 'usuarios', 'anios', 'meses', 'anio', 'mes',
             'categorias', 'categoria'
         ));
     }
@@ -67,6 +69,7 @@ class ReconocimientosController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'user_id'                  => 'nullable|exists:users,id',
             'nombre'                   => 'required|string|max:255',
             'cargo'                    => 'nullable|string|max:255',
             'unidad_organica_id'       => 'nullable|exists:unidades_organicas,id',

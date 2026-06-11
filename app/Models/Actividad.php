@@ -17,8 +17,10 @@ class Actividad extends Model
     protected $table = 'actividades';
 
     protected $fillable = [
-        'codigo', 'nombre', 'descripcion',
-        'componente_id', 'unidad_organica_id', 'creado_por',
+        'codigo', 'modulo', 'anio',
+        'sci_pregunta_id', 'integridad_pregunta_id',
+        'nombre', 'descripcion',
+        'unidad_organica_id', 'creado_por',
         'numero_sgd', 'fecha_inicio', 'fecha_limite', 'fecha_cumplimiento',
         'avance', 'estado', 'prioridad', 'observaciones',
     ];
@@ -26,6 +28,7 @@ class Actividad extends Model
     const ESTADOS = ['pendiente', 'en_proceso', 'completada', 'observado', 'vencida'];
     const PRIORIDADES = ['alta', 'media', 'baja'];
     const TIPOS_RESPONSABLE = ['principal', 'colaborador', 'supervisor'];
+    const MODULOS = ['sci', 'integridad'];
 
     protected function casts(): array
     {
@@ -33,6 +36,7 @@ class Actividad extends Model
             'fecha_inicio'       => 'date',
             'fecha_limite'       => 'date',
             'fecha_cumplimiento' => 'date',
+            'anio'               => 'integer',
         ];
     }
 
@@ -65,9 +69,14 @@ class Actividad extends Model
 
     // ─── Relaciones ───────────────────────────────────────────────────────────
 
-    public function componente(): BelongsTo
+    public function sciPregunta(): BelongsTo
     {
-        return $this->belongsTo(Componente::class, 'componente_id');
+        return $this->belongsTo(SciPregunta::class, 'sci_pregunta_id');
+    }
+
+    public function integridadPregunta(): BelongsTo
+    {
+        return $this->belongsTo(IntegridadPregunta::class, 'integridad_pregunta_id');
     }
 
     public function unidadOrganica(): BelongsTo
@@ -80,7 +89,6 @@ class Actividad extends Model
         return $this->belongsTo(User::class, 'creado_por');
     }
 
-    /** Responsables múltiples con tipo: principal | colaborador | supervisor */
     public function responsables(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'actividad_responsables', 'actividad_id', 'user_id')
@@ -89,7 +97,6 @@ class Actividad extends Model
                     ->orderByPivot('tipo');
     }
 
-    /** Acceso rápido al responsable principal */
     public function responsablePrincipal(): BelongsToMany
     {
         return $this->responsables()->wherePivot('tipo', 'principal');
@@ -143,22 +150,14 @@ class Actividad extends Model
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    /**
-     * Sincroniza responsables a partir de un array.
-     * Acepta dos formatos:
-     *   - Asociativo: [user_id => 'principal'|'colaborador'|'supervisor']
-     *   - Plano:      [user_id, user_id, ...] → todos como $tipoDefault
-     */
     public function sincronizarResponsables(array $responsables, string $tipoDefault = 'principal'): void
     {
         $syncData = [];
 
         foreach ($responsables as $key => $value) {
             if (is_string($value) && in_array($value, self::TIPOS_RESPONSABLE)) {
-                // Formato asociativo: [userId => tipo]
                 $syncData[(int) $key] = ['tipo' => $value];
             } else {
-                // Formato plano: valor es el user_id
                 $syncData[(int) $value] = ['tipo' => $tipoDefault];
             }
         }
