@@ -53,8 +53,7 @@ class CumplimientoResponsablesSheet implements FromCollection, WithHeadings, Wit
             ->get()
             ->map(function (User $user) {
                 $base = Actividad::whereHas('responsables', fn($q) => $q->where('users.id', $user->id))
-                    ->whereYear('created_at', $this->anio)
-                    ->when($this->componenteId, fn($q) => $q->where('componente_id', $this->componenteId));
+                    ->whereYear('created_at', $this->anio);
 
                 $total       = (clone $base)->count();
                 $completadas = (clone $base)->where('estado', 'completada')->count();
@@ -140,19 +139,20 @@ class CumplimientoSinEvidenciaSheet implements FromCollection, WithHeadings, Wit
 
     public function collection()
     {
-        return Actividad::with(['componente', 'unidadOrganica', 'responsables'])
+        return Actividad::with(['sciPregunta.componente', 'integridadPregunta.componente', 'unidadOrganica', 'responsables'])
             ->whereNotIn('estado', ['pendiente'])
             ->whereDoesntHave('evidencias')
             ->whereYear('created_at', $this->anio)
-            ->when($this->unidadId,     fn($q) => $q->where('unidad_organica_id', $this->unidadId))
-            ->when($this->componenteId, fn($q) => $q->where('componente_id', $this->componenteId))
+            ->when($this->unidadId, fn($q) => $q->where('unidad_organica_id', $this->unidadId))
             ->orderByRaw("FIELD(estado,'vencida','observado','en_proceso','completada')")
             ->orderBy('fecha_limite')
             ->get()
             ->map(fn($a) => [
                 $a->nombre,
                 $a->codigo ?? '—',
-                $a->componente?->nombre ?? '—',
+                $a->modulo === 'integridad'
+                    ? ($a->integridadPregunta?->componente?->nombre ?? '—')
+                    : ($a->sciPregunta?->componente?->nombre ?? '—'),
                 $a->unidadOrganica?->sigla ?? '—',
                 $a->responsables->where('pivot.tipo','principal')->first()?->name
                     ?? $a->responsables->first()?->name ?? '—',

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\pages;
 use App\Http\Controllers\Controller;
 use App\Models\Actividad;
 use App\Models\ActividadHistorial;
-use App\Models\Componente;
+use App\Models\SciEje;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,16 +15,22 @@ class MisActividadesController extends Controller
     {
         $user = Auth::user();
 
-        $query = Actividad::with(['componente', 'unidadOrganica', 'responsables', 'evidencias'])
+        $query = Actividad::with([
+                'sciPregunta.componente.eje',
+                'integridadPregunta.componente.etapa',
+                'unidadOrganica',
+                'responsables',
+                'evidencias',
+            ])
             ->whereHas('responsables', fn($q) => $q->where('users.id', $user->id))
             ->orderByRaw("FIELD(estado,'vencida','observado','en_proceso','pendiente','completada')")
             ->orderBy('fecha_limite');
 
+        if ($request->filled('modulo')) {
+            $query->where('modulo', $request->modulo);
+        }
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
-        }
-        if ($request->filled('componente_id')) {
-            $query->where('componente_id', $request->componente_id);
         }
         if ($request->filled('prioridad')) {
             $query->where('prioridad', $request->prioridad);
@@ -73,12 +79,17 @@ class MisActividadesController extends Controller
             'vencidas'    => (clone $base)->where('estado', 'vencida')->count(),
             'sin_ev'      => (clone $base)->whereNotIn('estado', ['pendiente'])
                                 ->whereDoesntHave('evidencias')->count(),
+            'sci'         => (clone $base)->where('modulo', 'sci')->count(),
+            'integridad'  => (clone $base)->where('modulo', 'integridad')->count(),
         ];
         $stats['porcentaje'] = $stats['total'] > 0
             ? round(($stats['completadas'] / $stats['total']) * 100) : 0;
 
         // Mis próximas a vencer (próximos 15 días)
-        $proximas = Actividad::with('componente')
+        $proximas = Actividad::with([
+                'sciPregunta.componente',
+                'integridadPregunta.componente',
+            ])
             ->whereHas('responsables', fn($q) => $q->where('users.id', $user->id))
             ->whereNotIn('estado', ['completada', 'vencida', 'observado'])
             ->whereDate('fecha_limite', '>=', now())
@@ -86,10 +97,24 @@ class MisActividadesController extends Controller
             ->orderBy('fecha_limite')
             ->get();
 
-        $componentes = Componente::where('activo', true)->orderBy('numero')->get();
+        // Ejes SCI del año actual para filtro
+        $sciEjes = SciEje::where('activo', true)->where('anio', now()->year)->orderBy('orden')->get();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'html'  => view('content.mis-actividades._cards', compact('actividades', 'user'))->render(),
+                'stats' => $stats,
+                'total' => $actividades->total(),
+                'from'  => $actividades->firstItem() ?? 0,
+                'to'    => $actividades->lastItem() ?? 0,
+                'pages' => $actividades->hasPages()
+                    ? $actividades->links()->toHtml()
+                    : '',
+            ]);
+        }
 
         return view('content.mis-actividades.index', compact(
-            'actividades', 'stats', 'proximas', 'componentes', 'user'
+            'actividades', 'stats', 'proximas', 'sciEjes', 'user'
         ));
     }
 
@@ -97,7 +122,6 @@ class MisActividadesController extends Controller
     {
         $user = Auth::user();
 
-        // Solo puede actualizar si es responsable
         abort_unless(
             $actividad->responsables()->where('users.id', $user->id)->exists(),
             403,
@@ -105,8 +129,8 @@ class MisActividadesController extends Controller
         );
 
         $request->validate([
-            'avance'       => 'required|integer|min:0|max:100',
-            'observaciones'=> 'nullable|string|max:500',
+            'avance'        => 'required|integer|min:0|max:100',
+            'observaciones' => 'nullable|string|max:500',
         ]);
 
         $data = ['avance' => $request->avance];
@@ -125,9 +149,9 @@ class MisActividadesController extends Controller
         $actividad->update($data);
 
         return response()->json([
-            'success'    => true,
-            'avance'     => $actividad->avance,
-            'estado'     => $actividad->estado,
+            'success'      => true,
+            'avance'       => $actividad->avance,
+            'estado'       => $actividad->estado,
             'estado_label' => $actividad->estado_label,
         ]);
     }

@@ -17,6 +17,7 @@ class BuenaPractica extends Model
         'titulo', 'descripcion', 'categoria', 'unidad_organica_id',
         'responsable_id', 'estado', 'avance', 'fecha_inicio', 'fecha_termino',
         'numero_sgd', 'impacto', 'evidencias', 'observaciones', 'creado_por',
+        'propuesto_por',
     ];
 
     protected $casts = [
@@ -50,6 +51,11 @@ class BuenaPractica extends Model
     public function creadoPor()
     {
         return $this->belongsTo(User::class, 'creado_por');
+    }
+
+    public function propuestoPor()
+    {
+        return $this->belongsTo(User::class, 'propuesto_por');
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────

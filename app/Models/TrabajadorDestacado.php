@@ -14,7 +14,7 @@ class TrabajadorDestacado extends Model
     protected $table = 'trabajadores_destacados';
 
     protected $fillable = [
-        'unidad_organica_id', 'nombre', 'cargo', 'dni', 'correo',
+        'unidad_organica_id', 'user_id', 'nombre', 'cargo', 'dni', 'correo',
         'foto_ruta',
         'puntaje_cumplimiento', 'puntaje_puntualidad',
         'puntaje_participacion', 'puntaje_responsabilidad',
@@ -38,6 +38,11 @@ class TrabajadorDestacado extends Model
     public function unidadOrganica(): BelongsTo
     {
         return $this->belongsTo(UnidadOrganica::class, 'unidad_organica_id');
+    }
+
+    public function usuario(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function registradoPor(): BelongsTo

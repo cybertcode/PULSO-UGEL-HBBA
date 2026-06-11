@@ -75,7 +75,7 @@
 .act-row:hover { background: rgba(0,0,0,.025); }
 .act-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .95rem; flex-shrink: 0; }
 
-/* ── Componentes table ── */
+/* ── Tabla ejes/avance ── */
 .tbl-comp td, .tbl-comp th { padding: .5rem .85rem; font-size: .82rem; vertical-align: middle; }
 .tbl-comp thead th { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6e6b7b; background: #f8f7fa; white-space: nowrap; border-bottom: 1px solid rgba(0,0,0,.07); }
 
@@ -138,11 +138,11 @@
 <div class="row g-3 mb-4">
   @php
   $kpis = [
-    ['route'=>'sci-control-interno',   'grad'=>'kpi-grad-blue',   'icon'=>'tabler-clipboard-list',       'label'=>'Control Interno',      'sub'=>'Actividades en seguimiento', 'val'=>$stats['total'],                        'trend'=>$stats['avance_global'].'% completadas'],
-    ['route'=>'sci-modelo-integridad', 'grad'=>'kpi-grad-green',  'icon'=>'tabler-shield-check',          'label'=>'Modelo de Integridad', 'sub'=>'Acciones en seguimiento',    'val'=>$componentes->sum('actividades_count'),  'trend'=>round($componentes->avg('porcentaje')).'% completadas'],
-    ['route'=>'buenas-practicas',      'grad'=>'kpi-grad-orange', 'icon'=>'tabler-rosette-discount-check','label'=>'Buenas Prácticas',     'sub'=>'Registradas',                'val'=>($stats['reconocimientos']??0),           'trend'=>($stats['reconocimientos_implementadas']??0).' en implementación'],
-    ['route'=>'sci-control-interno',   'grad'=>'kpi-grad-red',    'icon'=>'tabler-clock-exclamation',     'label'=>'Pendientes',           'sub'=>'Por atender',                'val'=>$stats['pendientes'],                    'trend'=>$stats['vencidas'].' vencidas'],
-    ['route'=>'mon-ranking-unidades',  'grad'=>'kpi-grad-cyan',   'icon'=>'tabler-building-community',    'label'=>'Áreas Participantes',  'sub'=>'En el sistema',              'val'=>$stats['unidades'],                      'trend'=>'De '.$stats['total_unidades'].' totales'],
+    ['route'=>'sci-control-interno',   'grad'=>'kpi-grad-blue',   'icon'=>'tabler-clipboard-check',       'label'=>'Control Interno',      'sub'=>'Actividades SCI',            'val'=>$stats['total_sci'],   'trend'=>$stats['avance_sci'].'% completadas'],
+    ['route'=>'sci-modelo-integridad', 'grad'=>'kpi-grad-green',  'icon'=>'tabler-shield-check',           'label'=>'Modelo de Integridad', 'sub'=>'Actividades Integridad',     'val'=>$stats['total_int'],   'trend'=>$stats['avance_int'].'% completadas'],
+    ['route'=>'buenas-practicas',      'grad'=>'kpi-grad-orange', 'icon'=>'tabler-rosette-discount-check', 'label'=>'Buenas Prácticas',     'sub'=>'Registradas',                'val'=>($stats['reconocimientos']??0), 'trend'=>($stats['reconocimientos_implementadas']??0).' en implementación'],
+    ['route'=>'sci-control-interno',   'grad'=>'kpi-grad-red',    'icon'=>'tabler-clock-exclamation',      'label'=>'Pendientes',           'sub'=>'Por atender',                'val'=>$stats['pendientes'],  'trend'=>$stats['vencidas'].' vencidas'],
+    ['route'=>'mon-ranking-unidades',  'grad'=>'kpi-grad-cyan',   'icon'=>'tabler-building-community',     'label'=>'Áreas Participantes',  'sub'=>'En el sistema',              'val'=>$stats['unidades'],    'trend'=>'De '.$stats['total_unidades'].' totales'],
   ];
   @endphp
   @foreach($kpis as $kpi)
@@ -189,7 +189,7 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="{{ route('rep-reportes') }}"><i class="ti tabler-file-analytics me-2"></i>Reporte completo</a></li>
-              <li><a class="dropdown-item" href="{{ route('mon-semaforo') }}"><i class="ti tabler-traffic-lights me-2"></i>Ver semáforo</a></li>
+              <li><a class="dropdown-item" href="{{ route('sci-semaforo') }}"><i class="ti tabler-traffic-lights me-2"></i>Ver semáforo</a></li>
             </ul>
           </div>
         </div>
@@ -382,18 +382,18 @@
 
 </div>
 
-{{-- ── FILA 3: Componentes PCM + Próximas a vencer ── --}}
+{{-- ── FILA 3: Ejes SCI + Próximas a vencer ── --}}
 <div class="row g-4 mb-4">
 
-  {{-- Componentes PCM --}}
+  {{-- Ejes SCI --}}
   <div class="col-xl-5">
     <div class="card sec-card h-100 mb-0">
       <div class="card-header d-flex align-items-start justify-content-between">
         <div>
-          <h6>Componentes PCM</h6>
-          <p>Directiva N° 006-2019-CG-INTEG</p>
+          <h6>Avance por Ejes SCI</h6>
+          <p>Sistema de Control Interno · {{ now()->year }}</p>
         </div>
-        <a href="{{ route('mon-semaforo') }}" class="btn btn-sm btn-label-primary rounded-pill px-3" style="font-size:.74rem">
+        <a href="{{ route('sci-semaforo') }}" class="btn btn-sm btn-label-primary rounded-pill px-3" style="font-size:.74rem">
           <i class="ti tabler-traffic-lights me-1" style="font-size:.8rem"></i>Semáforo
         </a>
       </div>
@@ -402,43 +402,51 @@
           <table class="table table-hover mb-0 tbl-comp">
             <thead>
               <tr>
-                <th>Componente</th>
+                <th>Eje</th>
                 <th style="min-width:120px">Avance</th>
                 <th class="text-center">Acts.</th>
               </tr>
             </thead>
             <tbody>
-              @forelse($componentes->take(9) as $c)
+              @forelse($sciEjes as $eje)
               <tr>
                 <td>
                   <div class="d-flex align-items-center gap-2">
-                    <div class="badge rounded bg-label-{{ $c->color }} flex-shrink-0" style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;padding:0">
-                      <i class="ti {{ $c->icono ?? 'tabler-point' }}" style="font-size:.78rem"></i>
+                    <div class="badge rounded bg-label-{{ $eje->color }} flex-shrink-0"
+                      style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;padding:0">
+                      <i class="ti tabler-layout-grid" style="font-size:.78rem"></i>
                     </div>
-                    <span class="fw-semibold text-truncate" style="max-width:145px;font-size:.8rem" title="{{ $c->nombre }}">{{ $c->nombre }}</span>
+                    <span class="fw-semibold text-truncate" style="max-width:145px;font-size:.8rem"
+                      title="{{ $eje->nombre }}">{{ Str::limit($eje->nombre, 30) }}</span>
                   </div>
                 </td>
                 <td>
                   <div class="d-flex align-items-center gap-2">
                     <div class="progress flex-grow-1" style="height:5px;border-radius:3px">
-                      <div class="progress-bar bg-{{ $c->color }} rounded-pill" style="width:{{ $c->porcentaje }}%"></div>
+                      <div class="progress-bar bg-{{ $eje->color }} rounded-pill" style="width:{{ $eje->porcentaje }}%"></div>
                     </div>
-                    <small class="fw-bold text-{{ $c->color }}" style="min-width:28px;font-size:.78rem">{{ $c->porcentaje }}%</small>
+                    <small class="fw-bold text-{{ $eje->color }}" style="min-width:28px;font-size:.78rem">{{ $eje->porcentaje }}%</small>
                   </div>
                 </td>
                 <td class="text-center">
-                  <span class="fw-semibold" style="font-size:.8rem">{{ $c->completadas_count }}</span><span class="text-muted" style="font-size:.78rem">/{{ $c->actividades_count }}</span>
+                  <span class="fw-semibold" style="font-size:.8rem">{{ $eje->completadas_count }}</span>
+                  <span class="text-muted" style="font-size:.78rem">/{{ $eje->actividades_count }}</span>
                 </td>
               </tr>
               @empty
-              <tr><td colspan="3" class="text-center text-muted py-4">Sin datos de componentes</td></tr>
+              <tr>
+                <td colspan="3" class="text-center text-muted py-4">
+                  <i class="ti tabler-list-tree d-block mb-1" style="font-size:1.5rem"></i>
+                  Sin ejes SCI para {{ now()->year }}
+                </td>
+              </tr>
               @endforelse
             </tbody>
           </table>
         </div>
         <div class="card-foot">
-          <a href="{{ route('sci-modelo-integridad') }}" class="text-primary fw-medium">
-            Ver todas las actividades <i class="ti tabler-arrow-right ms-1" style="font-size:.72rem"></i>
+          <a href="{{ route('sci-control-interno') }}" class="text-primary fw-medium">
+            Ver actividades SCI <i class="ti tabler-arrow-right ms-1" style="font-size:.72rem"></i>
           </a>
         </div>
       </div>
@@ -471,8 +479,15 @@
           </div>
           <div class="flex-grow-1 overflow-hidden">
             <div class="fw-semibold text-truncate" style="font-size:.82rem">{{ $a->nombre }}</div>
+            @php
+              $compNombre = $a->modulo === 'integridad'
+                ? ($a->integridadPregunta?->componente?->nombre ?? '—')
+                : ($a->sciPregunta?->componente?->nombre ?? '—');
+              $moduloBadge = $a->modulo === 'integridad' ? 'warning' : 'primary';
+            @endphp
             <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
-              <span class="badge bg-label-secondary rounded-pill" style="font-size:.68rem;padding:.18em .55em">{{ $a->componente->nombre ?? '—' }}</span>
+              <span class="badge bg-label-{{ $moduloBadge }} rounded-pill" style="font-size:.65rem;padding:.15em .5em">{{ strtoupper($a->modulo) }}</span>
+              <span class="badge bg-label-secondary rounded-pill" style="font-size:.68rem;padding:.18em .55em">{{ Str::limit($compNombre, 22) }}</span>
               @php $resp = $a->responsables->first(); @endphp
               @if($resp)
               <div class="d-flex align-items-center gap-1">

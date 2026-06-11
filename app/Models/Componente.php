@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Componente extends Model
 {
-    protected $fillable = ['numero', 'nombre', 'icono', 'tipo', 'descripcion', 'activo'];
+    protected $fillable = ['numero', 'nombre', 'icono', 'descripcion', 'activo'];
 
     protected function casts(): array
     {

@@ -1,5 +1,23 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
+## [v2.0.0] - 2026-06-10 (Sesión Actual)
+### Refactorización Estructural Mayor y Módulo de Encuestas
+- **Nueva Estructura SCI e Integridad**: Evolución de los módulos legacy (`PACI`, `Matriz de Riesgos`, `Actas de Comité`) hacia un modelo dinámico y jerárquico basado en Ejes, Etapas, Componentes y Preguntas.
+- **Módulo de Encuestas (PULSO-Polls)**: Implementación integral de un motor de encuestas institucional con:
+    - Gestión de preguntas (múltiples tipos) y opciones.
+    - Sistema de destinatarios y control de respuestas.
+    - Exportación de resultados a Excel.
+- **Refactorización v2 de Actividades y Alertas**: Optimización profunda del esquema de base de datos para mejorar la trazabilidad, rendimiento y consistencia relacional.
+- **Soporte PWA (Progressive Web App)**: El sistema ahora es instalable y ofrece capacidades offline básicas mediante Service Worker y Manifiesto de Aplicación.
+- **Notificaciones Dinámicas**: Sistema de notificaciones en tiempo real para la revisión de evidencias y alertas críticas.
+- **Limpieza de Código (Cleanup)**: Depuración de controladores, modelos y migraciones legacy para mantener la arquitectura limpia y alineada con los nuevos estándares.
+
+### Estructura Técnica
+- **Nuevos Modelos**: `SciEje`, `SciComponente`, `SciPregunta`, `IntegridadEtapa`, `IntegridadComponente`, `IntegridadPregunta`, `Encuesta`, `EncuestaPregunta`, `EncuestaRespuesta`, etc.
+- **Controladores**: `SciEstructuraController`, `IntegridadEstructuraController`, `EncuestaController`, `EncuestaResultadoController`.
+- **Migraciones**: Refactorización completa mediante migraciones v2 (`refactor_actividades_v2`, `refactor_alertas_v2`) y creación de nuevas estructuras.
+- **UI/UX**: Nuevas vistas administrativas para la gestión de estructuras y encuestas, manteniendo la fidelidad visual a la plantilla Vuexy.
+
 ## [v1.5.4] - 2026-06-10
 ### Automatización y Portal de Publicaciones
 - **Portal de Todas las Publicaciones**: Creación de la vista `publicaciones.blade.php` y su ruta correspondiente, permitiendo a los ciudadanos explorar el historial completo de noticias, eventos y normativas con filtrado dinámico.

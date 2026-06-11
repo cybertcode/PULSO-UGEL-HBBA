@@ -9,14 +9,6 @@ use Illuminate\Validation\Rule;
 
 class ComponenteController extends Controller
 {
-    private const CATEGORIAS = [
-        'Ambiente de Control',
-        'Evaluación de Riesgos',
-        'Actividades de Control',
-        'Información y Comunicación',
-        'Supervisión y Monitoreo',
-    ];
-
     private const ICONOS = [
         'tabler-crown', 'tabler-shield-check', 'tabler-chart-pie', 'tabler-chart-bar',
         'tabler-clipboard-list', 'tabler-alert-triangle', 'tabler-messages',
@@ -42,7 +34,6 @@ class ComponenteController extends Controller
         $validated = $request->validate([
             'nombre'      => 'required|string|max:255',
             'icono'       => ['nullable', Rule::in(self::ICONOS)],
-            'tipo'        => ['nullable', Rule::in(self::CATEGORIAS)],
             'descripcion' => 'nullable|string|max:1000',
             'activo'      => 'boolean',
         ]);
@@ -60,7 +51,6 @@ class ComponenteController extends Controller
         $validated = $request->validate([
             'nombre'      => 'required|string|max:255',
             'icono'       => ['nullable', Rule::in(self::ICONOS)],
-            'tipo'        => ['nullable', Rule::in(self::CATEGORIAS)],
             'descripcion' => 'nullable|string|max:1000',
             'activo'      => 'boolean',
         ]);

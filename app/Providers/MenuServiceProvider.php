@@ -43,7 +43,6 @@ class MenuServiceProvider extends ServiceProvider
                 'i18n' => 'Resumen y estadísticas',
             ];
 
-            // Mis Actividades — visible para todos los usuarios autenticados
             $menu[] = (object)[
                 'url'  => '/mis-actividades',
                 'name' => 'Mis Actividades',
@@ -53,22 +52,63 @@ class MenuServiceProvider extends ServiceProvider
             ];
 
             // ════════════════════════════════════════
-            // CONTROL INTERNO
+            // SISTEMA DE CONTROL INTERNO
             // ════════════════════════════════════════
-            $hasSci = Gate::check('control-interno.ver')
-                   || Gate::check('integridad.ver')
-                   || Gate::check('evidencias.ver');
+            if (Gate::check('control-interno.ver')) {
+                $menu[] = (object)['menuHeader' => 'Sistema de Control Interno'];
 
-            if ($hasSci) {
-                $menu[] = (object)['menuHeader' => 'Control Interno'];
+                $menu[] = (object)[
+                    'url'  => '/control-interno',
+                    'name' => 'Actividades SCI',
+                    'icon' => 'menu-icon icon-base ti tabler-clipboard-check',
+                    'slug' => 'sci-control-interno',
+                    'i18n' => 'Registro y seguimiento',
+                ];
+            }
 
-                if (Gate::check('control-interno.ver')) {
+            // ════════════════════════════════════════
+            // MODELO DE INTEGRIDAD
+            // ════════════════════════════════════════
+            if (Gate::check('integridad.ver')) {
+                $menu[] = (object)['menuHeader' => 'Modelo de Integridad'];
+
+                $menu[] = (object)[
+                    'url'  => '/modelo-integridad',
+                    'name' => 'Actividades Integridad',
+                    'icon' => 'menu-icon icon-base ti tabler-shield-check',
+                    'slug' => 'sci-modelo-integridad',
+                    'i18n' => 'Registro y seguimiento',
+                ];
+            }
+
+            // ════════════════════════════════════════
+            // MONITOREO  (compartido SCI + Integridad)
+            // ════════════════════════════════════════
+            $hasMonitoreo = Gate::check('control-interno.ver')
+                         || Gate::check('integridad.ver')
+                         || Gate::check('evidencias.ver')
+                         || Gate::check('alertas.ver');
+
+            if ($hasMonitoreo) {
+                $menu[] = (object)['menuHeader' => 'Monitoreo'];
+
+                if (Gate::check('control-interno.ver') || Gate::check('integridad.ver')) {
                     $menu[] = (object)[
-                        'url'  => '/control-interno',
-                        'name' => 'Actividades SCI',
-                        'icon' => 'menu-icon icon-base ti tabler-clipboard-check',
-                        'slug' => 'sci-control-interno',
-                        'i18n' => 'Registro y seguimiento',
+                        'url'  => '/semaforo',
+                        'name' => 'Semáforo',
+                        'icon' => 'menu-icon icon-base ti tabler-traffic-lights',
+                        'slug' => 'sci-semaforo',
+                        'i18n' => 'SCI e Integridad',
+                    ];
+                }
+
+                if (Gate::check('alertas.ver')) {
+                    $menu[] = (object)[
+                        'url'  => '/alertas',
+                        'name' => 'Alertas',
+                        'icon' => 'menu-icon icon-base ti tabler-bell',
+                        'slug' => 'mon-alertas',
+                        'i18n' => 'SCI e Integridad',
                     ];
                 }
 
@@ -78,213 +118,143 @@ class MenuServiceProvider extends ServiceProvider
                         'name' => 'Evidencias',
                         'icon' => 'menu-icon icon-base ti tabler-files',
                         'slug' => 'sci-evidencias',
-                        'i18n' => 'Documentos de respaldo',
+                        'i18n' => 'SCI e Integridad',
                     ];
                 }
+            }
 
-                // Modelo de Integridad + Semáforo fusionados en un submenú
-                if (Gate::check('integridad.ver')) {
-                    $intSub = [];
-                    $intSub[] = (object)[
-                        'url'  => '/modelo-integridad',
-                        'name' => 'Vista General',
-                        'slug' => 'sci-modelo-integridad',
-                        'i18n' => '9 componentes PCM',
+            // ════════════════════════════════════════
+            // SEGUIMIENTO Y ANÁLISIS (compartido SCI + Integridad)
+            // ════════════════════════════════════════
+            $hasSeguimiento = Gate::check('control-interno.ver')
+                           || Gate::check('reportes.ver')
+                           || Gate::check('recomendaciones.ver')
+                           || Gate::check('buenas-practicas.ver')
+                           || Gate::check('reconocimientos.ver');
+
+            if ($hasSeguimiento) {
+                $menu[] = (object)['menuHeader' => 'Seguimiento y Análisis'];
+
+                if (Gate::check('control-interno.ver')) {
+                    $cumSub = [];
+                    $cumSub[] = (object)[
+                        'url'  => '/cumplimiento/panel',
+                        'name' => 'Panel de Control',
+                        'slug' => 'cumplimiento.panel',
+                        'i18n' => 'Resumen ejecutivo',
                     ];
-                    $intSub[] = (object)[
-                        'url'  => '/semaforo',
-                        'name' => 'Semáforo',
-                        'slug' => 'mon-semaforo',
-                        'i18n' => 'Estado por unidad',
+                    $cumSub[] = (object)[
+                        'url'  => '/cumplimiento/responsables',
+                        'name' => 'Por Responsable',
+                        'slug' => 'cumplimiento.responsables',
+                        'i18n' => '¿Quién cumple y quién no?',
+                    ];
+                    $cumSub[] = (object)[
+                        'url'  => '/cumplimiento/sin-evidencia',
+                        'name' => 'Sin Evidencia',
+                        'slug' => 'cumplimiento.sin-evidencia',
+                        'i18n' => 'Actividades sin documentar',
                     ];
                     $menu[] = (object)[
-                        'name'    => 'Modelo de Integridad',
-                        'icon'    => 'menu-icon icon-base ti tabler-shield-check',
-                        'slug'    => ['sci-modelo-integridad', 'mon-semaforo'],
-                        'i18n'    => 'PCM — 9 componentes',
-                        'submenu' => $intSub,
+                        'name'    => 'Seguimiento SCI',
+                        'icon'    => 'menu-icon icon-base ti tabler-chart-dots',
+                        'slug'    => ['cumplimiento.panel', 'cumplimiento.responsables', 'cumplimiento.sin-evidencia'],
+                        'i18n'    => 'Plazos y evidencias',
+                        'submenu' => $cumSub,
                     ];
                 }
-            }
 
-            // ════════════════════════════════════════
-            // CUMPLIMIENTO (núcleo del objetivo SCI)
-            // ════════════════════════════════════════
-            if (Gate::check('control-interno.ver')) {
-                $menu[] = (object)['menuHeader' => 'Cumplimiento'];
-
-                $cumSub = [];
-                $cumSub[] = (object)[
-                    'url'  => '/cumplimiento/panel',
-                    'name' => 'Panel de Control',
-                    'slug' => 'cumplimiento.panel',
-                    'i18n' => 'Resumen ejecutivo',
-                ];
-                $cumSub[] = (object)[
-                    'url'  => '/cumplimiento/responsables',
-                    'name' => 'Por Responsable',
-                    'slug' => 'cumplimiento.responsables',
-                    'i18n' => '¿Quién cumple y quién no?',
-                ];
-                $cumSub[] = (object)[
-                    'url'  => '/cumplimiento/sin-evidencia',
-                    'name' => 'Sin Evidencia',
-                    'slug' => 'cumplimiento.sin-evidencia',
-                    'i18n' => 'Actividades sin documentar',
-                ];
-                $menu[] = (object)[
-                    'name'    => 'Seguimiento SCI',
-                    'icon'    => 'menu-icon icon-base ti tabler-chart-dots',
-                    'slug'    => ['cumplimiento.panel', 'cumplimiento.responsables', 'cumplimiento.sin-evidencia'],
-                    'i18n'    => 'Plazos y evidencias',
-                    'submenu' => $cumSub,
-                ];
-            }
-
-            // Avance y Ranking — requiere permiso de reportes
-            if (Gate::check('reportes.ver')) {
-                $analisisSub = [];
-                $analisisSub[] = (object)[
-                    'url'  => '/avance-unidades',
-                    'name' => 'Avance por Unidades',
-                    'slug' => 'mon-avance-unidades',
-                    'i18n' => 'Seguimiento por área',
-                ];
-                $analisisSub[] = (object)[
-                    'url'  => '/ranking-unidades',
-                    'name' => 'Ranking',
-                    'slug' => 'mon-ranking-unidades',
-                    'i18n' => 'Clasificación mensual',
-                ];
-                $menu[] = (object)[
-                    'name'    => 'Análisis',
-                    'icon'    => 'menu-icon icon-base ti tabler-chart-bar',
-                    'slug'    => ['mon-avance-unidades', 'mon-ranking-unidades'],
-                    'i18n'    => 'Avance y ranking',
-                    'submenu' => $analisisSub,
-                ];
-            }
-
-            if (Gate::check('alertas.ver')) {
-                $menu[] = (object)[
-                    'url'  => '/alertas',
-                    'name' => 'Alertas',
-                    'icon' => 'menu-icon icon-base ti tabler-bell',
-                    'slug' => 'mon-alertas',
-                    'i18n' => 'Notificaciones activas',
-                ];
-            }
-
-            // ════════════════════════════════════════
-            // PLANIFICACIÓN SCI
-            // ════════════════════════════════════════
-            $hasPlan = Gate::check('paci.ver') || Gate::check('riesgos.ver');
-
-            if ($hasPlan) {
-                $menu[] = (object)['menuHeader' => 'Planificación SCI'];
-
-                if (Gate::check('paci.ver')) {
+                if (Gate::check('reportes.ver')) {
+                    $analisisSub = [];
+                    $analisisSub[] = (object)[
+                        'url'  => '/avance-unidades',
+                        'name' => 'Avance por Unidades',
+                        'slug' => 'mon-avance-unidades',
+                        'i18n' => 'Seguimiento por área',
+                    ];
+                    $analisisSub[] = (object)[
+                        'url'  => '/ranking-unidades',
+                        'name' => 'Ranking',
+                        'slug' => 'mon-ranking-unidades',
+                        'i18n' => 'Clasificación mensual',
+                    ];
                     $menu[] = (object)[
-                        'url'  => '/paci',
-                        'name' => 'PACI',
-                        'icon' => 'menu-icon icon-base ti tabler-file-description',
-                        'slug' => 'paci.index',
-                        'i18n' => 'Plan Anual de Control Interno',
+                        'name'    => 'Análisis',
+                        'icon'    => 'menu-icon icon-base ti tabler-chart-bar',
+                        'slug'    => ['mon-avance-unidades', 'mon-ranking-unidades'],
+                        'i18n'    => 'Avance y ranking',
+                        'submenu' => $analisisSub,
                     ];
-                }
 
-                if (Gate::check('riesgos.ver')) {
                     $menu[] = (object)[
-                        'url'  => '/matriz-riesgos',
-                        'name' => 'Matriz de Riesgos',
-                        'icon' => 'menu-icon icon-base ti tabler-shield-exclamation',
-                        'slug' => 'matriz-riesgos.index',
-                        'i18n' => 'Identificación y tratamiento',
+                        'url'  => '/reportes',
+                        'name' => 'Reportes Generales',
+                        'icon' => 'menu-icon icon-base ti tabler-table-export',
+                        'slug' => 'rep-reportes',
+                        'i18n' => 'Excel y PDF por actividad',
                     ];
                 }
 
-                if (Gate::check('actas.ver')) {
+                if (Gate::check('recomendaciones.ver')) {
                     $menu[] = (object)[
-                        'url'  => '/actas-comite',
-                        'name' => 'Actas del Comité',
-                        'icon' => 'menu-icon icon-base ti tabler-notebook',
-                        'slug' => 'actas-comite.index',
-                        'i18n' => 'Sesiones del comité SCI',
+                        'url'  => '/recomendaciones',
+                        'name' => 'Recomendaciones',
+                        'icon' => 'menu-icon icon-base ti tabler-message-report',
+                        'slug' => 'recomendaciones',
+                        'i18n' => 'Observaciones y mejoras',
                     ];
                 }
 
-                if (Gate::check('autoevaluacion.ver')) {
+                if (Gate::check('buenas-practicas.ver')) {
                     $menu[] = (object)[
-                        'url'  => '/autoevaluacion',
-                        'name' => 'Autoevaluación',
-                        'icon' => 'menu-icon icon-base ti tabler-clipboard-list',
-                        'slug' => 'autoevaluacion.index',
-                        'i18n' => 'Cuestionarios COSO',
+                        'url'  => '/buenas-practicas',
+                        'name' => 'Buenas Prácticas',
+                        'icon' => 'menu-icon icon-base ti tabler-rosette-discount-check',
+                        'slug' => 'buenas-practicas',
+                        'i18n' => 'Prácticas positivas',
+                    ];
+                }
+
+                if (Gate::check('reconocimientos.ver')) {
+                    $menu[] = (object)[
+                        'url'  => '/reconocimientos',
+                        'name' => 'Reconocimientos',
+                        'icon' => 'menu-icon icon-base ti tabler-trophy',
+                        'slug' => 'rep-reconocimientos',
+                        'i18n' => 'Trabajadores destacados',
                     ];
                 }
             }
 
-            // ════════════════════════════════════════
-            // GESTIÓN
-            // ════════════════════════════════════════
-            $hasGestion = Gate::check('recomendaciones.ver')
-                       || Gate::check('buenas-practicas.ver')
-                       || Gate::check('reconocimientos.ver');
-
-            if ($hasGestion) {
-                $menu[] = (object)['menuHeader' => 'Gestión'];
-            }
-
-            if (Gate::check('recomendaciones.ver')) {
-                $menu[] = (object)[
-                    'url'  => '/recomendaciones',
-                    'name' => 'Recomendaciones',
-                    'icon' => 'menu-icon icon-base ti tabler-message-report',
-                    'slug' => 'recomendaciones',
-                    'i18n' => 'Observaciones y mejoras',
-                ];
-            }
-
-            if (Gate::check('buenas-practicas.ver')) {
-                $menu[] = (object)[
-                    'url'  => '/buenas-practicas',
-                    'name' => 'Buenas Prácticas',
-                    'icon' => 'menu-icon icon-base ti tabler-rosette-discount-check',
-                    'slug' => 'buenas-practicas',
-                    'i18n' => 'Prácticas positivas',
-                ];
-            }
-
-            if (Gate::check('reconocimientos.ver')) {
-                $menu[] = (object)[
-                    'url'  => '/reconocimientos',
-                    'name' => 'Reconocimientos',
-                    'icon' => 'menu-icon icon-base ti tabler-trophy',
-                    'slug' => 'rep-reconocimientos',
-                    'i18n' => 'Trabajadores destacados',
-                ];
-            }
 
             // ════════════════════════════════════════
-            // REPORTES
+            // ENCUESTAS
             // ════════════════════════════════════════
-            if (Gate::check('reportes.ver')) {
-                $menu[] = (object)['menuHeader' => 'Reportes'];
+            if (Gate::check('encuesta.ver') || Gate::check('encuesta.responder')) {
+                $menu[] = (object)['menuHeader' => 'Encuestas Institucionales'];
 
-                $menu[] = (object)[
-                    'url'  => '/reportes',
-                    'name' => 'Reportes Generales',
-                    'icon' => 'menu-icon icon-base ti tabler-table-export',
-                    'slug' => 'rep-reportes',
-                    'i18n' => 'Excel y PDF por actividad',
+                $encSub = [];
+                $encSub[] = (object)[
+                    'url'  => '/encuestas',
+                    'name' => 'Todas las encuestas',
+                    'slug' => 'encuestas-index',
+                    'i18n' => 'Listado y gestión',
                 ];
+                if (Gate::check('encuesta.crear')) {
+                    $encSub[] = (object)[
+                        'url'  => '/encuestas/crear',
+                        'name' => 'Nueva Encuesta',
+                        'slug' => 'encuestas-crear',
+                        'i18n' => 'Crear encuesta',
+                    ];
+                }
 
                 $menu[] = (object)[
-                    'url'  => '/cumplimiento/responsables',
-                    'name' => 'Reporte Cumplimiento',
-                    'icon' => 'menu-icon icon-base ti tabler-user-check',
-                    'slug' => 'cumplimiento.responsables',
-                    'i18n' => 'Exportar por responsable',
+                    'name'    => 'Encuestas',
+                    'icon'    => 'menu-icon icon-base ti tabler-forms',
+                    'slug'    => ['encuestas-index', 'encuestas-crear'],
+                    'i18n'    => 'Formularios y estadísticas',
+                    'submenu' => $encSub,
                 ];
             }
 
@@ -337,11 +307,19 @@ class MenuServiceProvider extends ServiceProvider
                     ];
 
                     $menu[] = (object)[
-                        'url'  => '/administracion/componentes',
-                        'name' => 'Componentes SCI',
-                        'icon' => 'menu-icon icon-base ti tabler-layout-grid',
-                        'slug' => 'adm-componentes',
-                        'i18n' => 'Catálogo del modelo',
+                        'url'  => '/administracion/sci-estructura',
+                        'name' => 'Estructura SCI',
+                        'icon' => 'menu-icon icon-base ti tabler-list-tree',
+                        'slug' => 'adm-sci-estructura',
+                        'i18n' => 'Ejes, componentes y preguntas',
+                    ];
+
+                    $menu[] = (object)[
+                        'url'  => '/administracion/integridad-estructura',
+                        'name' => 'Estructura Integridad',
+                        'icon' => 'menu-icon icon-base ti tabler-list-tree',
+                        'slug' => 'adm-integridad-estructura',
+                        'i18n' => 'Etapas, componentes y preguntas',
                     ];
 
                     $menu[] = (object)[
@@ -351,23 +329,30 @@ class MenuServiceProvider extends ServiceProvider
                         'slug' => 'adm-configuracion',
                         'i18n' => 'Parámetros del sistema',
                     ];
-
-                    $menu[] = (object)[
-                        'url'  => '/slider-landing',
-                        'name' => 'Slider del Landing',
-                        'icon' => 'menu-icon icon-base ti tabler-slideshow',
-                        'slug' => 'slider-landing.index',
-                        'i18n' => 'Slides de la página principal',
-                    ];
-
-                    $menu[] = (object)[
-                        'url'  => '/instituciones-vinculadas',
-                        'name' => 'Instituciones Vinculadas',
-                        'icon' => 'menu-icon icon-base ti tabler-building-community',
-                        'slug' => 'instituciones-vinculadas.index',
-                        'i18n' => 'Logos e instituciones del landing',
-                    ];
                 }
+            }
+
+            // ════════════════════════════════════════
+            // LANDING
+            // ════════════════════════════════════════
+            if (Gate::check('configuracion.ver')) {
+                $menu[] = (object)['menuHeader' => 'Landing'];
+
+                $menu[] = (object)[
+                    'url'  => '/slider-landing',
+                    'name' => 'Slider',
+                    'icon' => 'menu-icon icon-base ti tabler-slideshow',
+                    'slug' => 'slider-landing.index',
+                    'i18n' => 'Slides de la página principal',
+                ];
+
+                $menu[] = (object)[
+                    'url'  => '/instituciones-vinculadas',
+                    'name' => 'Instituciones Vinculadas',
+                    'icon' => 'menu-icon icon-base ti tabler-building-community',
+                    'slug' => 'instituciones-vinculadas.index',
+                    'i18n' => 'Logos e instituciones',
+                ];
             }
 
             // ════════════════════════════════════════

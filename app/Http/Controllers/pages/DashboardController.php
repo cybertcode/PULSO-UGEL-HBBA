@@ -5,8 +5,10 @@ namespace App\Http\Controllers\pages;
 use App\Http\Controllers\Controller;
 use App\Models\Actividad;
 use App\Models\Alerta;
-use App\Models\Componente;
 use App\Models\ConfiguracionInstitucional;
+use App\Models\SciEje;
+use App\Models\SciComponente;
+use App\Models\IntegridadEtapa;
 use App\Models\TrabajadorDestacado;
 use App\Models\UnidadOrganica;
 use App\Support\SemaforoHelper;
@@ -20,6 +22,7 @@ class DashboardController extends Controller
         $config = ConfiguracionInstitucional::cached();
         [$umbral_verde, $umbral_amarillo] = SemaforoHelper::umbrales($config);
 
+        // ── Stats generales ───────────────────────────────────────────────────
         $total       = Actividad::count();
         $completadas = Actividad::where('estado', 'completada')->count();
         $en_proceso  = Actividad::where('estado', 'en_proceso')->count();
@@ -27,6 +30,16 @@ class DashboardController extends Controller
         $observados  = Actividad::where('estado', 'observado')->count();
         $vencidas    = Actividad::whereNotIn('estado', ['completada', 'observado'])
                          ->whereDate('fecha_limite', '<', now())->count();
+
+        // ── Stats SCI ─────────────────────────────────────────────────────────
+        $totalSci       = Actividad::where('modulo', 'sci')->count();
+        $completadasSci = Actividad::where('modulo', 'sci')->where('estado', 'completada')->count();
+        $avanceSci      = $totalSci > 0 ? round(($completadasSci / $totalSci) * 100) : 0;
+
+        // ── Stats Integridad ──────────────────────────────────────────────────
+        $totalInt       = Actividad::where('modulo', 'integridad')->count();
+        $completadasInt = Actividad::where('modulo', 'integridad')->where('estado', 'completada')->count();
+        $avanceInt      = $totalInt > 0 ? round(($completadasInt / $totalInt) * 100) : 0;
 
         $totalUnidades = UnidadOrganica::where('activo', true)->count();
         $responsables  = DB::table('actividad_responsables')
@@ -47,6 +60,12 @@ class DashboardController extends Controller
             'vencidas'                      => $vencidas,
             'alertas'                       => Alerta::where('leida', false)->count(),
             'avance_global'                 => $total > 0 ? round(($completadas / $total) * 100) : 0,
+            'total_sci'                     => $totalSci,
+            'completadas_sci'               => $completadasSci,
+            'avance_sci'                    => $avanceSci,
+            'total_int'                     => $totalInt,
+            'completadas_int'               => $completadasInt,
+            'avance_int'                    => $avanceInt,
             'reconocimientos'               => $reconocimientosTotal,
             'reconocimientos_implementadas' => $reconocimientosImpl,
             'unidades'                      => $totalUnidades,
@@ -54,25 +73,25 @@ class DashboardController extends Controller
             'responsables_asignados'        => $responsables,
         ];
 
-        // Datos mensuales para el gráfico de línea (12 meses)
+        // ── Gráfico mensual SCI vs Integridad ─────────────────────────────────
         $meses_labels  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         $por_mes_sci   = [];
         $por_mes_integ = [];
 
         for ($m = 1; $m <= 12; $m++) {
-            $tot = Actividad::whereYear('created_at', $anio)->whereMonth('created_at', $m)->count();
-            $com = Actividad::whereYear('created_at', $anio)->whereMonth('created_at', $m)
-                    ->where('estado', 'completada')->count();
+            $base = fn($modulo) => Actividad::where('modulo', $modulo)
+                ->whereYear('created_at', $anio)->whereMonth('created_at', $m);
+
+            $tot = $base('sci')->count();
+            $com = $base('sci')->where('estado', 'completada')->count();
             $por_mes_sci[] = $tot > 0 ? round(($com / $tot) * 100) : 0;
 
-            $totI = Actividad::whereYear('created_at', $anio)->whereMonth('created_at', $m)
-                ->whereHas('componente', fn($q) => $q->whereIn('tipo', ['integridad', 'ambos']))->count();
-            $comI = Actividad::whereYear('created_at', $anio)->whereMonth('created_at', $m)
-                ->where('estado', 'completada')
-                ->whereHas('componente', fn($q) => $q->whereIn('tipo', ['integridad', 'ambos']))->count();
+            $totI = $base('integridad')->count();
+            $comI = $base('integridad')->where('estado', 'completada')->count();
             $por_mes_integ[] = $totI > 0 ? round(($comI / $totI) * 100) : 0;
         }
 
+        // ── Ranking de unidades ───────────────────────────────────────────────
         $areas_ranking = UnidadOrganica::withCount([
             'actividades',
             'actividades as completadas_count' => fn($q) => $q->where('estado', 'completada'),
@@ -84,31 +103,42 @@ class DashboardController extends Controller
               return $u;
           })->sortByDesc('porcentaje')->values()->take(8);
 
-        $componentes = Componente::withCount([
-            'actividades',
-            'actividades as completadas_count' => fn($q) => $q->where('estado', 'completada'),
-            'actividades as en_proceso_count'  => fn($q) => $q->where('estado', 'en_proceso'),
-            'actividades as vencidas_count'    => fn($q) => $q->whereNotIn('estado', ['completada','observado'])
-                ->whereDate('fecha_limite', '<', now()),
-        ])->get()->map(function ($c) use ($config) {
-            SemaforoHelper::decorar($c, 'actividades_count', 'completadas_count', $config);
-            $c->semaforo = $c->color;
-            return $c;
-        });
+        // ── Ejes SCI con avance (reemplaza "componentes PCM") ─────────────────
+        $sciEjes = SciEje::where('activo', true)
+            ->where('anio', $anio)
+            ->with(['componentes' => fn($q) => $q->where('activo', true)->with('preguntas')])
+            ->orderBy('orden')
+            ->get()
+            ->map(function ($eje) use ($config) {
+                $pregIds     = $eje->componentes->flatMap(fn($c) => $c->preguntas->pluck('id'));
+                $total       = Actividad::where('modulo', 'sci')->whereIn('sci_pregunta_id', $pregIds)->count();
+                $completadas = Actividad::where('modulo', 'sci')->whereIn('sci_pregunta_id', $pregIds)
+                                ->where('estado', 'completada')->count();
+                $eje->actividades_count  = $total;
+                $eje->completadas_count  = $completadas;
+                SemaforoHelper::decorar($eje, 'actividades_count', 'completadas_count', $config);
+                return $eje;
+            });
 
+        // ── Alertas recientes ─────────────────────────────────────────────────
         $alertas_recientes = Alerta::with(['actividad.responsables', 'unidadOrganica'])
             ->where('leida', false)
             ->orderByRaw("FIELD(prioridad,'alta','media','baja')")
             ->limit(5)->get();
 
-        $actividades_proximas = Actividad::with('componente', 'responsables')
+        // ── Actividades próximas a vencer (ambos módulos) ─────────────────────
+        $actividades_proximas = Actividad::with([
+                'sciPregunta.componente',
+                'integridadPregunta.componente',
+                'responsables',
+            ])
             ->whereNotIn('estado', ['completada', 'observado'])
             ->whereDate('fecha_limite', '>=', now())
             ->orderBy('fecha_limite')
             ->limit(6)->get();
 
         return view('content.dashboard.index', compact(
-            'stats', 'componentes', 'alertas_recientes', 'actividades_proximas',
+            'stats', 'sciEjes', 'alertas_recientes', 'actividades_proximas',
             'meses_labels', 'por_mes_sci', 'por_mes_integ',
             'areas_ranking'
         ));

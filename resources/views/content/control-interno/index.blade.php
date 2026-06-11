@@ -2,7 +2,7 @@
 use Illuminate\Support\Str;
 $configData = Helper::appClasses();
 
-$hayFiltros = request()->hasAny(['componente_id','unidad_id','responsable_id','estado','prioridad','buscar','fecha_desde','fecha_hasta']);
+$hayFiltros = request()->hasAny(['eje_id','componente_id','pregunta_id','unidad_id','responsable_id','estado','prioridad','buscar','anio','fecha_desde','fecha_hasta']);
 @endphp
 @extends('layouts/layoutMaster')
 @section('title', 'Control Interno - PULSO UGEL')
@@ -218,7 +218,7 @@ $porcentaje = round(($stats['completadas'] / $totalBase) * 100);
         <div class="d-flex align-items-start justify-content-between mb-2">
           <div>
             <div class="kpi-label text-white-50">{{ $kp['label'] }}</div>
-            <div class="kpi-value">{{ $stats[$kp['k']] }}</div>
+            <div class="kpi-value" id="kpi-{{ $kp['k'] }}">{{ $stats[$kp['k']] }}</div>
           </div>
           <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
             <i class="ti {{ $kp['icon'] }}"></i>
@@ -227,9 +227,9 @@ $porcentaje = round(($stats['completadas'] / $totalBase) * 100);
         @if($kp['extra'] === 'porcentaje')
         <div class="d-flex align-items-center gap-2">
           <div class="progress flex-grow-1" style="height:4px;background:rgba(255,255,255,.25)">
-            <div class="progress-bar bg-white" style="width:{{ $porcentaje }}%"></div>
+            <div class="progress-bar bg-white" id="kpi-bar" style="width:{{ $porcentaje }}%"></div>
           </div>
-          <span class="kpi-sub text-white-75">{{ $porcentaje }}%</span>
+          <span class="kpi-sub text-white-75" id="kpi-pct">{{ $porcentaje }}%</span>
         </div>
         @else
         <div class="kpi-sub text-white-75">{{ $kp['sub'] }}</div>
@@ -243,10 +243,11 @@ $porcentaje = round(($stats['completadas'] / $totalBase) * 100);
 {{-- ── Banner vencidas próximas ──────────────────────────────────────────── --}}
 @php
 $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observado'])
+  ->where('modulo', 'sci')
   ->whereDate('fecha_limite', '>=', now())
   ->whereDate('fecha_limite', '<=', now()->addDays(7))
   ->orderBy('fecha_limite')
-  ->with('componente')
+  ->with('sciPregunta.componente')
   ->limit(5)
   ->get();
 @endphp
@@ -277,17 +278,40 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
 <div class="card filter-card mb-4">
   <div class="card-body py-3">
     <form id="formFiltros" method="GET" action="{{ route('sci-control-interno') }}">
-      {{-- Fila: 3 + 2 + 2 + 1 + 1 + 3 = 12 --}}
       <div class="row g-2 align-items-end">
 
-        {{-- Componente --}}
-        <div class="col-md-3">
+        {{-- Año --}}
+        <div class="col-md-1">
+          <label class="form-label form-label-sm mb-1">Año</label>
+          <select name="anio" id="filtroAnio" class="form-select">
+            <option value="">Todos</option>
+            @foreach($anios as $a)
+            <option value="{{ $a }}" {{ request('anio') == $a ? 'selected' : '' }}>{{ $a }}</option>
+            @endforeach
+          </select>
+        </div>
+
+        {{-- Eje --}}
+        <div class="col-md-2">
+          <label class="form-label form-label-sm mb-1">Eje</label>
+          <select name="eje_id" id="filtroEje" class="form-select select2-filtro">
+            <option value="">Todos los ejes</option>
+            @foreach($ejes as $e)
+            <option value="{{ $e->id }}" {{ request('eje_id') == $e->id ? 'selected' : '' }}>
+              {{ Str::limit($e->nombre, 28) }} ({{ $e->anio }})
+            </option>
+            @endforeach
+          </select>
+        </div>
+
+        {{-- Componente (carga dinámica) --}}
+        <div class="col-md-2">
           <label class="form-label form-label-sm mb-1">Componente</label>
           <select name="componente_id" id="filtroComponente" class="form-select select2-filtro">
-            <option value="">Todos los componentes</option>
+            <option value="">Todos</option>
             @foreach($componentes as $c)
             <option value="{{ $c->id }}" {{ request('componente_id') == $c->id ? 'selected' : '' }}>
-              {{ $c->numero }}. {{ Str::limit($c->nombre, 30) }}
+              {{ Str::limit($c->nombre, 26) }}
             </option>
             @endforeach
           </select>
@@ -356,11 +380,11 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
               <span class="filter-badge-count">!</span>
               @endif
             </button>
-            <a href="{{ route('sci-control-interno') }}"
+            <button type="button"
                class="btn btn-label-secondary px-2 {{ $hayFiltros ? '' : 'invisible' }}"
                id="btnLimpiar" title="Limpiar filtros">
               <i class="ti tabler-x icon-14px"></i>
-            </a>
+            </button>
           </div>
         </div>
 
@@ -408,10 +432,8 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
       <h5 class="mb-0">Actividades de Control Interno</h5>
     </div>
     <div class="d-flex align-items-center gap-3">
-      <span class="badge bg-label-primary rounded-pill">{{ $actividades->total() }} registros</span>
-      @if($hayFiltros)
-      <span class="badge bg-label-warning rounded-pill"><i class="ti tabler-filter me-1"></i>Filtro activo</span>
-      @endif
+      <span class="badge bg-label-primary rounded-pill" id="badgeTotal">{{ $actividades->total() }} registros</span>
+      <span class="badge bg-label-warning rounded-pill {{ $hayFiltros ? '' : 'd-none' }}" id="badgeFiltroActivo"><i class="ti tabler-filter me-1"></i>Filtro activo</span>
     </div>
   </div>
 
@@ -432,174 +454,23 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
             <th style="width:105px">Acciones</th>
           </tr>
         </thead>
-        <tbody>
-          @forelse($actividades as $a)
-          @php
-            $ec        = $a->estado_color;
-            $dias      = (int) round(now()->diffInDays($a->fecha_limite, false));
-            $prioColor = match($a->prioridad) { 'alta'=>'danger', 'media'=>'warning', default=>'info' };
-            $fechaColor = $dias < 0 ? 'danger' : ($dias <= 7 ? 'warning' : 'secondary');
-          @endphp
-          <tr class="row-{{ $a->estado }}">
-
-            {{-- Código --}}
-            <td>
-              <div class="codigo-chip">{{ $a->codigo }}</div>
-              @if($a->numero_sgd)
-              <div class="sgd-chip"><i class="ti tabler-file-text icon-10px me-1"></i>{{ $a->numero_sgd }}</div>
-              @endif
-            </td>
-
-            {{-- Actividad --}}
-            <td>
-              <div class="fw-medium" style="font-size:13px;line-height:1.4;max-width:230px"
-                title="{{ $a->nombre }}">{{ Str::limit($a->nombre, 55) }}</div>
-            </td>
-
-            {{-- Componente --}}
-            <td>
-              <div class="d-flex align-items-center gap-1" style="font-size:12px">
-                <i class="ti {{ $a->componente->icono ?? 'tabler-point' }} icon-14px text-primary flex-shrink-0"></i>
-                <span title="{{ $a->componente->nombre ?? '' }}">{{ Str::limit($a->componente->nombre ?? '—', 24) }}</span>
-              </div>
-            </td>
-
-            {{-- Unidad --}}
-            <td class="text-center">
-              <span class="badge bg-label-secondary" title="{{ $a->unidadOrganica->nombre ?? '—' }}">
-                {{ $a->unidadOrganica->sigla ?? '—' }}
-              </span>
-            </td>
-
-            {{-- Responsables --}}
-            <td>
-              @if($a->responsables->isNotEmpty())
-                @foreach($a->responsables->take(2) as $resp)
-                @php
-                  $tipoKey = $resp->pivot->tipo;
-                  $tipoCss = match($tipoKey) { 'principal'=>'p', 'colaborador'=>'c', default=>'s' };
-                  $tipoLbl = match($tipoKey) { 'principal'=>'P', 'colaborador'=>'C', default=>'S' };
-                @endphp
-                <div class="resp-row">
-                  <span class="resp-tipo {{ $tipoCss }}" title="{{ ucfirst($tipoKey) }}">{{ $tipoLbl }}</span>
-                  <span class="resp-name text-body" title="{{ $resp->name }}">{{ $resp->name }}</span>
-                </div>
-                @endforeach
-                @if($a->responsables->count() > 2)
-                <small class="text-muted" style="font-size:10px">+{{ $a->responsables->count() - 2 }} más</small>
-                @endif
-              @else
-                <small class="text-muted fst-italic" style="font-size:11px">Sin asignar</small>
-              @endif
-            </td>
-
-            {{-- Prioridad --}}
-            <td>
-              <span class="badge bg-label-{{ $prioColor }}" style="font-size:11px">
-                @if($a->prioridad === 'alta')<i class="ti tabler-chevrons-up me-1"></i>@elseif($a->prioridad === 'baja')<i class="ti tabler-chevrons-down me-1"></i>@endif
-                {{ ucfirst($a->prioridad) }}
-              </span>
-            </td>
-
-            {{-- Fecha límite --}}
-            <td>
-              <span class="fecha-chip badge bg-label-{{ $fechaColor }}">
-                {{ $a->fecha_limite->format('d/m/Y') }}
-              </span>
-              @if($dias < 0 && !in_array($a->estado, ['completada','observado']))
-              <div class="dias-tag text-danger"><i class="ti tabler-clock-x icon-10px"></i>{{ abs($dias) }}d tarde</div>
-              @elseif($dias >= 0 && $dias <= 7 && !in_array($a->estado, ['completada','observado']))
-              <div class="dias-tag text-warning"><i class="ti tabler-clock icon-10px"></i>{{ $dias }}d restantes</div>
-              @elseif(in_array($a->estado, ['completada']))
-              <div class="dias-tag text-success"><i class="ti tabler-check icon-10px"></i>Completada</div>
-              @endif
-            </td>
-
-            {{-- Avance --}}
-            <td>
-              <div class="prog-wrap">
-                <div class="prog-track">
-                  <div class="prog-fill bg-{{ $ec }}" style="width:{{ $a->avance }}%"></div>
-                </div>
-                <span class="prog-pct text-{{ $ec }}">{{ $a->avance }}%</span>
-              </div>
-            </td>
-
-            {{-- Estado --}}
-            <td>
-              <span class="estado-pill badge bg-label-{{ $ec }}">{{ $a->estado_label }}</span>
-            </td>
-
-            {{-- Acciones --}}
-            <td>
-              <div class="act-actions">
-                <button class="btn btn-icon btn-label-secondary btn-historial"
-                  data-id="{{ $a->id }}"
-                  data-nombre="{{ $a->nombre }}"
-                  data-url="{{ route('sci-control-interno.historial', $a) }}"
-                  title="Historial de cambios">
-                  <i class="ti tabler-history icon-14px"></i>
-                </button>
-                @can('control-interno.editar')
-                <button class="btn btn-icon btn-label-primary btn-editar"
-                  data-id="{{ $a->id }}"
-                  data-nombre="{{ $a->nombre }}"
-                  data-componente="{{ $a->componente_id }}"
-                  data-unidad="{{ $a->unidad_organica_id ?? '' }}"
-                  data-responsables-json='@json($a->responsables->map(fn($r) => ["id"=>$r->id,"name"=>$r->name,"tipo"=>$r->pivot->tipo]))'
-                  data-fecha="{{ $a->fecha_limite->format('Y-m-d') }}"
-                  data-fechainicio="{{ $a->fecha_inicio?->format('Y-m-d') ?? '' }}"
-                  data-avance="{{ $a->avance }}"
-                  data-estado="{{ $a->estado }}"
-                  data-prioridad="{{ $a->prioridad }}"
-                  data-sgd="{{ $a->numero_sgd ?? '' }}"
-                  data-descripcion="{{ htmlspecialchars($a->descripcion ?? '', ENT_QUOTES) }}"
-                  data-observaciones="{{ htmlspecialchars($a->observaciones ?? '', ENT_QUOTES) }}"
-                  title="Editar">
-                  <i class="ti tabler-edit icon-14px"></i>
-                </button>
-                <form method="POST" action="{{ route('sci-control-interno.destroy', $a) }}" class="form-eliminar d-inline">
-                  @csrf @method('DELETE')
-                  <button type="submit" class="btn btn-icon btn-label-danger" title="Eliminar">
-                    <i class="ti tabler-trash icon-14px"></i>
-                  </button>
-                </form>
-                @endcan
-              </div>
-            </td>
-
-          </tr>
-          @empty
-          <tr>
-            <td colspan="10">
-              <div class="empty-sci">
-                <div class="empty-icon"><i class="ti tabler-clipboard-off"></i></div>
-                <div class="fw-semibold mb-1">No se encontraron actividades</div>
-                <div class="text-body-secondary" style="font-size:13px">
-                  {{ $hayFiltros ? 'Prueba cambiando los filtros de búsqueda.' : 'Aún no hay actividades registradas en el sistema.' }}
-                </div>
-                @if($hayFiltros)
-                <a href="{{ route('sci-control-interno') }}" class="btn btn-sm btn-label-secondary mt-3">
-                  <i class="ti tabler-x me-1"></i>Limpiar filtros
-                </a>
-                @endif
-              </div>
-            </td>
-          </tr>
-          @endforelse
+        <tbody id="tablaBody">
+          @include('content.control-interno._tabla')
         </tbody>
       </table>
     </div>
   </div>
 
-  @if($actividades->hasPages())
-  <div class="card-footer d-flex align-items-center justify-content-between py-3">
-    <span class="text-muted" style="font-size:13px">
-      Mostrando {{ $actividades->firstItem() }}–{{ $actividades->lastItem() }} de {{ $actividades->total() }} registros
-    </span>
-    {{ $actividades->links() }}
+  <div id="tablaFooter">
+    @if($actividades->hasPages())
+    <div class="card-footer d-flex align-items-center justify-content-between py-3">
+      <span class="text-muted" style="font-size:13px" id="tablaContador">
+        Mostrando {{ $actividades->firstItem() }}–{{ $actividades->lastItem() }} de {{ $actividades->total() }} registros
+      </span>
+      <div id="tablaPages">{{ $actividades->links() }}</div>
+    </div>
+    @endif
   </div>
-  @endif
 </div>
 
 {{-- ════════════════════════════════════════════════════════════════════════ --}}
@@ -625,15 +496,38 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
               </div>
             </div>
 
-            <div class="col-md-6">
-              <label class="form-label">Componente <span class="text-danger">*</span></label>
-              <select name="componente_id" class="form-select select2-modal" required>
-                <option value="">Seleccionar componente…</option>
-                @foreach($componentes as $c)
-                <option value="{{ $c->id }}">{{ $c->numero }}. {{ $c->nombre }}</option>
+            {{-- Cascada SCI: Año → Eje → Componente → Pregunta --}}
+            <div class="col-md-3">
+              <label class="form-label">Año <span class="text-danger">*</span></label>
+              <input type="number" name="anio" id="nuevo_anio" class="form-control"
+                value="{{ date('Y') }}" min="2020" max="2099" required>
+            </div>
+
+            <div class="col-md-9">
+              <label class="form-label">Eje SCI <span class="text-danger">*</span></label>
+              <select name="_eje_id" id="nuevo_eje" class="form-select select2-modal">
+                <option value="">— Seleccionar eje —</option>
+                @foreach($ejes as $e)
+                <option value="{{ $e->id }}">{{ $e->nombre }} ({{ $e->anio }})</option>
                 @endforeach
               </select>
             </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Componente <span class="text-danger">*</span></label>
+              <select name="_comp_id" id="nuevo_componente" class="form-select select2-modal" disabled>
+                <option value="">— Primero seleccione eje —</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Pregunta <span class="text-danger">*</span></label>
+              <select name="sci_pregunta_id" id="nuevo_pregunta" class="form-select select2-modal" disabled required>
+                <option value="">— Primero seleccione componente —</option>
+              </select>
+            </div>
+
+            <input type="hidden" name="modulo" value="sci">
 
             <div class="col-md-6">
               <label class="form-label">Unidad Orgánica</label>
@@ -750,12 +644,34 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
               </div>
             </div>
 
+            {{-- Cascada SCI edición --}}
+            <div class="col-md-3">
+              <label class="form-label">Año <span class="text-danger">*</span></label>
+              <input type="number" name="anio" id="edit_anio" class="form-control"
+                min="2020" max="2099" required>
+            </div>
+
+            <div class="col-md-9">
+              <label class="form-label">Eje SCI <span class="text-danger">*</span></label>
+              <select name="_edit_eje_id" id="edit_eje" class="form-select select2-modal-edit">
+                <option value="">— Seleccionar eje —</option>
+                @foreach($ejes as $e)
+                <option value="{{ $e->id }}">{{ $e->nombre }} ({{ $e->anio }})</option>
+                @endforeach
+              </select>
+            </div>
+
             <div class="col-md-6">
               <label class="form-label">Componente <span class="text-danger">*</span></label>
-              <select name="componente_id" id="edit_componente" class="form-select select2-modal-edit" required>
-                @foreach($componentes as $c)
-                <option value="{{ $c->id }}">{{ $c->numero }}. {{ $c->nombre }}</option>
-                @endforeach
+              <select name="_edit_comp_id" id="edit_componente" class="form-select select2-modal-edit">
+                <option value="">— Seleccionar componente —</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Pregunta <span class="text-danger">*</span></label>
+              <select name="sci_pregunta_id" id="edit_pregunta" class="form-select select2-modal-edit" required>
+                <option value="">— Seleccionar pregunta —</option>
               </select>
             </div>
 
@@ -914,37 +830,196 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  const route    = '{{ route('sci-control-interno') }}';
-  const form     = document.getElementById('formFiltros');
+  const BASE_URL    = '{{ route('sci-control-interno') }}';
+  const form        = document.getElementById('formFiltros');
+  const tablaBody   = document.getElementById('tablaBody');
+  const tablaFooter = document.getElementById('tablaFooter');
+  const badgeTotal  = document.getElementById('badgeTotal');
+  const badgeFiltro = document.getElementById('badgeFiltroActivo');
+  const btnLimpiar  = document.getElementById('btnLimpiar');
 
-  // ── Select2 filtros (auto-submit en change) ───────────────────────────────
+  let currentXhr = null;
+
+  // ── Colectar parámetros ───────────────────────────────────────────────────
+  function getParams() {
+    const params = new URLSearchParams();
+    new FormData(form).forEach((v, k) => {
+      if (v && v !== '') params.set(k, v);
+    });
+    return params;
+  }
+
+  // ── Actualizar KPIs ───────────────────────────────────────────────────────
+  function updateStats(stats) {
+    ['total','completadas','en_proceso','observados','vencidas'].forEach(k => {
+      const el = document.getElementById('kpi-' + k);
+      if (el) el.textContent = stats[k] ?? 0;
+    });
+    const total = Math.max(stats.total, 1);
+    const pct   = Math.round((stats.completadas / total) * 100);
+    const bar   = document.getElementById('kpi-bar');
+    const pctEl = document.getElementById('kpi-pct');
+    if (bar)   bar.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
+  }
+
+  // ── Actualizar URL ────────────────────────────────────────────────────────
+  function pushUrl(params) {
+    const qs = params.toString();
+    history.pushState(null, '', BASE_URL + (qs ? '?' + qs : ''));
+  }
+
+  // ── Verificar si hay filtros activos ─────────────────────────────────────
+  function hayFiltros(params) {
+    return params.toString().length > 0;
+  }
+
+  // ── Cargar tabla via AJAX ─────────────────────────────────────────────────
+  function cargarTabla(params, page) {
+    if (page) params.set('page', page);
+
+    if (currentXhr) currentXhr.abort();
+    const ctrl = new AbortController();
+    currentXhr = ctrl;
+
+    tablaBody.style.opacity = '0.5';
+
+    fetch(BASE_URL + '?' + params.toString(), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+      signal: ctrl.signal,
+    })
+    .then(r => r.json())
+    .then(data => {
+      currentXhr = null;
+      tablaBody.style.opacity = '1';
+
+      tablaBody.innerHTML = data.html;
+      updateStats(data.stats);
+      pushUrl(params);
+
+      // Badge total
+      badgeTotal.textContent = data.total + ' registros';
+
+      // Badge filtro activo
+      if (hayFiltros(params)) {
+        badgeFiltro.classList.remove('d-none');
+        btnLimpiar.classList.remove('invisible');
+      } else {
+        badgeFiltro.classList.add('d-none');
+        btnLimpiar.classList.add('invisible');
+      }
+
+      // Footer paginación
+      if (data.pages) {
+        tablaFooter.innerHTML = `
+          <div class="card-footer d-flex align-items-center justify-content-between py-3">
+            <span class="text-muted" style="font-size:13px" id="tablaContador">
+              Mostrando ${data.from}–${data.to} de ${data.total} registros
+            </span>
+            <div id="tablaPages">${data.pages}</div>
+          </div>`;
+      } else {
+        tablaFooter.innerHTML = '';
+      }
+
+      bindTableEvents();
+    })
+    .catch(err => {
+      if (err.name !== 'AbortError') {
+        tablaBody.style.opacity = '1';
+      }
+    });
+  }
+
+  // ── Re-enlazar eventos de la tabla tras actualización ────────────────────
+  function bindTableEvents() {
+    // Limpiar filtros desde empty state
+    document.getElementById('btnLimpiarEmpty')?.addEventListener('click', limpiarFiltros);
+
+    // Botones historial
+    tablaBody.querySelectorAll('.btn-historial').forEach(btn => {
+      btn.addEventListener('click', function () {
+        abrirHistorial(this.dataset.url, this.dataset.nombre);
+      });
+    });
+
+    // Botones editar
+    tablaBody.querySelectorAll('.btn-editar').forEach(btn => {
+      btn.addEventListener('click', function () {
+        abrirEditar(this);
+      });
+    });
+
+    // Botones eliminar
+    tablaBody.querySelectorAll('.btn-eliminar').forEach(btn => {
+      btn.addEventListener('click', function () {
+        confirmarEliminar(this.dataset.url);
+      });
+    });
+
+    // Paginación delegada en el footer
+    tablaFooter.querySelectorAll('a[href]').forEach(a => {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        const url   = new URL(this.href);
+        const page  = url.searchParams.get('page');
+        const p     = getParams();
+        cargarTabla(p, page);
+      });
+    });
+  }
+
+  // ── Select2 filtros ───────────────────────────────────────────────────────
   document.querySelectorAll('.select2-filtro').forEach(el => {
     $(el).wrap('<div class="position-relative"></div>').select2({
       dropdownParent: $(el).parent(),
       width: '100%',
     });
-    $(el).on('change', () => submitFiltros());
-  });
-
-  // Buscar: submit al presionar Enter
-  document.getElementById('filtroBuscar')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); submitFiltros(); }
-  });
-
-  // Estado y Prioridad: submit inmediato
-  ['filtroEstado','filtroPrioridad'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', () => submitFiltros());
-  });
-
-  function submitFiltros() {
-    const params = new URLSearchParams();
-    new FormData(form).forEach((v, k) => {
-      if (v && v !== '') params.set(k, v);
+    $(el).on('change', () => {
+      // Para el Eje: primero actualizar componentes, luego filtrar
+      if (el.id === 'filtroEje') return; // lo maneja el listener de cascada
+      cargarTabla(getParams());
     });
-    window.location.href = route + (params.toString() ? '?' + params.toString() : '');
-  }
+  });
 
-  // ── Flatpickr fechas avanzadas ────────────────────────────────────────────
+  // Buscar: disparar con debounce al escribir o Enter
+  let searchTimer = null;
+  document.getElementById('filtroBuscar')?.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => cargarTabla(getParams()), 400);
+  });
+  document.getElementById('filtroBuscar')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); clearTimeout(searchTimer); cargarTabla(getParams()); }
+  });
+
+  // Estado, Prioridad, Año
+  ['filtroEstado','filtroPrioridad','filtroAnio'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => cargarTabla(getParams()));
+  });
+
+  // Cascada filtro: Eje → cargar componentes → luego filtrar
+  $('#filtroEje').on('change', function () {
+    const ejeId  = this.value;
+    const compEl = document.getElementById('filtroComponente');
+    $(compEl).empty().append('<option value="">Todos</option>');
+    $(compEl).trigger('change.select2');
+
+    if (!ejeId) { cargarTabla(getParams()); return; }
+
+    fetch(`/api/sci/componentes?eje_id=${ejeId}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.json())
+      .then(data => {
+        data.forEach(c => {
+          const o = document.createElement('option');
+          o.value = c.id; o.textContent = c.nombre;
+          compEl.appendChild(o);
+        });
+        $(compEl).trigger('change.select2');
+        cargarTabla(getParams());
+      });
+  });
+
+  // Flatpickr: disparar al cerrar
   const fpOpts = {
     dateFormat: 'd/m/Y',
     locale: {
@@ -953,101 +1028,104 @@ document.addEventListener('DOMContentLoaded', function () {
       months: { shorthand:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
         longhand:['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] },
     },
-    static: false,
-    allowInput: false,
+    static: false, allowInput: false,
   };
-
   const desdeVal = document.getElementById('filtroFechaDesdeVal');
   const hastaVal = document.getElementById('filtroFechaHastaVal');
+  flatpickr('#filtroFechaDesde', { ...fpOpts, defaultDate: desdeVal.value || null,
+    onClose(dates) { desdeVal.value = dates[0] ? dates[0].toISOString().slice(0,10) : ''; cargarTabla(getParams()); }
+  });
+  flatpickr('#filtroFechaHasta', { ...fpOpts, defaultDate: hastaVal.value || null,
+    onClose(dates) { hastaVal.value = dates[0] ? dates[0].toISOString().slice(0,10) : ''; cargarTabla(getParams()); }
+  });
 
-  // Pre-fill display inputs if values exist
-  function isoToDisplay(iso) {
-    if (!iso) return '';
-    const [y,m,d] = iso.split('-');
-    return d+'/'+m+'/'+y;
+  // Botón Aplicar filtros avanzados
+  document.querySelector('#filtrosAvanzados .btn-primary')?.addEventListener('click', e => {
+    e.preventDefault();
+    cargarTabla(getParams());
+    bootstrap.Collapse.getInstance(document.getElementById('filtrosAvanzados'))?.hide();
+  });
+
+  // ── Limpiar filtros ───────────────────────────────────────────────────────
+  function limpiarFiltros() {
+    form.reset();
+    desdeVal.value = '';
+    hastaVal.value = '';
+    // Limpiar Select2
+    document.querySelectorAll('.select2-filtro').forEach(el => {
+      $(el).val('').trigger('change.select2');
+    });
+    cargarTabla(new URLSearchParams());
   }
-  const fpDesde = flatpickr('#filtroFechaDesde', {
-    ...fpOpts,
-    defaultDate: desdeVal.value || null,
-    onClose(dates) {
-      desdeVal.value = dates[0] ? dates[0].toISOString().slice(0,10) : '';
-    },
-  });
-  const fpHasta = flatpickr('#filtroFechaHasta', {
-    ...fpOpts,
-    defaultDate: hastaVal.value || null,
-    onClose(dates) {
-      hastaVal.value = dates[0] ? dates[0].toISOString().slice(0,10) : '';
-    },
-  });
 
-  // ── Select2 modal nueva ───────────────────────────────────────────────────
-  const modalNuevo = document.getElementById('modalNuevaActividad');
+  btnLimpiar?.addEventListener('click', limpiarFiltros);
+
+  // ── Helpers modal ─────────────────────────────────────────────────────────
+  function loadSelect(url, targetEl, placeholder) {
+    const $el = $(targetEl);
+    $el.empty().append(`<option value="">${placeholder}</option>`);
+    targetEl.disabled = true;
+    return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.json())
+      .then(data => {
+        data.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.id; opt.textContent = item.nombre;
+          targetEl.appendChild(opt);
+        });
+        targetEl.disabled = false;
+        $el.trigger('change.select2');
+      });
+  }
+
+  // ── Select2 modales ───────────────────────────────────────────────────────
+  const modalNuevo  = document.getElementById('modalNuevaActividad');
+  const modalEditar = document.getElementById('modalEditarActividad');
+
   document.querySelectorAll('.select2-modal').forEach(el =>
     $(el).select2({ dropdownParent: modalNuevo, width: '100%' })
   );
-
-  // ── Select2 modal editar ──────────────────────────────────────────────────
-  const modalEditar = document.getElementById('modalEditarActividad');
   document.querySelectorAll('.select2-modal-edit').forEach(el =>
     $(el).select2({ dropdownParent: modalEditar, width: '100%' })
   );
 
-  // ── Builder de responsables ───────────────────────────────────────────────
+  // ── Builder responsables ──────────────────────────────────────────────────
   function buildRespManager(listaId, emptyId, addBtnId, selectId, tipoId) {
     const lista  = document.getElementById(listaId);
     const empty  = document.getElementById(emptyId);
     const addBtn = document.getElementById(addBtnId);
     const sel    = document.getElementById(selectId);
     const tipo   = document.getElementById(tipoId);
+    const LABELS = { principal: 'Principal', colaborador: 'Colaborador', supervisor: 'Supervisor' };
 
-    const TIPO_LABELS = { principal: 'Principal', colaborador: 'Colaborador', supervisor: 'Supervisor' };
-
-    function refresh() {
-      const rows = lista.querySelectorAll('.resp-row-item');
-      empty.style.display = rows.length ? 'none' : 'block';
-    }
+    function refresh() { empty.style.display = lista.querySelectorAll('.resp-row-item').length ? 'none' : 'block'; }
 
     function addRow(userId, userName, tipoVal) {
-      if (!userId) return;
-      // Evitar duplicados
-      if (lista.querySelector(`.resp-row-item[data-uid="${userId}"]`)) return;
-
+      if (!userId || lista.querySelector(`.resp-row-item[data-uid="${userId}"]`)) return;
       const div = document.createElement('div');
-      div.className = 'resp-row-item';
-      div.dataset.uid = userId;
+      div.className = 'resp-row-item'; div.dataset.uid = userId;
       div.innerHTML = `
         <input type="hidden" name="responsables[]" value="${userId}">
         <input type="hidden" name="tipos[${userId}]" value="${tipoVal}" class="tipo-hidden">
-        <span class="resp-tipo-badge ${tipoVal}" data-uid="${userId}">${TIPO_LABELS[tipoVal]}</span>
+        <span class="resp-tipo-badge ${tipoVal}">${LABELS[tipoVal]}</span>
         <span class="flex-grow-1" style="font-size:13px">${userName}</span>
         <div class="btn-group btn-group-sm">
-          <button type="button" class="btn btn-sm btn-icon btn-label-secondary btn-change-tipo" title="Cambiar rol" style="height:26px;width:26px;padding:0">
+          <button type="button" class="btn btn-sm btn-icon btn-label-secondary btn-change-tipo" style="height:26px;width:26px;padding:0">
             <i class="ti tabler-arrows-exchange icon-12px"></i>
           </button>
-          <button type="button" class="btn btn-sm btn-icon btn-label-danger btn-remove" title="Quitar" style="height:26px;width:26px;padding:0">
+          <button type="button" class="btn btn-sm btn-icon btn-label-danger btn-remove" style="height:26px;width:26px;padding:0">
             <i class="ti tabler-x icon-12px"></i>
           </button>
         </div>`;
-
-      div.querySelector('.btn-remove').addEventListener('click', () => {
-        div.remove();
-        refresh();
-      });
-
+      div.querySelector('.btn-remove').addEventListener('click', () => { div.remove(); refresh(); });
       div.querySelector('.btn-change-tipo').addEventListener('click', () => {
-        const order = ['principal', 'colaborador', 'supervisor'];
-        const hidden = div.querySelector('.tipo-hidden');
-        const badge  = div.querySelector('.resp-tipo-badge');
-        const cur    = hidden.value;
-        const next   = order[(order.indexOf(cur) + 1) % order.length];
-        hidden.value = next;
-        badge.className = `resp-tipo-badge ${next}`;
-        badge.textContent = TIPO_LABELS[next];
+        const order = ['principal','colaborador','supervisor'];
+        const h = div.querySelector('.tipo-hidden');
+        const b = div.querySelector('.resp-tipo-badge');
+        const next = order[(order.indexOf(h.value) + 1) % order.length];
+        h.value = next; b.className = `resp-tipo-badge ${next}`; b.textContent = LABELS[next];
       });
-
-      lista.appendChild(div);
-      refresh();
+      lista.appendChild(div); refresh();
     }
 
     addBtn.addEventListener('click', () => {
@@ -1057,45 +1135,27 @@ document.addEventListener('DOMContentLoaded', function () {
       sel.value = '';
     });
 
-    function addAll(tipoVal) {
-      Array.from(sel.options).forEach(opt => {
-        if (opt.value) addRow(opt.value, opt.dataset.name, tipoVal);
-      });
-    }
-
     return {
-      addRow, addAll,
-      clear: () => { lista.querySelectorAll('.resp-row-item').forEach(r => r.remove()); refresh(); }
+      addRow,
+      addAll: tipoVal => Array.from(sel.options).forEach(o => { if (o.value) addRow(o.value, o.dataset.name, tipoVal); }),
+      clear:  () => { lista.querySelectorAll('.resp-row-item').forEach(r => r.remove()); refresh(); },
     };
   }
 
   const respNuevo  = buildRespManager('respListaNuevo',  'respEmptyNuevo',  'respAddBtnNuevo',  'respSelectNuevo',  'respTipoNuevo');
   const respEditar = buildRespManager('respListaEditar', 'respEmptyEditar', 'respAddBtnEditar', 'respSelectEditar', 'respTipoEditar');
 
-  // Botones "Asignar TODOS"
-  document.getElementById('respAddAllBtnNuevo')?.addEventListener('click', () => {
-    const tipo = document.getElementById('respTipoNuevo').value;
-    respNuevo.addAll(tipo);
-  });
-  document.getElementById('respAddAllBtnEditar')?.addEventListener('click', () => {
-    const tipo = document.getElementById('respTipoEditar').value;
-    respEditar.addAll(tipo);
-  });
-
-  // Limpiar builder al abrir modal nuevo
+  document.getElementById('respAddAllBtnNuevo')?.addEventListener('click',  () => respNuevo.addAll(document.getElementById('respTipoNuevo').value));
+  document.getElementById('respAddAllBtnEditar')?.addEventListener('click', () => respEditar.addAll(document.getElementById('respTipoEditar').value));
   modalNuevo.addEventListener('show.bs.modal', () => respNuevo.clear());
 
   function fixModalScroll(modal) {
-    const body    = modal.querySelector('.modal-body');
-    const content = modal.querySelector('.modal-content');
-    const header  = modal.querySelector('.modal-header');
-    const footer  = modal.querySelector('.modal-footer');
+    const body = modal.querySelector('.modal-body'), content = modal.querySelector('.modal-content');
+    const header = modal.querySelector('.modal-header'), footer = modal.querySelector('.modal-footer');
     if (!body || !content) return;
-    const maxContentH = Math.floor(window.innerHeight * 0.88);
-    const headerH     = header?.offsetHeight ?? 0;
-    const footerH     = footer?.offsetHeight ?? 0;
-    const bodyMaxH    = maxContentH - headerH - footerH;
-    content.style.setProperty('max-height', maxContentH + 'px', 'important');
+    const maxH = Math.floor(window.innerHeight * 0.88);
+    const bodyMaxH = maxH - (header?.offsetHeight ?? 0) - (footer?.offsetHeight ?? 0);
+    content.style.setProperty('max-height', maxH + 'px', 'important');
     content.style.setProperty('overflow', 'hidden', 'important');
     content.style.setProperty('display', 'flex', 'important');
     content.style.setProperty('flex-direction', 'column', 'important');
@@ -1103,136 +1163,148 @@ document.addEventListener('DOMContentLoaded', function () {
     body.style.setProperty('max-height', bodyMaxH + 'px', 'important');
     body.style.setProperty('min-height', '0', 'important');
   }
-
-  modalNuevo.addEventListener('shown.bs.modal', () => fixModalScroll(modalNuevo));
+  modalNuevo.addEventListener('shown.bs.modal',  () => fixModalScroll(modalNuevo));
   modalEditar.addEventListener('shown.bs.modal', () => fixModalScroll(modalEditar));
 
-  // ── Poblar modal editar ───────────────────────────────────────────────────
-  document.querySelectorAll('.btn-editar').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const form = document.getElementById('formEditarActividad');
-      form.action = '{{ url('control-interno') }}/' + this.dataset.id;
-
-      document.getElementById('edit_nombre').value        = this.dataset.nombre;
-      document.getElementById('edit_fecha').value         = this.dataset.fecha;
-      document.getElementById('edit_fechainicio').value   = this.dataset.fechainicio || '';
-      document.getElementById('edit_avance').value        = this.dataset.avance;
-      document.getElementById('edit_sgd').value           = this.dataset.sgd || '';
-      document.getElementById('edit_descripcion').value   = this.dataset.descripcion || '';
-      document.getElementById('edit_observaciones').value = this.dataset.observaciones || '';
-
-      const set = (id, val) => {
-        const el = document.getElementById(id);
-        if (el && val) { el.value = val; $(el).trigger('change'); }
-      };
-      set('edit_componente', this.dataset.componente);
-      set('edit_unidad',     this.dataset.unidad);
-      set('edit_estado',     this.dataset.estado);
-      set('edit_prioridad',  this.dataset.prioridad);
-
-      // Poblar responsables con sus tipos
-      respEditar.clear();
-      const respData = this.dataset.responsablesJson
-        ? JSON.parse(this.dataset.responsablesJson)
-        : [];
-      respData.forEach(r => respEditar.addRow(r.id, r.name, r.tipo));
-
-      new bootstrap.Modal(modalEditar).show();
-    });
+  // ── Cascada modal NUEVO ───────────────────────────────────────────────────
+  $('#nuevo_eje').on('change', function () {
+    const ejeId = this.value, compEl = document.getElementById('nuevo_componente'), pregEl = document.getElementById('nuevo_pregunta');
+    $(pregEl).empty().append('<option value="">— Primero seleccione componente —</option>'); pregEl.disabled = true;
+    if (!ejeId) { compEl.innerHTML = '<option value="">— Primero seleccione eje —</option>'; compEl.disabled = true; return; }
+    loadSelect(`/api/sci/componentes?eje_id=${ejeId}`, compEl, '— Seleccionar componente —');
   });
+  $('#nuevo_componente').on('change', function () {
+    const compId = this.value, pregEl = document.getElementById('nuevo_pregunta');
+    if (!compId) { $(pregEl).empty().append('<option value="">— Primero seleccione componente —</option>'); pregEl.disabled = true; return; }
+    loadSelect(`/api/sci/preguntas?componente_id=${compId}`, pregEl, '— Seleccionar pregunta —');
+  });
+
+  // ── Cascada modal EDITAR ──────────────────────────────────────────────────
+  $('#edit_eje').on('change', function () {
+    const ejeId = this.value, compEl = document.getElementById('edit_componente'), pregEl = document.getElementById('edit_pregunta');
+    $(pregEl).empty().append('<option value="">— Seleccionar pregunta —</option>');
+    if (!ejeId) return;
+    loadSelect(`/api/sci/componentes?eje_id=${ejeId}`, compEl, '— Seleccionar componente —');
+  });
+  $('#edit_componente').on('change', function () {
+    const compId = this.value, pregEl = document.getElementById('edit_pregunta');
+    if (!compId) return;
+    loadSelect(`/api/sci/preguntas?componente_id=${compId}`, pregEl, '— Seleccionar pregunta —');
+  });
+
+  // ── Abrir modal editar ────────────────────────────────────────────────────
+  async function abrirEditar(btn) {
+    const f = document.getElementById('formEditarActividad');
+    f.action = '{{ url('control-interno') }}/' + btn.dataset.id;
+
+    document.getElementById('edit_nombre').value        = btn.dataset.nombre;
+    document.getElementById('edit_anio').value          = btn.dataset.anio || '{{ date("Y") }}';
+    document.getElementById('edit_fecha').value         = btn.dataset.fecha;
+    document.getElementById('edit_fechainicio').value   = btn.dataset.fechainicio || '';
+    document.getElementById('edit_avance').value        = btn.dataset.avance;
+    document.getElementById('edit_sgd').value           = btn.dataset.sgd || '';
+    document.getElementById('edit_descripcion').value   = btn.dataset.descripcion || '';
+    document.getElementById('edit_observaciones').value = btn.dataset.observaciones || '';
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) { el.value = val; $(el).trigger('change'); } };
+    set('edit_unidad', btn.dataset.unidad); set('edit_estado', btn.dataset.estado); set('edit_prioridad', btn.dataset.prioridad);
+
+    const ejeId = btn.dataset.ejeId, compId = btn.dataset.componenteId, pregId = btn.dataset.preguntaId;
+    if (ejeId) {
+      $('#edit_eje').val(ejeId).trigger('change');
+      if (compId) {
+        await loadSelect(`/api/sci/componentes?eje_id=${ejeId}`, document.getElementById('edit_componente'), '— Seleccionar componente —');
+        $('#edit_componente').val(compId).trigger('change.select2');
+        if (pregId) {
+          await loadSelect(`/api/sci/preguntas?componente_id=${compId}`, document.getElementById('edit_pregunta'), '— Seleccionar pregunta —');
+          $('#edit_pregunta').val(pregId).trigger('change.select2');
+        }
+      }
+    }
+
+    respEditar.clear();
+    (btn.dataset.responsablesJson ? JSON.parse(btn.dataset.responsablesJson) : [])
+      .forEach(r => respEditar.addRow(r.id, r.name, r.tipo));
+
+    new bootstrap.Modal(modalEditar).show();
+  }
 
   // ── Historial ─────────────────────────────────────────────────────────────
   const campoIconos = {
-    estado: { icon: 'tabler-toggle-right', color: 'primary' },
-    avance: { icon: 'tabler-chart-bar', color: 'success' },
-    prioridad: { icon: 'tabler-flag', color: 'warning' },
-    responsables: { icon: 'tabler-users', color: 'info' },
-    nombre: { icon: 'tabler-pencil', color: 'secondary' },
-    fecha_limite: { icon: 'tabler-calendar', color: 'danger' },
-    observaciones: { icon: 'tabler-notes', color: 'secondary' },
+    estado: { icon:'tabler-toggle-right', color:'primary' }, avance: { icon:'tabler-chart-bar', color:'success' },
+    prioridad: { icon:'tabler-flag', color:'warning' }, responsables: { icon:'tabler-users', color:'info' },
+    nombre: { icon:'tabler-pencil', color:'secondary' }, fecha_limite: { icon:'tabler-calendar', color:'danger' },
+    observaciones: { icon:'tabler-notes', color:'secondary' },
   };
 
-  document.querySelectorAll('.btn-historial').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const url    = this.dataset.url;
-      const nombre = this.dataset.nombre;
+  function abrirHistorial(url, nombre) {
+    document.getElementById('historial_actividad_nombre').textContent = nombre;
+    document.getElementById('historial_loading').style.display = 'block';
+    document.getElementById('historial_content').style.display = 'none';
+    document.getElementById('historial_empty').style.display   = 'none';
+    new bootstrap.Modal(document.getElementById('modalHistorial')).show();
 
-      document.getElementById('historial_actividad_nombre').textContent = nombre;
-      document.getElementById('historial_loading').style.display  = 'block';
-      document.getElementById('historial_content').style.display  = 'none';
-      document.getElementById('historial_empty').style.display    = 'none';
-
-      new bootstrap.Modal(document.getElementById('modalHistorial')).show();
-
-      fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-        .then(r => r.json())
-        .then(data => {
-          document.getElementById('historial_loading').style.display = 'none';
-          if (!data.length) {
-            document.getElementById('historial_empty').style.display = 'block';
-            return;
-          }
-          const lista = data.map(h => {
-            const cfg   = campoIconos[h.campo] || { icon: 'tabler-edit', color: 'secondary' };
-            const fecha = h.created_at ? new Date(h.created_at).toLocaleString('es-PE') : '—';
-            const usuario = h.usuario?.name ?? 'Sistema';
-            const label = h.campo_label ?? h.campo;
-            const ant   = h.valor_anterior ?? '—';
-            const nvo   = h.valor_nuevo    ?? '—';
-            return `<div class="hist-item">
-              <div class="hist-dot bg-label-${cfg.color}">
-                <i class="ti ${cfg.icon} text-${cfg.color}"></i>
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('historial_loading').style.display = 'none';
+        if (!data.length) { document.getElementById('historial_empty').style.display = 'block'; return; }
+        document.getElementById('historial_lista').innerHTML = data.map(h => {
+          const cfg = campoIconos[h.campo] || { icon:'tabler-edit', color:'secondary' };
+          const fecha = h.created_at ? new Date(h.created_at).toLocaleString('es-PE') : '—';
+          const usuario = h.usuario?.name ?? 'Sistema';
+          const label = h.campo_label ?? h.campo, ant = h.valor_anterior ?? '—', nvo = h.valor_nuevo ?? '—';
+          return `<div class="hist-item">
+            <div class="hist-dot bg-label-${cfg.color}"><i class="ti ${cfg.icon} text-${cfg.color}"></i></div>
+            <div class="flex-grow-1">
+              <div class="fw-semibold" style="font-size:13px">${label}</div>
+              <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                <span class="badge bg-label-secondary" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${ant}">${ant}</span>
+                <i class="ti tabler-arrow-right hist-arrow"></i>
+                <span class="badge bg-label-${cfg.color}" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${nvo}">${nvo}</span>
               </div>
-              <div class="flex-grow-1">
-                <div class="fw-semibold" style="font-size:13px">${label}</div>
-                <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
-                  <span class="badge bg-label-secondary" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${ant}">
-                    ${ant}
-                  </span>
-                  <i class="ti tabler-arrow-right hist-arrow"></i>
-                  <span class="badge bg-label-${cfg.color}" style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${nvo}">
-                    ${nvo}
-                  </span>
-                </div>
-                <div class="text-muted mt-1" style="font-size:11px">
-                  <i class="ti tabler-user icon-12px me-1"></i>${usuario}
-                  <span class="mx-1">·</span>
-                  <i class="ti tabler-clock icon-12px me-1"></i>${fecha}
-                </div>
+              <div class="text-muted mt-1" style="font-size:11px">
+                <i class="ti tabler-user icon-12px me-1"></i>${usuario}
+                <span class="mx-1">·</span>
+                <i class="ti tabler-clock icon-12px me-1"></i>${fecha}
               </div>
-            </div>`;
-          }).join('');
+            </div>
+          </div>`;
+        }).join('');
+        document.getElementById('historial_content').style.display = 'block';
+      })
+      .catch(() => {
+        document.getElementById('historial_loading').style.display = 'none';
+        document.getElementById('historial_empty').style.display   = 'block';
+      });
+  }
 
-          document.getElementById('historial_lista').innerHTML = lista;
-          document.getElementById('historial_content').style.display = 'block';
-        })
-        .catch(() => {
-          document.getElementById('historial_loading').style.display = 'none';
-          document.getElementById('historial_empty').style.display   = 'block';
-        });
+  // ── Eliminar via AJAX ─────────────────────────────────────────────────────
+  function confirmarEliminar(url) {
+    Swal.fire({
+      title: '¿Eliminar actividad?', text: 'Esta acción no se puede deshacer.', icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '<i class="ti tabler-trash me-1"></i>Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup:'rounded-3', confirmButton:'btn btn-danger me-2', cancelButton:'btn btn-label-secondary' },
+      buttonsStyling: false,
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      fetch(url, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: '_method=DELETE',
+      })
+      .then(res => res.ok ? cargarTabla(getParams()) : Promise.reject())
+      .catch(() => Swal.fire({ icon:'error', title:'Error', text:'No se pudo eliminar la actividad.' }));
     });
-  });
+  }
 
-  // ── Confirmar eliminar ────────────────────────────────────────────────────
-  document.querySelectorAll('.form-eliminar').forEach(form => {
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      Swal.fire({
-        title: '¿Eliminar actividad?',
-        text: 'Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: '<i class="ti tabler-trash me-1"></i>Sí, eliminar',
-        cancelButtonText: 'Cancelar',
-        customClass: {
-          popup:         'rounded-3',
-          confirmButton: 'btn btn-danger me-2',
-          cancelButton:  'btn btn-label-secondary',
-        },
-        buttonsStyling: false,
-      }).then(r => { if (r.isConfirmed) form.submit(); });
-    });
-  });
+  // ── Enlazar tabla inicial ─────────────────────────────────────────────────
+  bindTableEvents();
+
+  // Tras guardar en modal (nueva / editar): el form hace POST y recarga — OK
+  // Los modales de nueva actividad y edición usan submit normal (back()->with('success'))
 
 });
 </script>

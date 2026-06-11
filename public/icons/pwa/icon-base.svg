@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo con bordes redondeados (maskable safe zone) -->
+  <rect width="512" height="512" rx="96" fill="#7367f0"/>
+
+  <!-- Letra P estilizada (PULSO) -->
+  <text x="256" y="310" font-family="Arial, sans-serif" font-size="260" font-weight="700"
+    fill="#ffffff" text-anchor="middle" dominant-baseline="middle">P</text>
+
+  <!-- Barra inferior decorativa -->
+  <rect x="96" y="420" width="320" height="16" rx="8" fill="rgba(255,255,255,0.4)"/>
+</svg>
