@@ -1,21 +1,22 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
 ## [v2.0.0] - 2026-06-10 (Sesión Actual)
-### Refactorización Estructural Mayor y Módulo de Encuestas
+### Refactorización Estructural Mayor, Módulo de Encuestas y Seguimiento Visual
 - **Nueva Estructura SCI e Integridad**: Evolución de los módulos legacy (`PACI`, `Matriz de Riesgos`, `Actas de Comité`) hacia un modelo dinámico y jerárquico basado en Ejes, Etapas, Componentes y Preguntas.
 - **Módulo de Encuestas (PULSO-Polls)**: Implementación integral de un motor de encuestas institucional con:
     - Gestión de preguntas (múltiples tipos) y opciones.
     - Sistema de destinatarios y control de respuestas.
-    - Exportación de resultados a Excel.
+    - Exportación de resultados a Excel y PDF (DomPDF).
+- **Sistema de Semáforo y Avance**: Implementación de tableros visuales de seguimiento para el avance de unidades orgánicas y cumplimiento de metas mediante semaforización dinámica.
 - **Refactorización v2 de Actividades y Alertas**: Optimización profunda del esquema de base de datos para mejorar la trazabilidad, rendimiento y consistencia relacional.
 - **Soporte PWA (Progressive Web App)**: El sistema ahora es instalable y ofrece capacidades offline básicas mediante Service Worker y Manifiesto de Aplicación.
 - **Notificaciones Dinámicas**: Sistema de notificaciones en tiempo real para la revisión de evidencias y alertas críticas.
 - **Limpieza de Código (Cleanup)**: Depuración de controladores, modelos y migraciones legacy para mantener la arquitectura limpia y alineada con los nuevos estándares.
 
 ### Estructura Técnica
-- **Nuevos Modelos**: `SciEje`, `SciComponente`, `SciPregunta`, `IntegridadEtapa`, `IntegridadComponente`, `IntegridadPregunta`, `Encuesta`, `EncuestaPregunta`, `EncuestaRespuesta`, etc.
-- **Controladores**: `SciEstructuraController`, `IntegridadEstructuraController`, `EncuestaController`, `EncuestaResultadoController`.
-- **Migraciones**: Refactorización completa mediante migraciones v2 (`refactor_actividades_v2`, `refactor_alertas_v2`) y creación de nuevas estructuras.
+- **Nuevos Modelos**: `SciEje`, `SciComponente`, `SciPregunta`, `IntegridadEtapa`, `IntegridadComponente`, `IntegridadPregunta`, `Encuesta`, `EncuestaPregunta`, `EncuestaRespuesta`, `EncuestaOpcion`.
+- **Controladores**: `SciEstructuraController`, `IntegridadEstructuraController`, `EncuestaController`, `EncuestaResultadoController`, `EncuestaRespuestaController`, `SemaforoController`, `AvanceUnidadesController`, `ModeloIntegridadController`.
+- **Migraciones**: Refactorización completa mediante migraciones v2 (`refactor_actividades_v2`, `refactor_alertas_v2`), `add_tipos_to_encuesta_preguntas` y `add_encuestas_to_alertas_modulo_enum`.
 - **UI/UX**: Nuevas vistas administrativas para la gestión de estructuras y encuestas, manteniendo la fidelidad visual a la plantilla Vuexy.
 
 ## [v1.5.4] - 2026-06-10
