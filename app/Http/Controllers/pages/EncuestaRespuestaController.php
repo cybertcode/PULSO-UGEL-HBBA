@@ -78,7 +78,8 @@ class EncuestaRespuestaController extends Controller
                             'texto_respuesta' => null,
                         ]);
                     }
-                } elseif ($pregunta->tipo === 'opcion_multiple') {
+                } elseif (in_array($pregunta->tipo, ['opcion_multiple', 'desplegable'])) {
+                    // Opción única o desplegable → guarda el opcion_id
                     EncuestaRespuestaDetalle::create([
                         'respuesta_id'    => $respuesta->id,
                         'pregunta_id'     => $pregunta->id,
@@ -86,7 +87,7 @@ class EncuestaRespuestaController extends Controller
                         'texto_respuesta' => null,
                     ]);
                 } else {
-                    // escala y texto_libre
+                    // escala, texto_libre, si_no, verdadero_falso → guarda texto
                     EncuestaRespuestaDetalle::create([
                         'respuesta_id'    => $respuesta->id,
                         'pregunta_id'     => $pregunta->id,

@@ -58,20 +58,22 @@ class ModeloIntegridadController extends Controller
             $actQuery->where(fn($q) => $q->where('nombre', 'like', "%$b%")->orWhere('codigo', 'like', "%$b%"));
         }
 
-        $actividades = $actQuery->orderBy('fecha_limite')->get();
-
         // ── Si es petición AJAX de listado ────────────────────────────────────
         if ($request->ajax() || $request->wantsJson()) {
+            $all = $actQuery->orderByDesc('fecha_limite')->get();
             return response()->json([
-                'actividades' => $actividades->map(fn($a) => $this->actividadToArray($a)),
-                'total'       => $actividades->count(),
+                'actividades' => $all->map(fn($a) => $this->actividadToArray($a)),
+                'total'       => $all->count(),
             ]);
         }
 
+        // Para métricas necesitamos todos los registros sin paginar
+        $todasActividades = $actQuery->orderByDesc('fecha_limite')->get();
+
         // ── Métricas globales ─────────────────────────────────────────────────
-        $total         = $actividades->count();
-        $completadas_n = $actividades->where('estado', 'completada')->count();
-        $avance_global = $total > 0 ? round($actividades->avg('avance')) : 0;
+        $total         = $todasActividades->count();
+        $completadas_n = $todasActividades->where('estado', 'completada')->count();
+        $avance_global = $total > 0 ? round($todasActividades->avg('avance')) : 0;
 
         // ── Componentes con métricas ──────────────────────────────────────────
         $componentesBase = IntegridadComponente::with(['etapa', 'preguntas'])
@@ -79,8 +81,8 @@ class ModeloIntegridadController extends Controller
             ->orderBy('orden')
             ->get();
 
-        $componentes = $componentesBase->map(function ($comp) use ($actividades, $umbral_verde, $umbral_amarillo) {
-            $acts        = $actividades->filter(fn($a) => $a->integridadPregunta?->componente_id === $comp->id);
+        $componentes = $componentesBase->map(function ($comp) use ($todasActividades, $umbral_verde, $umbral_amarillo) {
+            $acts        = $todasActividades->filter(fn($a) => $a->integridadPregunta?->componente_id === $comp->id);
             $total       = $acts->count();
             $porcentaje  = $total > 0 ? (int) round($acts->avg('avance')) : 0;
             $completadas = $acts->where('estado', 'completada')->count();
@@ -113,10 +115,10 @@ class ModeloIntegridadController extends Controller
         $criticos  = $componentes->where('color', 'danger')->count();
 
         // ── Evidencias recientes ──────────────────────────────────────────────
-        $idsIntegridad = $actividades->pluck('id');
+        $idsIntegridad = $todasActividades->pluck('id');
         $evidencias_recientes = Evidencia::with(['actividad.integridadPregunta.componente', 'subidoPor'])
             ->whereIn('actividad_id', $idsIntegridad)
-            ->latest()->limit(10)->get()
+            ->latest()->limit(50)->get()
             ->map(function ($ev) {
                 if ($ev->actividad?->integridadPregunta) {
                     $comp = $ev->actividad->integridadPregunta->componente;
@@ -143,10 +145,10 @@ class ModeloIntegridadController extends Controller
             });
 
         // ── Próximas acciones ─────────────────────────────────────────────────
-        $proximas_acciones = $actividades
+        $proximas_acciones = $todasActividades
             ->whereIn('estado', ['pendiente', 'en_proceso'])
             ->filter(fn($a) => $a->fecha_limite !== null)
-            ->sortBy('fecha_limite')->take(5)
+            ->sortBy('fecha_limite')->take(8)
             ->map(function ($act) {
                 $comp = $act->integridadPregunta?->componente;
                 $act->componente = $comp ? (object)['nombre' => $comp->nombre] : null;
@@ -158,6 +160,9 @@ class ModeloIntegridadController extends Controller
         $unidades  = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
         $usuarios  = User::where('estado', 'activo')->orderBy('name')->get();
         $anios_opt = Actividad::where('modulo','integridad')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
+
+        // Paginado para la tabla (re-ejecuta la query con paginación)
+        $actividades = $actQuery->orderByDesc('fecha_limite')->paginate(15)->withQueryString();
 
         return view('content.modelo-integridad.index', compact(
             'avance_global', 'umbral_verde', 'umbral_amarillo',

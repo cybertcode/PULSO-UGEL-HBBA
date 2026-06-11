@@ -66,17 +66,25 @@ class EncuestaController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'titulo'       => 'required|string|max:255',
             'modulo'       => 'required|in:sci,integridad,ambos',
             'fecha_inicio' => 'nullable|date',
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
             'preguntas'    => 'required|array|min:1',
             'preguntas.*.texto' => 'required|string',
-            'preguntas.*.tipo'  => 'required|in:opcion_multiple,seleccion_multiple,escala,texto_libre',
+            'preguntas.*.tipo'  => 'required|in:opcion_multiple,seleccion_multiple,escala,texto_libre,si_no,verdadero_falso,desplegable',
         ]);
 
-        DB::transaction(function () use ($request) {
+        if ($validator->fails()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $encuesta = null;
+        DB::transaction(function () use ($request, &$encuesta) {
             $encuesta = Encuesta::create([
                 'titulo'      => $request->titulo,
                 'descripcion' => $request->descripcion,
@@ -95,7 +103,7 @@ class EncuestaController extends Controller
                     'requerida' => ($preguntaData['requerida'] ?? '1') === '1',
                 ]);
 
-                if (in_array($pregunta->tipo, ['opcion_multiple', 'seleccion_multiple'])) {
+                if (in_array($pregunta->tipo, ['opcion_multiple', 'seleccion_multiple', 'desplegable'])) {
                     foreach (($preguntaData['opciones'] ?? []) as $j => $opcionTexto) {
                         if (trim($opcionTexto)) {
                             $pregunta->opciones()->create(['orden' => $j + 1, 'texto' => $opcionTexto]);
@@ -105,10 +113,15 @@ class EncuestaController extends Controller
             }
 
             $this->guardarDestinatarios($encuesta, $request);
-
-            session()->flash('success', 'Encuesta creada correctamente.');
-            session()->flash('encuesta_id', $encuesta->id);
         });
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Encuesta creada como borrador.',
+                'redirect' => route('encuestas.index'),
+            ]);
+        }
 
         return redirect()->route('encuestas.index')
             ->with('success', 'Encuesta creada como borrador. Puedes publicarla cuando esté lista.');
@@ -130,15 +143,22 @@ class EncuestaController extends Controller
     {
         abort_if($encuesta->estado !== 'borrador', 403, 'Solo se pueden editar encuestas en borrador.');
 
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'titulo'       => 'required|string|max:255',
             'modulo'       => 'required|in:sci,integridad,ambos',
             'fecha_inicio' => 'nullable|date',
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
             'preguntas'    => 'required|array|min:1',
             'preguntas.*.texto' => 'required|string',
-            'preguntas.*.tipo'  => 'required|in:opcion_multiple,seleccion_multiple,escala,texto_libre',
+            'preguntas.*.tipo'  => 'required|in:opcion_multiple,seleccion_multiple,escala,texto_libre,si_no,verdadero_falso,desplegable',
         ]);
+
+        if ($validator->fails()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            return back()->withErrors($validator)->withInput();
+        }
 
         DB::transaction(function () use ($request, $encuesta) {
             $encuesta->update([
@@ -149,7 +169,6 @@ class EncuestaController extends Controller
                 'fecha_fin'   => $request->fecha_fin,
             ]);
 
-            // Reconstruir preguntas
             $encuesta->preguntas()->each(fn($p) => $p->opciones()->delete());
             $encuesta->preguntas()->delete();
 
@@ -161,7 +180,7 @@ class EncuestaController extends Controller
                     'requerida' => ($preguntaData['requerida'] ?? '1') === '1',
                 ]);
 
-                if (in_array($pregunta->tipo, ['opcion_multiple', 'seleccion_multiple'])) {
+                if (in_array($pregunta->tipo, ['opcion_multiple', 'seleccion_multiple', 'desplegable'])) {
                     foreach (($preguntaData['opciones'] ?? []) as $j => $opcionTexto) {
                         if (trim($opcionTexto)) {
                             $pregunta->opciones()->create(['orden' => $j + 1, 'texto' => $opcionTexto]);
@@ -173,6 +192,14 @@ class EncuestaController extends Controller
             $encuesta->destinatarios()->delete();
             $this->guardarDestinatarios($encuesta, $request);
         });
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Encuesta actualizada correctamente.',
+                'redirect' => route('encuestas.index'),
+            ]);
+        }
 
         return redirect()->route('encuestas.index')
             ->with('success', 'Encuesta actualizada correctamente.');

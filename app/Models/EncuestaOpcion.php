@@ -10,6 +10,8 @@ class EncuestaOpcion extends Model
 {
     use HasFactory;
 
+    protected $table = 'encuesta_opciones';
+
     protected $fillable = [
         'pregunta_id', 'orden', 'texto',
     ];

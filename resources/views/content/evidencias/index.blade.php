@@ -83,13 +83,6 @@ $authId = auth()->id();
 
 @section('content')
 
-{{-- Flash errores --}}
-@if($errors->any())
-  <meta name="flash-errors" content="{{ addslashes($errors->first()) }}">
-@endif
-@if(session('success'))
-  <meta name="flash-success" content="{{ addslashes(session('success')) }}">
-@endif
 
 {{-- Notificaciones de evidencias pendientes de revisión propia --}}
 @php
@@ -506,14 +499,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const tablaBody  = document.getElementById('tabla-body');
   const contador   = document.getElementById('contador-ev');
 
-  // ── Flash messages ────────────────────────────────────────────────────────
-  const flashErr = document.querySelector('meta[name="flash-errors"]')?.content;
-  if (flashErr) Swal.fire({ icon:'error', title:'Error', text: flashErr,
-    customClass:{ popup:'rounded-3', confirmButton:'btn btn-primary' }, buttonsStyling:false });
-
-  const flashOk = document.querySelector('meta[name="flash-success"]')?.content;
-  if (flashOk) Swal.fire({ icon:'success', title:'Listo', text: flashOk, timer:2800, showConfirmButton:false,
-    customClass:{ popup:'rounded-3' } });
 
   // ── Escape XSS ────────────────────────────────────────────────────────────
   function esc(s) {
