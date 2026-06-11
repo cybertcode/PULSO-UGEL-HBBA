@@ -4,8 +4,102 @@
 
 @section('page-style')
 <style>
-.pregunta-item { border: 1px solid #e7e7e7; border-radius: 10px; background: #fafafa; padding: 1rem; }
-.opciones-container .opcion-row { display: flex; gap: .5rem; align-items: center; margin-bottom: .4rem; }
+/* ── Wizard ── */
+.wizard-step { display: none; animation: fadeInUp .25s ease; }
+.wizard-step.active { display: block; }
+@keyframes fadeInUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+.step-bar { display: flex; align-items: center; gap: 0; }
+.step-bar .sb-item { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.step-bar .sb-item::after {
+  content: ''; position: absolute; top: 16px; left: 50%; width: 100%; height: 2px;
+  background: #e0dffe; z-index: 0;
+}
+.step-bar .sb-item:last-child::after { display: none; }
+.step-bar .sb-item.done::after { background: #696cff; }
+.sb-circle {
+  width: 34px; height: 34px; border-radius: 50%; border: 2px solid #e0dffe;
+  background: #fff; color: #a8a5c1; font-weight: 700; font-size: .82rem;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; z-index: 1; transition: all .25s;
+}
+.sb-item.active .sb-circle { border-color: #696cff; color: #696cff; box-shadow: 0 0 0 4px rgba(105,108,255,.12); }
+.sb-item.done  .sb-circle  { border-color: #696cff; background: #696cff; color: #fff; }
+.sb-label { font-size: .72rem; color: #a8a5c1; margin-top: 4px; font-weight: 500; }
+.sb-item.active .sb-label, .sb-item.done .sb-label { color: #696cff; }
+
+/* ── Tarjeta de pregunta ── */
+.pq-card {
+  background: #fff; border: 1.5px solid #e7e7e7; border-radius: 14px;
+  padding: 1.1rem 1.2rem; margin-bottom: 1rem;
+  transition: box-shadow .2s, border-color .2s;
+  animation: fadeInUp .2s ease;
+}
+.pq-card:hover { box-shadow: 0 4px 18px rgba(105,108,255,.10); border-color: #c5c4f5; }
+.pq-card.has-error { border-color: #ff3e1d !important; }
+.pq-header { display: flex; gap: .8rem; align-items: flex-start; }
+.pq-num {
+  min-width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#696cff,#9b59b6);
+  color: #fff; font-weight: 700; font-size: .78rem;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 6px;
+}
+.pq-texto { flex: 1; }
+.pq-texto input.form-control {
+  border: none; border-bottom: 1.5px solid #e7e7e7; border-radius: 0;
+  padding-left: 0; font-size: .97rem; font-weight: 500; background: transparent;
+  transition: border-color .2s;
+}
+.pq-texto input.form-control:focus { border-color: #696cff; box-shadow: none; }
+.pq-texto input.form-control.is-invalid { border-color: #ff3e1d; }
+.pq-tipo-selector { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .7rem; }
+.tipo-pill {
+  border: 1.5px solid #e0dffe; border-radius: 20px; padding: .3rem .9rem;
+  font-size: .73rem; font-weight: 600; color: #696cff; cursor: pointer;
+  background: #fff; transition: all .15s; display: flex; align-items: center; gap: .35rem;
+  white-space: nowrap;
+}
+.tipo-pill:hover { background: #f0efff; border-color: #696cff; }
+.tipo-pill.active { background: #696cff; color: #fff; border-color: #696cff; }
+.tipo-pill i { font-size: .85rem; }
+
+.pq-body { padding-top: .8rem; border-top: 1px dashed #e7e7e7; margin-top: .8rem; }
+.opcion-row { display: flex; gap: .5rem; align-items: center; margin-bottom: .4rem; animation: fadeInUp .15s ease; }
+.opcion-row .opcion-prefix {
+  width: 22px; height: 22px; border: 1.5px solid #c5c4f5; border-radius: 50%;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 700; color: #696cff;
+}
+.opcion-row.check-style .opcion-prefix { border-radius: 4px; }
+.opcion-row input.form-control {
+  border: none; border-bottom: 1px solid #e7e7e7; border-radius: 0; background: transparent;
+  padding-left: 0; font-size: .88rem; transition: border-color .15s;
+}
+.opcion-row input.form-control:focus { border-color: #696cff; box-shadow: none; }
+
+.preview-bloque { background: #f8f7fe; border: 1px solid #e0dffe; border-radius: 10px; padding: .9rem 1.1rem; }
+.si-no-btn, .vf-btn {
+  padding: .55rem 2rem; border-radius: 8px; font-weight: 600; font-size: .9rem;
+  cursor: default; transition: all .15s; border: 2px solid;
+}
+.si-no-btn.si  { border-color: #28a745; color: #28a745; background: #f0fff4; }
+.si-no-btn.no  { border-color: #dc3545; color: #dc3545; background: #fff5f5; }
+.vf-btn.v      { border-color: #17a2b8; color: #17a2b8; background: #f0fbff; }
+.vf-btn.f      { border-color: #fd7e14; color: #fd7e14; background: #fff8f0; }
+.escala-preview span {
+  width: 44px; height: 44px; border-radius: 10px; border: 2px solid #e0dffe;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem; color: #696cff; background: #fff;
+}
+
+.dest-option {
+  border: 1.5px solid #e7e7e7; border-radius: 12px; padding: .9rem 1.1rem;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: .8rem;
+}
+.dest-option:hover { border-color: #696cff; background: #f8f7ff; }
+.dest-option.active { border-color: #696cff; background: #f0efff; }
+.dest-option .dest-icon { font-size: 1.5rem; color: #696cff; }
+
+.drag-handle { cursor: grab; color: #c5c4f5; font-size: 1rem; margin-top: 8px; flex-shrink: 0; }
 </style>
 @endsection
 
@@ -13,175 +107,407 @@
 <div class="container-xxl flex-grow-1 container-p-y">
 
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0"><span class="text-muted fw-light">Encuestas /</span> Editar: {{ $encuesta->titulo }}</h4>
+    <div>
+      <h4 class="fw-bold mb-0"><span class="text-muted fw-light">Encuestas /</span> Editar encuesta</h4>
+      <p class="text-muted small mb-0">{{ $encuesta->titulo }}</p>
+    </div>
     <a href="{{ route('encuestas.index') }}" class="btn btn-outline-secondary btn-sm">
       <i class="ti tabler-arrow-left me-1"></i> Volver
     </a>
   </div>
 
-  @if(session('success'))
-    <div class="alert alert-success alert-dismissible mb-4"><i class="ti tabler-check me-1"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-  @endif
-
-  <form method="POST" action="{{ route('encuestas.update', $encuesta) }}" id="formEncuesta">
-    @csrf @method('PUT')
-
-    <div class="row g-4">
-      {{-- Columna izquierda: datos + destinatarios --}}
-      <div class="col-lg-4">
-        <div class="card shadow-sm mb-4">
-          <div class="card-header"><h5 class="mb-0"><i class="ti tabler-info-circle me-1"></i> Datos Generales</h5></div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
-              <input type="text" name="titulo" class="form-control @error('titulo') is-invalid @enderror"
-                value="{{ old('titulo', $encuesta->titulo) }}" required>
-              @error('titulo')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Descripción</label>
-              <textarea name="descripcion" class="form-control" rows="3">{{ old('descripcion', $encuesta->descripcion) }}</textarea>
-            </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Módulo</label>
-              <select name="modulo" class="form-select">
-                <option value="ambos"      {{ old('modulo',$encuesta->modulo) === 'ambos'      ? 'selected':'' }}>SCI + Integridad</option>
-                <option value="sci"        {{ old('modulo',$encuesta->modulo) === 'sci'        ? 'selected':'' }}>SCI</option>
-                <option value="integridad" {{ old('modulo',$encuesta->modulo) === 'integridad' ? 'selected':'' }}>Integridad</option>
-              </select>
-            </div>
-            <div class="row g-2">
-              <div class="col-6">
-                <label class="form-label fw-semibold small">Fecha inicio</label>
-                <input type="date" name="fecha_inicio" class="form-control form-control-sm"
-                  value="{{ old('fecha_inicio', $encuesta->fecha_inicio?->format('Y-m-d')) }}">
-              </div>
-              <div class="col-6">
-                <label class="form-label fw-semibold small">Fecha límite</label>
-                <input type="date" name="fecha_fin" class="form-control form-control-sm"
-                  value="{{ old('fecha_fin', $encuesta->fecha_fin?->format('Y-m-d')) }}">
-              </div>
-            </div>
-          </div>
+  {{-- Step bar --}}
+  <div class="card shadow-sm mb-4 border-0">
+    <div class="card-body py-3 px-4">
+      <div class="step-bar" id="stepBar">
+        <div class="sb-item active" id="sb-1">
+          <div class="sb-circle"><i class="ti tabler-info-circle" style="font-size:.9rem"></i></div>
+          <span class="sb-label">Datos</span>
         </div>
-
-        <div class="card shadow-sm">
-          <div class="card-header"><h5 class="mb-0"><i class="ti tabler-users me-1"></i> Destinatarios</h5></div>
-          <div class="card-body">
-            @php
-              $destTodos = $encuesta->destinatarios->firstWhere('tipo','todos');
-              $destUnidades = $encuesta->destinatarios->where('tipo','unidad_organica')->pluck('referencia_id')->toArray();
-              $destRoles = $encuesta->destinatarios->where('tipo','rol')->pluck('referencia_id')->toArray();
-              $destUsuarios = $encuesta->destinatarios->where('tipo','usuario')->pluck('referencia_id')->toArray();
-            @endphp
-
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="checkbox" id="destTodos" onchange="toggleTodos(this)"
-                {{ $destTodos ? 'checked' : '' }}>
-              <label class="form-check-label fw-semibold" for="destTodos">Todos los usuarios activos</label>
-            </div>
-            <input type="hidden" name="destinatarios[0][tipo]" id="inputDestTodos" value="{{ $destTodos ? 'todos' : '' }}">
-
-            <div id="seccionDetallada" style="{{ $destTodos ? 'opacity:.4;pointer-events:none' : '' }}">
-              <div class="mb-3">
-                <label class="form-label small fw-semibold">Por Unidad Orgánica</label>
-                <select name="destinatarios[1][ids][]" class="form-select form-select-sm" multiple>
-                  @foreach($unidades as $u)
-                    <option value="{{ $u->id }}" {{ in_array($u->id, $destUnidades) ? 'selected':'' }}>{{ $u->nombre }}</option>
-                  @endforeach
-                </select>
-                <input type="hidden" name="destinatarios[1][tipo]" value="unidad_organica">
-              </div>
-              <div class="mb-3">
-                <label class="form-label small fw-semibold">Por Rol</label>
-                <select name="destinatarios[2][ids][]" class="form-select form-select-sm" multiple>
-                  @foreach($roles as $r)
-                    <option value="{{ $r->id }}" {{ in_array($r->id, $destRoles) ? 'selected':'' }}>{{ $r->name }}</option>
-                  @endforeach
-                </select>
-                <input type="hidden" name="destinatarios[2][tipo]" value="rol">
-              </div>
-              <div class="mb-3">
-                <label class="form-label small fw-semibold">Usuarios individuales</label>
-                <select name="destinatarios[3][ids][]" class="form-select form-select-sm" multiple>
-                  @foreach($usuarios as $u)
-                    <option value="{{ $u->id }}" {{ in_array($u->id, $destUsuarios) ? 'selected':'' }}>{{ $u->name }} ({{ $u->dni }})</option>
-                  @endforeach
-                </select>
-                <input type="hidden" name="destinatarios[3][tipo]" value="usuario">
-              </div>
-            </div>
-          </div>
+        <div class="sb-item" id="sb-2">
+          <div class="sb-circle"><i class="ti tabler-help-circle" style="font-size:.9rem"></i></div>
+          <span class="sb-label">Preguntas</span>
+        </div>
+        <div class="sb-item" id="sb-3">
+          <div class="sb-circle"><i class="ti tabler-users" style="font-size:.9rem"></i></div>
+          <span class="sb-label">Destinatarios</span>
         </div>
       </div>
+    </div>
+  </div>
 
-      {{-- Columna derecha: preguntas --}}
-      <div class="col-lg-8">
-        <div class="card shadow-sm">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="ti tabler-help-circle me-1"></i> Preguntas</h5>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarPregunta()">
+  <form id="formEncuesta" novalidate>
+    @csrf
+    <input type="hidden" name="_method" value="PUT">
+
+    {{-- PASO 1: Datos --}}
+    <div class="wizard-step active" id="step-1">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
+          <h5 class="mb-0 fw-bold"><i class="ti tabler-sparkles me-2 text-primary"></i>Datos de la encuesta</h5>
+        </div>
+        <div class="card-body px-4">
+          <div class="row g-4">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+              <input type="text" name="titulo" id="inp-titulo"
+                class="form-control form-control-lg"
+                value="{{ old('titulo', $encuesta->titulo) }}"
+                placeholder="Título de la encuesta">
+              <div class="invalid-feedback" id="err-titulo">El título es obligatorio.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción / Instrucciones</label>
+              <textarea name="descripcion" id="inp-descripcion" class="form-control" rows="3"
+                placeholder="Explica el propósito de esta encuesta...">{{ old('descripcion', $encuesta->descripcion) }}</textarea>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Módulo <span class="text-danger">*</span></label>
+              <select name="modulo" id="inp-modulo" class="form-select">
+                <option value="ambos"      {{ old('modulo',$encuesta->modulo) === 'ambos'      ? 'selected':'' }}>🔵 SCI + Integridad</option>
+                <option value="sci"        {{ old('modulo',$encuesta->modulo) === 'sci'        ? 'selected':'' }}>📋 Solo SCI</option>
+                <option value="integridad" {{ old('modulo',$encuesta->modulo) === 'integridad' ? 'selected':'' }}>🛡️ Solo Integridad</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Fecha de inicio</label>
+              <input type="date" name="fecha_inicio" id="inp-fecha_inicio" class="form-control"
+                value="{{ old('fecha_inicio', $encuesta->fecha_inicio?->format('Y-m-d')) }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Fecha límite</label>
+              <input type="date" name="fecha_fin" id="inp-fecha_fin" class="form-control"
+                value="{{ old('fecha_fin', $encuesta->fecha_fin?->format('Y-m-d')) }}">
+              <div class="invalid-feedback" id="err-fecha_fin">La fecha límite debe ser posterior a la de inicio.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-white border-top-0 px-4 pb-4 text-end">
+          <button type="button" class="btn btn-primary px-4" onclick="irPaso(2)">
+            Siguiente: Preguntas <i class="ti tabler-arrow-right ms-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {{-- PASO 2: Preguntas --}}
+    <div class="wizard-step" id="step-2">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+              <h5 class="mb-0 fw-bold"><i class="ti tabler-list-details me-2 text-primary"></i>Constructor de preguntas</h5>
+              <p class="text-muted small mb-0">Edita, agrega o elimina preguntas.</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="agregarPregunta()">
+              <i class="ti tabler-plus me-1"></i> Nueva pregunta
+            </button>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-3 pb-3 border-bottom">
+            <span class="text-muted small me-1 align-self-center">Agregar rápido:</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarPregunta('opcion_multiple')"><i class="ti tabler-circle-dot me-1"></i>Opción única</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarPregunta('seleccion_multiple')"><i class="ti tabler-checkbox me-1"></i>Selección múltiple</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarPregunta('escala')"><i class="ti tabler-stars me-1"></i>Escala 1-5</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarPregunta('si_no')"><i class="ti tabler-checks me-1"></i>Sí / No</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarPregunta('verdadero_falso')"><i class="ti tabler-shield-check me-1"></i>Verdadero / Falso</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarPregunta('desplegable')"><i class="ti tabler-selector me-1"></i>Lista desplegable</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarPregunta('texto_libre')"><i class="ti tabler-text-size me-1"></i>Texto libre</button>
+          </div>
+        </div>
+        <div class="card-body px-4 pt-3">
+          <div id="listaPreguntas"></div>
+          <div id="sinPreguntas" class="text-center py-5" style="display:none">
+            <div class="mb-3" style="font-size:3rem">📋</div>
+            <h6 class="text-muted">Sin preguntas</h6>
+            <button type="button" class="btn btn-outline-primary mt-1" onclick="agregarPregunta()">
               <i class="ti tabler-plus me-1"></i> Agregar pregunta
             </button>
           </div>
-          <div class="card-body">
-            <div id="listaPreguntas"></div>
-            <div id="sinPreguntas" class="text-center py-4 text-muted" style="display:none">
-              <i class="ti tabler-help fs-1 d-block mb-2"></i>
-              Agrega al menos una pregunta.
-            </div>
-          </div>
-          <div class="card-footer text-end">
-            <a href="{{ route('encuestas.index') }}" class="btn btn-outline-secondary me-2">Cancelar</a>
-            <button type="submit" class="btn btn-primary">
-              <i class="ti tabler-device-floppy me-1"></i> Guardar cambios
+        </div>
+        <div class="card-footer bg-white border-top px-4 pb-4 d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-secondary" onclick="irPaso(1)">
+            <i class="ti tabler-arrow-left me-1"></i> Anterior
+          </button>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small" id="contPreguntas">0 preguntas</span>
+            <button type="button" class="btn btn-primary px-4" onclick="irPaso(3)">
+              Siguiente: Destinatarios <i class="ti tabler-arrow-right ms-1"></i>
             </button>
           </div>
         </div>
       </div>
     </div>
+
+    {{-- PASO 3: Destinatarios --}}
+    @php
+      $destTodos    = $encuesta->destinatarios->firstWhere('tipo','todos');
+      $destUnidades = $encuesta->destinatarios->where('tipo','unidad_organica')->pluck('referencia_id')->toArray();
+      $destRoles    = $encuesta->destinatarios->where('tipo','rol')->pluck('referencia_id')->toArray();
+      $destUsuarios = $encuesta->destinatarios->where('tipo','usuario')->pluck('referencia_id')->toArray();
+    @endphp
+    <div class="wizard-step" id="step-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
+          <h5 class="mb-0 fw-bold"><i class="ti tabler-users me-2 text-primary"></i>¿A quiénes va dirigida?</h5>
+          <p class="text-muted small mb-0">Combina criterios — se enviarán alertas a los usuarios resultantes.</p>
+        </div>
+        <div class="card-body px-4">
+          <div class="dest-option mb-3 {{ $destTodos ? 'active' : '' }}" id="destCardTodos" onclick="toggleDestTodos(this)">
+            <span class="dest-icon"><i class="ti tabler-world"></i></span>
+            <div class="flex-grow-1">
+              <div class="fw-semibold">Todos los usuarios activos</div>
+              <div class="text-muted small">Enviará la encuesta a todos los usuarios con estado activo.</div>
+            </div>
+            <div class="form-check mb-0">
+              <input class="form-check-input" type="checkbox" id="cbTodos" {{ $destTodos ? 'checked' : '' }} onclick="event.stopPropagation()">
+            </div>
+          </div>
+          <hr class="my-4">
+          <div id="seccionDetallada" style="{{ $destTodos ? 'opacity:.35;pointer-events:none' : '' }}">
+            <div class="row g-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small"><i class="ti tabler-sitemap me-1 text-primary"></i>Por Unidad Orgánica</label>
+                <select name="destinatarios[1][ids][]" class="form-select" multiple size="5" id="sel-unidades">
+                  @foreach($unidades as $u)
+                    <option value="{{ $u->id }}" {{ in_array($u->id, $destUnidades) ? 'selected':'' }}>{{ $u->nombre }}</option>
+                  @endforeach
+                </select>
+                <input type="hidden" name="destinatarios[1][tipo]" value="unidad_organica">
+                <small class="text-muted">Mantén Ctrl para seleccionar varios.</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small"><i class="ti tabler-lock me-1 text-primary"></i>Por Rol del sistema</label>
+                <select name="destinatarios[2][ids][]" class="form-select" multiple size="5" id="sel-roles">
+                  @foreach($roles as $r)
+                    <option value="{{ $r->id }}" {{ in_array($r->id, $destRoles) ? 'selected':'' }}>{{ $r->name }}</option>
+                  @endforeach
+                </select>
+                <input type="hidden" name="destinatarios[2][tipo]" value="rol">
+                <small class="text-muted">Mantén Ctrl para seleccionar varios.</small>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small"><i class="ti tabler-user-check me-1 text-primary"></i>Usuarios individuales</label>
+                <select name="destinatarios[3][ids][]" class="form-select" multiple size="5" id="sel-usuarios">
+                  @foreach($usuarios as $u)
+                    <option value="{{ $u->id }}" {{ in_array($u->id, $destUsuarios) ? 'selected':'' }}>{{ $u->name }} — {{ $u->dni }}</option>
+                  @endforeach
+                </select>
+                <input type="hidden" name="destinatarios[3][tipo]" value="usuario">
+                <small class="text-muted">Mantén Ctrl para seleccionar varios.</small>
+              </div>
+            </div>
+          </div>
+          <div id="err-destinatarios" class="text-danger small mt-3" style="display:none">
+            <i class="ti tabler-alert-circle me-1"></i>Selecciona al menos un destinatario.
+          </div>
+        </div>
+        <div class="card-footer bg-white border-top px-4 pb-4 d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-outline-secondary" onclick="irPaso(2)">
+            <i class="ti tabler-arrow-left me-1"></i> Anterior
+          </button>
+          <button type="button" class="btn btn-primary btn-lg px-5" id="btnGuardar" onclick="submitEncuesta()">
+            <span id="btnGuardarTxt"><i class="ti tabler-device-floppy me-1"></i> Guardar cambios</span>
+            <span id="btnGuardarSpin" style="display:none">
+              <span class="spinner-border spinner-border-sm me-1"></span> Guardando...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </form>
 </div>
+
+<div id="toastContainer" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:.5rem;"></div>
 @endsection
 
 @section('page-script')
 <script>
+const TIPOS = {
+  opcion_multiple:    { label: 'Opción única',        icon: 'ti tabler-circle-dot' },
+  seleccion_multiple: { label: 'Selección múltiple',  icon: 'ti tabler-checkbox' },
+  escala:             { label: 'Escala 1-5',           icon: 'ti tabler-stars' },
+  si_no:              { label: 'Sí / No',              icon: 'ti tabler-checks' },
+  verdadero_falso:    { label: 'Verdadero / Falso',    icon: 'ti tabler-shield-check' },
+  desplegable:        { label: 'Lista desplegable',    icon: 'ti tabler-selector' },
+  texto_libre:        { label: 'Texto libre',          icon: 'ti tabler-text-size' },
+};
+
 let preguntaIdx = 0;
 
 const preguntasExistentes = @json($encuesta->preguntas->map(fn($p) => [
-    'id' => $p->id,
-    'texto' => $p->texto,
-    'tipo' => $p->tipo,
-    'requerida' => $p->requerida,
-    'opciones' => $p->opciones->pluck('texto'),
+    'texto'    => $p->texto,
+    'tipo'     => $p->tipo,
+    'requerida'=> $p->requerida,
+    'opciones' => $p->opciones->pluck('texto')->toArray(),
 ]));
 
-function agregarPregunta(data = null) {
-  if (document.querySelectorAll('.pregunta-item').length === 0) {
-    document.getElementById('sinPreguntas').style.display = 'none';
+/* ─── WIZARD ─── */
+function irPaso(p) {
+  if (p > 1 && !validarPaso1()) return;
+  if (p > 2 && !validarPaso2()) return;
+  document.querySelector('.wizard-step.active').classList.remove('active');
+  document.getElementById('step-' + p).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  for (let i = 1; i <= 3; i++) {
+    const sb = document.getElementById('sb-' + i);
+    sb.classList.remove('active', 'done');
+    if (i < p) sb.classList.add('done');
+    if (i === p) sb.classList.add('active');
   }
-  const idx = preguntaIdx++;
-  const tipo = data?.tipo || 'opcion_multiple';
-  const div = document.createElement('div');
-  div.className = 'pregunta-item mb-3';
-  div.id = 'pq-' + idx;
-  div.innerHTML = `
-    <div class="d-flex align-items-start gap-2 mb-2">
-      <div class="flex-grow-1">
-        <input type="text" name="preguntas[${idx}][texto]" class="form-control mb-2"
-          placeholder="Escribe la pregunta aquí..." value="${data?.texto || ''}" required>
-        <div class="d-flex gap-2 align-items-center flex-wrap">
-          <select name="preguntas[${idx}][tipo]" class="form-select form-select-sm" style="max-width:220px"
-            onchange="cambiarTipo(this, ${idx})">
-            <option value="opcion_multiple"    ${tipo==='opcion_multiple'    ?'selected':''}>Opción múltiple</option>
-            <option value="seleccion_multiple" ${tipo==='seleccion_multiple' ?'selected':''}>Selección múltiple</option>
-            <option value="escala"             ${tipo==='escala'             ?'selected':''}>Escala (1-5)</option>
-            <option value="texto_libre"        ${tipo==='texto_libre'        ?'selected':''}>Texto libre</option>
-          </select>
+}
+
+function irPasoSilencioso(p) {
+  document.querySelector('.wizard-step.active').classList.remove('active');
+  document.getElementById('step-' + p).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  for (let i = 1; i <= 3; i++) {
+    const sb = document.getElementById('sb-' + i);
+    sb.classList.remove('active', 'done');
+    if (i < p) sb.classList.add('done');
+    if (i === p) sb.classList.add('active');
+  }
+}
+
+function validarPaso1() {
+  let ok = true;
+  const titulo = document.getElementById('inp-titulo');
+  if (!titulo.value.trim()) {
+    titulo.classList.add('is-invalid');
+    titulo.focus();
+    ok = false;
+  } else {
+    titulo.classList.remove('is-invalid');
+  }
+  const fi = document.getElementById('inp-fecha_inicio').value;
+  const ff = document.getElementById('inp-fecha_fin').value;
+  if (fi && ff && ff < fi) {
+    document.getElementById('inp-fecha_fin').classList.add('is-invalid');
+    document.getElementById('err-fecha_fin').style.display = 'block';
+    ok = false;
+  } else {
+    document.getElementById('inp-fecha_fin').classList.remove('is-invalid');
+    document.getElementById('err-fecha_fin').style.display = 'none';
+  }
+  return ok;
+}
+
+function validarPaso2() {
+  const cards = document.querySelectorAll('.pq-card');
+  if (cards.length === 0) {
+    mostrarToast('Agrega al menos una pregunta antes de continuar.', 'warning');
+    return false;
+  }
+  let ok = true;
+  cards.forEach(card => {
+    const inp = card.querySelector('input[type=text]');
+    if (inp && !inp.value.trim()) {
+      inp.classList.add('is-invalid');
+      card.classList.add('has-error');
+      ok = false;
+    }
+  });
+  if (!ok) mostrarToast('Completa el texto de todas las preguntas.', 'danger');
+  return ok;
+}
+
+function validarPaso3() {
+  if (document.getElementById('cbTodos').checked) return true;
+  const haySeleccion = (document.getElementById('sel-unidades')?.selectedOptions.length > 0)
+    || (document.getElementById('sel-roles')?.selectedOptions.length > 0)
+    || (document.getElementById('sel-usuarios')?.selectedOptions.length > 0);
+  if (!haySeleccion) {
+    document.getElementById('err-destinatarios').style.display = 'block';
+    mostrarToast('Selecciona al menos un destinatario.', 'warning');
+    return false;
+  }
+  document.getElementById('err-destinatarios').style.display = 'none';
+  return true;
+}
+
+/* ─── SUBMIT AJAX ─── */
+function submitEncuesta() {
+  if (!validarPaso1() || !validarPaso2() || !validarPaso3()) return;
+
+  const btn = document.getElementById('btnGuardar');
+  btn.disabled = true;
+  document.getElementById('btnGuardarTxt').style.display = 'none';
+  document.getElementById('btnGuardarSpin').style.display = 'inline-flex';
+
+  const data = new FormData(document.getElementById('formEncuesta'));
+  if (document.getElementById('cbTodos').checked) {
+    data.set('destinatarios[0][tipo]', 'todos');
+  }
+
+  fetch('{{ route("encuestas.update", $encuesta) }}', {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    body: data,
+  })
+  .then(async res => {
+    const json = await res.json();
+    if (res.ok && json.success) {
+      mostrarToast('Encuesta actualizada correctamente.', 'success');
+      setTimeout(() => { window.location.href = json.redirect; }, 1200);
+    } else if (res.status === 422 && json.errors) {
+      const msgs = Object.values(json.errors).flat();
+      mostrarToast(msgs[0] || 'Revisa los campos del formulario.', 'danger');
+      const tieneErrorPaso1 = json.errors.titulo || json.errors.modulo || json.errors.fecha_fin;
+      const tieneErrorPaso2 = Object.keys(json.errors).some(k => k.startsWith('preguntas'));
+      if (tieneErrorPaso1) irPasoSilencioso(1);
+      else if (tieneErrorPaso2) irPasoSilencioso(2);
+      btn.disabled = false;
+      document.getElementById('btnGuardarTxt').style.display = 'inline';
+      document.getElementById('btnGuardarSpin').style.display = 'none';
+    } else {
+      mostrarToast('Error inesperado. Intenta de nuevo.', 'danger');
+      btn.disabled = false;
+      document.getElementById('btnGuardarTxt').style.display = 'inline';
+      document.getElementById('btnGuardarSpin').style.display = 'none';
+    }
+  })
+  .catch(() => {
+    mostrarToast('Error de conexión.', 'danger');
+    btn.disabled = false;
+    document.getElementById('btnGuardarTxt').style.display = 'inline';
+    document.getElementById('btnGuardarSpin').style.display = 'none';
+  });
+}
+
+/* ─── PREGUNTAS ─── */
+function agregarPregunta(tipoInicial = 'opcion_multiple', data = null) {
+  document.getElementById('sinPreguntas').style.display = 'none';
+  const idx  = preguntaIdx++;
+  const tipo = data?.tipo || tipoInicial;
+
+  const card = document.createElement('div');
+  card.className = 'pq-card';
+  card.id = 'pq-' + idx;
+
+  const pillsHtml = Object.entries(TIPOS).map(([val, cfg]) =>
+    `<button type="button" class="tipo-pill ${val === tipo ? 'active' : ''}"
+      data-tipo="${val}" onclick="seleccionarTipo(${idx}, '${val}', this)">
+      <i class="${cfg.icon}"></i>${cfg.label}</button>`
+  ).join('');
+
+  const textoVal = escapeHtml(data?.texto || '');
+
+  card.innerHTML = `
+    <input type="hidden" name="preguntas[${idx}][tipo]" id="tipo-val-${idx}" value="${tipo}">
+    <div class="pq-header">
+      <span class="drag-handle"><i class="ti tabler-grip-vertical"></i></span>
+      <span class="pq-num" id="pq-num-${idx}">?</span>
+      <div class="pq-texto flex-grow-1">
+        <input type="text" name="preguntas[${idx}][texto]" class="form-control"
+          placeholder="Escribe tu pregunta aquí..." value="${textoVal}"
+          oninput="this.classList.remove('is-invalid'); this.closest('.pq-card').classList.remove('has-error')">
+        <div class="invalid-feedback">El texto de la pregunta es obligatorio.</div>
+        <div class="pq-tipo-selector mt-2">${pillsHtml}</div>
+        <div class="d-flex align-items-center gap-3 mt-2">
           <div class="form-check mb-0">
-            <input class="form-check-input" type="checkbox" name="preguntas[${idx}][requerida]" value="1"
-              ${(data?.requerida ?? true) ? 'checked' : ''} id="req-${idx}">
-            <label class="form-check-label small" for="req-${idx}">Obligatoria</label>
+            <input class="form-check-input" type="checkbox" name="preguntas[${idx}][requerida]"
+              value="1" ${(data?.requerida ?? true) ? 'checked' : ''} id="req-${idx}">
+            <label class="form-check-label small text-muted" for="req-${idx}">Obligatoria</label>
           </div>
         </div>
       </div>
@@ -189,58 +515,156 @@ function agregarPregunta(data = null) {
         <i class="ti tabler-trash"></i>
       </button>
     </div>
-    <div id="opciones-${idx}" class="opciones-container ms-4 mt-2"
-      style="${['opcion_multiple','seleccion_multiple'].includes(tipo) ? '' : 'display:none'}">
-    </div>
-    <div id="escala-${idx}" class="ms-4 mt-2" style="${tipo==='escala' ? '' : 'display:none'}">
-      <div class="d-flex gap-2">${[1,2,3,4,5].map(v=>`<span class="badge bg-label-secondary px-3 py-2">${v}</span>`).join('')}</div>
-    </div>
-    <div id="libre-${idx}" class="ms-4 mt-2" style="${tipo==='texto_libre' ? '' : 'display:none'}">
-      <div class="form-control bg-light text-muted" style="min-height:50px">Campo de texto abierto</div>
-    </div>`;
-  document.getElementById('listaPreguntas').appendChild(div);
+    <div class="pq-body" id="pq-body-${idx}"></div>`;
 
-  const opciones = data?.opciones || [''];
-  opciones.forEach((txt, j) => {
-    const cont = document.querySelector(`#opciones-${idx}`);
-    const row = document.createElement('div'); row.className = 'opcion-row';
-    row.innerHTML = `<input type="text" name="preguntas[${idx}][opciones][]" class="form-control form-control-sm"
-      placeholder="Opción ${j+1}" value="${txt}">
-      ${j===0 ? `<button type="button" class="btn btn-icon btn-sm btn-outline-secondary" onclick="agregarOpcion(${idx})"><i class="ti tabler-plus"></i></button>` : `<button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="this.parentElement.remove()"><i class="ti tabler-x"></i></button>`}`;
-    cont.appendChild(row);
-  });
+  document.getElementById('listaPreguntas').appendChild(card);
+  renderCuerpo(idx, tipo, data?.opciones || []);
+  actualizarNumeros();
+  if (!data) setTimeout(() => card.querySelector('input[type=text]').focus(), 50);
 }
 
-function cambiarTipo(sel, idx) {
-  const tipo = sel.value;
-  document.getElementById('opciones-' + idx).style.display  = ['opcion_multiple','seleccion_multiple'].includes(tipo) ? '' : 'none';
-  document.getElementById('escala-' + idx).style.display    = tipo === 'escala' ? '' : 'none';
-  document.getElementById('libre-' + idx).style.display     = tipo === 'texto_libre' ? '' : 'none';
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(str || ''));
+  return d.innerHTML;
 }
 
-function agregarOpcion(idx) {
-  const cont = document.querySelector(`#opciones-${idx}`);
-  const n = cont.querySelectorAll('.opcion-row').length + 1;
-  const row = document.createElement('div'); row.className = 'opcion-row';
-  row.innerHTML = `<input type="text" name="preguntas[${idx}][opciones][]" class="form-control form-control-sm" placeholder="Opción ${n}">
-    <button type="button" class="btn btn-icon btn-sm btn-outline-danger" onclick="this.parentElement.remove()"><i class="ti tabler-x"></i></button>`;
-  cont.appendChild(row);
+function seleccionarTipo(idx, tipo, pillBtn) {
+  document.getElementById('tipo-val-' + idx).value = tipo;
+  pillBtn.closest('.pq-tipo-selector').querySelectorAll('.tipo-pill').forEach(p => p.classList.remove('active'));
+  pillBtn.classList.add('active');
+  renderCuerpo(idx, tipo, []);
 }
 
-function eliminarPregunta(idx) {
-  document.getElementById('pq-' + idx).remove();
-  if (document.querySelectorAll('.pregunta-item').length === 0) {
-    document.getElementById('sinPreguntas').style.display = '';
+function renderCuerpo(idx, tipo, opcionesIniciales = []) {
+  const body = document.getElementById('pq-body-' + idx);
+  body.innerHTML = '';
+
+  if (['opcion_multiple','seleccion_multiple','desplegable'].includes(tipo)) {
+    const isCheck = tipo === 'seleccion_multiple';
+    const wrap = document.createElement('div');
+    wrap.className = 'opciones-container';
+    wrap.id = 'opciones-' + idx;
+
+    const opciones = opcionesIniciales.length ? opcionesIniciales : ['', ''];
+    opciones.forEach((txt, n) => wrap.appendChild(crearFilaOpcion(idx, n + 1, isCheck, txt)));
+
+    const btnAdd = document.createElement('div');
+    btnAdd.className = 'mt-2 btn-agregar-wrap';
+    btnAdd.innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarOpcion(${idx})">
+      <i class="ti tabler-plus me-1"></i> Agregar opción</button>`;
+    if (tipo === 'desplegable') {
+      btnAdd.insertAdjacentHTML('beforeend',
+        `<span class="text-muted small ms-2"><i class="ti tabler-info-circle me-1"></i>Se mostrará como lista desplegable.</span>`);
+    }
+    wrap.appendChild(btnAdd);
+    body.appendChild(wrap);
+
+  } else if (tipo === 'escala') {
+    body.innerHTML = `<div class="preview-bloque">
+      <p class="small text-muted mb-2 fw-semibold">Vista previa:</p>
+      <div class="d-flex gap-2 escala-preview">
+        ${[1,2,3,4,5].map(v=>`<span class="d-flex align-items-center justify-content-center">${v}</span>`).join('')}
+      </div>
+      <div class="d-flex justify-content-between mt-1" style="font-size:.7rem;color:#aaa">
+        <span>Muy malo</span><span>Malo</span><span>Regular</span><span>Bueno</span><span>Muy bueno</span>
+      </div></div>`;
+
+  } else if (tipo === 'si_no') {
+    body.innerHTML = `<div class="preview-bloque"><p class="small text-muted mb-2 fw-semibold">Vista previa:</p>
+      <div class="d-flex gap-3">
+        <button type="button" class="si-no-btn si"><i class="ti tabler-check me-1"></i>Sí</button>
+        <button type="button" class="si-no-btn no"><i class="ti tabler-x me-1"></i>No</button>
+      </div></div>`;
+
+  } else if (tipo === 'verdadero_falso') {
+    body.innerHTML = `<div class="preview-bloque"><p class="small text-muted mb-2 fw-semibold">Vista previa:</p>
+      <div class="d-flex gap-3">
+        <button type="button" class="vf-btn v"><i class="ti tabler-check me-1"></i>Verdadero</button>
+        <button type="button" class="vf-btn f"><i class="ti tabler-x me-1"></i>Falso</button>
+      </div></div>`;
+
+  } else if (tipo === 'texto_libre') {
+    body.innerHTML = `<div class="preview-bloque"><p class="small text-muted mb-2 fw-semibold">Vista previa:</p>
+      <textarea class="form-control" rows="3" disabled placeholder="El usuario escribirá su respuesta aquí..."></textarea>
+      </div>`;
   }
 }
 
-function toggleTodos(cb) {
-  document.getElementById('inputDestTodos').value = cb.checked ? 'todos' : '';
-  document.getElementById('seccionDetallada').style.opacity = cb.checked ? '.4' : '1';
-  document.getElementById('seccionDetallada').style.pointerEvents = cb.checked ? 'none' : '';
+function crearFilaOpcion(idx, n, isCheck, valorInicial = '') {
+  const row = document.createElement('div');
+  row.className = 'opcion-row' + (isCheck ? ' check-style' : '');
+  const v = escapeHtml(valorInicial);
+  row.innerHTML = `
+    <div class="opcion-prefix">${n}</div>
+    <input type="text" name="preguntas[${idx}][opciones][]" class="form-control"
+      placeholder="Opción ${n}" value="${v}">
+    <button type="button" class="btn btn-icon btn-sm btn-outline-danger"
+      onclick="this.closest('.opcion-row').remove(); renumerarOpciones(${idx})"
+      title="Eliminar opción"><i class="ti tabler-x"></i></button>`;
+  return row;
 }
 
-// Cargar preguntas existentes
-preguntasExistentes.forEach(p => agregarPregunta(p));
+function agregarOpcion(idx) {
+  const cont = document.querySelector('#opciones-' + idx);
+  const btnWrap = cont.querySelector('.btn-agregar-wrap');
+  const n = cont.querySelectorAll('.opcion-row').length + 1;
+  const tipo = document.getElementById('tipo-val-' + idx).value;
+  const row = crearFilaOpcion(idx, n, tipo === 'seleccion_multiple');
+  cont.insertBefore(row, btnWrap);
+  row.querySelector('input').focus();
+}
+
+function renumerarOpciones(idx) {
+  document.querySelectorAll('#opciones-' + idx + ' .opcion-row').forEach((row, i) => {
+    const p = row.querySelector('.opcion-prefix'); if (p) p.textContent = i + 1;
+    const inp = row.querySelector('input'); if (inp) inp.placeholder = 'Opción ' + (i + 1);
+  });
+}
+
+function eliminarPregunta(idx) {
+  const card = document.getElementById('pq-' + idx);
+  card.style.opacity = '0'; card.style.transform = 'translateY(-8px)'; card.style.transition = 'all .2s';
+  setTimeout(() => {
+    card.remove(); actualizarNumeros();
+    if (!document.querySelectorAll('.pq-card').length)
+      document.getElementById('sinPreguntas').style.display = '';
+  }, 200);
+}
+
+function actualizarNumeros() {
+  document.querySelectorAll('.pq-card').forEach((c, i) => {
+    const n = c.querySelector('.pq-num'); if (n) n.textContent = i + 1;
+  });
+  const cnt = document.querySelectorAll('.pq-card').length;
+  const el = document.getElementById('contPreguntas');
+  if (el) el.textContent = cnt + ' pregunta' + (cnt !== 1 ? 's' : '');
+}
+
+function toggleDestTodos(card) {
+  const cb = document.getElementById('cbTodos');
+  cb.checked = !cb.checked;
+  card.classList.toggle('active', cb.checked);
+  const sd = document.getElementById('seccionDetallada');
+  sd.style.opacity = cb.checked ? '.35' : '1';
+  sd.style.pointerEvents = cb.checked ? 'none' : '';
+  if (cb.checked) document.getElementById('err-destinatarios').style.display = 'none';
+}
+
+function mostrarToast(msg, tipo = 'info') {
+  const colors = { info:'#696cff', warning:'#ffab00', danger:'#ff3e1d', success:'#71dd37' };
+  const icons  = { info:'tabler-info-circle', warning:'tabler-alert-triangle', danger:'tabler-alert-circle', success:'tabler-circle-check' };
+  const el = document.createElement('div');
+  el.style.cssText = `background:${colors[tipo]};color:#fff;padding:.75rem 1.25rem;
+    border-radius:10px;font-size:.88rem;font-weight:600;min-width:260px;
+    box-shadow:0 6px 24px rgba(0,0,0,.18);animation:fadeInUp .25s ease;
+    display:flex;align-items:center;gap:.5rem;`;
+  el.innerHTML = `<i class="ti ${icons[tipo]}" style="font-size:1.1rem;flex-shrink:0"></i><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),350); }, 4000);
+}
+
+// Cargar preguntas existentes al iniciar
+preguntasExistentes.forEach(p => agregarPregunta(p.tipo, p));
 </script>
 @endsection

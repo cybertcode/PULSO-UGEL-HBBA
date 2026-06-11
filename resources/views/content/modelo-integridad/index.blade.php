@@ -6,27 +6,47 @@ $configData = Helper::appClasses();
 @section('title', 'Modelo de Integridad - PULSO UGEL')
 
 @section('vendor-style')
-@vite(['resources/assets/vendor/libs/apex-charts/apex-charts.scss'])
+@vite([
+  'resources/assets/vendor/libs/apex-charts/apex-charts.scss',
+  'resources/assets/vendor/libs/select2/select2.scss',
+  'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
+])
 @endsection
 @section('vendor-script')
-@vite(['resources/assets/vendor/libs/apex-charts/apexcharts.js'])
+@vite([
+  'resources/assets/vendor/libs/apex-charts/apexcharts.js',
+  'resources/assets/vendor/libs/select2/select2.js',
+  'resources/assets/vendor/libs/sweetalert2/sweetalert2.js',
+])
 @endsection
 
 @section('page-style')
 <style>
-/* ── Componente cards ─────────────────────────────────── */
-.comp-card { border-radius: 12px; border: none; transition: transform .15s, box-shadow .15s; }
-.comp-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,.10); }
-.comp-name { font-size: 12.5px; font-weight: 600; line-height: 1.4; min-height: 2.8em; }
+/* ── Cards de componente ─────────────────────────────── */
+.comp-card { border-radius: 10px; border: 1px solid rgba(var(--bs-secondary-rgb),.12); transition: transform .15s, box-shadow .15s; }
+.comp-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.09); }
 
-/* ── Alerta item ──────────────────────────────────────── */
-.alerta-item:last-of-type { border-bottom: none !important; }
+/* ── KPI unificado ───────────────────────────────────── */
+.kpi-unified { border-radius: 12px; overflow: hidden; }
+.kpi-divider { width: 1px; background: rgba(var(--bs-secondary-rgb),.15); align-self: stretch; margin: 12px 0; }
+
+/* ── Evidencia item ──────────────────────────────────── */
+.ev-item { border-bottom: 1px solid rgba(var(--bs-secondary-rgb),.08); }
+.ev-item:last-child { border-bottom: none; }
+
+/* ── Acción item ─────────────────────────────────────── */
+.accion-item { border-bottom: 1px solid rgba(var(--bs-secondary-rgb),.08); }
+.accion-item:last-child { border-bottom: none; }
 
 /* ── Tab nav ──────────────────────────────────────────── */
-.nav-tabs .nav-link { font-size: 13.5px; padding: .55rem 1.1rem; }
+.nav-tabs .nav-link { font-size: 13px; padding: .5rem 1rem; }
 
-/* ── KPI strip ────────────────────────────────────────── */
-.kpi-strip .kpi-box { border-radius: 10px; padding: 14px 16px; }
+/* Vuexy overflow:hidden fix para modales */
+body.modal-open .layout-wrapper { overflow: visible !important; }
+#modalNuevaActInt .modal-content > form,
+#modalEditarActInt .modal-content > form {
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden;
+}
 </style>
 @endsection
 
@@ -38,21 +58,20 @@ $configData = Helper::appClasses();
   $nivel = $gc >= $umbral_verde ? 'Bueno'   : ($gc >= $umbral_amarillo ? 'Regular'  : 'En riesgo');
 @endphp
 
-{{-- ── Breadcrumb + Header ──────────────────────────────── --}}
-<nav aria-label="breadcrumb" class="mb-2">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
-    <li class="breadcrumb-item active">Modelo de Integridad</li>
-  </ol>
-</nav>
-
-<div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-3">
+{{-- ── Header ─────────────────────────────────────────────── --}}
+<div class="d-flex align-items-start justify-content-between mb-3 flex-wrap gap-2">
   <div>
-    <h4 class="mb-1 d-flex align-items-center gap-2">
-      Modelo de Integridad
-      <span class="badge bg-label-success rounded-pill" style="font-size:11px">PCM — 9 componentes</span>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-1">
+        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Inicio</a></li>
+        <li class="breadcrumb-item active">Modelo de Integridad</li>
+      </ol>
+    </nav>
+    <h4 class="mb-0 d-flex align-items-center gap-2">
+      <i class="ti tabler-shield-check text-warning"></i> Modelo de Integridad
+      <span class="badge bg-label-warning rounded-pill" style="font-size:11px">PCM — 9 componentes</span>
     </h4>
-    <p class="mb-0 text-muted small">Monitorea el cumplimiento de los nueve componentes del Modelo de Integridad de la PCM.</p>
+    <p class="mb-0 text-muted small mt-1">Monitoreo del cumplimiento de los nueve componentes del Modelo de Integridad de la PCM.</p>
   </div>
   <div class="d-flex gap-2 align-self-start flex-wrap">
     @can('integridad.crear')
@@ -66,69 +85,74 @@ $configData = Helper::appClasses();
   </div>
 </div>
 
-{{-- ── KPI Strip ─────────────────────────────────────────── --}}
-<div class="row g-3 mb-4 kpi-strip">
+{{-- ── KPI unificado ────────────────────────────────────────── --}}
+<div class="card kpi-unified mb-4">
+  <div class="card-body py-3 px-0">
+    <div class="row g-0 text-center">
 
-  {{-- Gauge --}}
-  <div class="col-12 col-sm-6 col-xl-3">
-    <div class="card h-100 mb-0" style="border-top:3px solid var(--bs-{{ $nc }})">
-      <div class="card-body d-flex align-items-center gap-3 py-3">
-        <div id="gaugeModelo" style="min-width:80px"></div>
-        <div>
-          <div class="fw-bold" style="font-size:1.5rem;color:var(--bs-{{ $nc }});line-height:1">{{ $gc }}%</div>
-          <div class="fw-semibold" style="font-size:12px">Índice global</div>
-          <span class="badge bg-label-{{ $nc }} mt-1" style="font-size:10px">{{ $nivel }}</span>
+      {{-- Índice Global --}}
+      <div class="col-12 col-sm-3 px-4 py-2">
+        <div class="d-flex align-items-center gap-3 justify-content-center justify-content-sm-start">
+          <div id="gaugeModelo" style="min-width:70px;min-height:50px"></div>
+          <div class="text-start">
+            <div class="fw-bold lh-1 mb-1" style="font-size:2rem;color:var(--bs-{{ $nc }})">{{ $gc }}%</div>
+            <div class="fw-semibold" style="font-size:12px">Índice Global</div>
+            <span class="badge bg-label-{{ $nc }}" style="font-size:10px">{{ $nivel }}</span>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  {{-- En avance --}}
-  <div class="col-6 col-sm-3 col-xl-3">
-    <div class="card h-100 mb-0 kpi-box" style="border-top:3px solid #28c76f">
-      <div class="card-body py-3 px-4">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="badge rounded bg-label-success p-2"><i class="ti tabler-trending-up icon-md text-success"></i></span>
-          <span class="fw-bold text-success" style="font-size:1.9rem;line-height:1">{{ $en_avance }}</span>
-        </div>
-        <div class="fw-semibold" style="font-size:12px">En avance</div>
-        <div class="text-muted" style="font-size:11px">≥ {{ $umbral_verde }}%</div>
+      <div class="kpi-divider d-none d-sm-block"></div>
+
+      {{-- En avance --}}
+      <div class="col-4 col-sm px-3 py-2 border-start border-sm-0">
+        <div class="fw-bold text-success lh-1 mb-1" style="font-size:2rem">{{ $en_avance }}</div>
+        <div class="fw-semibold" style="font-size:11px">En avance</div>
+        <div class="text-muted" style="font-size:10px">≥ {{ $umbral_verde }}%</div>
       </div>
-    </div>
-  </div>
 
-  {{-- En riesgo --}}
-  <div class="col-6 col-sm-3 col-xl-3">
-    <div class="card h-100 mb-0" style="border-top:3px solid #ff9f43">
-      <div class="card-body py-3 px-4">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="badge rounded bg-label-warning p-2"><i class="ti tabler-alert-triangle icon-md text-warning"></i></span>
-          <span class="fw-bold text-warning" style="font-size:1.9rem;line-height:1">{{ $en_riesgo }}</span>
-        </div>
-        <div class="fw-semibold" style="font-size:12px">En riesgo</div>
-        <div class="text-muted" style="font-size:11px">{{ $umbral_amarillo }}–{{ $umbral_verde - 1 }}%</div>
+      <div class="kpi-divider d-none d-sm-block"></div>
+
+      {{-- En riesgo --}}
+      <div class="col-4 col-sm px-3 py-2 border-start border-sm-0">
+        <div class="fw-bold text-warning lh-1 mb-1" style="font-size:2rem">{{ $en_riesgo }}</div>
+        <div class="fw-semibold" style="font-size:11px">En riesgo</div>
+        <div class="text-muted" style="font-size:10px">{{ $umbral_amarillo }}–{{ $umbral_verde - 1 }}%</div>
       </div>
-    </div>
-  </div>
 
-  {{-- Críticos --}}
-  <div class="col-6 col-sm-3 col-xl-3">
-    <div class="card h-100 mb-0" style="border-top:3px solid #ea5455">
-      <div class="card-body py-3 px-4">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="badge rounded bg-label-danger p-2"><i class="ti tabler-urgent icon-md text-danger"></i></span>
-          <span class="fw-bold text-danger" style="font-size:1.9rem;line-height:1">{{ $criticos }}</span>
-        </div>
-        <div class="fw-semibold" style="font-size:12px">Críticos</div>
-        <div class="text-muted" style="font-size:11px">&lt; {{ $umbral_amarillo }}%</div>
+      <div class="kpi-divider d-none d-sm-block"></div>
+
+      {{-- Críticos --}}
+      <div class="col-4 col-sm px-3 py-2 border-start border-sm-0">
+        <div class="fw-bold text-danger lh-1 mb-1" style="font-size:2rem">{{ $criticos }}</div>
+        <div class="fw-semibold" style="font-size:11px">Críticos</div>
+        <div class="text-muted" style="font-size:10px">&lt; {{ $umbral_amarillo }}%</div>
       </div>
+
+      <div class="kpi-divider d-none d-sm-block"></div>
+
+      {{-- Actividades --}}
+      <div class="col-4 col-sm px-3 py-2 border-start border-sm-0">
+        <div class="fw-bold text-primary lh-1 mb-1" style="font-size:2rem">{{ $actividades->total() }}</div>
+        <div class="fw-semibold" style="font-size:11px">Actividades</div>
+        <div class="text-muted" style="font-size:10px">registradas</div>
+      </div>
+
+      <div class="kpi-divider d-none d-sm-block"></div>
+
+      {{-- Evidencias --}}
+      <div class="col-4 col-sm px-3 py-2 border-start border-sm-0">
+        <div class="fw-bold text-info lh-1 mb-1" style="font-size:2rem">{{ $componentes->sum('evidencias_count') }}</div>
+        <div class="fw-semibold" style="font-size:11px">Evidencias</div>
+        <div class="text-muted" style="font-size:10px">cargadas</div>
+      </div>
+
     </div>
   </div>
-
 </div>
 
 {{-- ── Tabs ──────────────────────────────────────────────── --}}
-<ul class="nav nav-tabs mb-4" role="tablist">
+<ul class="nav nav-tabs mb-3" role="tablist">
   <li class="nav-item">
     <a class="nav-link active fw-semibold" data-bs-toggle="tab" href="#tab-vista-general">
       <i class="ti tabler-layout-dashboard me-1"></i>Vista General
@@ -136,333 +160,325 @@ $configData = Helper::appClasses();
   </li>
   <li class="nav-item">
     <a class="nav-link fw-semibold" data-bs-toggle="tab" href="#tab-detalle-componente">
-      <i class="ti tabler-table me-1"></i>Detalle por Componente
+      <i class="ti tabler-table me-1"></i>Por Componente
     </a>
   </li>
   <li class="nav-item">
     <a class="nav-link fw-semibold" data-bs-toggle="tab" href="#tab-actividades" id="tabActividadesLink">
       <i class="ti tabler-list-check me-1"></i>Actividades
-      <span class="badge bg-label-warning ms-1 rounded-pill" style="font-size:10px">{{ $actividades->count() }}</span>
+      <span class="badge bg-label-warning ms-1 rounded-pill" style="font-size:10px">{{ $actividades->total() }}</span>
     </a>
   </li>
 </ul>
 
 <div class="tab-content">
 
-{{-- ══════════════════════════════════════════════════════════
-     TAB VISTA GENERAL
-══════════════════════════════════════════════════════════ --}}
+{{-- ══ TAB VISTA GENERAL ═══════════════════════════════════ --}}
 <div class="tab-pane fade show active" id="tab-vista-general">
-<div class="row g-4">
 
-  {{-- ── Columna principal (8/12) ── --}}
-  <div class="col-xl-8">
+  {{-- ── Fila 1: Componentes del Modelo ──────────────────── --}}
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <span class="fw-semibold text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">
+      <i class="ti tabler-components me-1"></i>9 Componentes del Modelo
+    </span>
+    <small class="text-muted" style="font-size:11px">Última act.: {{ now()->translatedFormat('d \d\e F, H:i') }}</small>
+  </div>
 
-    {{-- Tarjetas de Componentes --}}
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <span class="text-muted small fw-semibold" style="text-transform:uppercase;letter-spacing:.04em">
-        <i class="ti tabler-components me-1"></i>9 Componentes del Modelo
-      </span>
-      <small class="text-muted">Última act.: {{ now()->translatedFormat('d \d\e F, H:i') }}</small>
-    </div>
-
-    <div class="row g-3 mb-4">
-      @forelse($componentes as $c)
-      @php
-        $nivelLabel = match($c->color) { 'success'=>'Cumplido', 'warning'=>'En proceso', default=>'En riesgo' };
-        $nivelIcon  = match($c->color) { 'success'=>'tabler-circle-check', 'warning'=>'tabler-clock', default=>'tabler-alert-triangle' };
-      @endphp
-      <div class="col-12 col-sm-6 col-xxl-4">
-        <div class="card comp-card h-100 mb-0" style="border-top:3px solid var(--bs-{{ $c->color }})">
-          <div class="card-body pb-2 pt-3 px-3">
-
-            {{-- Número + badge --}}
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="badge bg-label-secondary rounded-pill" style="font-size:10px">Comp. {{ $c->numero }}</span>
-              <span class="badge bg-label-{{ $c->color }}" style="font-size:10px">
-                <i class="ti {{ $nivelIcon }} me-1" style="font-size:9px"></i>{{ $nivelLabel }}
-              </span>
-            </div>
-
-            {{-- Nombre completo --}}
-            <div class="comp-name mb-2 text-body">{{ $c->nombre }}</div>
-
-            {{-- % + barra --}}
-            <div class="d-flex align-items-end gap-1 mb-1">
-              <span class="fw-bold text-{{ $c->color }}" style="font-size:1.8rem;line-height:1">{{ $c->porcentaje }}</span>
-              <span class="text-muted fw-semibold mb-1">%</span>
-            </div>
-            <div class="progress mb-3" style="height:5px">
-              <div class="progress-bar bg-{{ $c->color }} rounded-pill" style="width:{{ $c->porcentaje }}%"></div>
-            </div>
-
-            {{-- Mini stats --}}
-            <div class="d-flex align-items-center gap-3" style="font-size:11px">
-              <span class="text-success fw-semibold">
-                <i class="ti tabler-check me-1"></i>{{ $c->completadas_count }} hecho
-              </span>
-              <span class="text-warning fw-semibold">
-                <i class="ti tabler-clock me-1"></i>{{ $c->en_proceso_count }} proceso
-              </span>
-              <span class="text-info fw-semibold ms-auto">
-                <i class="ti tabler-files me-1"></i>{{ $c->evidencias_count }}
-              </span>
-            </div>
-
+  <div class="row g-2 mb-4">
+    @forelse($componentes as $c)
+    @php $nivelLabel = match($c->color) { 'success'=>'Cumplido','warning'=>'En proceso',default=>'En riesgo' }; @endphp
+    <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
+      <div class="card comp-card h-100 mb-0">
+        <div style="height:3px;background:var(--bs-{{ $c->color }});border-radius:10px 10px 0 0"></div>
+        <div class="card-body p-3">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <span class="text-muted fw-bold" style="font-size:10px;text-transform:uppercase;letter-spacing:.05em">Comp. {{ $c->numero }}</span>
+            <span class="badge bg-label-{{ $c->color }}" style="font-size:10px">{{ $nivelLabel }}</span>
           </div>
-          <div class="card-footer py-2 px-3">
-            <a href="{{ route('sci-evidencias', ['componente_id' => $c->id]) }}"
-               class="btn btn-xs btn-label-{{ $c->color }} w-100 text-center">
-              <i class="ti tabler-upload me-1" style="font-size:11px"></i>Registrar evidencia
-            </a>
+          <div class="fw-semibold mb-2 text-body" style="font-size:12.5px;line-height:1.35;min-height:2.6em">{{ $c->nombre }}</div>
+          <div class="d-flex align-items-end gap-1 mb-1">
+            <span class="fw-bold text-{{ $c->color }}" style="font-size:1.6rem;line-height:1">{{ $c->porcentaje }}</span>
+            <span class="text-muted fw-semibold" style="font-size:12px;margin-bottom:2px">%</span>
+          </div>
+          <div class="progress mb-2" style="height:4px;border-radius:2px">
+            <div class="progress-bar bg-{{ $c->color }}" style="width:{{ $c->porcentaje }}%"></div>
+          </div>
+          <div class="d-flex gap-3 mt-2" style="font-size:11px">
+            <span class="text-success"><i class="ti tabler-check"></i> {{ $c->completadas_count }}</span>
+            <span class="text-warning"><i class="ti tabler-clock"></i> {{ $c->en_proceso_count }}</span>
+            <span class="text-info ms-auto"><i class="ti tabler-paperclip"></i> {{ $c->evidencias_count }}</span>
           </div>
         </div>
-      </div>
-      @empty
-      <div class="col-12">
-        <div class="card"><div class="card-body text-center text-muted py-5">
-          <i class="ti tabler-components icon-32px d-block mb-2"></i>No hay componentes configurados.
-        </div></div>
-      </div>
-      @endforelse
-    </div>
-
-    {{-- Evidencias Recientes --}}
-    <div class="card">
-      <div class="card-header d-flex align-items-center justify-content-between py-3">
-        <h5 class="mb-0 fw-semibold"><i class="ti tabler-files me-2 text-primary"></i>Evidencias Recientes</h5>
-        <a href="{{ route('sci-evidencias') }}" class="btn btn-sm btn-label-primary">
-          Ver todas <i class="ti tabler-arrow-right ms-1"></i>
-        </a>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle" style="min-width:640px">
-          <thead style="background:rgba(var(--bs-secondary-rgb),.04)">
-            <tr>
-              <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px;white-space:nowrap">N° SGD</th>
-              <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px">Título</th>
-              <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px">Componente</th>
-              <th class="text-center" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px">Estado</th>
-              <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px">Subido por</th>
-              <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px;white-space:nowrap">Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($evidencias_recientes as $ev)
-            @php
-              $ec = match($ev->estado) { 'validado'=>'success', 'rechazado'=>'danger', default=>'warning' };
-              $el = match($ev->estado) { 'validado'=>'Validado', 'rechazado'=>'Rechazado', default=>'Pendiente' };
-            @endphp
-            <tr>
-              <td style="padding:10px 14px">
-                <span class="badge bg-label-primary font-monospace" style="font-size:11px">{{ $ev->numero_sgd ?? '—' }}</span>
-              </td>
-              <td style="padding:10px 14px;max-width:220px">
-                <div class="fw-medium text-truncate" style="font-size:13px">{{ $ev->titulo }}</div>
-                @if($ev->descripcion)
-                  <small class="text-muted text-truncate d-block">{{ Str::limit($ev->descripcion, 55) }}</small>
-                @endif
-              </td>
-              <td style="padding:10px 14px">
-                @if($ev->actividad?->componente)
-                  <span class="badge bg-label-secondary" style="font-size:10px">Comp. {{ $ev->actividad->componente->numero }}</span>
-                  <div class="text-muted text-truncate" style="font-size:11px;max-width:130px">{{ $ev->actividad->componente->nombre }}</div>
-                @else
-                  <span class="text-muted">—</span>
-                @endif
-              </td>
-              <td class="text-center" style="padding:10px 14px">
-                <span class="badge bg-label-{{ $ec }}" style="font-size:11px">{{ $el }}</span>
-              </td>
-              <td style="padding:10px 14px">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="avatar-initial rounded-circle bg-label-secondary d-inline-flex align-items-center justify-content-center flex-shrink-0"
-                        style="width:28px;height:28px;font-size:10px;font-weight:700">
-                    {{ strtoupper(substr($ev->subidoPor->name ?? 'U', 0, 2)) }}
-                  </span>
-                  <span class="text-muted text-truncate" style="font-size:12px;max-width:110px">{{ $ev->subidoPor->name ?? '—' }}</span>
-                </div>
-              </td>
-              <td style="padding:10px 14px">
-                <small class="text-muted">{{ $ev->created_at->format('d/m/Y') }}</small>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="6" class="text-center text-muted py-5">
-                <i class="ti tabler-files d-block mb-2" style="font-size:2rem;opacity:.3"></i>
-                Sin evidencias registradas aún
-              </td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
+        <div class="card-footer py-2 px-3 bg-transparent border-top" style="border-color:rgba(var(--bs-secondary-rgb),.1)!important">
+          <a href="{{ route('sci-evidencias', ['componente_id' => $c->id]) }}"
+             class="btn btn-xs btn-label-{{ $c->color }} w-100">
+            <i class="ti tabler-upload me-1" style="font-size:10px"></i>Evidencia
+          </a>
+        </div>
       </div>
     </div>
+    @empty
+    <div class="col-12">
+      <div class="card"><div class="card-body text-center text-muted py-5">Sin componentes configurados.</div></div>
+    </div>
+    @endforelse
+  </div>
 
-  </div>{{-- /col-xl-8 --}}
-
-  {{-- ── Sidebar (4/12) ── --}}
-  <div class="col-xl-4">
+  {{-- ── Fila 2: Alertas + Próximas Acciones ─────────────── --}}
+  <div class="row g-3 mb-4">
 
     {{-- Alertas Activas --}}
-    <div class="card mb-4">
-      <div class="card-header d-flex align-items-center justify-content-between py-3">
-        <h5 class="mb-0 fw-semibold" style="font-size:14px">
-          <i class="ti tabler-bell-ringing me-2 text-danger"></i>Alertas Activas
-        </h5>
-        <a href="{{ route('mon-alertas') }}" class="btn btn-xs btn-label-danger">Ver todas</a>
-      </div>
-      <div class="card-body p-0">
-        @forelse($alertas_activas as $al)
-        @php $ic = match($al->prioridad) { 'alta'=>'danger', 'media'=>'warning', default=>'info' }; @endphp
-        <div class="alerta-item d-flex align-items-start gap-3 px-3 py-3 border-bottom">
-          <span class="avatar-initial rounded-circle bg-label-{{ $ic }} d-inline-flex align-items-center justify-content-center flex-shrink-0 mt-1"
-                style="width:32px;height:32px">
-            <i class="ti tabler-{{ $al->prioridad === 'alta' ? 'alert-octagon' : 'alert-circle' }}" style="font-size:14px"></i>
+    <div class="col-12 col-lg-6">
+      <div class="card h-100 mb-0">
+        <div class="card-header d-flex align-items-center justify-content-between py-3 px-4" style="border-bottom:2px solid rgba(var(--bs-danger-rgb),.12)">
+          <span class="fw-semibold" style="font-size:14px">
+            <i class="ti tabler-bell-ringing me-2 text-danger"></i>Alertas Activas
           </span>
-          <div class="flex-grow-1 overflow-hidden">
-            <p class="mb-1 fw-semibold text-truncate" style="font-size:12.5px">{{ $al->titulo }}</p>
-            @if($al->actividad?->componente)
-            <div class="text-muted text-truncate" style="font-size:11px">{{ $al->actividad->componente->nombre }}</div>
-            @endif
-            <div class="d-flex align-items-center gap-2 mt-1">
-              <span class="badge bg-label-{{ $ic }}" style="font-size:10px">{{ ucfirst($al->prioridad) }}</span>
-              <small class="text-muted">{{ $al->created_at->diffForHumans() }}</small>
+          <a href="{{ route('mon-alertas') }}" class="btn btn-xs btn-label-danger">Ver todas</a>
+        </div>
+        <div class="card-body p-0">
+          @forelse($alertas_activas as $al)
+          @php $ic = match($al->prioridad) { 'alta'=>'danger','media'=>'warning',default=>'info' }; @endphp
+          <div class="d-flex align-items-start gap-3 px-4 py-3 border-bottom" style="border-color:rgba(var(--bs-secondary-rgb),.08)!important">
+            <span class="flex-shrink-0 badge rounded-circle bg-label-{{ $ic }} d-flex align-items-center justify-content-center mt-1" style="width:32px;height:32px">
+              <i class="ti tabler-{{ $ic==='danger'?'alert-octagon':'alert-circle' }}" style="font-size:14px"></i>
+            </span>
+            <div class="flex-grow-1 overflow-hidden">
+              <div class="fw-semibold text-truncate" style="font-size:13px">{{ $al->titulo }}</div>
+              @if($al->actividad?->componente)
+              <div class="text-muted text-truncate" style="font-size:11px">{{ $al->actividad->componente->nombre }}</div>
+              @endif
+              <div class="d-flex align-items-center gap-2 mt-1">
+                <span class="badge bg-label-{{ $ic }}" style="font-size:10px">{{ ucfirst($al->prioridad) }}</span>
+                <small class="text-muted" style="font-size:10px">{{ $al->created_at->diffForHumans() }}</small>
+              </div>
             </div>
           </div>
+          @empty
+          <div class="text-center text-muted py-5 px-3">
+            <i class="ti tabler-bell-off d-block mb-2 text-success" style="font-size:2rem;opacity:.6"></i>
+            <div class="fw-semibold" style="font-size:13px">Sin alertas activas</div>
+            <small>El módulo está operando sin incidencias.</small>
+          </div>
+          @endforelse
         </div>
-        @empty
-        <div class="text-center text-muted py-5 px-4">
-          <i class="ti tabler-bell-off d-block mb-2 text-success" style="font-size:2rem"></i>
-          <small>Sin alertas activas</small>
-        </div>
-        @endforelse
-        <div class="px-3 py-2 bg-body-secondary" style="border-radius:0 0 var(--bs-card-border-radius) var(--bs-card-border-radius)">
-          <small class="text-muted d-flex align-items-start gap-2" style="font-size:11px">
-            <i class="ti tabler-info-circle text-info flex-shrink-0 mt-px"></i>
+        @if($alertas_activas->isNotEmpty())
+        <div class="card-footer py-2 px-4" style="background:rgba(var(--bs-secondary-rgb),.04)">
+          <small class="text-muted d-flex align-items-center gap-1" style="font-size:10px">
+            <i class="ti tabler-info-circle text-info"></i>
             Las alertas se envían al correo del responsable asignado.
           </small>
         </div>
+        @endif
       </div>
     </div>
 
     {{-- Próximas Acciones --}}
-    <div class="card">
-      <div class="card-header py-3">
-        <h5 class="mb-0 fw-semibold" style="font-size:14px">
-          <i class="ti tabler-clock-exclamation me-2 text-warning"></i>Próximas Acciones
-        </h5>
-      </div>
-      <div class="card-body py-3 px-3">
-        @forelse($proximas_acciones as $act)
-        @php
-          $dias = (int) round(now()->diffInDays($act->fecha_limite, false));
-          $tc   = $dias <= 3 ? 'danger' : ($dias <= 7 ? 'warning' : 'primary');
-        @endphp
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <span class="badge rounded bg-label-{{ $tc }} p-1_5 flex-shrink-0 mt-1">
-            <i class="ti tabler-{{ $tc === 'danger' ? 'urgent' : 'clock' }}" style="font-size:13px"></i>
-          </span>
-          <div class="flex-grow-1 overflow-hidden">
-            <div class="d-flex align-items-start justify-content-between gap-1">
-              <p class="mb-0 fw-semibold text-truncate" style="font-size:12.5px">{{ $act->nombre }}</p>
-              <span class="badge bg-label-{{ $tc }} flex-shrink-0 ms-1" style="font-size:10px;white-space:nowrap">
-                @if($dias <= 0) Vencida
-                @elseif($dias == 1) Mañana
-                @else {{ $act->fecha_limite->format('d/m') }}
-                @endif
-              </span>
-            </div>
-            <small class="text-muted" style="font-size:11px">{{ $act->componente->nombre ?? '—' }}</small>
+    <div class="col-12 col-lg-6">
+      <div class="card h-100 mb-0">
+        <div class="card-header py-3 px-4" style="border-bottom:2px solid rgba(var(--bs-warning-rgb),.18)">
+          <div class="d-flex align-items-center justify-content-between">
+            <span class="fw-semibold" style="font-size:14px">
+              <i class="ti tabler-clock-exclamation me-2 text-warning"></i>Próximas Acciones
+            </span>
+            <span class="badge bg-label-warning rounded-pill" style="font-size:10px">{{ $proximas_acciones->count() }} pendientes</span>
           </div>
         </div>
-        @empty
-        <div class="text-center text-muted py-4">
-          <i class="ti tabler-circle-check d-block mb-2 text-success" style="font-size:2rem"></i>
-          <small>Sin acciones pendientes próximas</small>
+        <div class="card-body p-0">
+          @forelse($proximas_acciones as $act)
+          @php
+            $dias = (int) round(now()->diffInDays($act->fecha_limite, false));
+            $tc   = $dias <= 0 ? 'danger' : ($dias <= 3 ? 'danger' : ($dias <= 7 ? 'warning' : 'primary'));
+          @endphp
+          <div class="accion-item d-flex align-items-center gap-3 px-4 py-3">
+            {{-- Fecha mini-calendar --}}
+            <div class="flex-shrink-0 text-center rounded-2 p-1" style="min-width:46px;background:rgba(var(--bs-{{ $tc }}-rgb),.08);border:1px solid rgba(var(--bs-{{ $tc }}-rgb),.2)">
+              @if($dias <= 0)
+                <div class="fw-bold text-danger" style="font-size:9px;text-transform:uppercase;line-height:1.2">Venc.</div>
+              @else
+                <div class="fw-bold text-{{ $tc }}" style="font-size:1.15rem;line-height:1.1">{{ $act->fecha_limite->format('d') }}</div>
+                <div class="text-{{ $tc }}" style="font-size:9px;text-transform:uppercase;font-weight:600;opacity:.8">{{ $act->fecha_limite->format('M') }}</div>
+              @endif
+            </div>
+            {{-- Info --}}
+            <div class="flex-grow-1 overflow-hidden">
+              <div class="fw-semibold text-truncate" style="font-size:13px">{{ Str::limit($act->nombre, 48) }}</div>
+              <div class="text-muted text-truncate" style="font-size:11px">{{ $act->componente->nombre ?? '—' }}</div>
+            </div>
+            {{-- Badge días --}}
+            <span class="badge bg-label-{{ $tc }} flex-shrink-0" style="font-size:10px;white-space:nowrap">
+              {{ $dias <= 0 ? 'Vencida' : ($dias === 1 ? 'Mañana' : $dias.' días') }}
+            </span>
+          </div>
+          @empty
+          <div class="text-center text-muted py-5 px-3">
+            <i class="ti tabler-calendar-check d-block mb-2 text-success" style="font-size:2rem;opacity:.6"></i>
+            <div class="fw-semibold" style="font-size:13px">Sin acciones próximas</div>
+            <small>Todas las actividades están al día.</small>
+          </div>
+          @endforelse
         </div>
-        @endforelse
       </div>
     </div>
 
-  </div>{{-- /col-xl-4 --}}
+  </div>{{-- /fila 2 --}}
 
-</div>{{-- /row --}}
+  {{-- ── Fila 3: Evidencias Recientes (ancho completo) ───── --}}
+  <div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between py-3 px-4" style="border-bottom:2px solid rgba(var(--bs-primary-rgb),.1)">
+      <span class="fw-semibold" style="font-size:14px">
+        <i class="ti tabler-paperclip me-2 text-primary"></i>Evidencias Recientes
+        <span class="badge bg-label-primary rounded-pill ms-1" id="ev-total-badge" style="font-size:10px">{{ $evidencias_recientes->count() }}</span>
+      </span>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted" id="ev-pag-info" style="font-size:12px"></span>
+        <a href="{{ route('sci-evidencias') }}" class="btn btn-xs btn-label-primary">
+          Ver todas <i class="ti tabler-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+
+    {{-- Tabla de evidencias --}}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="min-width:700px">
+        <thead style="background:var(--bs-tertiary-bg)">
+          <tr>
+            <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px;width:44px">Estado</th>
+            <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px">Título / SGD</th>
+            <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px;min-width:160px">Componente</th>
+            <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px">Subido por</th>
+            <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:10px 14px;white-space:nowrap">Fecha</th>
+          </tr>
+        </thead>
+        <tbody id="ev-tbody">
+          @forelse($evidencias_recientes as $ev)
+          @php
+            $ec = match($ev->estado) { 'validado'=>'success','rechazado'=>'danger',default=>'warning' };
+            $el = match($ev->estado) { 'validado'=>'Validado','rechazado'=>'Rechazado',default=>'Pendiente' };
+            $ei = match($ev->estado) { 'validado'=>'tabler-circle-check','rechazado'=>'tabler-circle-x',default=>'tabler-clock' };
+          @endphp
+          <tr class="ev-row">
+            <td style="padding:10px 14px">
+              <span class="badge rounded-circle bg-label-{{ $ec }} d-flex align-items-center justify-content-center" style="width:32px;height:32px">
+                <i class="ti {{ $ei }}" style="font-size:14px"></i>
+              </span>
+            </td>
+            <td style="padding:10px 14px;max-width:280px">
+              <div class="fw-semibold text-truncate" style="font-size:13px">{{ $ev->titulo }}</div>
+              @if($ev->numero_sgd)
+              <span class="badge bg-label-secondary font-monospace mt-1" style="font-size:10px">{{ $ev->numero_sgd }}</span>
+              @endif
+            </td>
+            <td style="padding:10px 14px">
+              @if($ev->actividad?->componente)
+              <div class="fw-medium text-truncate" style="font-size:12px;max-width:150px">{{ $ev->actividad->componente->nombre }}</div>
+              @else
+              <span class="text-muted">—</span>
+              @endif
+            </td>
+            <td style="padding:10px 14px">
+              <div class="d-flex align-items-center gap-2">
+                <span class="avatar-initial rounded-circle bg-label-secondary d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;font-size:10px;font-weight:700">
+                  {{ strtoupper(substr($ev->subidoPor->name ?? 'U', 0, 2)) }}
+                </span>
+                <span class="text-truncate" style="font-size:12px;max-width:100px">{{ $ev->subidoPor->name ?? '—' }}</span>
+              </div>
+            </td>
+            <td style="padding:10px 14px;white-space:nowrap">
+              <div style="font-size:12px">{{ $ev->created_at->format('d/m/Y') }}</div>
+              <div class="text-muted" style="font-size:10px">{{ $ev->created_at->format('H:i') }}</div>
+            </td>
+          </tr>
+          @empty
+          <tr><td colspan="5" class="text-center text-muted py-5">
+            <i class="ti tabler-paperclip d-block mb-2" style="font-size:2.5rem;opacity:.25"></i>
+            <small>Sin evidencias registradas aún</small>
+          </td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    {{-- Paginación JS --}}
+    @if($evidencias_recientes->count() > 8)
+    <div class="card-footer d-flex align-items-center justify-content-between py-2 px-4">
+      <small class="text-muted" id="ev-pag-footer"></small>
+      <div class="d-flex gap-1" id="ev-paginador"></div>
+    </div>
+    @endif
+  </div>{{-- /evidencias --}}
+
 </div>{{-- /tab-vista-general --}}
 
-{{-- ══════════════════════════════════════════════════════════
-     TAB DETALLE POR COMPONENTE
-══════════════════════════════════════════════════════════ --}}
+{{-- ══ TAB DETALLE POR COMPONENTE ══════════════════════════ --}}
 <div class="tab-pane fade" id="tab-detalle-componente">
   <div class="card">
+    <div class="card-header py-3 px-4">
+      <span class="fw-semibold" style="font-size:14px">
+        <i class="ti tabler-table me-2 text-primary"></i>Detalle por Componente
+      </span>
+    </div>
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
-        <thead>
-          <tr style="background:var(--bs-tertiary-bg)">
+        <thead style="background:var(--bs-tertiary-bg)">
+          <tr>
             <th class="ps-4" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;width:50px">#</th>
             <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Componente</th>
-            <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;min-width:180px">Avance</th>
-            <th class="text-center" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Completadas</th>
-            <th class="text-center" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">En proceso</th>
-            <th class="text-center" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Evidencias</th>
+            <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;min-width:200px">Avance</th>
+            <th class="text-center" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">✓ Completadas</th>
+            <th class="text-center" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">⏱ En proceso</th>
+            <th class="text-center" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">📎 Evidencias</th>
             <th class="text-center pe-4" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Nivel</th>
           </tr>
         </thead>
         <tbody>
           @forelse($componentes as $c)
-          @php $nivelLabel = match($c->color) { 'success'=>'Cumplido', 'warning'=>'En proceso', default=>'En riesgo' }; @endphp
+          @php $nivelLabel = match($c->color) { 'success'=>'Cumplido','warning'=>'En proceso',default=>'En riesgo' }; @endphp
           <tr style="border-left:3px solid var(--bs-{{ $c->color }})">
             <td class="ps-4">
               <span class="badge bg-label-secondary rounded-pill fw-bold" style="font-size:11px">{{ $c->numero }}</span>
             </td>
             <td>
               <div class="fw-semibold" style="font-size:13.5px">{{ $c->nombre }}</div>
+              <small class="text-muted" style="font-size:11px">{{ $c->etapa }}</small>
             </td>
             <td>
               <div class="d-flex align-items-center gap-2">
-                <div class="progress flex-grow-1" style="height:7px">
+                <div class="progress flex-grow-1" style="height:6px">
                   <div class="progress-bar bg-{{ $c->color }} rounded-pill" style="width:{{ $c->porcentaje }}%"></div>
                 </div>
                 <span class="fw-bold text-{{ $c->color }}" style="min-width:36px;font-size:13px">{{ $c->porcentaje }}%</span>
               </div>
             </td>
-            <td class="text-center"><span class="fw-bold text-success fs-5">{{ $c->completadas_count }}</span></td>
-            <td class="text-center"><span class="fw-bold text-warning fs-5">{{ $c->en_proceso_count }}</span></td>
-            <td class="text-center"><span class="fw-bold text-info fs-5">{{ $c->evidencias_count }}</span></td>
+            <td class="text-center"><span class="fw-bold text-success" style="font-size:1.1rem">{{ $c->completadas_count }}</span></td>
+            <td class="text-center"><span class="fw-bold text-warning" style="font-size:1.1rem">{{ $c->en_proceso_count }}</span></td>
+            <td class="text-center"><span class="fw-bold text-info" style="font-size:1.1rem">{{ $c->evidencias_count }}</span></td>
             <td class="text-center pe-4">
-              <span class="badge bg-label-{{ $c->color }} rounded-pill px-3 py-1" style="font-size:11px">{{ $nivelLabel }}</span>
+              <span class="badge bg-label-{{ $c->color }} rounded-pill px-3" style="font-size:11px">{{ $nivelLabel }}</span>
             </td>
           </tr>
           @empty
-          <tr><td colspan="7" class="text-center text-muted py-6">Sin componentes configurados</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-5">Sin componentes configurados</td></tr>
           @endforelse
         </tbody>
-        {{-- Totales --}}
         <tfoot>
-          <tr style="background:var(--bs-tertiary-bg);border-top:2px solid rgba(var(--bs-secondary-rgb),.15)">
+          <tr style="background:var(--bs-tertiary-bg);border-top:2px solid rgba(var(--bs-secondary-rgb),.12)">
             <td class="ps-4" colspan="2">
-              <span class="fw-bold text-muted" style="font-size:12px">TOTALES</span>
+              <span class="fw-bold text-muted" style="font-size:12px">TOTAL GENERAL</span>
             </td>
             <td>
               <div class="d-flex align-items-center gap-2">
-                <div class="progress flex-grow-1" style="height:7px">
+                <div class="progress flex-grow-1" style="height:6px">
                   <div class="progress-bar bg-{{ $nc }} rounded-pill" style="width:{{ $gc }}%"></div>
                 </div>
                 <span class="fw-bold text-{{ $nc }}" style="min-width:36px;font-size:13px">{{ $gc }}%</span>
               </div>
             </td>
-            <td class="text-center">
-              <span class="fw-bold text-success fs-5">{{ $componentes->sum('completadas_count') }}</span>
-            </td>
-            <td class="text-center">
-              <span class="fw-bold text-warning fs-5">{{ $componentes->sum('en_proceso_count') }}</span>
-            </td>
-            <td class="text-center">
-              <span class="fw-bold text-info fs-5">{{ $componentes->sum('evidencias_count') }}</span>
-            </td>
+            <td class="text-center"><span class="fw-bold text-success" style="font-size:1.1rem">{{ $componentes->sum('completadas_count') }}</span></td>
+            <td class="text-center"><span class="fw-bold text-warning" style="font-size:1.1rem">{{ $componentes->sum('en_proceso_count') }}</span></td>
+            <td class="text-center"><span class="fw-bold text-info" style="font-size:1.1rem">{{ $componentes->sum('evidencias_count') }}</span></td>
             <td class="text-center pe-4">
-              <span class="badge bg-label-{{ $nc }} rounded-pill px-3 py-1" style="font-size:11px">{{ $nivel }}</span>
+              <span class="badge bg-label-{{ $nc }} rounded-pill px-3" style="font-size:11px">{{ $nivel }}</span>
             </td>
           </tr>
         </tfoot>
@@ -471,9 +487,7 @@ $configData = Helper::appClasses();
   </div>
 </div>
 
-{{-- ══════════════════════════════════════════════════════════
-     TAB ACTIVIDADES
-══════════════════════════════════════════════════════════ --}}
+{{-- ══ TAB ACTIVIDADES ══════════════════════════════════════ --}}
 <div class="tab-pane fade" id="tab-actividades">
 
   {{-- Filtros --}}
@@ -481,7 +495,7 @@ $configData = Helper::appClasses();
     <div class="card-body py-3 px-4">
       <div class="row g-2 align-items-end">
         <div class="col-md-3">
-          <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">Etapa</label>
+          <label class="form-label fw-semibold mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.04em">Etapa</label>
           <select id="act-f-etapa" class="form-select form-select-sm">
             <option value="">Todas las etapas</option>
             @foreach($etapas as $et)
@@ -490,13 +504,13 @@ $configData = Helper::appClasses();
           </select>
         </div>
         <div class="col-md-3">
-          <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">Componente</label>
+          <label class="form-label fw-semibold mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.04em">Componente</label>
           <select id="act-f-componente" class="form-select form-select-sm" disabled>
             <option value="">— Selecciona etapa —</option>
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">Estado</label>
+          <label class="form-label fw-semibold mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.04em">Estado</label>
           <select id="act-f-estado" class="form-select form-select-sm">
             <option value="">Todos</option>
             <option value="pendiente">Pendiente</option>
@@ -507,14 +521,14 @@ $configData = Helper::appClasses();
           </select>
         </div>
         <div class="col-md-3">
-          <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">Buscar</label>
+          <label class="form-label fw-semibold mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.04em">Buscar</label>
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="ti tabler-search icon-14px"></i></span>
             <input type="text" id="act-f-buscar" class="form-control" placeholder="Código o nombre…">
           </div>
         </div>
         <div class="col-md-1 d-flex align-items-end">
-          <button id="act-f-limpiar" class="btn btn-sm btn-label-secondary w-100" title="Limpiar">
+          <button id="act-f-limpiar" class="btn btn-sm btn-label-secondary w-100" title="Limpiar filtros">
             <i class="ti tabler-filter-off"></i>
           </button>
         </div>
@@ -523,44 +537,44 @@ $configData = Helper::appClasses();
   </div>
 
   {{-- Tabla actividades --}}
-  <div class="card" style="border-radius:12px">
+  <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between py-3 px-4">
-      <span class="fw-semibold" style="font-size:15px">
+      <span class="fw-semibold" style="font-size:14px">
         <i class="ti tabler-certificate me-2 text-warning"></i>Actividades de Integridad
       </span>
-      <span class="badge bg-label-warning rounded-pill" id="act-contador">{{ $actividades->count() }} registros</span>
+      <span class="badge bg-label-warning rounded-pill" id="act-contador">{{ $actividades->total() }} registros</span>
     </div>
     <div class="card-body p-0">
-      <div class="position-relative" id="act-wrapper" style="min-height:100px">
-        <div id="act-spinner" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;background:#fff;border-radius:12px;padding:12px 20px;box-shadow:0 4px 20px rgba(0,0,0,.12)">
-          <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>Cargando…
+      <div class="position-relative" id="act-wrapper" style="min-height:80px">
+        <div id="act-spinner" style="display:none;position:absolute;inset:0;z-index:10;background:rgba(255,255,255,.8);display:none;align-items:center;justify-content:center">
+          <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div><span>Cargando…</span>
         </div>
         <div class="table-responsive">
-          <table class="table table-hover mb-0 align-middle" id="act-tabla" style="min-width:900px">
-            <thead>
+          <table class="table table-hover mb-0 align-middle" id="act-tabla" style="min-width:860px">
+            <thead style="background:var(--bs-tertiary-bg)">
               <tr>
-                <th style="font-size:11px;font-weight:700;text-transform:uppercase;padding:12px 14px;background:rgba(var(--bs-secondary-rgb),.04)">Código</th>
-                <th style="font-size:11px;font-weight:700;text-transform:uppercase;padding:12px 14px;background:rgba(var(--bs-secondary-rgb),.04);min-width:200px">Actividad</th>
-                <th style="font-size:11px;font-weight:700;text-transform:uppercase;padding:12px 14px;background:rgba(var(--bs-secondary-rgb),.04);min-width:140px">Componente / Pregunta</th>
-                <th style="font-size:11px;font-weight:700;text-transform:uppercase;padding:12px 14px;background:rgba(var(--bs-secondary-rgb),.04)">Responsable</th>
-                <th style="font-size:11px;font-weight:700;text-transform:uppercase;padding:12px 14px;background:rgba(var(--bs-secondary-rgb),.04);min-width:160px">Avance</th>
-                <th style="font-size:11px;font-weight:700;text-transform:uppercase;padding:12px 14px;background:rgba(var(--bs-secondary-rgb),.04)">Estado</th>
-                <th style="font-size:11px;font-weight:700;text-transform:uppercase;padding:12px 14px;background:rgba(var(--bs-secondary-rgb),.04)">Vence</th>
-                @can('integridad.editar')<th style="font-size:11px;font-weight:700;text-transform:uppercase;padding:12px 14px;background:rgba(var(--bs-secondary-rgb),.04);width:110px">Acciones</th>@endcan
+                <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:11px 14px;white-space:nowrap">Código</th>
+                <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:11px 14px;min-width:210px">Actividad</th>
+                <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:11px 14px;min-width:130px">Componente</th>
+                <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:11px 14px">Responsable</th>
+                <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:11px 14px;min-width:140px">Avance</th>
+                <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:11px 14px">Estado</th>
+                <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:11px 14px;white-space:nowrap">Vence</th>
+                @can('integridad.editar')<th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:11px 14px;width:90px">Acciones</th>@endcan
               </tr>
             </thead>
             <tbody id="act-tbody">
               @forelse($actividades as $act)
               @php
-                $ac = match($act->estado) { 'completada'=>'success','vencida'=>'danger','observado'=>'warning','en_proceso'=>'info',default=>'secondary' };
+                $ac   = match($act->estado) { 'completada'=>'success','vencida'=>'danger','observado'=>'warning','en_proceso'=>'info',default=>'secondary' };
                 $comp = $act->integridadPregunta?->componente;
                 $pct  = $act->avance ?? 0;
               @endphp
               <tr>
-                <td><code style="font-size:11px">{{ $act->codigo }}</code></td>
-                <td>
-                  <div class="fw-medium" style="font-size:13px">{{ Str::limit($act->nombre, 50) }}</div>
-                  @if($act->numero_sgd)<small class="text-muted" style="font-size:10px">SGD: {{ $act->numero_sgd }}</small>@endif
+                <td style="padding:10px 14px"><code style="font-size:10.5px">{{ $act->codigo }}</code></td>
+                <td style="padding:10px 14px">
+                  <div class="fw-semibold text-truncate" style="font-size:13px;max-width:200px">{{ $act->nombre }}</div>
+                  @if($act->numero_sgd)<small class="text-muted font-monospace" style="font-size:10px">{{ $act->numero_sgd }}</small>@endif
                 </td>
                 <td>
                   <div style="font-size:12px;font-weight:600">{{ Str::limit($comp?->nombre ?? '—', 30) }}</div>
@@ -636,6 +650,11 @@ $configData = Helper::appClasses();
         </div>
       </div>
     </div>
+    @if($actividades->hasPages())
+    <div class="card-footer d-flex justify-content-center py-2">
+      {{ $actividades->links() }}
+    </div>
+    @endif
   </div>
 </div>{{-- /tab-actividades --}}
 
@@ -646,7 +665,7 @@ $configData = Helper::appClasses();
 {{-- ════════════════════════════════════════════════════════════════════ --}}
 @can('integridad.crear')
 <div class="modal fade" id="modalNuevaActInt" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <form method="POST" action="{{ route('integridad.store') }}" id="formNuevaActInt">
         @csrf
@@ -790,7 +809,7 @@ $configData = Helper::appClasses();
 {{-- Modal Editar Actividad Integridad --}}
 @can('integridad.editar')
 <div class="modal fade" id="modalEditarActInt" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <form method="POST" id="formEditarActInt">
         @csrf @method('PUT')
@@ -937,15 +956,63 @@ document.addEventListener('DOMContentLoaded', function () {
     stroke: { lineCap: 'round' },
   }).render();
 
-  // ── Flash messages ──────────────────────────────────────────────────────
-  @if(session('success'))
-  Swal.fire({ icon:'success', title:'Listo', text:@json(session('success')), timer:2800, showConfirmButton:false,
-    customClass:{ popup:'rounded-3' } });
-  @endif
-  @if($errors->any())
-  Swal.fire({ icon:'error', title:'Error de validación', text:@json($errors->first()),
-    customClass:{ popup:'rounded-3', confirmButton:'btn btn-primary' }, buttonsStyling:false });
-  @endif
+  // Flash messages los maneja el toast global del layout (contentNavbarLayout)
+
+  // ── Select2: inicializar dentro de cada modal ───────────────────────────
+  function initSelect2InModal(modalId) {
+    const $modal = $('#' + modalId);
+    $modal.find('.select2-nueva-int, .select2-editar-int, .select2-resp-nueva').each(function () {
+      if (!$(this).hasClass('select2-hidden-accessible')) {
+        $(this).select2({ dropdownParent: $modal, width: '100%' });
+      }
+    });
+  }
+
+  // Función para envolver un select nativo en Select2 dentro del modal
+  function initCascadeSelect2(selectEl, modalId) {
+    const $modal = $('#' + modalId);
+    if ($(selectEl).hasClass('select2-hidden-accessible')) {
+      $(selectEl).select2('destroy');
+    }
+    $(selectEl).select2({ dropdownParent: $modal, width: '100%' });
+  }
+
+  document.getElementById('modalNuevaActInt')?.addEventListener('shown.bs.modal', function () {
+    const $modal = $('#modalNuevaActInt');
+    // Cascada + unidad
+    ['nueva_etapa_id','nueva_componente_id','nueva_pregunta_id'].forEach(id => {
+      initCascadeSelect2(document.getElementById(id), 'modalNuevaActInt');
+    });
+    $modal.find('.select2-nueva-int').each(function () {
+      if (!$(this).hasClass('select2-hidden-accessible'))
+        $(this).select2({ dropdownParent: $modal, width: '100%' });
+    });
+    // Responsables existentes
+    $modal.find('.select2-resp-nueva').each(function () {
+      if (!$(this).hasClass('select2-hidden-accessible'))
+        $(this).select2({ dropdownParent: $modal, width: '100%', placeholder: '— Seleccionar responsable —' });
+    });
+  });
+
+  document.getElementById('modalEditarActInt')?.addEventListener('shown.bs.modal', function () {
+    const $modal = $('#modalEditarActInt');
+    ['edit_etapa_id','edit_componente_id','edit_pregunta_id'].forEach(id => {
+      initCascadeSelect2(document.getElementById(id), 'modalEditarActInt');
+    });
+    $modal.find('.select2-editar-int').each(function () {
+      if (!$(this).hasClass('select2-hidden-accessible'))
+        $(this).select2({ dropdownParent: $modal, width: '100%' });
+    });
+  });
+
+  // Re-inicializar Select2 en selects de cascada después de cargar opciones vía AJAX
+  function reinitSelect2Cascade(selectEl, modalId) {
+    const $sel = $(selectEl);
+    const val  = $sel.val();
+    if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+    $sel.select2({ dropdownParent: $('#' + modalId), width: '100%' });
+    if (val) $sel.val(val).trigger('change.select2');
+  }
 
   // ── URLs AJAX cascada ───────────────────────────────────────────────────
   const URL_COMPONENTES = '{{ route('integridad.componentes') }}';
@@ -972,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (nuevoEtapa) {
-    nuevoEtapa.addEventListener('change', async function () {
+    $(nuevoEtapa).on('change', async function () {
       resetSelect(nuevoComponente, '— Cargando… —', true);
       resetSelect(nuevoPregunta, '— Selecciona componente —', true);
       nuevaFichaDiv.style.display = 'none';
@@ -981,9 +1048,10 @@ document.addEventListener('DOMContentLoaded', function () {
       nuevoComponente.innerHTML = '<option value="">— Seleccionar componente —</option>';
       data.forEach(c => nuevoComponente.innerHTML += `<option value="${c.id}">${c.orden}. ${c.nombre}</option>`);
       nuevoComponente.disabled = false;
+      reinitSelect2Cascade(nuevoComponente, 'modalNuevaActInt');
     });
 
-    nuevoComponente.addEventListener('change', async function () {
+    $(nuevoComponente).on('change', async function () {
       resetSelect(nuevoPregunta, '— Cargando… —', true);
       nuevaFichaDiv.style.display = 'none';
       if (!this.value) { resetSelect(nuevoPregunta, '— Selecciona componente —'); return; }
@@ -997,9 +1065,10 @@ document.addEventListener('DOMContentLoaded', function () {
         nuevoPregunta.appendChild(opt);
       });
       nuevoPregunta.disabled = false;
+      reinitSelect2Cascade(nuevoPregunta, 'modalNuevaActInt');
     });
 
-    nuevoPregunta.addEventListener('change', function () {
+    $(nuevoPregunta).on('change', function () {
       const opt = this.selectedOptions[0];
       if (opt?.dataset.ficha) {
         nuevaFichaUrl.href = opt.dataset.ficha;
@@ -1018,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const editFichaUrl   = document.getElementById('edit-ficha-url');
 
   if (editEtapa) {
-    editEtapa.addEventListener('change', async function () {
+    $(editEtapa).on('change', async function () {
       resetSelect(editComponente, '— Cargando… —', true);
       resetSelect(editPregunta, '— Selecciona componente —', true);
       if (editFichaDiv) editFichaDiv.style.display = 'none';
@@ -1027,9 +1096,10 @@ document.addEventListener('DOMContentLoaded', function () {
       editComponente.innerHTML = '<option value="">— Seleccionar componente —</option>';
       data.forEach(c => editComponente.innerHTML += `<option value="${c.id}">${c.orden}. ${c.nombre}</option>`);
       editComponente.disabled = false;
+      reinitSelect2Cascade(editComponente, 'modalEditarActInt');
     });
 
-    editComponente.addEventListener('change', async function () {
+    $(editComponente).on('change', async function () {
       resetSelect(editPregunta, '— Cargando… —', true);
       if (editFichaDiv) editFichaDiv.style.display = 'none';
       if (!this.value) return;
@@ -1043,9 +1113,10 @@ document.addEventListener('DOMContentLoaded', function () {
         editPregunta.appendChild(opt);
       });
       editPregunta.disabled = false;
+      reinitSelect2Cascade(editPregunta, 'modalEditarActInt');
     });
 
-    editPregunta.addEventListener('change', function () {
+    $(editPregunta).on('change', function () {
       const opt = this.selectedOptions[0];
       if (opt?.dataset.ficha && editFichaDiv) {
         editFichaUrl.href = opt.dataset.ficha;
@@ -1120,26 +1191,107 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Agregar responsables en modal nueva ────────────────────────────────
   const respContainer = document.getElementById('nueva-responsables-container');
-  const respTpl = respContainer?.querySelector('.responsable-row')?.outerHTML ?? '';
+  // Plantilla limpia (sin Select2 inicializado) para clonar
   let respIdx = 0;
 
-  document.getElementById('btn-add-resp-nueva')?.addEventListener('click', () => {
+  function addResponsableRow(container, modalId) {
     respIdx++;
-    const div = document.createElement('div');
-    div.innerHTML = respTpl.replace(/\[\]/g, `[${respIdx}]`).replace(/_idx_/g, respIdx);
-    respContainer.appendChild(div.firstChild);
+    const row = document.createElement('div');
+    row.className = 'row g-2 mb-2 responsable-row';
+    row.innerHTML = `
+      <div class="col-md-8">
+        <select name="responsables[]" class="form-select select2-resp-nueva" style="width:100%">
+          <option value="">— Seleccionar responsable —</option>
+          @foreach($usuarios as $u)
+          <option value="{{ $u->id }}">{{ $u->name }}</option>
+          @endforeach
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="tipos[${respIdx}]" class="form-select">
+          <option value="principal">Principal</option>
+          <option value="colaborador">Colaborador</option>
+          <option value="supervisor">Supervisor</option>
+        </select>
+      </div>
+      <div class="col-md-1 d-flex align-items-center">
+        <button type="button" class="btn btn-icon btn-label-secondary btn-rm-resp" style="width:34px;height:34px;padding:0">
+          <i class="ti tabler-trash icon-14px"></i>
+        </button>
+      </div>`;
+    container.appendChild(row);
+    // Inicializar Select2 en el nuevo select
+    const $sel = $(row).find('.select2-resp-nueva');
+    $sel.select2({ dropdownParent: $('#' + modalId), width: '100%', placeholder: '— Seleccionar responsable —' });
     bindRmResp();
+  }
+
+  document.getElementById('btn-add-resp-nueva')?.addEventListener('click', () => {
+    addResponsableRow(respContainer, 'modalNuevaActInt');
   });
 
   function bindRmResp() {
     document.querySelectorAll('.btn-rm-resp').forEach(btn => {
       btn.onclick = function () {
         const rows = document.querySelectorAll('.responsable-row');
-        if (rows.length > 1) this.closest('.responsable-row').remove();
+        if (rows.length > 1) {
+          // Destruir Select2 antes de remover
+          $(this.closest('.responsable-row')).find('.select2-resp-nueva').select2('destroy');
+          this.closest('.responsable-row').remove();
+        }
       };
     });
   }
   bindRmResp();
+
+  // ── Paginación tabla Evidencias Recientes ──────────────────────────────
+  (function () {
+    const tbody    = document.getElementById('ev-tbody');
+    if (!tbody) return;
+    const rows     = Array.from(tbody.querySelectorAll('tr.ev-row'));
+    if (rows.length === 0) return;
+    const PER_PAGE = 8;
+    const totalPag = Math.ceil(rows.length / PER_PAGE);
+    const footer   = document.getElementById('ev-pag-footer');
+    const paginador= document.getElementById('ev-paginador');
+    if (!paginador) return;
+
+    let currentPage = 1;
+
+    function render(page) {
+      currentPage = page;
+      const start = (page - 1) * PER_PAGE;
+      const end   = start + PER_PAGE;
+      rows.forEach((r, i) => r.style.display = (i >= start && i < end) ? '' : 'none');
+      if (footer) footer.textContent = `Mostrando ${start + 1}–${Math.min(end, rows.length)} de ${rows.length}`;
+
+      paginador.innerHTML = '';
+      // Prev
+      const prev = document.createElement('button');
+      prev.className = 'btn btn-xs btn-label-secondary' + (page === 1 ? ' disabled' : '');
+      prev.innerHTML = '<i class="ti tabler-chevron-left"></i>';
+      prev.onclick = () => page > 1 && render(page - 1);
+      paginador.appendChild(prev);
+
+      // Páginas
+      for (let p = 1; p <= totalPag; p++) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-xs ' + (p === page ? 'btn-primary' : 'btn-label-secondary');
+        btn.textContent = p;
+        btn.onclick = () => render(p);
+        paginador.appendChild(btn);
+      }
+
+      // Next
+      const next = document.createElement('button');
+      next.className = 'btn btn-xs btn-label-secondary' + (page === totalPag ? ' disabled' : '');
+      next.innerHTML = '<i class="ti tabler-chevron-right"></i>';
+      next.onclick = () => page < totalPag && render(page + 1);
+      paginador.appendChild(next);
+    }
+
+    render(1);
+  })();
 
   // ── Filtros tab actividades ─────────────────────────────────────────────
   const RUTA_INT = '{{ route('sci-modelo-integridad') }}';

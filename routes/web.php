@@ -107,6 +107,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     })->name('notifications.read');
 
     // --- Monitoreo ---
+    Route::get('/semaforo/demo',      [SemaforoController::class,        'demo'])->name('sci-semaforo.demo');
     Route::get('/semaforo',          [SemaforoController::class,        'index'])->name('sci-semaforo');
     Route::middleware('can:alertas.ver')->group(function () {
         Route::get('/alertas', [AlertasController::class, 'index'])->name('mon-alertas');
@@ -260,6 +261,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/{encuesta}/resultados',         [EncuestaResultadoController::class, 'index'])  ->name('resultados')        ->middleware('can:encuesta.resultados');
         Route::get('/{encuesta}/resultados/datos',   [EncuestaResultadoController::class, 'datos'])  ->name('resultados.datos')  ->middleware('can:encuesta.resultados');
         Route::get('/{encuesta}/exportar',           [EncuestaResultadoController::class, 'exportar'])->name('exportar')        ->middleware('can:encuesta.exportar');
+        Route::get('/{encuesta}/exportar-pdf',       [EncuestaResultadoController::class, 'exportarPdf'])->name('exportar.pdf')   ->middleware('can:encuesta.exportar');
     });
 
     // --- Unidades Orgánicas ---

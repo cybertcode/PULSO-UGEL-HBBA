@@ -39,7 +39,7 @@ class EncuestaPregunta extends Model
 
     public function tieneOpciones(): bool
     {
-        return in_array($this->tipo, ['opcion_multiple', 'seleccion_multiple']);
+        return in_array($this->tipo, ['opcion_multiple', 'seleccion_multiple', 'desplegable']);
     }
 
     public function getTipoLabelAttribute(): string
@@ -49,6 +49,9 @@ class EncuestaPregunta extends Model
             'seleccion_multiple'   => 'Selección múltiple',
             'escala'               => 'Escala de valoración',
             'texto_libre'          => 'Texto libre',
+            'si_no'                => 'Sí / No',
+            'verdadero_falso'      => 'Verdadero / Falso',
+            'desplegable'          => 'Lista desplegable',
             default                => $this->tipo,
         };
     }

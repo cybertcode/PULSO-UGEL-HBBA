@@ -186,17 +186,19 @@
     });
   </script>
 
-  <!-- Botón flotante de instalación PWA -->
-  <div id="pwa-install-btn" style="display:none;position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;
-    background:#7367f0;color:#fff;border:none;border-radius:2rem;padding:.625rem 1.25rem;
-    font-size:.875rem;font-weight:500;cursor:pointer;gap:.5rem;align-items:center;
-    box-shadow:0 4px 18px rgba(115,103,240,.45);font-family:inherit;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink:0">
+  <!-- Botón discreto de instalación PWA -->
+  <button id="pwa-install-btn" title="Instalar aplicación" style="display:none;position:fixed;bottom:1.25rem;right:1.25rem;z-index:9999;
+    width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+    background:rgba(115,103,240,.12);color:#7367f0;
+    align-items:center;justify-content:center;
+    transition:background .2s,transform .15s;"
+    onmouseenter="this.style.background='rgba(115,103,240,.22)';this.style.transform='scale(1.1)'"
+    onmouseleave="this.style.background='rgba(115,103,240,.12)';this.style.transform='scale(1)'">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
       <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
       <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
     </svg>
-    Instalar app
-  </div>
+  </button>
 
   <!-- Banner de actualización disponible -->
   <div id="pwa-update-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;
