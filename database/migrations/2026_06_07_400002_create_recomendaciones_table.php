@@ -23,6 +23,7 @@ return new class extends Migration
             $table->date('fecha_atencion')->nullable();
             $table->string('numero_sgd')->nullable();
             $table->string('origen')->nullable(); // SCI, OCI, DRE, Auditoría, Autocontrol
+            $table->string('modulo')->default('sci'); // sci, integridad
             $table->text('observaciones')->nullable();
             $table->foreignId('creado_por')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
