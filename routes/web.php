@@ -66,18 +66,26 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('/diag', fn() => view('content.dashboard.diag'))->name('diag')->middleware('can:configuracion.ver');
 
     // Slider del Landing (administrado desde el panel)
-    Route::get('/slider-landing',                          [SliderLandingController::class, 'index'])->name('slider-landing.index');
-    Route::post('/slider-landing',                         [SliderLandingController::class, 'store'])->name('slider-landing.store');
-    Route::put('/slider-landing/{sliderLanding}',          [SliderLandingController::class, 'update'])->name('slider-landing.update');
-    Route::delete('/slider-landing/{sliderLanding}',       [SliderLandingController::class, 'destroy'])->name('slider-landing.destroy');
-    Route::patch('/slider-landing/{sliderLanding}/toggle', [SliderLandingController::class, 'toggleActivo'])->name('slider-landing.toggle');
+    Route::middleware('can:configuracion.ver')->group(function () {
+        Route::get('/slider-landing', [SliderLandingController::class, 'index'])->name('slider-landing.index');
+    });
+    Route::middleware('can:configuracion.editar')->group(function () {
+        Route::post('/slider-landing',                         [SliderLandingController::class, 'store'])->name('slider-landing.store');
+        Route::put('/slider-landing/{sliderLanding}',          [SliderLandingController::class, 'update'])->name('slider-landing.update');
+        Route::delete('/slider-landing/{sliderLanding}',       [SliderLandingController::class, 'destroy'])->name('slider-landing.destroy');
+        Route::patch('/slider-landing/{sliderLanding}/toggle', [SliderLandingController::class, 'toggleActivo'])->name('slider-landing.toggle');
+    });
 
     // Instituciones Vinculadas del Landing
-    Route::get('/instituciones-vinculadas',                                    [InstitucionVinculadaController::class, 'index'])->name('instituciones-vinculadas.index');
-    Route::post('/instituciones-vinculadas',                                   [InstitucionVinculadaController::class, 'store'])->name('instituciones-vinculadas.store');
-    Route::put('/instituciones-vinculadas/{institucionVinculada}',             [InstitucionVinculadaController::class, 'update'])->name('instituciones-vinculadas.update');
-    Route::delete('/instituciones-vinculadas/{institucionVinculada}',          [InstitucionVinculadaController::class, 'destroy'])->name('instituciones-vinculadas.destroy');
-    Route::patch('/instituciones-vinculadas/{institucionVinculada}/toggle',    [InstitucionVinculadaController::class, 'toggleActivo'])->name('instituciones-vinculadas.toggle');
+    Route::middleware('can:configuracion.ver')->group(function () {
+        Route::get('/instituciones-vinculadas', [InstitucionVinculadaController::class, 'index'])->name('instituciones-vinculadas.index');
+    });
+    Route::middleware('can:configuracion.editar')->group(function () {
+        Route::post('/instituciones-vinculadas',                                   [InstitucionVinculadaController::class, 'store'])->name('instituciones-vinculadas.store');
+        Route::put('/instituciones-vinculadas/{institucionVinculada}',             [InstitucionVinculadaController::class, 'update'])->name('instituciones-vinculadas.update');
+        Route::delete('/instituciones-vinculadas/{institucionVinculada}',          [InstitucionVinculadaController::class, 'destroy'])->name('instituciones-vinculadas.destroy');
+        Route::patch('/instituciones-vinculadas/{institucionVinculada}/toggle',    [InstitucionVinculadaController::class, 'toggleActivo'])->name('instituciones-vinculadas.toggle');
+    });
 
     // --- Control y Seguimiento (permisos: control-interno.*, integridad.*, evidencias.*) ---
     Route::middleware('can:control-interno.ver')->group(function () {
@@ -85,14 +93,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
     Route::post('/control-interno',                       [ControlInternoController::class, 'store'])->name('sci-control-interno.store')->middleware('can:control-interno.crear');
     Route::put('/control-interno/{actividad}',            [ControlInternoController::class, 'update'])->name('sci-control-interno.update')->middleware('can:control-interno.editar');
-    Route::delete('/control-interno/{actividad}',         [ControlInternoController::class, 'destroy'])->name('sci-control-interno.destroy')->middleware('can:control-interno.editar');
+    Route::delete('/control-interno/{actividad}',         [ControlInternoController::class, 'destroy'])->name('sci-control-interno.destroy')->middleware('can:control-interno.eliminar');
     Route::patch('/control-interno/{actividad}/avance',   [ControlInternoController::class, 'updateAvance'])->name('sci-control-interno.avance')->middleware('can:control-interno.editar');
     Route::get('/control-interno/{actividad}/historial',  [ControlInternoController::class, 'historial'])->name('sci-control-interno.historial')->middleware('can:control-interno.ver');
 
     Route::get('/modelo-integridad', [ModeloIntegridadController::class, 'index'])->name('sci-modelo-integridad')->middleware('can:integridad.ver');
     Route::post('/modelo-integridad',                        [ModeloIntegridadController::class, 'store'])->name('integridad.store')->middleware('can:integridad.crear');
     Route::put('/modelo-integridad/{actividad}',             [ModeloIntegridadController::class, 'update'])->name('integridad.update')->middleware('can:integridad.editar');
-    Route::delete('/modelo-integridad/{actividad}',          [ModeloIntegridadController::class, 'destroy'])->name('integridad.destroy')->middleware('can:integridad.editar');
+    Route::delete('/modelo-integridad/{actividad}',          [ModeloIntegridadController::class, 'destroy'])->name('integridad.destroy')->middleware('can:integridad.eliminar');
     Route::patch('/modelo-integridad/{actividad}/avance',    [ModeloIntegridadController::class, 'updateAvance'])->name('integridad.avance')->middleware('can:integridad.editar');
     Route::get('/modelo-integridad/{actividad}/historial',   [ModeloIntegridadController::class, 'historial'])->name('integridad.historial')->middleware('can:integridad.ver');
     Route::get('/integridad/componentes',                    [ModeloIntegridadController::class, 'componentesPorEtapa'])->name('integridad.componentes');
@@ -104,7 +112,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::post('/evidencias',                        [EvidenciasController::class, 'store'])->name('sci-evidencias.store')->middleware('can:evidencias.subir');
     Route::put('/evidencias/{evidencia}',             [EvidenciasController::class, 'update'])->name('sci-evidencias.update')->middleware('can:evidencias.subir');
     Route::patch('/evidencias/{evidencia}/validar',   [EvidenciasController::class, 'validar'])->name('sci-evidencias.validar')->middleware('can:evidencias.validar');
-    Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.validar');
+    Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.eliminar');
 
     // Notificaciones
     Route::patch('/notifications/{id}/read', function (string $id) {
@@ -114,8 +122,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     })->name('notifications.read');
 
     // --- Monitoreo ---
-    Route::get('/semaforo/demo',      [SemaforoController::class,        'demo'])->name('sci-semaforo.demo');
-    Route::get('/semaforo',          [SemaforoController::class,        'index'])->name('sci-semaforo');
+    Route::get('/semaforo/demo',      [SemaforoController::class, 'demo'])->name('sci-semaforo.demo')->middleware('can:semaforo.ver');
+    Route::get('/semaforo',           [SemaforoController::class, 'index'])->name('sci-semaforo')->middleware('can:semaforo.ver');
     Route::middleware('can:alertas.ver')->group(function () {
         Route::get('/alertas', [AlertasController::class, 'index'])->name('mon-alertas');
         Route::patch('/alertas/{alerta}/leer',  [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
@@ -131,17 +139,17 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('/avance-unidades/exportar',[AvanceUnidadesController::class, 'exportar'])->name('mon-avance-unidades.exportar')->middleware('can:reportes.ver');
 
     // --- Cumplimiento SCI ---
-    Route::middleware('can:control-interno.ver')->group(function () {
+    Route::middleware('can:cumplimiento.ver')->group(function () {
         Route::get('/cumplimiento/panel',         [CumplimientoController::class, 'panelSci'])->name('cumplimiento.panel');
         Route::get('/cumplimiento/responsables',  [CumplimientoController::class, 'responsables'])->name('cumplimiento.responsables');
         Route::get('/cumplimiento/sin-evidencia', [CumplimientoController::class, 'sinEvidencia'])->name('cumplimiento.sin-evidencia');
     });
     Route::get('/cumplimiento/exportar', [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar')->middleware('can:reportes.exportar');
 
-    // --- Mis Actividades ---
-    Route::get('/mis-actividades',                       [MisActividadesController::class, 'index'])->name('mis-actividades');
-    Route::get('/mis-actividades/{actividad}/historial', [MisActividadesController::class, 'historial'])->name('mis-actividades.historial');
-    Route::patch('/mis-actividades/{actividad}/avance', [MisActividadesController::class, 'updateAvance'])->name('mis-actividades.avance');
+    // --- Mis Actividades --- (accesible a cualquier usuario autenticado — muestra solo sus propias actividades)
+    Route::get('/mis-actividades',                        [MisActividadesController::class, 'index'])->name('mis-actividades');
+    Route::get('/mis-actividades/{actividad}/historial',  [MisActividadesController::class, 'historial'])->name('mis-actividades.historial');
+    Route::patch('/mis-actividades/{actividad}/avance',   [MisActividadesController::class, 'updateAvance'])->name('mis-actividades.avance');
 
     // --- Reportes ---
     Route::get('/reportes',        [ReportesController::class,       'index'])->name('rep-reportes')->middleware('can:reportes.ver');
@@ -201,10 +209,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::put('/administracion/sci/pregunta/{pregunta}',        [SciEstructuraController::class, 'updatePregunta'])->name('adm-sci.pregunta.update');
         Route::delete('/administracion/sci/pregunta/{pregunta}',     [SciEstructuraController::class, 'destroyPregunta'])->name('adm-sci.pregunta.destroy');
     });
-    // API cascada SCI (sin middleware de permiso extra — requiere auth)
-    Route::get('/api/sci/ejes',        [SciEstructuraController::class, 'apiEjes'])->name('api.sci.ejes');
-    Route::get('/api/sci/componentes', [SciEstructuraController::class, 'apiComponentes'])->name('api.sci.componentes');
-    Route::get('/api/sci/preguntas',   [SciEstructuraController::class, 'apiPreguntas'])->name('api.sci.preguntas');
+    // API cascada SCI
+    Route::middleware('can:componentes.ver')->group(function () {
+        Route::get('/api/sci/ejes',        [SciEstructuraController::class, 'apiEjes'])->name('api.sci.ejes');
+        Route::get('/api/sci/componentes', [SciEstructuraController::class, 'apiComponentes'])->name('api.sci.componentes');
+        Route::get('/api/sci/preguntas',   [SciEstructuraController::class, 'apiPreguntas'])->name('api.sci.preguntas');
+    });
 
     // --- Administración: Estructura Integridad (Etapas → Componentes → Preguntas) ---
     Route::middleware('can:integridad.ver')->group(function () {
@@ -225,58 +235,64 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::delete('/administracion/integridad/pregunta/{pregunta}',     [IntegridadEstructuraController::class, 'destroyPregunta'])->name('adm-integridad.pregunta.destroy');
     });
     // API cascada Integridad
-    Route::get('/api/integridad/etapas',             [IntegridadEstructuraController::class, 'apiEtapas'])->name('api.integridad.etapas');
-    Route::get('/api/integridad/componentes',        [IntegridadEstructuraController::class, 'apiComponentes'])->name('api.integridad.componentes');
-    Route::get('/api/integridad/preguntas',          [IntegridadEstructuraController::class, 'apiPreguntas'])->name('api.integridad.preguntas');
-    // API admin (CRUD panel)
-    Route::get('/api/integridad/componentes-admin',  [IntegridadEstructuraController::class, 'apiComponentesAdmin'])->name('api.integridad.componentes-admin');
-    Route::get('/api/integridad/preguntas-admin',    [IntegridadEstructuraController::class, 'apiPreguntasAdmin'])->name('api.integridad.preguntas-admin');
+    Route::middleware('can:integridad.ver')->group(function () {
+        Route::get('/api/integridad/etapas',      [IntegridadEstructuraController::class, 'apiEtapas'])->name('api.integridad.etapas');
+        Route::get('/api/integridad/componentes', [IntegridadEstructuraController::class, 'apiComponentes'])->name('api.integridad.componentes');
+        Route::get('/api/integridad/preguntas',   [IntegridadEstructuraController::class, 'apiPreguntas'])->name('api.integridad.preguntas');
+    });
+    // API admin integridad (CRUD panel)
+    Route::middleware('can:componentes.ver')->group(function () {
+        Route::get('/api/integridad/componentes-admin', [IntegridadEstructuraController::class, 'apiComponentesAdmin'])->name('api.integridad.componentes-admin');
+        Route::get('/api/integridad/preguntas-admin',   [IntegridadEstructuraController::class, 'apiPreguntasAdmin'])->name('api.integridad.preguntas-admin');
+    });
 
     // --- Configuración Institucional ---
     Route::get('/configuracion',  [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
     Route::put('/configuracion',  [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
 
     // --- Buenas Prácticas / Concurso ---
-    Route::get('/buenas-practicas',                                  [BuenasPracticasController::class, 'index'])->name('buenas-practicas');
-    Route::get('/buenas-practicas/data',                             [BuenasPracticasController::class, 'data'])->name('buenas-practicas.data');
-    Route::post('/buenas-practicas/proponer',                        [BuenasPracticasController::class, 'proponer'])->name('buenas-practicas.proponer');
-    Route::post('/buenas-practicas',                                 [BuenasPracticasController::class, 'store'])->name('buenas-practicas.store')->middleware('can:buenas-practicas.ver');
-    Route::put('/buenas-practicas/{buenaPractica}',                  [BuenasPracticasController::class, 'update'])->name('buenas-practicas.update')->middleware('can:buenas-practicas.ver');
-    Route::delete('/buenas-practicas/{buenaPractica}',               [BuenasPracticasController::class, 'destroy'])->name('buenas-practicas.destroy')->middleware('can:buenas-practicas.ver');
-    Route::patch('/buenas-practicas/{buenaPractica}/avance',         [BuenasPracticasController::class, 'updateAvance'])->name('buenas-practicas.avance')->middleware('can:buenas-practicas.ver');
+    Route::get('/buenas-practicas',         [BuenasPracticasController::class, 'index'])->name('buenas-practicas')->middleware('can:buenas-practicas.ver');
+    Route::get('/buenas-practicas/data',    [BuenasPracticasController::class, 'data'])->name('buenas-practicas.data')->middleware('can:buenas-practicas.ver');
+    Route::post('/buenas-practicas/proponer',[BuenasPracticasController::class, 'proponer'])->name('buenas-practicas.proponer')->middleware('can:buenas-practicas.crear');
+    Route::post('/buenas-practicas',        [BuenasPracticasController::class, 'store'])->name('buenas-practicas.store')->middleware('can:buenas-practicas.crear');
+    Route::put('/buenas-practicas/{buenaPractica}',          [BuenasPracticasController::class, 'update'])->name('buenas-practicas.update')->middleware('can:buenas-practicas.editar');
+    Route::delete('/buenas-practicas/{buenaPractica}',       [BuenasPracticasController::class, 'destroy'])->name('buenas-practicas.destroy')->middleware('can:buenas-practicas.eliminar');
+    Route::patch('/buenas-practicas/{buenaPractica}/avance', [BuenasPracticasController::class, 'updateAvance'])->name('buenas-practicas.avance')->middleware('can:buenas-practicas.editar');
     // Flujo concurso — Nivel 1 UGEL Huacaybamba
-    Route::patch('/buenas-practicas/{buenaPractica}/recepcionar',      [BuenasPracticasController::class, 'recepcionar'])->name('buenas-practicas.recepcionar')->middleware('can:buenas-practicas.ver');
-    Route::patch('/buenas-practicas/{buenaPractica}/elegible',         [BuenasPracticasController::class, 'declararElegible'])->name('buenas-practicas.elegible')->middleware('can:buenas-practicas.ver');
-    Route::patch('/buenas-practicas/{buenaPractica}/no-elegible',      [BuenasPracticasController::class, 'noElegible'])->name('buenas-practicas.no-elegible')->middleware('can:buenas-practicas.ver');
-    Route::patch('/buenas-practicas/{buenaPractica}/ganador-ugel',     [BuenasPracticasController::class, 'declararGanadorUgel'])->name('buenas-practicas.ganador-ugel')->middleware('can:buenas-practicas.ver');
+    Route::patch('/buenas-practicas/{buenaPractica}/recepcionar',       [BuenasPracticasController::class, 'recepcionar'])->name('buenas-practicas.recepcionar')->middleware('can:buenas-practicas.editar');
+    Route::patch('/buenas-practicas/{buenaPractica}/elegible',          [BuenasPracticasController::class, 'declararElegible'])->name('buenas-practicas.elegible')->middleware('can:buenas-practicas.editar');
+    Route::patch('/buenas-practicas/{buenaPractica}/no-elegible',       [BuenasPracticasController::class, 'noElegible'])->name('buenas-practicas.no-elegible')->middleware('can:buenas-practicas.editar');
+    Route::patch('/buenas-practicas/{buenaPractica}/ganador-ugel',      [BuenasPracticasController::class, 'declararGanadorUgel'])->name('buenas-practicas.ganador-ugel')->middleware('can:buenas-practicas.editar');
     // Flujo concurso — Nivel 2 Externo (MINEDU / DRE Huánuco)
-    Route::patch('/buenas-practicas/{buenaPractica}/externo',          [BuenasPracticasController::class, 'registrarExterno'])->name('buenas-practicas.externo')->middleware('can:buenas-practicas.ver');
-    Route::patch('/buenas-practicas/{buenaPractica}/resultado-externo',[BuenasPracticasController::class, 'resultadoExterno'])->name('buenas-practicas.resultado-externo')->middleware('can:buenas-practicas.ver');
+    Route::patch('/buenas-practicas/{buenaPractica}/externo',           [BuenasPracticasController::class, 'registrarExterno'])->name('buenas-practicas.externo')->middleware('can:buenas-practicas.editar');
+    Route::patch('/buenas-practicas/{buenaPractica}/resultado-externo', [BuenasPracticasController::class, 'resultadoExterno'])->name('buenas-practicas.resultado-externo')->middleware('can:buenas-practicas.editar');
 
     // --- Recomendaciones ---
     Route::get('/recomendaciones',                              [RecomendacionesController::class, 'index'])->name('recomendaciones')->middleware('can:recomendaciones.ver');
     Route::get('/recomendaciones/data',                         [RecomendacionesController::class, 'data'])->name('recomendaciones.data')->middleware('can:recomendaciones.ver');
     Route::post('/recomendaciones',                             [RecomendacionesController::class, 'store'])->name('recomendaciones.store')->middleware('can:recomendaciones.crear');
     Route::put('/recomendaciones/{recomendacion}',              [RecomendacionesController::class, 'update'])->name('recomendaciones.update')->middleware('can:recomendaciones.editar');
-    Route::delete('/recomendaciones/{recomendacion}',           [RecomendacionesController::class, 'destroy'])->name('recomendaciones.destroy')->middleware('can:recomendaciones.editar');
+    Route::delete('/recomendaciones/{recomendacion}',           [RecomendacionesController::class, 'destroy'])->name('recomendaciones.destroy')->middleware('can:recomendaciones.eliminar');
     Route::patch('/recomendaciones/{recomendacion}/atender',    [RecomendacionesController::class, 'marcarAtendida'])->name('recomendaciones.atender')->middleware('can:recomendaciones.editar');
 
     // --- Normativas ---
-    Route::get('/normativas',                           [NormativasController::class, 'index'])->name('normativas');
-    Route::get('/normativas/data',                      [NormativasController::class, 'data'])->name('normativas.data');
-    Route::get('/normativas/{normativa}',               [NormativasController::class, 'show'])->name('normativas.show');
-    Route::post('/normativas',                          [NormativasController::class, 'store'])->name('normativas.store')->middleware('can:normativas.gestionar');
-    Route::put('/normativas/{normativa}',               [NormativasController::class, 'update'])->name('normativas.update')->middleware('can:normativas.gestionar');
-    Route::delete('/normativas/{normativa}',            [NormativasController::class, 'destroy'])->name('normativas.destroy')->middleware('can:normativas.gestionar');
+    Route::middleware('can:normativas.ver')->group(function () {
+        Route::get('/normativas',             [NormativasController::class, 'index'])->name('normativas');
+        Route::get('/normativas/data',        [NormativasController::class, 'data'])->name('normativas.data');
+        Route::get('/normativas/{normativa}', [NormativasController::class, 'show'])->name('normativas.show');
+    });
+    Route::post('/normativas',                             [NormativasController::class, 'store'])->name('normativas.store')->middleware('can:normativas.gestionar');
+    Route::put('/normativas/{normativa}',                  [NormativasController::class, 'update'])->name('normativas.update')->middleware('can:normativas.gestionar');
+    Route::delete('/normativas/{normativa}',               [NormativasController::class, 'destroy'])->name('normativas.destroy')->middleware('can:normativas.gestionar');
     Route::patch('/normativas/{normativa}/toggle-vigente', [NormativasController::class, 'toggleVigente'])->name('normativas.toggle')->middleware('can:normativas.gestionar');
 
-    // --- Ayuda ---
+    // --- Ayuda --- (accesible a cualquier usuario autenticado)
     Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda');
 
     // ── ENCUESTAS ──────────────────────────────────────────────────────────────
     Route::prefix('encuestas')->name('encuestas.')->group(function () {
         Route::get('/',                              [EncuestaController::class, 'index'])    ->name('index')             ->middleware('can:encuesta.ver');
-        Route::get('/data',                          [EncuestaController::class, 'data'])     ->name('data');
+        Route::get('/data',                          [EncuestaController::class, 'data'])     ->name('data')              ->middleware('can:encuesta.ver');
         Route::get('/crear',                         [EncuestaController::class, 'create'])   ->name('crear')             ->middleware('can:encuesta.crear');
         Route::post('/',                             [EncuestaController::class, 'store'])    ->name('store')             ->middleware('can:encuesta.crear');
         Route::get('/{encuesta}/editar',             [EncuestaController::class, 'edit'])     ->name('editar')            ->middleware('can:encuesta.editar');
