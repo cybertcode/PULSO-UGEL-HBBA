@@ -9,10 +9,10 @@
       "i18n": "Resumen y estadísticas"
     },
 
-    { "menuHeader": "Sistema de Control Interno" },
+    { "menuHeader": "Control Interno (SCI)" },
     {
       "url": "/control-interno",
-      "name": "Control Interno",
+      "name": "Actividades SCI",
       "icon": "menu-icon icon-base ti tabler-clipboard-check",
       "slug": "sci-control-interno",
       "i18n": "Actividades y compromisos SCI"
@@ -25,16 +25,16 @@
       "i18n": "Documentos y registros"
     },
     {
-      "name": "Cumplimiento SCI",
+      "name": "Seguimiento",
       "icon": "menu-icon icon-base ti tabler-chart-dots",
-      "slug": ["cumplimiento.panel", "cumplimiento.responsables", "cumplimiento.sin-evidencia"],
-      "i18n": "Plazos, evidencias y responsables",
+      "slug": ["cumplimiento.panel", "cumplimiento.responsables", "cumplimiento.sin-evidencia", "mon-avance-unidades", "mon-ranking-unidades"],
+      "i18n": "SCI e Integridad en tiempo real",
       "submenu": [
         {
           "url": "/cumplimiento/panel",
-          "name": "Panel de Control",
+          "name": "Panel General",
           "slug": "cumplimiento.panel",
-          "i18n": "Resumen ejecutivo SCI"
+          "i18n": "Resumen SCI + Integridad"
         },
         {
           "url": "/cumplimiento/responsables",
@@ -47,25 +47,23 @@
           "name": "Sin Evidencia",
           "slug": "cumplimiento.sin-evidencia",
           "i18n": "Actividades sin documentar"
+        },
+        {
+          "url": "/avance-unidades",
+          "name": "Avance por Unidades",
+          "slug": "mon-avance-unidades",
+          "i18n": "Seguimiento por área"
+        },
+        {
+          "url": "/ranking-unidades",
+          "name": "Ranking de Unidades",
+          "slug": "mon-ranking-unidades",
+          "i18n": "Clasificación general"
         }
       ]
     },
-    {
-      "url": "/avance-unidades",
-      "name": "Avance por Unidades",
-      "icon": "menu-icon icon-base ti tabler-building-community",
-      "slug": "mon-avance-unidades",
-      "i18n": "Seguimiento por área"
-    },
-    {
-      "url": "/ranking-unidades",
-      "name": "Ranking de Unidades",
-      "icon": "menu-icon icon-base ti tabler-podium",
-      "slug": "mon-ranking-unidades",
-      "i18n": "Clasificación general"
-    },
 
-    { "menuHeader": "Módulo de Integridad" },
+    { "menuHeader": "Integridad Institucional" },
     {
       "url": "/modelo-integridad",
       "name": "Modelo de Integridad",
@@ -79,13 +77,6 @@
       "icon": "menu-icon icon-base ti tabler-traffic-lights",
       "slug": "sci-semaforo",
       "i18n": "Estado en tiempo real"
-    },
-    {
-      "url": "/alertas",
-      "name": "Alertas",
-      "icon": "menu-icon icon-base ti tabler-bell",
-      "slug": "mon-alertas",
-      "i18n": "Notificaciones y pendientes"
     },
     {
       "url": "/buenas-practicas",
@@ -109,7 +100,14 @@
       "i18n": "Premiación y destacados"
     },
 
-    { "menuHeader": "Reportes" },
+    { "menuHeader": "Seguimiento y Alertas" },
+    {
+      "url": "/alertas",
+      "name": "Alertas",
+      "icon": "menu-icon icon-base ti tabler-bell",
+      "slug": "mon-alertas",
+      "i18n": "Notificaciones y pendientes"
+    },
     {
       "url": "/reportes",
       "name": "Reportes",
@@ -179,6 +177,8 @@
         }
       ]
     },
+
+    { "menuHeader": "Configuración" },
     {
       "url": "/configuracion",
       "name": "Configuración",
@@ -193,8 +193,6 @@
       "slug": "slider-landing",
       "i18n": "Slides de la página principal"
     },
-
-    { "menuHeader": "Soporte" },
     {
       "url": "/ayuda",
       "name": "Ayuda",
