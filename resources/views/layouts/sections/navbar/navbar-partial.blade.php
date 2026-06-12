@@ -13,8 +13,8 @@ $userCargo      = $authUser?->cargo?->nombre ?? 'Usuario';
 $userUnidad     = $authUser?->unidadOrganica?->nombre ?? null;
 $userRol        = $authUser?->roles->first()?->name ?? null;
 
-// Alertas reales para el dropdown de notificaciones
-$alertasDropdown = $authUser
+// Alertas reales para el dropdown de notificaciones (solo si tiene permiso)
+$alertasDropdown = ($authUser && $authUser->can('alertas.ver'))
     ? \App\Models\Alerta::where('leida', false)
         ->with('actividad:id,nombre')
         ->latest()
@@ -142,6 +142,7 @@ $totalAlertas = $alertasDropdown->count();
           </div>
         </div>
         <div class="dropdown-shortcuts-list scrollable-container">
+          {{-- Dashboard — siempre visible --}}
           <div class="row row-bordered overflow-visible g-0">
             <div class="dropdown-shortcuts-item col">
               <span class="dropdown-shortcuts-icon rounded-circle mb-3">
@@ -150,6 +151,7 @@ $totalAlertas = $alertasDropdown->count();
               <a href="{{ route('dashboard') }}" class="stretched-link">Dashboard</a>
               <small>Panel principal</small>
             </div>
+            @can('control-interno.ver')
             <div class="dropdown-shortcuts-item col">
               <span class="dropdown-shortcuts-icon rounded-circle mb-3">
                 <i class="icon-base ti tabler-clipboard-list icon-26px text-heading"></i>
@@ -157,8 +159,11 @@ $totalAlertas = $alertasDropdown->count();
               <a href="{{ route('sci-control-interno') }}" class="stretched-link">Control Interno</a>
               <small>Actividades SCI</small>
             </div>
+            @endcan
           </div>
+          @canany(['reportes.ver', 'reconocimientos.ver'])
           <div class="row row-bordered overflow-visible g-0">
+            @can('reportes.ver')
             <div class="dropdown-shortcuts-item col">
               <span class="dropdown-shortcuts-icon rounded-circle mb-3">
                 <i class="icon-base ti tabler-award icon-26px text-heading"></i>
@@ -173,7 +178,9 @@ $totalAlertas = $alertasDropdown->count();
               <a href="{{ route('rep-reportes') }}" class="stretched-link">Reportes</a>
               <small>PDF / Excel</small>
             </div>
+            @endcan
           </div>
+          @endcanany
           @can('configuracion.ver')
           <div class="row row-bordered overflow-visible g-0">
             <div class="dropdown-shortcuts-item col">
@@ -197,6 +204,7 @@ $totalAlertas = $alertasDropdown->count();
     </li>
 
     <!-- Notificaciones — alertas reales del sistema -->
+    @can('alertas.ver')
     <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
       <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill"
         href="javascript:void(0);" data-bs-toggle="dropdown" data-bs-auto-close="outside">
@@ -280,6 +288,7 @@ $totalAlertas = $alertasDropdown->count();
         </li>
       </ul>
     </li>
+    @endcan
     <!--/ Notificaciones -->
 
     <!-- Usuario autenticado -->
@@ -328,6 +337,7 @@ $totalAlertas = $alertasDropdown->count();
             <i class="icon-base ti tabler-user-circle me-3 icon-md"></i><span>Mi Perfil</span>
           </a>
         </li>
+        @can('alertas.ver')
         <li>
           <a class="dropdown-item" href="{{ route('mon-alertas') }}">
             <i class="icon-base ti tabler-bell me-3 icon-md"></i>
@@ -337,6 +347,7 @@ $totalAlertas = $alertasDropdown->count();
             @endif
           </a>
         </li>
+        @endcan
 
         @can('configuracion.ver')
         <li>

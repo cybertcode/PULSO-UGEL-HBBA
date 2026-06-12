@@ -41,6 +41,7 @@ use App\Http\Controllers\pages\EncuestaController;
 use App\Http\Controllers\pages\EncuestaRespuestaController;
 use App\Http\Controllers\pages\EncuestaResultadoController;
 use App\Http\Controllers\pages\NormativasController;
+use App\Http\Controllers\pages\SearchController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
 Route::get('/',                    [LandingController::class, 'index'])->name('landing');
@@ -63,6 +64,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/search/data', [SearchController::class, 'data'])->name('search.data');
     Route::get('/diag', fn() => view('content.dashboard.diag'))->name('diag')->middleware('can:configuracion.ver');
 
     // Slider del Landing
