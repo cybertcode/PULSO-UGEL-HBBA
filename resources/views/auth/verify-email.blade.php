@@ -1,12 +1,13 @@
 @php
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 $configData = Helper::appClasses();
 $customizerHidden = 'customizer-hide';
 @endphp
 
 @extends('layouts/blankLayout')
 
-@section('title', 'Verificar Correo - PULSO UGEL')
+@section('title', 'Verificar Correo - ' . ($configInstitucional?->sigla ?? $configInstitucional?->nombre_institucion ?? 'PULSO UGEL'))
 
 @section('page-style')
 @vite('resources/assets/vendor/scss/pages/page-auth.scss')
@@ -14,9 +15,16 @@ $customizerHidden = 'customizer-hide';
 
 @section('content')
 <div class="authentication-wrapper authentication-cover">
+
   <a href="{{ url('/') }}" class="app-brand auth-cover-brand">
-    <span class="app-brand-logo demo">@include('_partials.macros')</span>
-    <span class="app-brand-text demo text-heading fw-bold">PULSO UGEL</span>
+    @if(!empty($configInstitucional?->logo_ruta))
+      <span class="app-brand-logo demo">
+        <img src="{{ Storage::url($configInstitucional->logo_ruta) }}" height="28" alt="logo" class="rounded">
+      </span>
+    @endif
+    <span class="app-brand-text demo text-heading fw-bold">
+      {{ $configInstitucional?->sigla ?? $configInstitucional?->nombre_institucion ?? 'PULSO UGEL' }}
+    </span>
   </a>
 
   <div class="authentication-inner row m-0">
@@ -40,9 +48,9 @@ $customizerHidden = 'customizer-hide';
         <h4 class="mb-1">Verifica tu correo ✉️</h4>
 
         @if (session('status') == 'verification-link-sent')
-        <div class="alert alert-success mb-4" role="alert">
-          Se envió un nuevo enlace de verificación a tu correo electrónico.
-        </div>
+          <div class="alert alert-success mb-4" role="alert">
+            Se envió un nuevo enlace de verificación a tu correo electrónico.
+          </div>
         @endif
 
         <p class="text-start mb-0">
@@ -64,7 +72,12 @@ $customizerHidden = 'customizer-hide';
         </div>
 
         <div class="divider my-6">
-          <div class="divider-text">UGEL Huacaybamba · Huánuco</div>
+          <div class="divider-text">
+            {{ $configInstitucional?->nombre_institucion ?? 'PULSO UGEL' }}
+            @if($configInstitucional?->provincia || $configInstitucional?->departamento)
+              &bull; {{ implode(', ', array_filter([$configInstitucional->provincia, $configInstitucional->departamento])) }}
+            @endif
+          </div>
         </div>
 
         <p class="text-center text-muted small mb-0">

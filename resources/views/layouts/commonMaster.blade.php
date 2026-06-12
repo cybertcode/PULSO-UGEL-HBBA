@@ -45,6 +45,10 @@
     content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
   @php
+    // Garantizar que $configInstitucional esté disponible aunque el composer falle
+    if (empty($configInstitucional)) {
+        try { $configInstitucional = \App\Models\ConfiguracionInstitucional::cached(); } catch (\Exception $e) { $configInstitucional = null; }
+    }
     $instNombre = $configInstitucional?->nombre_institucion ?? config('variables.templateName', 'PULSO UGEL');
     $instSigla  = $configInstitucional?->sigla ?? config('variables.templateSuffix', 'Sistema SCI');
     $instDesc   = $configInstitucional?->descripcion

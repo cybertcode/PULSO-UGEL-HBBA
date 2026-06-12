@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\language\LanguageController;
 use App\Http\Controllers\pages\MiscError;
+use App\Http\Controllers\pages\MiscNotAuthorized;
+use App\Http\Controllers\pages\MiscUnderMaintenance;
+use App\Http\Controllers\pages\MiscComingSoon;
 use App\Http\Controllers\pages\DashboardController;
 use App\Http\Controllers\pages\ControlInternoController;
 use App\Http\Controllers\pages\ModeloIntegridadController;
@@ -45,7 +48,10 @@ Route::get('/noticias/{id}',       [LandingController::class, 'show'])->name('la
 Route::get('/publicaciones',       [LandingController::class, 'publicaciones'])->name('landing.publicaciones');
 Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
 Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('auth-register-basic');
-Route::get('/pages/misc-error',    [MiscError::class,     'index'])->name('pages-misc-error');
+Route::get('/pages/misc-error',           [MiscError::class,          'index'])->name('pages-misc-error');
+Route::get('/pages/misc-not-authorized',  [MiscNotAuthorized::class,   'index'])->name('pages-misc-not-authorized');
+Route::get('/pages/misc-under-maintenance',[MiscUnderMaintenance::class,'index'])->name('pages-misc-under-maintenance');
+Route::get('/pages/misc-comingsoon',      [MiscComingSoon::class,      'index'])->name('pages-misc-comingsoon');
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
 

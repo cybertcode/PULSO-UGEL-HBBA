@@ -1,12 +1,14 @@
 @php
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 $configData = Helper::appClasses();
 $customizerHidden = 'customizer-hide';
+try { $ci = \App\Models\ConfiguracionInstitucional::cached(); } catch (\Exception $e) { $ci = null; }
 @endphp
 
 @extends('layouts/blankLayout')
 
-@section('title', 'Restablecer Contraseña - PULSO UGEL')
+@section('title', 'Restablecer Contraseña - ' . ($ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL'))
 
 @section('page-style')
 @vite(['resources/assets/vendor/scss/pages/page-auth.scss'])
@@ -14,9 +16,16 @@ $customizerHidden = 'customizer-hide';
 
 @section('content')
 <div class="authentication-wrapper authentication-cover">
+
   <a href="{{ url('/') }}" class="app-brand auth-cover-brand">
-    <span class="app-brand-logo demo">@include('_partials.macros')</span>
-    <span class="app-brand-text demo text-heading fw-bold">PULSO UGEL</span>
+    @if(!empty($ci?->logo_ruta))
+      <span class="app-brand-logo demo">
+        <img src="{{ Storage::url($ci->logo_ruta) }}" height="28" alt="logo" class="rounded">
+      </span>
+    @endif
+    <span class="app-brand-text demo text-heading fw-bold">
+      {{ $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL' }}
+    </span>
   </a>
 
   <div class="authentication-inner row m-0">
@@ -41,9 +50,9 @@ $customizerHidden = 'customizer-hide';
         <p class="mb-6"><span class="fw-medium">Tu nueva contraseña debe ser diferente a las anteriores</span></p>
 
         @if ($errors->any())
-        <div class="alert alert-danger mb-4">
-          @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
-        </div>
+          <div class="alert alert-danger mb-4">
+            @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+          </div>
         @endif
 
         <form id="formAuthentication" class="mb-6" action="{{ route('password.update') }}" method="POST">
@@ -53,12 +62,11 @@ $customizerHidden = 'customizer-hide';
           <div class="mb-6">
             <label for="email" class="form-label">Correo electrónico</label>
             <input type="email" class="form-control @error('email') is-invalid @enderror"
-              id="email" name="email" placeholder="tu.correo@ugel.gob.pe"
+              id="email" name="email"
+              placeholder="{{ $ci?->correo_institucional ?? 'tu.correo@ugel.gob.pe' }}"
               value="{{ Request()->email }}" readonly />
             @error('email')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
+              <span class="invalid-feedback" role="alert"><span class="fw-medium">{{ $message }}</span></span>
             @enderror
           </div>
 
@@ -73,9 +81,7 @@ $customizerHidden = 'customizer-hide';
               </span>
             </div>
             @error('password')
-            <span class="invalid-feedback" role="alert">
-              <span class="fw-medium">{{ $message }}</span>
-            </span>
+              <span class="invalid-feedback" role="alert"><span class="fw-medium">{{ $message }}</span></span>
             @enderror
           </div>
 
@@ -94,13 +100,22 @@ $customizerHidden = 'customizer-hide';
 
           <div class="text-center">
             @if (Route::has('login'))
-            <a href="{{ route('login') }}" class="d-flex justify-content-center align-items-center">
-              <i class="icon-base ti tabler-chevron-left scaleX-n1-rtl me-1_5"></i>
-              Volver al inicio de sesión
-            </a>
+              <a href="{{ route('login') }}" class="d-flex justify-content-center align-items-center">
+                <i class="icon-base ti tabler-chevron-left scaleX-n1-rtl me-1_5"></i>
+                Volver al inicio de sesión
+              </a>
             @endif
           </div>
         </form>
+
+        <div class="divider my-6">
+          <div class="divider-text">
+            {{ $ci?->nombre_institucion ?? 'PULSO UGEL' }}
+            @if($ci?->provincia || $ci?->departamento)
+              &bull; {{ implode(', ', array_filter([$ci->provincia, $ci->departamento])) }}
+            @endif
+          </div>
+        </div>
       </div>
     </div>
   </div>
