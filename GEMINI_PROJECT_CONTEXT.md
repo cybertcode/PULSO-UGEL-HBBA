@@ -1,6 +1,28 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.0.0] - 2026-06-10 (Sesión Actual)
+## [v2.1.0] - 2026-06-11 (Sesión Actual)
+### Módulo de Normativas, Refactorización de Buenas Prácticas y Alertas
+- **Módulo de Normativas**: Implementación completa del sistema de gestión de normativas legales e institucionales, incluyendo CRUD administrativo y vistas públicas.
+- **Refactorización de Buenas Prácticas**: 
+    - Evolución del módulo a un esquema de dos niveles para mejor organización.
+    - Soporte para adjuntar archivos técnicos y evidencias en formato PDF/documentos.
+    - Sistema de estados para concursos de buenas prácticas.
+- **Mejoras en Configuración Institucional**: 
+    - Integración de autoridades mediante relaciones de clave foránea para mayor integridad.
+    - Implementación de configuración granular para niveles de notificación del sistema.
+- **Sistema de Alertas por Email**: Creación de Jobs asíncronos para el envío automatizado de alertas, optimizando el rendimiento del servidor.
+- **Optimización de Ranking y Reportes**: 
+    - Adición de la dimensión de "módulo" en el historial de ranking para trazabilidad por áreas.
+    - Nuevos componentes visuales (`_ranking.blade.php`, `_tabla.blade.php`) para reportes ejecutivos.
+- **Refinamiento UI/UX Global**: Actualización masiva de controladores y vistas (Dashboard, Avance, Reconocimientos) para integrar las nuevas métricas y funcionalidades.
+
+### Estructura Técnica
+- **Nuevos Modelos y Controladores**: `Normativa`, `NormativasController`.
+- **Migraciones**: Implementación de 11 nuevas migraciones para normativas, archivos en buenas prácticas, autoridades en configuración y trazabilidad de ranking.
+- **Seeders**: `NormativasSeeder` para inicialización de base legal.
+- **UI**: Nuevas carpetas de vistas en `resources/views/content/normativas/` y parciales de reportes.
+
+## [v2.0.0] - 2026-06-10
 ### Refactorización Estructural Mayor, Módulo de Encuestas y Seguimiento Visual
 - **Nueva Estructura SCI e Integridad**: Evolución de los módulos legacy (`PACI`, `Matriz de Riesgos`, `Actas de Comité`) hacia un modelo dinámico y jerárquico basado en Ejes, Etapas, Componentes y Preguntas.
 - **Módulo de Encuestas (PULSO-Polls)**: Implementación integral de un motor de encuestas institucional con:

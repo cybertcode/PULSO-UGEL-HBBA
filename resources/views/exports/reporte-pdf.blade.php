@@ -37,7 +37,7 @@
 
 <table style="width:auto;border:none;margin-bottom:10px">
   <tr>
-    @if($filtro_componente)<td style="padding:2px 10px 2px 0;border:none"><strong>Componente:</strong> {{ $filtro_componente }}</td>@endif
+    @if(!empty($filtro_modulo))<td style="padding:2px 10px 2px 0;border:none"><strong>Módulo:</strong> {{ $filtro_modulo }}</td>@endif
     @if($filtro_estado)<td style="padding:2px 10px 2px 0;border:none"><strong>Estado:</strong> {{ ucfirst($filtro_estado) }}</td>@endif
     @if($filtro_unidad)<td style="padding:2px 10px 2px 0;border:none"><strong>Unidad:</strong> {{ $filtro_unidad }}</td>@endif
   </tr>
@@ -60,7 +60,7 @@
     <tr>
       <th>#</th>
       <th>Actividad</th>
-      <th>Componente</th>
+      <th>Módulo</th>
       <th>Unidad</th>
       <th>Responsable</th>
       <th>Estado</th>
@@ -78,7 +78,7 @@
     <tr>
       <td style="color:#999">{{ $i + 1 }}</td>
       <td>{{ $a->nombre }}</td>
-      <td>{{ $a->componente->nombre ?? '—' }}</td>
+      <td>{{ $a->modulo === 'sci' ? 'SCI' : 'Integridad' }}</td>
       <td>{{ $a->unidadOrganica->nombre ?? '—' }}</td>
       <td>{{ $a->responsables->pluck('name')->implode(', ') ?: '—' }}</td>
       <td><span class="badge badge-{{ $eb }}">{{ ucfirst($a->estado) }}</span></td>

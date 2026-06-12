@@ -16,24 +16,24 @@ class ActividadesExport implements FromCollection, WithHeadings, WithStyles, Wit
 {
     public function __construct(
         private int $anio,
-        private ?int $componenteId,
+        private ?string $modulo,
         private ?string $estado,
         private ?int $unidadId,
     ) {}
 
     public function collection()
     {
-        $query = Actividad::with(['componente', 'unidadOrganica', 'responsables'])
+        $query = Actividad::with(['unidadOrganica', 'responsables'])
             ->whereYear('created_at', $this->anio);
 
-        if ($this->componenteId) $query->where('componente_id', $this->componenteId);
-        if ($this->estado)       $query->where('estado', $this->estado);
-        if ($this->unidadId)     $query->where('unidad_organica_id', $this->unidadId);
+        if ($this->modulo)   $query->where('modulo', $this->modulo);
+        if ($this->estado)   $query->where('estado', $this->estado);
+        if ($this->unidadId) $query->where('unidad_organica_id', $this->unidadId);
 
         return $query->orderBy('fecha_limite')->get()->map(fn($a) => [
-            $a->id,
+            $a->codigo ?? $a->id,
             $a->nombre,
-            $a->componente->nombre ?? '—',
+            $a->modulo === 'sci' ? 'Control Interno (SCI)' : 'Modelo de Integridad',
             $a->unidadOrganica->nombre ?? '—',
             $a->responsables->pluck('name')->implode(', ') ?: '—',
             ucfirst($a->estado),
@@ -46,7 +46,7 @@ class ActividadesExport implements FromCollection, WithHeadings, WithStyles, Wit
 
     public function headings(): array
     {
-        return ['ID', 'Actividad', 'Componente', 'Unidad Orgánica', 'Responsable', 'Estado', 'Prioridad', 'Fecha Límite', '% Avance', 'Registrado'];
+        return ['Código', 'Actividad', 'Módulo', 'Unidad Orgánica', 'Responsable', 'Estado', 'Prioridad', 'Fecha Límite', '% Avance', 'Registrado'];
     }
 
     public function styles(Worksheet $sheet)
@@ -62,7 +62,7 @@ class ActividadesExport implements FromCollection, WithHeadings, WithStyles, Wit
 
     public function columnWidths(): array
     {
-        return ['A' => 6, 'B' => 40, 'C' => 28, 'D' => 28, 'E' => 24, 'F' => 14, 'G' => 12, 'H' => 14, 'I' => 10, 'J' => 14];
+        return ['A' => 14, 'B' => 40, 'C' => 24, 'D' => 28, 'E' => 24, 'F' => 14, 'G' => 12, 'H' => 14, 'I' => 10, 'J' => 14];
     }
 
     public function title(): string

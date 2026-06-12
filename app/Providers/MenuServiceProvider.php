@@ -224,6 +224,14 @@ class MenuServiceProvider extends ServiceProvider
                         'i18n' => 'Trabajadores destacados',
                     ];
                 }
+
+                $menu[] = (object)[
+                    'url'  => '/normativas',
+                    'name' => 'Normativas',
+                    'icon' => 'menu-icon icon-base ti tabler-book-2',
+                    'slug' => 'normativas',
+                    'i18n' => 'Marco legal y documentos',
+                ];
             }
 
 
@@ -307,7 +315,7 @@ class MenuServiceProvider extends ServiceProvider
                     ];
 
                     $menu[] = (object)[
-                        'url'  => '/administracion/sci-estructura',
+                        'url'  => '/administracion/sci',
                         'name' => 'Estructura SCI',
                         'icon' => 'menu-icon icon-base ti tabler-list-tree',
                         'slug' => 'adm-sci-estructura',
@@ -315,7 +323,7 @@ class MenuServiceProvider extends ServiceProvider
                     ];
 
                     $menu[] = (object)[
-                        'url'  => '/administracion/integridad-estructura',
+                        'url'  => '/administracion/integridad',
                         'name' => 'Estructura Integridad',
                         'icon' => 'menu-icon icon-base ti tabler-list-tree',
                         'slug' => 'adm-integridad-estructura',

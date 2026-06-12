@@ -1,5 +1,6 @@
 @php
 use Illuminate\Support\Str;
+use App\Support\SemaforoHelper;
 $configData = Helper::appClasses();
 @endphp
 @extends('layouts/layoutMaster')
@@ -17,24 +18,34 @@ $configData = Helper::appClasses();
 /* ── Módulo tabs principales ── */
 .mod-tab-btn {
   display: flex; align-items: center; gap: .5rem;
-  padding: .55rem 1.4rem; border-radius: 10px; border: 1.5px solid transparent;
+  padding: .6rem 1.4rem; border-radius: 10px; border: 1.5px solid rgba(0,0,0,.14);
   font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .18s;
-  background: transparent; white-space: nowrap;
+  background: var(--bs-body-bg); color: #6e6b7b; white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
 }
-.mod-tab-btn.active-sci  { background: rgba(105,108,255,.1); border-color: #696cff; color: #696cff; }
-.mod-tab-btn.active-int  { background: rgba(40,199,111,.1);  border-color: #28c76f; color: #28c76f; }
-.mod-tab-btn.active-gen  { background: rgba(108,117,125,.1); border-color: #6c757d; color: #6c757d; }
-.mod-tab-btn:not(.active-sci):not(.active-int):not(.active-gen) {
-  color: #6e6b7b; border-color: rgba(0,0,0,.1);
-}
+.mod-tab-btn.active-sci  { background: rgba(105,108,255,.1); border-color: #696cff; color: #696cff; box-shadow: 0 2px 10px rgba(105,108,255,.2); }
+.mod-tab-btn.active-int  { background: rgba(40,199,111,.1);  border-color: #28c76f; color: #28c76f; box-shadow: 0 2px 10px rgba(40,199,111,.2); }
+.mod-tab-btn.active-gen  { background: rgba(108,117,125,.1); border-color: #6c757d; color: #6c757d; box-shadow: 0 2px 10px rgba(108,117,125,.15); }
 .mod-tab-btn:hover:not(.active-sci):not(.active-int):not(.active-gen) {
-  background: rgba(0,0,0,.04);
+  background: rgba(105,108,255,.05); border-color: rgba(105,108,255,.3); color: #696cff;
 }
 
-/* ── KPI cards ── */
-.kpi-card { border-radius: 14px; border: 1px solid rgba(0,0,0,.06); overflow:hidden; transition: box-shadow .18s; }
-.kpi-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.09); }
-.kpi-bar { height: 3px; }
+/* ── KPI cards (estilo mis-actividades) ── */
+.kpi-card {
+  border-radius: 14px; border: none; overflow: hidden;
+  box-shadow: rgba(47,43,61,.14) 0px 3px 12px 0px;
+  transition: transform .18s, box-shadow .18s;
+}
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,.14); }
+
+.kpi-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+}
+.kpi-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+.kpi-label { font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.kpi-sub   { font-size: .8rem; font-weight: 600; opacity: .85; }
 
 /* ── Filtros inline ── */
 .filter-bar { background: var(--bs-body-bg); border: 1px solid rgba(0,0,0,.07); border-radius: 12px; }
@@ -118,8 +129,8 @@ $configData = Helper::appClasses();
       @endif
     </p>
   </div>
-  <a href="{{ route('rep-reportes') }}" class="btn btn-sm btn-label-secondary align-self-start">
-    <i class="ti tabler-download me-1"></i>Exportar
+  <a href="{{ route('mon-avance-unidades.exportar') }}" class="btn btn-sm btn-label-success align-self-start">
+    <i class="ti tabler-file-spreadsheet me-1"></i>Exportar Excel
   </a>
 </div>
 
@@ -147,169 +158,223 @@ $configData = Helper::appClasses();
 {{-- ════════════════════════════════════════════
      KPI HERO — cambia según módulo activo
 ════════════════════════════════════════════ --}}
-{{-- === SCI === --}}
+{{-- === SCI — 4 KPI cards horizontales === --}}
 <div id="kpi-sci" class="mod-panel">
   <div class="row g-4 mb-4">
-    {{-- Gauge SCI --}}
+    {{-- Avance SCI --}}
     <div class="col-xl-3 col-sm-6">
-      <div class="kpi-card card h-100">
-        <div class="kpi-bar" style="background:#696cff"></div>
-        <div class="card-body d-flex flex-column align-items-center text-center py-4">
-          <div id="chartSci"></div>
-          <h2 class="fw-bold mb-1 mt-n2" style="color:{{ $gc_sci }}">{{ $sci_avance }}%</h2>
-          <p class="text-muted mb-2" style="font-size:.8rem">Avance SCI — UGEL</p>
-          <span class="badge bg-{{ $col_sci }} rounded-pill px-3 mb-4">{{ $lbl_sci }}</span>
-          <div class="w-100 d-flex flex-column gap-2 text-start">
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#28c76f;flex-shrink:0"></span><small class="text-muted">Completadas</small><span class="fw-bold ms-auto text-success">{{ $sci_completadas }}</span></div>
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#ff9f43;flex-shrink:0"></span><small class="text-muted">En proceso</small><span class="fw-bold ms-auto text-warning">{{ $sci_en_proceso }}</span></div>
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#ea5455;flex-shrink:0"></span><small class="text-muted">Pendientes</small><span class="fw-bold ms-auto text-danger">{{ $sci_pendientes }}</span></div>
-            <div class="border-top pt-2 mt-1 d-flex align-items-center gap-2"><small class="text-muted fw-semibold">Total actividades</small><span class="fw-bold ms-auto">{{ $sci_total }}</span></div>
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Avance SCI</div>
+              <div class="kpi-value">{{ $sci_avance }}%</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-shield-check"></i>
+            </div>
           </div>
+          <div class="kpi-sub text-white-75">{{ $lbl_sci }} — UGEL</div>
         </div>
       </div>
     </div>
-    {{-- Top 3 SCI --}}
-    <div class="col-xl-9 col-sm-6">
-      <div class="row g-4 h-100">
-        @php $top3sci = $unidades->filter(fn($u) => $u->sci_total > 0)->sortByDesc('sci_porcentaje')->take(3)->values(); @endphp
-        @foreach($top3sci as $idx => $u)
-        <div class="col-12 col-md-4">
-          <div class="kpi-card card h-100">
-            <div class="kpi-bar" style="background:{{ $colorHex[$u->sci_color] }}"></div>
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between mb-3">
-                <div class="sigla-av bg-label-primary" style="background:rgba(105,108,255,.12);color:#696cff">{{ strtoupper(substr($u->sigla,0,2)) }}</div>
-                <span class="badge bg-label-secondary rounded-pill" style="font-size:9px">#{{ $idx+1 }} SCI</span>
-              </div>
-              <p class="fw-bold mb-0" style="font-size:13px">{{ $u->sigla }}</p>
-              <p class="text-muted mb-3" style="font-size:11px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ $u->nombre }}</p>
-              <div class="d-flex align-items-end gap-1 mb-2">
-                <h2 class="fw-bold mb-0" style="color:{{ $colorHex[$u->sci_color] }};line-height:1">{{ $u->sci_porcentaje }}</h2>
-                <span class="text-muted fw-semibold mb-1">%</span>
-              </div>
-              <div class="prog-mini mb-2">
-                <div class="prog-mini-bar" style="width:{{ $u->sci_porcentaje }}%;background:{{ $colorHex[$u->sci_color] }}"></div>
-              </div>
-              <small class="text-muted">{{ $u->sci_completadas }}/{{ $u->sci_total }} completadas</small>
+    {{-- Completadas SCI --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Completadas</div>
+              <div class="kpi-value">{{ $sci_completadas }}</div>
             </div>
-            <div class="card-footer border-top-0 pt-0 pb-3 px-3">
-              <span class="sema-badge w-100 justify-content-center" style="background:rgba({{ $colorRgb[$u->sci_color] }},.12);color:{{ $colorHex[$u->sci_color] }}">
-                {{ SemaforoHelper::label($u->sci_porcentaje, 75, 50, 'En avance', 'En proceso', 'En riesgo') }}
-              </span>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-circle-check"></i>
             </div>
           </div>
+          <div class="kpi-sub text-white-75">de {{ $sci_total }} actividades SCI</div>
         </div>
-        @endforeach
+      </div>
+    </div>
+    {{-- En proceso SCI --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#f7971e 0%,#ffd200 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">En Proceso</div>
+              <div class="kpi-value">{{ $sci_en_proceso }}</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-loader-2"></i>
+            </div>
+          </div>
+          <div class="kpi-sub text-white-75">Actividades en curso</div>
+        </div>
+      </div>
+    </div>
+    {{-- Pendientes SCI --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#cb2d3e 0%,#ef473a 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Pendientes</div>
+              <div class="kpi-value">{{ $sci_pendientes }}</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-clock-exclamation"></i>
+            </div>
+          </div>
+          <div class="kpi-sub text-white-75">Requieren atención</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-{{-- === INTEGRIDAD === --}}
+{{-- === INTEGRIDAD — 4 KPI cards horizontales === --}}
 <div id="kpi-integridad" class="mod-panel" style="display:none">
   <div class="row g-4 mb-4">
+    {{-- Avance Integridad --}}
     <div class="col-xl-3 col-sm-6">
-      <div class="kpi-card card h-100">
-        <div class="kpi-bar" style="background:#28c76f"></div>
-        <div class="card-body d-flex flex-column align-items-center text-center py-4">
-          <div id="chartInt"></div>
-          <h2 class="fw-bold mb-1 mt-n2" style="color:{{ $gc_int }}">{{ $int_avance }}%</h2>
-          <p class="text-muted mb-2" style="font-size:.8rem">Avance Integridad — UGEL</p>
-          <span class="badge bg-{{ $col_int }} rounded-pill px-3 mb-4">{{ $lbl_int }}</span>
-          <div class="w-100 d-flex flex-column gap-2 text-start">
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#28c76f;flex-shrink:0"></span><small class="text-muted">Completadas</small><span class="fw-bold ms-auto text-success">{{ $int_completadas }}</span></div>
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#ff9f43;flex-shrink:0"></span><small class="text-muted">En proceso</small><span class="fw-bold ms-auto text-warning">{{ $int_en_proceso }}</span></div>
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#ea5455;flex-shrink:0"></span><small class="text-muted">Pendientes</small><span class="fw-bold ms-auto text-danger">{{ $int_pendientes }}</span></div>
-            <div class="border-top pt-2 mt-1 d-flex align-items-center gap-2"><small class="text-muted fw-semibold">Total actividades</small><span class="fw-bold ms-auto">{{ $int_total }}</span></div>
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Avance Integridad</div>
+              <div class="kpi-value">{{ $int_avance }}%</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-heart-handshake"></i>
+            </div>
           </div>
+          <div class="kpi-sub text-white-75">{{ $lbl_int }} — UGEL</div>
         </div>
       </div>
     </div>
-    <div class="col-xl-9 col-sm-6">
-      <div class="row g-4 h-100">
-        @php $top3int = $unidades->filter(fn($u) => $u->int_total > 0)->sortByDesc('int_porcentaje')->take(3)->values(); @endphp
-        @foreach($top3int as $idx => $u)
-        <div class="col-12 col-md-4">
-          <div class="kpi-card card h-100">
-            <div class="kpi-bar" style="background:{{ $colorHex[$u->int_color] }}"></div>
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between mb-3">
-                <div class="sigla-av" style="background:rgba(40,199,111,.12);color:#28c76f">{{ strtoupper(substr($u->sigla,0,2)) }}</div>
-                <span class="badge bg-label-secondary rounded-pill" style="font-size:9px">#{{ $idx+1 }} Integ.</span>
-              </div>
-              <p class="fw-bold mb-0" style="font-size:13px">{{ $u->sigla }}</p>
-              <p class="text-muted mb-3" style="font-size:11px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ $u->nombre }}</p>
-              <div class="d-flex align-items-end gap-1 mb-2">
-                <h2 class="fw-bold mb-0" style="color:{{ $colorHex[$u->int_color] }};line-height:1">{{ $u->int_porcentaje }}</h2>
-                <span class="text-muted fw-semibold mb-1">%</span>
-              </div>
-              <div class="prog-mini mb-2">
-                <div class="prog-mini-bar" style="width:{{ $u->int_porcentaje }}%;background:{{ $colorHex[$u->int_color] }}"></div>
-              </div>
-              <small class="text-muted">{{ $u->int_completadas }}/{{ $u->int_total }} completadas</small>
+    {{-- Completadas Integridad --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Completadas</div>
+              <div class="kpi-value">{{ $int_completadas }}</div>
             </div>
-            <div class="card-footer border-top-0 pt-0 pb-3 px-3">
-              <span class="sema-badge w-100 justify-content-center" style="background:rgba({{ $colorRgb[$u->int_color] }},.12);color:{{ $colorHex[$u->int_color] }}">
-                {{ SemaforoHelper::label($u->int_porcentaje, 75, 50, 'En avance', 'En proceso', 'En riesgo') }}
-              </span>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-circle-check"></i>
             </div>
           </div>
+          <div class="kpi-sub text-white-75">de {{ $int_total }} actividades</div>
         </div>
-        @endforeach
+      </div>
+    </div>
+    {{-- En proceso Integridad --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#f7971e 0%,#ffd200 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">En Proceso</div>
+              <div class="kpi-value">{{ $int_en_proceso }}</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-loader-2"></i>
+            </div>
+          </div>
+          <div class="kpi-sub text-white-75">Actividades en curso</div>
+        </div>
+      </div>
+    </div>
+    {{-- Pendientes Integridad --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#cb2d3e 0%,#ef473a 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Pendientes</div>
+              <div class="kpi-value">{{ $int_pendientes }}</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-clock-exclamation"></i>
+            </div>
+          </div>
+          <div class="kpi-sub text-white-75">Requieren atención</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-{{-- === GENERAL === --}}
+{{-- === GENERAL — 4 KPI cards horizontales === --}}
 <div id="kpi-general" class="mod-panel" style="display:none">
   <div class="row g-4 mb-4">
+    {{-- Avance General --}}
     <div class="col-xl-3 col-sm-6">
-      <div class="kpi-card card h-100">
-        <div class="kpi-bar" style="background:#6c757d"></div>
-        <div class="card-body d-flex flex-column align-items-center text-center py-4">
-          <div id="chartGen"></div>
-          <h2 class="fw-bold mb-1 mt-n2" style="color:{{ $gc_global }}">{{ $avance_global }}%</h2>
-          <p class="text-muted mb-2" style="font-size:.8rem">Promedio General UGEL</p>
-          <span class="badge bg-{{ $col_global }} rounded-pill px-3 mb-4">{{ $lbl_global }}</span>
-          <div class="w-100 d-flex flex-column gap-2 text-start">
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#28c76f;flex-shrink:0"></span><small class="text-muted">Completadas</small><span class="fw-bold ms-auto text-success">{{ $total_completadas }}</span></div>
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#ff9f43;flex-shrink:0"></span><small class="text-muted">En proceso</small><span class="fw-bold ms-auto text-warning">{{ $total_en_proceso }}</span></div>
-            <div class="d-flex align-items-center gap-2"><span style="width:7px;height:7px;border-radius:50%;background:#ea5455;flex-shrink:0"></span><small class="text-muted">Pendientes</small><span class="fw-bold ms-auto text-danger">{{ $total_pendientes }}</span></div>
-            <div class="border-top pt-2 mt-1 d-flex align-items-center gap-2"><small class="text-muted fw-semibold">Total actividades</small><span class="fw-bold ms-auto">{{ $total_actividades }}</span></div>
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Avance General</div>
+              <div class="kpi-value">{{ $avance_global }}%</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-chart-bar"></i>
+            </div>
           </div>
+          <div class="kpi-sub text-white-75">{{ $lbl_global }} — SCI + Integridad</div>
         </div>
       </div>
     </div>
-    <div class="col-xl-9 col-sm-6">
-      <div class="row g-4 h-100">
-        @php $top3gen = $unidades->take(3); @endphp
-        @foreach($top3gen as $idx => $u)
-        <div class="col-12 col-md-4">
-          <div class="kpi-card card h-100">
-            <div class="kpi-bar" style="background:{{ $colorHex[$u->color] }}"></div>
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between mb-3">
-                <div class="sigla-av" style="background:rgba(108,117,125,.12);color:#6c757d">{{ strtoupper(substr($u->sigla,0,2)) }}</div>
-                <span class="badge bg-label-secondary rounded-pill" style="font-size:9px">#{{ $idx+1 }}</span>
-              </div>
-              <p class="fw-bold mb-0" style="font-size:13px">{{ $u->sigla }}</p>
-              <p class="text-muted mb-3" style="font-size:11px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ $u->nombre }}</p>
-              <div class="d-flex align-items-end gap-1 mb-2">
-                <h2 class="fw-bold mb-0" style="color:{{ $colorHex[$u->color] }};line-height:1">{{ $u->porcentaje }}</h2>
-                <span class="text-muted fw-semibold mb-1">%</span>
-              </div>
-              <div class="prog-mini mb-2">
-                <div class="prog-mini-bar" style="width:{{ $u->porcentaje }}%;background:{{ $colorHex[$u->color] }}"></div>
-              </div>
-              <small class="text-muted">{{ $u->completadas_count }}/{{ $u->actividades_count }} completadas</small>
+    {{-- Total actividades --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Total Actividades</div>
+              <div class="kpi-value">{{ $total_actividades }}</div>
             </div>
-            <div class="card-footer border-top-0 pt-0 pb-3 px-3">
-              <span class="sema-badge w-100 justify-content-center" style="background:rgba({{ $colorRgb[$u->color] }},.12);color:{{ $colorHex[$u->color] }}">{{ $u->semaforo }}</span>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-clipboard-list"></i>
             </div>
           </div>
+          <div class="kpi-sub text-white-75">SCI + Integridad</div>
         </div>
-        @endforeach
+      </div>
+    </div>
+    {{-- Completadas General --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Completadas</div>
+              <div class="kpi-value">{{ $total_completadas }}</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-circle-check"></i>
+            </div>
+          </div>
+          <div class="kpi-sub text-white-75">{{ $total_en_proceso }} en proceso</div>
+        </div>
+      </div>
+    </div>
+    {{-- Pendientes General --}}
+    <div class="col-xl-3 col-sm-6">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#cb2d3e 0%,#ef473a 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Pendientes</div>
+              <div class="kpi-value">{{ $total_pendientes }}</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-clock-exclamation"></i>
+            </div>
+          </div>
+          <div class="kpi-sub text-white-75">Requieren atención</div>
+        </div>
       </div>
     </div>
   </div>
@@ -318,10 +383,10 @@ $configData = Helper::appClasses();
 {{-- ════════════════════════════════════════════
      CUERPO PRINCIPAL: TABLA + PANEL LATERAL
 ════════════════════════════════════════════ --}}
-<div class="row g-5">
+<div class="row g-4">
 
-  {{-- ── Tabla principal ─────────────────────────────────────────── --}}
-  <div class="col-xl-8">
+  {{-- ── Tabla principal (full-width) ──────────────────────────────── --}}
+  <div class="col-12">
     <div class="card" style="border-radius:14px;border:1px solid rgba(0,0,0,.06)">
 
       {{-- Encabezado tabla con filtros en tiempo real --}}
@@ -375,6 +440,9 @@ $configData = Helper::appClasses();
               data-sci-color="{{ $u->sci_color }}"
               data-int-color="{{ $u->int_color }}"
               data-gen-color="{{ $u->color }}"
+              data-sci-pct="{{ $u->sci_porcentaje }}"
+              data-int-pct="{{ $u->int_porcentaje }}"
+              data-gen-pct="{{ $u->porcentaje }}"
             >
               <td class="ps-4">
                 <div class="d-flex align-items-center gap-3">
@@ -397,17 +465,25 @@ $configData = Helper::appClasses();
               <td>
                 {{-- SCI --}}
                 <div class="d-flex align-items-center gap-2 mod-col" data-show="sci">
+                  @if($u->sci_total > 0)
                   <div class="prog-mini flex-grow-1">
                     <div class="prog-mini-bar" style="width:{{ $u->sci_porcentaje }}%;background:{{ $sciColor }}"></div>
                   </div>
                   <span class="fw-bold" style="min-width:30px;font-size:12px;color:{{ $sciColor }}">{{ $u->sci_porcentaje }}%</span>
+                  @else
+                  <span class="text-muted" style="font-size:11px;font-style:italic">Sin actividades</span>
+                  @endif
                 </div>
                 {{-- Integridad --}}
                 <div class="d-flex align-items-center gap-2 mod-col" data-show="integridad" style="display:none!important">
+                  @if($u->int_total > 0)
                   <div class="prog-mini flex-grow-1">
                     <div class="prog-mini-bar" style="width:{{ $u->int_porcentaje }}%;background:{{ $intColor }}"></div>
                   </div>
                   <span class="fw-bold" style="min-width:30px;font-size:12px;color:{{ $intColor }}">{{ $u->int_porcentaje }}%</span>
+                  @else
+                  <span class="text-muted" style="font-size:11px;font-style:italic">Sin actividades</span>
+                  @endif
                 </div>
                 {{-- General --}}
                 <div class="d-flex align-items-center gap-2 mod-col" data-show="general" style="display:none!important">
@@ -442,14 +518,22 @@ $configData = Helper::appClasses();
               {{-- Estado semáforo --}}
               <td class="text-center">
                 {{-- SCI --}}
+                @if($u->sci_total > 0)
                 <span class="sema-badge mod-col" data-show="sci"
                       style="background:rgba({{ $sciRgb }},.12);color:{{ $sciColor }}">
                   {{ $u->sci_porcentaje >= 75 ? 'En avance' : ($u->sci_porcentaje >= 50 ? 'En proceso' : 'En riesgo') }}
                 </span>
+                @else
+                <span class="sema-badge mod-col" data-show="sci" style="background:rgba(108,117,125,.1);color:#6c757d">—</span>
+                @endif
                 {{-- Integridad --}}
+                @if($u->int_total > 0)
                 <span class="sema-badge mod-col" data-show="integridad" style="display:none!important;background:rgba({{ $intRgb }},.12);color:{{ $intColor }}">
                   {{ $u->int_porcentaje >= 75 ? 'En avance' : ($u->int_porcentaje >= 50 ? 'En proceso' : 'En riesgo') }}
                 </span>
+                @else
+                <span class="sema-badge mod-col" data-show="integridad" style="display:none!important;background:rgba(108,117,125,.1);color:#6c757d">—</span>
+                @endif
                 {{-- General --}}
                 <span class="sema-badge mod-col" data-show="general" style="display:none!important;background:rgba({{ $genRgb }},.12);color:{{ $genColor }}">
                   {{ $u->semaforo }}
@@ -460,12 +544,12 @@ $configData = Helper::appClasses();
               <td class="text-center pe-3">
                 <a href="{{ route('sci-control-interno') }}?unidad_organica_id={{ $u->id }}"
                    class="btn btn-xs btn-label-primary rounded-pill mod-col" data-show="sci">Ver SCI</a>
-                <a href="{{ route('integridad') }}?unidad_organica_id={{ $u->id }}"
+                <a href="{{ route('sci-modelo-integridad') }}?unidad_organica_id={{ $u->id }}"
                    class="btn btn-xs btn-label-success rounded-pill mod-col" data-show="integridad" style="display:none!important">Ver Integ.</a>
                 <div class="d-flex gap-1 justify-content-center mod-col" data-show="general" style="display:none!important">
                   <a href="{{ route('sci-control-interno') }}?unidad_organica_id={{ $u->id }}"
                      class="btn btn-xs btn-label-primary rounded-pill" style="font-size:9px">SCI</a>
-                  <a href="{{ route('integridad') }}?unidad_organica_id={{ $u->id }}"
+                  <a href="{{ route('sci-modelo-integridad') }}?unidad_organica_id={{ $u->id }}"
                      class="btn btn-xs btn-label-success rounded-pill" style="font-size:9px">Int.</a>
                 </div>
               </td>
@@ -487,123 +571,131 @@ $configData = Helper::appClasses();
     </div>
   </div>
 
-  {{-- ── Panel lateral ───────────────────────────────────────────── --}}
-  <div class="col-xl-4">
+  {{-- ── Panel inferior: Distribución + Remediación + Logros ────────── --}}
+  <div class="col-12">
+    <div class="row g-4">
 
-    {{-- Distribución donut --}}
-    <div class="side-section card mb-4">
-      <div class="side-header d-flex align-items-center justify-content-between">
-        <div>
-          <h6 class="fw-bold mb-0">Distribución por Estado</h6>
-          <small class="text-muted" id="sideModLabel">Sistema de Control Interno</small>
-        </div>
-      </div>
-      <div class="side-body">
-        <div id="chartDistribucion" class="mx-auto mb-3" style="max-width:190px"></div>
-        <div class="d-flex flex-column gap-3" id="sideStats">
-          {{-- Se actualiza vía JS --}}
-          @foreach([
-            ['label'=>'Completadas','color'=>'success','hex'=>'#28c76f','val'=>$sci_completadas,'total'=>$sci_total],
-            ['label'=>'En proceso', 'color'=>'warning','hex'=>'#ff9f43','val'=>$sci_en_proceso, 'total'=>$sci_total],
-            ['label'=>'Pendientes', 'color'=>'danger', 'hex'=>'#ea5455','val'=>$sci_pendientes, 'total'=>$sci_total],
-          ] as $d)
-          <div class="d-flex align-items-center gap-3">
-            <div class="badge rounded p-1_5" style="background:rgba({{ $d['color']==='success'?'40,199,111':($d['color']==='warning'?'255,159,67':'234,84,85') }},.12)">
-              <i class="icon-base ti {{ $d['color']==='success'?'tabler-circle-check':($d['color']==='warning'?'tabler-clock':'tabler-alert-triangle') }} icon-sm text-{{ $d['color'] }}"></i>
+      {{-- Donut distribución --}}
+      <div class="col-xl-4 col-md-12">
+        <div class="side-section card h-100">
+          <div class="side-header d-flex align-items-center justify-content-between">
+            <div>
+              <h6 class="fw-bold mb-0">Distribución por Estado</h6>
+              <small class="text-muted" id="sideModLabel">Sistema de Control Interno</small>
             </div>
-            <div class="flex-grow-1">
-              <div class="d-flex justify-content-between mb-1">
-                <small class="fw-semibold">{{ $d['label'] }}</small>
-                <small class="fw-bold text-{{ $d['color'] }}" data-stat="{{ $d['color'] }}">{{ $d['val'] }}</small>
-              </div>
-              <div class="progress rounded-pill" style="height:4px">
-                <div class="progress-bar bg-{{ $d['color'] }} rounded-pill"
-                     style="width:{{ $d['total'] ? round($d['val']/$d['total']*100) : 0 }}%"
-                     data-bar="{{ $d['color'] }}"></div>
+          </div>
+          <div class="side-body">
+            {{-- Donut + stats en fila horizontal --}}
+            <div class="d-flex align-items-center gap-4 flex-wrap">
+              <div id="chartDistribucion" style="min-width:170px;max-width:190px;flex-shrink:0"></div>
+              <div class="flex-grow-1 d-flex flex-column gap-3" id="sideStats">
+                @foreach([
+                  ['label'=>'Completadas','color'=>'success','val'=>$sci_completadas,'total'=>$sci_total],
+                  ['label'=>'En proceso', 'color'=>'warning','val'=>$sci_en_proceso, 'total'=>$sci_total],
+                  ['label'=>'Pendientes', 'color'=>'danger', 'val'=>$sci_pendientes, 'total'=>$sci_total],
+                ] as $d)
+                <div class="d-flex align-items-center gap-3">
+                  <div class="badge rounded p-1_5" style="background:rgba({{ $d['color']==='success'?'40,199,111':($d['color']==='warning'?'255,159,67':'234,84,85') }},.12)">
+                    <i class="icon-base ti {{ $d['color']==='success'?'tabler-circle-check':($d['color']==='warning'?'tabler-clock':'tabler-alert-triangle') }} icon-sm text-{{ $d['color'] }}"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between mb-1">
+                      <small class="fw-semibold">{{ $d['label'] }}</small>
+                      <small class="fw-bold text-{{ $d['color'] }}" data-stat="{{ $d['color'] }}">{{ $d['val'] }}</small>
+                    </div>
+                    <div class="progress rounded-pill" style="height:4px">
+                      <div class="progress-bar bg-{{ $d['color'] }} rounded-pill"
+                           style="width:{{ $d['total'] ? round($d['val']/$d['total']*100) : 0 }}%"
+                           data-bar="{{ $d['color'] }}"></div>
+                    </div>
+                  </div>
+                </div>
+                @endforeach
+                <div class="border-top pt-2 d-flex justify-content-between">
+                  <small class="fw-semibold text-muted">Total</small>
+                  <small class="fw-bold" id="sideTotal">{{ $sci_total }}</small>
+                </div>
               </div>
             </div>
           </div>
-          @endforeach
-          <div class="border-top pt-2 d-flex justify-content-between">
-            <small class="fw-semibold text-muted">Total</small>
-            <small class="fw-bold" id="sideTotal">{{ $sci_total }}</small>
+        </div>
+      </div>
+
+      {{-- Medidas de Remediación SCI --}}
+      <div class="col-xl-4 col-md-6" id="panelRemediacion">
+        <div class="side-section card h-100">
+          <div class="side-header d-flex align-items-center gap-2">
+            <span style="width:8px;height:8px;border-radius:50%;background:#696cff;flex-shrink:0"></span>
+            <div>
+              <h6 class="fw-bold mb-0" style="font-size:.85rem">Medidas de Remediación</h6>
+              <small class="text-muted" style="font-size:.72rem">SCI · Alta prioridad pendientes</small>
+            </div>
+          </div>
+          <div class="side-body pt-2 pb-1">
+            @forelse($medidas_remediacion as $m)
+            <div class="rem-item">
+              <div class="d-flex align-items-start gap-2">
+                <div style="width:6px;height:6px;border-radius:50%;background:#ea5455;flex-shrink:0;margin-top:6px"></div>
+                <div class="flex-grow-1">
+                  <p class="fw-semibold mb-0" style="font-size:12px;line-height:1.35">{{ Str::limit($m->nombre, 50) }}</p>
+                  <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="badge bg-label-secondary rounded-pill" style="font-size:9px">{{ $m->unidadOrganica->sigla ?? '—' }}</span>
+                    @if($m->fecha_limite)
+                    <small class="text-muted" style="font-size:10px"><i class="ti tabler-calendar me-1"></i>{{ $m->fecha_limite->format('d/m/Y') }}</small>
+                    @endif
+                  </div>
+                </div>
+              </div>
+            </div>
+            @empty
+            <div class="empty-state py-4"><i class="ti tabler-circle-check" style="color:#28c76f;opacity:.6"></i><small>Sin medidas críticas pendientes</small></div>
+            @endforelse
+            @if($medidas_remediacion->count())
+            <div class="pt-2 pb-1">
+              <a href="{{ route('sci-control-interno') }}" class="text-primary fw-medium" style="font-size:11px">Ver todas en SCI <i class="ti tabler-arrow-right icon-11px"></i></a>
+            </div>
+            @endif
           </div>
         </div>
       </div>
+
+      {{-- Logros Integridad --}}
+      <div class="col-xl-4 col-md-6" id="panelControl">
+        <div class="side-section card h-100">
+          <div class="side-header d-flex align-items-center gap-2">
+            <span style="width:8px;height:8px;border-radius:50%;background:#28c76f;flex-shrink:0"></span>
+            <div>
+              <h6 class="fw-bold mb-0" style="font-size:.85rem">Logros de Integridad</h6>
+              <small class="text-muted" style="font-size:.72rem">Integridad · Completadas recientemente</small>
+            </div>
+          </div>
+          <div class="side-body pt-2 pb-1">
+            @forelse($medidas_control as $m)
+            <div class="rem-item">
+              <div class="d-flex align-items-start gap-2">
+                <div style="width:6px;height:6px;border-radius:50%;background:#28c76f;flex-shrink:0;margin-top:6px"></div>
+                <div class="flex-grow-1">
+                  <p class="fw-semibold mb-0" style="font-size:12px;line-height:1.35">{{ Str::limit($m->nombre, 50) }}</p>
+                  <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="badge bg-label-success rounded-pill" style="font-size:9px">{{ $m->unidadOrganica->sigla ?? '—' }}</span>
+                    <small class="text-muted" style="font-size:10px"><i class="ti tabler-check me-1 text-success"></i>Completada</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            @empty
+            <div class="empty-state py-4"><i class="ti tabler-shield" style="opacity:.4"></i><small>Sin logros recientes</small></div>
+            @endforelse
+            @if($medidas_control->count())
+            <div class="pt-2 pb-1">
+              <a href="{{ route('sci-modelo-integridad') }}" class="text-success fw-medium" style="font-size:11px">Ver todas en Integridad <i class="ti tabler-arrow-right icon-11px"></i></a>
+            </div>
+            @endif
+          </div>
+        </div>
+      </div>
+
     </div>
-
-    {{-- Alertas SCI: medidas de remediación --}}
-    <div class="side-section card mb-4" id="panelRemediacion">
-      <div class="side-header d-flex align-items-center gap-2">
-        <span style="width:8px;height:8px;border-radius:50%;background:#696cff;flex-shrink:0"></span>
-        <div>
-          <h6 class="fw-bold mb-0" style="font-size:.85rem">Medidas de Remediación</h6>
-          <small class="text-muted" style="font-size:.72rem">SCI · Alta prioridad pendientes</small>
-        </div>
-      </div>
-      <div class="side-body pt-2 pb-1">
-        @forelse($medidas_remediacion as $m)
-        <div class="rem-item">
-          <div class="d-flex align-items-start gap-2">
-            <div style="width:6px;height:6px;border-radius:50%;background:#ea5455;flex-shrink:0;margin-top:6px"></div>
-            <div class="flex-grow-1">
-              <p class="fw-semibold mb-0" style="font-size:12px;line-height:1.35">{{ Str::limit($m->nombre, 45) }}</p>
-              <div class="d-flex align-items-center gap-2 mt-1">
-                <span class="badge bg-label-secondary rounded-pill" style="font-size:9px">{{ $m->unidadOrganica->sigla ?? '—' }}</span>
-                @if($m->fecha_limite)
-                <small class="text-muted" style="font-size:10px">
-                  <i class="ti tabler-calendar me-1"></i>{{ $m->fecha_limite->format('d/m/Y') }}
-                </small>
-                @endif
-              </div>
-            </div>
-          </div>
-        </div>
-        @empty
-        <div class="empty-state py-4"><i class="ti tabler-circle-check" style="color:#28c76f;opacity:.6"></i><small>Sin medidas críticas pendientes</small></div>
-        @endforelse
-        @if($medidas_remediacion->count())
-        <div class="pt-2 pb-1">
-          <a href="{{ route('sci-control-interno') }}" class="text-primary fw-medium" style="font-size:11px">Ver todas en SCI <i class="ti tabler-arrow-right icon-11px"></i></a>
-        </div>
-        @endif
-      </div>
-    </div>
-
-    {{-- Logros Integridad: medidas de control --}}
-    <div class="side-section card" id="panelControl">
-      <div class="side-header d-flex align-items-center gap-2">
-        <span style="width:8px;height:8px;border-radius:50%;background:#28c76f;flex-shrink:0"></span>
-        <div>
-          <h6 class="fw-bold mb-0" style="font-size:.85rem">Logros de Integridad</h6>
-          <small class="text-muted" style="font-size:.72rem">Integridad · Completadas recientemente</small>
-        </div>
-      </div>
-      <div class="side-body pt-2 pb-1">
-        @forelse($medidas_control as $m)
-        <div class="rem-item">
-          <div class="d-flex align-items-start gap-2">
-            <div style="width:6px;height:6px;border-radius:50%;background:#28c76f;flex-shrink:0;margin-top:6px"></div>
-            <div class="flex-grow-1">
-              <p class="fw-semibold mb-0" style="font-size:12px;line-height:1.35">{{ Str::limit($m->nombre, 45) }}</p>
-              <div class="d-flex align-items-center gap-2 mt-1">
-                <span class="badge bg-label-success rounded-pill" style="font-size:9px">{{ $m->unidadOrganica->sigla ?? '—' }}</span>
-                <small class="text-muted" style="font-size:10px"><i class="ti tabler-check me-1 text-success"></i>Completada</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        @empty
-        <div class="empty-state py-4"><i class="ti tabler-shield" style="opacity:.4"></i><small>Sin logros recientes</small></div>
-        @endforelse
-        @if($medidas_control->count())
-        <div class="pt-2 pb-1">
-          <a href="{{ route('integridad') }}" class="text-success fw-medium" style="font-size:11px">Ver todas en Integridad <i class="ti tabler-arrow-right icon-11px"></i></a>
-        </div>
-        @endif
-      </div>
-    </div>
-
   </div>
 </div>
 
@@ -617,59 +709,52 @@ document.addEventListener('DOMContentLoaded', function () {
   const textColor = isDark ? '#b4bdc6' : '#697a8d';
   const bgColor   = isDark ? '#2b2c40' : '#fff';
 
-  // ── Datos por módulo para el donut lateral ────────────────────────
+  // ── Datos por módulo ─────────────────────────────────────────────
   const modData = {
-    sci:       { comp: {{ $sci_completadas }},    proc: {{ $sci_en_proceso }},   pend: {{ $sci_pendientes }},   total: {{ $sci_total }},          label: 'Sistema de Control Interno' },
-    integridad:{ comp: {{ $int_completadas }},    proc: {{ $int_en_proceso }},   pend: {{ $int_pendientes }},   total: {{ $int_total }},          label: 'Modelo de Integridad' },
-    general:   { comp: {{ $total_completadas }},  proc: {{ $total_en_proceso }}, pend: {{ $total_pendientes }}, total: {{ $total_actividades }},  label: 'Vista General Consolidada' },
+    sci:       { comp: {{ $sci_completadas }},   proc: {{ $sci_en_proceso }},   pend: {{ $sci_pendientes }},   total: {{ $sci_total }},         label: 'Sistema de Control Interno' },
+    integridad:{ comp: {{ $int_completadas }},   proc: {{ $int_en_proceso }},   pend: {{ $int_pendientes }},   total: {{ $int_total }},         label: 'Modelo de Integridad' },
+    general:   { comp: {{ $total_completadas }}, proc: {{ $total_en_proceso }}, pend: {{ $total_pendientes }}, total: {{ $total_actividades }}, label: 'Vista General Consolidada' },
   };
 
   const modMeta = {
-    sci:        { tblTitle: 'Avance por Unidad — SCI',        tblSub: 'Sistema de Control Interno',   modLabel: 'SCI',        modLabelColor: '#696cff' },
-    integridad: { tblTitle: 'Avance por Unidad — Integridad', tblSub: 'Modelo de Integridad',         modLabel: 'INTEGRIDAD', modLabelColor: '#28c76f' },
+    sci:        { tblTitle: 'Avance por Unidad — SCI',        tblSub: 'Sistema de Control Interno',        modLabel: 'SCI',        modLabelColor: '#696cff' },
+    integridad: { tblTitle: 'Avance por Unidad — Integridad', tblSub: 'Modelo de Integridad',              modLabel: 'INTEGRIDAD', modLabelColor: '#28c76f' },
     general:    { tblTitle: 'Avance por Unidad — General',    tblSub: 'Vista consolidada SCI + Integridad', modLabel: 'GENERAL',    modLabelColor: '#6c757d' },
   };
 
-  // ── Gauges ──────────────────────────────────────────────────────
-  function makeGauge(id, value, color) {
-    if (!document.getElementById(id)) return null;
-    return new ApexCharts(document.getElementById(id), {
-      chart:   { type: 'radialBar', height: 160, sparkline: { enabled: true } },
-      series:  [value],
-      plotOptions: {
-        radialBar: {
-          startAngle: -135, endAngle: 135,
-          hollow: { size: '60%' },
-          track:  { background: isDark ? '#2d2d4a' : '#e8e8e8', strokeWidth: '97%' },
-          dataLabels: { name: { show: false }, value: { show: false } },
-        }
-      },
-      fill:   { colors: [color] },
-      stroke: { lineCap: 'round' },
-    });
-  }
-
-  const gc_sci = '{{ $gc_sci }}', gc_int = '{{ $gc_int }}', gc_gen = '{{ $gc_global }}';
-  const gauges = {
-    sci:        makeGauge('chartSci', {{ $sci_avance }},    gc_sci),
-    integridad: makeGauge('chartInt', {{ $int_avance }},    gc_int),
-    general:    makeGauge('chartGen', {{ $avance_global }}, gc_gen),
+  // Paneles laterales por módulo
+  const sidePanels = {
+    sci:        { id: 'panelRemediacion', other: 'panelControl' },
+    integridad: { id: 'panelControl',     other: 'panelRemediacion' },
+    general:    { id: null,               other: null },
   };
-  Object.values(gauges).forEach(g => g && g.render());
 
-  // ── Donut distribución lateral ───────────────────────────────────
+
+  // ── FIX #1: Donut — destruir y recrear para que el total cambie ──
   let donutChart = null;
   function renderDonut(mod) {
     const d = modData[mod];
-    const opts = {
-      chart:   { type: 'donut', height: 190 },
+    const container = document.getElementById('chartDistribucion');
+
+    // Destruir instancia anterior para que el label "Total" se actualice
+    if (donutChart) {
+      donutChart.destroy();
+      donutChart = null;
+      container.innerHTML = '';
+    }
+
+    donutChart = new ApexCharts(container, {
+      chart:   { type: 'donut', height: 190, animations: { enabled: false } },
       series:  [d.comp, d.proc, d.pend],
       labels:  ['Completadas', 'En proceso', 'Pendientes'],
       colors:  ['#28c76f', '#ff9f43', '#ea5455'],
       plotOptions: {
         pie: { donut: { size: '72%', labels: {
           show: true,
-          total: { show: true, label: 'Total', color: textColor, formatter: () => d.total },
+          total: {
+            show: true, label: 'Total', color: textColor,
+            formatter: () => String(d.total),
+          },
           value: { fontSize: '18px', fontWeight: 700, color: textColor },
         }}}
       },
@@ -677,28 +762,51 @@ document.addEventListener('DOMContentLoaded', function () {
       dataLabels:  { enabled: false },
       stroke:      { width: 2, colors: [bgColor] },
       tooltip:     { y: { formatter: v => v + ' actividades' } },
-    };
-    if (donutChart) {
-      donutChart.updateSeries([d.comp, d.proc, d.pend]);
-    } else {
-      donutChart = new ApexCharts(document.getElementById('chartDistribucion'), opts);
-      donutChart.render();
-    }
+    });
+    donutChart.render();
   }
   renderDonut('sci');
 
-  // ── Actualizar stats del panel lateral ──────────────────────────
+  // ── Stats panel lateral ──────────────────────────────────────────
   function updateSideStats(mod) {
     const d = modData[mod];
-    document.getElementById('sideModLabel').textContent = modData[mod].label;
-    document.getElementById('sideTotal').textContent = d.total;
-    document.querySelector('[data-stat="success"]').textContent  = d.comp;
-    document.querySelector('[data-stat="warning"]').textContent  = d.proc;
-    document.querySelector('[data-stat="danger"]').textContent   = d.pend;
-    const pct = (v) => d.total ? Math.round(v/d.total*100) : 0;
-    document.querySelector('[data-bar="success"]').style.width  = pct(d.comp) + '%';
-    document.querySelector('[data-bar="warning"]').style.width  = pct(d.proc) + '%';
-    document.querySelector('[data-bar="danger"]').style.width   = pct(d.pend) + '%';
+    document.getElementById('sideModLabel').textContent           = d.label;
+    document.getElementById('sideTotal').textContent              = d.total;
+    document.querySelector('[data-stat="success"]').textContent   = d.comp;
+    document.querySelector('[data-stat="warning"]').textContent   = d.proc;
+    document.querySelector('[data-stat="danger"]').textContent    = d.pend;
+    const pct = v => d.total ? Math.round(v / d.total * 100) : 0;
+    document.querySelector('[data-bar="success"]').style.width    = pct(d.comp) + '%';
+    document.querySelector('[data-bar="warning"]').style.width    = pct(d.proc) + '%';
+    document.querySelector('[data-bar="danger"]').style.width     = pct(d.pend) + '%';
+  }
+
+  // ── FIX #4: Paneles laterales dinámicos según módulo ────────────
+  function updateSidePanels(mod) {
+    const p = sidePanels[mod];
+    if (mod === 'general') {
+      // General: mostrar ambos paneles
+      document.getElementById('panelRemediacion').style.display = '';
+      document.getElementById('panelControl').style.display     = '';
+    } else {
+      // SCI → mostrar Remediación primero; Integridad → mostrar Logros primero
+      const primary   = document.getElementById(p.id);
+      const secondary = document.getElementById(p.other);
+      // Reordenar en el DOM: primary arriba
+      const parent = primary.parentNode;
+      parent.insertBefore(primary, secondary);
+      primary.style.display   = '';
+      secondary.style.display = '';
+    }
+  }
+
+  // ── FIX #5: Reordenar filas tabla según porcentaje del módulo ────
+  function sortTableByMod(mod) {
+    const tbody = document.getElementById('tblBody');
+    const rows  = Array.from(tbody.querySelectorAll('tr[data-nombre]'));
+    const attr  = mod === 'sci' ? 'sciPct' : (mod === 'integridad' ? 'intPct' : 'genPct');
+    rows.sort((a, b) => (parseInt(b.dataset[attr]) || 0) - (parseInt(a.dataset[attr]) || 0));
+    rows.forEach(r => tbody.appendChild(r));
   }
 
   // ── Switch de módulo ─────────────────────────────────────────────
@@ -707,30 +815,24 @@ document.addEventListener('DOMContentLoaded', function () {
   window.switchMod = function(mod) {
     currentMod = mod;
 
-    // Tabs
+    // Tabs activos
     document.querySelectorAll('.mod-tab-btn').forEach(btn => {
       btn.classList.remove('active-sci', 'active-int', 'active-gen');
     });
-    const activeBtn = document.querySelector(`[data-mod="${mod}"]`);
-    if (mod === 'sci')        activeBtn.classList.add('active-sci');
-    else if (mod === 'integridad') activeBtn.classList.add('active-int');
-    else                      activeBtn.classList.add('active-gen');
+    const cls = mod === 'sci' ? 'active-sci' : (mod === 'integridad' ? 'active-int' : 'active-gen');
+    document.querySelector(`[data-mod="${mod}"]`).classList.add(cls);
 
-    // KPI panels
+    // KPI panels + gauge bajo demanda
     document.querySelectorAll('.mod-panel').forEach(p => p.style.display = 'none');
     document.getElementById('kpi-' + mod).style.display = '';
 
     // Columnas de tabla
-    document.querySelectorAll('.mod-col').forEach(el => {
-      el.style.setProperty('display', 'none', 'important');
-    });
-    document.querySelectorAll(`.mod-col[data-show="${mod}"]`).forEach(el => {
-      el.style.removeProperty('display');
-    });
+    document.querySelectorAll('.mod-col').forEach(el => el.style.setProperty('display', 'none', 'important'));
+    document.querySelectorAll(`.mod-col[data-show="${mod}"]`).forEach(el => el.style.removeProperty('display'));
 
-    // Avatares
+    // Avatares color
     document.querySelectorAll('.mod-avatar').forEach(av => {
-      av.style.background = av.dataset[mod + 'Bg'] || 'rgba(108,117,125,.12)';
+      av.style.background = av.dataset[mod + 'Bg']    || 'rgba(108,117,125,.12)';
       av.style.color      = av.dataset[mod + 'Color'] || '#6c757d';
     });
 
@@ -741,34 +843,37 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('tblMod').textContent      = meta.modLabel;
     document.getElementById('tblMod').style.color      = meta.modLabelColor;
 
-    // Donut + stats lateral
+    // Donut + stats + paneles laterales
     renderDonut(mod);
     updateSideStats(mod);
+    updateSidePanels(mod); // FIX #4
+
+    // FIX #5: reordenar tabla
+    sortTableByMod(mod);
 
     // Re-aplicar filtros
     applyFilters();
   };
 
-  // ── Filtros en tiempo real ───────────────────────────────────────
-  const inputBuscar  = document.getElementById('filterBuscar');
-  const selEstado    = document.getElementById('filterEstado');
-  const countEl      = document.getElementById('tblCount');
+  // ── FIX #2: Filtros en tiempo real — bug string literal corregido ─
+  const inputBuscar = document.getElementById('filterBuscar');
+  const selEstado   = document.getElementById('filterEstado');
+  const countEl     = document.getElementById('tblCount');
 
   function applyFilters() {
     const buscar = inputBuscar.value.toLowerCase().trim();
-    const estado = selEstado.value;
-    const rows   = document.querySelectorAll('#tblBody tr');
+    const estado = selEstado.value; // 'success' | 'warning' | 'danger' | ''
+    const rows   = document.querySelectorAll('#tblBody tr[data-nombre]');
     let visible  = 0;
 
     rows.forEach(row => {
-      if (!row.dataset.nombre) { return; } // fila vacía/empty
+      // FIX #2: comparación correcta según módulo activo
+      let colorKey;
+      if      (currentMod === 'sci')        colorKey = row.dataset.sciColor;
+      else if (currentMod === 'integridad') colorKey = row.dataset.intColor;
+      else                                  colorKey = row.dataset.genColor;
 
-      const nombre   = row.dataset.nombre || '';
-      const colorKey = `data-${currentMod}-color` === 'data-gen-color'
-                       ? row.dataset.genColor
-                       : (currentMod === 'sci' ? row.dataset.sciColor : row.dataset.intColor);
-
-      const matchNombre = !buscar || nombre.includes(buscar);
+      const matchNombre = !buscar || row.dataset.nombre.includes(buscar);
       const matchEstado = !estado || colorKey === estado;
 
       if (matchNombre && matchEstado) {
@@ -779,7 +884,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    const total = document.querySelectorAll('#tblBody tr[data-nombre]').length;
+    const total = rows.length;
     countEl.textContent = visible === total
       ? `Mostrando ${total} unidades`
       : `Mostrando ${visible} de ${total} unidades`;
@@ -788,11 +893,14 @@ document.addEventListener('DOMContentLoaded', function () {
   inputBuscar.addEventListener('input',  applyFilters);
   selEstado.addEventListener('change',   applyFilters);
 
-  window.limpiarFiltros = function() {
+  window.limpiarFiltros = function () {
     inputBuscar.value = '';
     selEstado.value   = '';
     applyFilters();
   };
+
+  // Render inicial del sort
+  sortTableByMod('sci');
 
 });
 </script>

@@ -96,6 +96,9 @@ class RolesPermisosSeeder extends Seeder
             'autoevaluacion.crear',
             'autoevaluacion.editar',
             'autoevaluacion.eliminar',
+
+            // Normativas
+            'normativas.gestionar',
         ];
 
         foreach ($permisos as $p) {
@@ -155,6 +158,7 @@ class RolesPermisosSeeder extends Seeder
             'autoevaluacion.ver',
             'autoevaluacion.crear',
             'autoevaluacion.editar',
+            'normativas.gestionar',
         ]);
 
         // ── Responsable de Unidad: gestiona actividades de su unidad orgánica ─

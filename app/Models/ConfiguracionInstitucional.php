@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\User;
 
 /**
  * @property int    $id
@@ -18,7 +20,11 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $sitio_web
  * @property string $timezone
  * @property string|null $director
+ * @property int|null    $director_id
  * @property string|null $coordinador_sci
+ * @property int|null    $coordinador_sci_id
+ * @property-read \App\Models\User|null $directorUser
+ * @property-read \App\Models\User|null $coordinadorSciUser
  * @property string|null $correo_institucional
  * @property string|null $telefono
  * @property string|null $logo_ruta
@@ -39,20 +45,40 @@ class ConfiguracionInstitucional extends Model
     protected $fillable = [
         'nombre_institucion', 'sigla', 'ugel_codigo', 'region', 'provincia',
         'departamento', 'distrito', 'ubigeo', 'direccion', 'sitio_web', 'timezone',
-        'director', 'coordinador_sci', 'correo_institucional', 'telefono',
+        'director', 'director_id', 'coordinador_sci', 'coordinador_sci_id',
+        'correo_institucional', 'telefono',
         'logo_ruta', 'favicon_ruta', 'anio_gestion',
         'umbral_verde', 'umbral_amarillo',
         'notif_vencimiento', 'notif_dias_anticipacion',
+        'notif_10dias', 'notif_5dias', 'notif_1dia',
+        'notif_modulo_sci', 'notif_modulo_integridad',
         'notif_avance_bajo', 'notif_umbral_avance', 'notif_email',
+        'mail_host', 'mail_port', 'mail_username', 'mail_password',
+        'mail_encryption', 'mail_from_name',
     ];
 
     protected function casts(): array
     {
         return [
-            'notif_vencimiento' => 'boolean',
-            'notif_avance_bajo' => 'boolean',
-            'notif_email'       => 'boolean',
+            'notif_vencimiento'        => 'boolean',
+            'notif_avance_bajo'        => 'boolean',
+            'notif_email'              => 'boolean',
+            'notif_10dias'             => 'boolean',
+            'notif_5dias'              => 'boolean',
+            'notif_1dia'               => 'boolean',
+            'notif_modulo_sci'         => 'boolean',
+            'notif_modulo_integridad'  => 'boolean',
         ];
+    }
+
+    public function directorUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'director_id');
+    }
+
+    public function coordinadorSciUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'coordinador_sci_id');
     }
 
     public static function actual(): self

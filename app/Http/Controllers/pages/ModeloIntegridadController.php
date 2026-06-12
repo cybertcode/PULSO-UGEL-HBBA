@@ -68,7 +68,7 @@ class ModeloIntegridadController extends Controller
         }
 
         // Para métricas necesitamos todos los registros sin paginar
-        $todasActividades = $actQuery->orderByDesc('fecha_limite')->get();
+        $todasActividades = (clone $actQuery)->orderByDesc('fecha_limite')->get();
 
         // ── Métricas globales ─────────────────────────────────────────────────
         $total         = $todasActividades->count();
@@ -78,6 +78,7 @@ class ModeloIntegridadController extends Controller
         // ── Componentes con métricas ──────────────────────────────────────────
         $componentesBase = IntegridadComponente::with(['etapa', 'preguntas'])
             ->where('activo', true)
+            ->whereHas('etapa', fn($q) => $q->where('anio', $anio))
             ->orderBy('orden')
             ->get();
 

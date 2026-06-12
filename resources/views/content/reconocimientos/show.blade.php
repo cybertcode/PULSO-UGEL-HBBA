@@ -31,7 +31,7 @@
         <p class="text-muted mb-1">{{ $trabajador->cargo }}</p>
         <p class="mb-3"><span class="badge bg-label-primary">{{ $trabajador->unidadOrganica->nombre ?? '—' }}</span></p>
 
-        @if($trabajador->numero_resolucion)
+        @if($trabajador->numero_resolucion || $trabajador->resolucion_ruta)
         <div class="card bg-body-secondary mb-3">
           <div class="card-body py-3">
             <div class="d-flex align-items-center gap-3">
@@ -39,13 +39,15 @@
                 <i class="ti tabler-file-certificate icon-22px"></i>
               </div>
               <div class="text-start">
-                <div class="fw-medium">Resolución Directoral</div>
+                <div class="fw-medium">Documento de Reconocimiento</div>
+                @if($trabajador->numero_resolucion)
                 <small class="text-muted">{{ $trabajador->numero_resolucion }}</small>
+                @endif
               </div>
               @if($trabajador->resolucion_ruta)
               <a href="{{ Storage::url($trabajador->resolucion_ruta) }}" target="_blank"
                 class="btn btn-sm btn-label-danger ms-auto">
-                <i class="ti tabler-download me-1"></i>Descargar RD
+                <i class="ti tabler-download me-1"></i>Ver documento
               </a>
               @endif
             </div>
@@ -122,11 +124,19 @@
       </div>
       <div class="card-body">
         <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted">Módulo</dt>
+          <dd class="col-sm-8">
+            @if($trabajador->categoria === 'Control Interno')
+              <span class="badge" style="background:rgba(115,103,240,.15);color:#7367f0"><i class="ti tabler-shield-check me-1"></i>Control Interno (SCI)</span>
+            @elseif($trabajador->categoria === 'Modelo de Integridad')
+              <span class="badge" style="background:rgba(40,199,111,.15);color:#28c76f"><i class="ti tabler-star me-1"></i>Modelo de Integridad</span>
+            @else
+              {{ $trabajador->categoria ?? '—' }}
+            @endif
+          </dd>
+
           <dt class="col-sm-4 text-muted">Período</dt>
           <dd class="col-sm-8">{{ $trabajador->mes_nombre ? $trabajador->mes_nombre . ' ' . $trabajador->anio : 'Año ' . $trabajador->anio }}</dd>
-
-          <dt class="col-sm-4 text-muted">Categoría</dt>
-          <dd class="col-sm-8">{{ $trabajador->categoria ?? '—' }}</dd>
 
           @if($trabajador->dni)
           <dt class="col-sm-4 text-muted">DNI</dt>
@@ -138,8 +148,20 @@
           <dd class="col-sm-8"><a href="mailto:{{ $trabajador->correo }}">{{ $trabajador->correo }}</a></dd>
           @endif
 
-          <dt class="col-sm-4 text-muted">Registrado</dt>
-          <dd class="col-sm-8">{{ $trabajador->created_at->format('d/m/Y H:i') }}</dd>
+          <dt class="col-sm-4 text-muted">Unidad Orgánica</dt>
+          <dd class="col-sm-8">{{ $trabajador->unidadOrganica?->nombre ?? '—' }}</dd>
+
+          <dt class="col-sm-4 text-muted">Puntaje total</dt>
+          <dd class="col-sm-8">
+            <span class="fw-bold text-{{ $trabajador->nivel_color }}">{{ number_format($trabajador->puntaje_total, 1) }} / 100</span>
+            <span class="badge bg-{{ $trabajador->nivel_color }} ms-2">{{ $trabajador->nivel }}</span>
+          </dd>
+
+          <dt class="col-sm-4 text-muted">Registrado por</dt>
+          <dd class="col-sm-8">{{ $trabajador->registradoPor?->name ?? 'Sistema' }}</dd>
+
+          <dt class="col-sm-4 text-muted">Fecha registro</dt>
+          <dd class="col-sm-8">{{ $trabajador->created_at->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}</dd>
         </dl>
       </div>
       <div class="card-footer d-flex gap-2">

@@ -729,7 +729,6 @@
                         style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);">
                         {{ $noticia->etiqueta ?? ucfirst($noticia->tipo) }}
                     </span>
-
                     <h1
                         style="font-size:clamp(1.6rem,3.2vw,2.4rem);font-weight:900;color:#fff;line-height:1.18;max-width:780px;letter-spacing:-.03em;margin:.25rem 0 1.25rem;text-shadow:0 2px 12px rgba(0,0,0,.3);">
                         {{ $noticia->titulo }}
@@ -1267,14 +1266,17 @@
                                 @endif
                                 @if ($config?->ubigeo)
                                     <div class="ugel-fn-inst-row">
-                                        <span>Ubigeo</span><strong>{{ $config->ubigeo }}</strong></div>
+                                        <span>Ubigeo</span><strong>{{ $config->ubigeo }}</strong>
+                                    </div>
                                 @endif
                                 <div class="ugel-fn-inst-row">
-                                    <span>Región</span><strong>{{ $config?->region ?? 'Huánuco' }}</strong></div>
+                                    <span>Región</span><strong>{{ $config?->region ?? 'Huánuco' }}</strong>
+                                </div>
                                 <div class="ugel-fn-inst-row"><span>Sector</span><strong>Educación</strong></div>
                                 @if ($config?->director)
                                     <div class="ugel-fn-inst-row">
-                                        <span>Director</span><strong>{{ $config->director }}</strong></div>
+                                        <span>Director</span><strong>{{ $config->director }}</strong>
+                                    </div>
                                 @endif
                             </div>
                         </div>
