@@ -1,6 +1,18 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
 ## [v2.1.3] - 2026-06-12 (Sesión Actual)
+### Buscador Inteligente y Layout Dinámico (Protección de Interfaz)
+- **Buscador Global Sensible a Permisos**:
+    - Implementación de `SearchController.php` para generar dinámicamente las sugerencias de búsqueda basadas en las capacidades reales del usuario logueado.
+    - Modificación de `main.js` para consumir la API de búsqueda en lugar de archivos JSON estáticos, garantizando que un usuario nunca vea accesos a módulos restringidos en la búsqueda.
+- **Limpieza de Interfaz (Navbar & Shortcuts)**:
+    - Aplicación de directivas `@can` en `navbar-partial.blade.php` para ocultar dinámicamente el dropdown de notificaciones, accesos directos (Shortcuts) y enlaces del perfil según el rol del usuario.
+    - Sincronización de la visibilidad de elementos en el menú lateral y navbar con el nuevo esquema de permisos granulados.
+- **Estructura Técnica**:
+    - Nuevo Controlador: `SearchController.php`.
+    - Assets: Actualización de lógica en `resources/assets/js/main.js`.
+    - Rutas: Nueva ruta `/search/data` protegida por autenticación.
+
 ### Refactorización de Seguridad de Alto Impacto (Permisos Granulados v2)
 - **Granularidad Extrema de Accesos**:
     - Evolución del sistema de permisos de un esquema genérico (`configuracion.ver/editar`) a uno **específico por módulo** (`slider.*`, `instituciones.*`, `unidades.*`, `roles.*`, `componentes.*`, `normativas.*`, etc.).

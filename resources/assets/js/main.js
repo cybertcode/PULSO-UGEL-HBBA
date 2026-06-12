@@ -438,20 +438,20 @@ function isMacOS() {
   return /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
 }
 
-// Load search data
+// Load search data — filtered by the authenticated user's permissions
 function loadSearchData() {
-  const searchJson = $('#layout-menu').hasClass('menu-horizontal') ? 'search-horizontal.json' : 'search-vertical.json';
-
-  fetch(assetsPath + 'json/' + searchJson)
+  fetch(baseUrl + 'search/data', {
+    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+  })
     .then(response => {
-      if (!response.ok) throw new Error('Failed to fetch data');
+      if (!response.ok) throw new Error('Failed to fetch search data');
       return response.json();
     })
     .then(json => {
       data = json;
       initializeAutocomplete();
     })
-    .catch(error => console.error('Error loading JSON:', error));
+    .catch(error => console.error('Error loading search data:', error));
 }
 
 // Initialize autocomplete
