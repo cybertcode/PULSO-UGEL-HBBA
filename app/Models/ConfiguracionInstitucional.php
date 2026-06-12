@@ -46,6 +46,7 @@ class ConfiguracionInstitucional extends Model
         'nombre_institucion', 'sigla', 'ugel_codigo', 'region', 'provincia',
         'departamento', 'distrito', 'ubigeo', 'direccion', 'sitio_web', 'timezone',
         'director', 'director_id', 'coordinador_sci', 'coordinador_sci_id',
+        'whatsapp_sci', 'correo_sci', 'cargo_sci',
         'correo_institucional', 'telefono',
         'logo_ruta', 'favicon_ruta', 'anio_gestion',
         'umbral_verde', 'umbral_amarillo',

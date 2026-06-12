@@ -903,25 +903,45 @@
 
             {{-- Instituciones vinculadas full width --}}
             <span class="ugel-label">Instituciones vinculadas</span>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.65rem;margin-top:1.25rem">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:.65rem;margin-top:1.25rem">
                 @foreach($instituciones as $inst)
-                <div style="display:flex;align-items:center;gap:.9rem;background:#fff;border:1px solid #e2e8f0;border-left:4px solid {{ $inst->color_acento }};border-radius:10px;padding:.65rem 1rem;transition:transform .2s,box-shadow .2s"
-                     onmouseover="this.style.transform='translateX(4px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'"
-                     onmouseout="this.style.transform='';this.style.boxShadow=''">
+                @php $tag = $inst->url_sitio ? 'a' : 'div'; @endphp
+                <{{ $tag }}
+                    @if($inst->url_sitio)
+                        href="{{ $inst->url_sitio }}" target="_blank" rel="noopener noreferrer"
+                    @endif
+                    style="display:flex;align-items:center;gap:.9rem;background:#fff;border:1px solid #e2e8f0;border-left:4px solid {{ $inst->color_acento }};border-radius:10px;padding:.65rem 1rem;transition:transform .2s,box-shadow .2s;text-decoration:none;color:inherit;{{ $inst->url_sitio ? 'cursor:pointer;' : '' }}"
+                    onmouseover="this.style.transform='translateX(4px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow=''">
+
+                    {{-- Logo o sigla --}}
                     @if($inst->logo_src)
                         <img src="{{ $inst->logo_src }}" alt="{{ $inst->sigla }}" style="height:32px;width:auto;object-fit:contain;flex-shrink:0" loading="lazy">
                     @else
-                        <span style="width:38px;height:38px;border-radius:8px;background:{{ $inst->color_acento }}18;color:{{ $inst->color_acento }};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;flex-shrink:0">{{ $inst->sigla }}</span>
+                        <span style="width:38px;height:38px;border-radius:8px;background:{{ $inst->color_acento }}18;color:{{ $inst->color_acento }};display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;flex-shrink:0;letter-spacing:-.02em">{{ $inst->sigla }}</span>
                     @endif
+
+                    {{-- Texto --}}
                     <div style="flex:1;min-width:0">
                         <div style="font-size:.82rem;font-weight:800;color:#1e293b;line-height:1.2">{{ $inst->sigla }}</div>
                         <div style="font-size:.72rem;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $inst->nombre }}</div>
+                        @if($inst->descripcion)
+                        <div style="font-size:.68rem;color:#b0bec5;margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $inst->descripcion }}</div>
+                        @endif
                     </div>
+
+                    {{-- Indicador enlace externo --}}
                     @if($inst->url_sitio)
-                    <a href="{{ $inst->url_sitio }}" target="_blank" rel="noopener"
-                       style="font-size:.68rem;color:{{ $inst->color_acento }};text-decoration:none;flex-shrink:0;white-space:nowrap">↗ Ver</a>
+                    <span style="flex-shrink:0;width:26px;height:26px;border-radius:6px;background:{{ $inst->color_acento }}15;display:flex;align-items:center;justify-content:center;" title="Ir al sitio oficial">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ $inst->color_acento }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/>
+                            <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                    </span>
                     @endif
-                </div>
+
+                </{{ $tag }}>
                 @endforeach
             </div>
 
@@ -1081,7 +1101,7 @@
                                 </div>
                             @endif
                             @if ($config?->coordinador_sci)
-                                <div class="ugel-ct-person">
+                                <div class="ugel-ct-person ugel-ct-person--sci">
                                     <div class="ugel-ct-person__av ugel-ct-person__av--navy">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -1090,8 +1110,38 @@
                                         </svg>
                                     </div>
                                     <div class="ugel-ct-person__info">
-                                        <span class="ugel-ct-person__role">Coordinador SCI</span>
+                                        <span class="ugel-ct-person__role">{{ $config->cargo_sci ?? 'Coordinador SCI' }}</span>
                                         <strong class="ugel-ct-person__name">{{ $config->coordinador_sci }}</strong>
+                                        {{-- Contacto directo del coordinador --}}
+                                        <div class="ugel-ct-person__links">
+                                            @if ($config?->whatsapp_sci)
+                                                @php
+                                                    $wa = preg_replace('/\D/', '', $config->whatsapp_sci);
+                                                    $waMsg = urlencode('Hola, me comunico desde el portal PULSO UGEL para consultar sobre el Sistema de Control Interno.');
+                                                @endphp
+                                                <a href="https://wa.me/51{{ $wa }}?text={{ $waMsg }}"
+                                                   target="_blank" rel="noopener"
+                                                   class="ugel-ct-person__link ugel-ct-person__link--wa"
+                                                   title="WhatsApp directo al Coordinador SCI">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+                                                    </svg>
+                                                    +51 {{ $config->whatsapp_sci }}
+                                                </a>
+                                            @endif
+                                            @if ($config?->correo_sci)
+                                                <a href="mailto:{{ $config->correo_sci }}"
+                                                   class="ugel-ct-person__link ugel-ct-person__link--mail"
+                                                   title="Correo del Coordinador SCI">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                                        <polyline points="22,6 12,13 2,6"/>
+                                                    </svg>
+                                                    {{ $config->correo_sci }}
+                                                </a>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             @endif
@@ -1168,6 +1218,35 @@
                             </div>
                         @endif
                     </div>
+
+                    {{-- Item WhatsApp SCI --}}
+                    @if ($config?->whatsapp_sci)
+                        @php
+                            $waSci = preg_replace('/\D/', '', $config->whatsapp_sci);
+                            $waMsgSci = urlencode('Hola, me comunico desde el portal PULSO UGEL para consultar sobre el Sistema de Control Interno.');
+                        @endphp
+                        <a href="https://wa.me/51{{ $waSci }}?text={{ $waMsgSci }}"
+                           target="_blank" rel="noopener"
+                           class="ugel-ct-item ugel-ct-item--link">
+                            <div class="ugel-ct-item__icon" style="--cti:#25D366;--ctil:#ECFDF5">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+                                </svg>
+                            </div>
+                            <div class="ugel-ct-item__body">
+                                <span class="ugel-ct-item__label">WhatsApp — {{ $config->cargo_sci ?? 'Coordinador SCI' }}</span>
+                                <strong class="ugel-ct-item__val">+51 {{ $config->whatsapp_sci }}</strong>
+                            </div>
+                            <div class="ugel-ct-item__arr">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    <polyline points="12 5 19 12 12 19" />
+                                </svg>
+                            </div>
+                        </a>
+                    @endif
 
                     {{-- Item horario --}}
                     <div class="ugel-ct-item">

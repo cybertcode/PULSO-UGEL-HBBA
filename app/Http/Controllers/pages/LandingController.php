@@ -28,14 +28,15 @@ class LandingController extends Controller
         $instituciones = InstitucionVinculada::activas()->orderBy('orden')->get();
 
         // Estadísticas reales
+        $anioGestion = $config?->anio_gestion ?? (date('Y') - 5);
         $stats = [
             'componentes' => class_exists('\App\Models\Componente') ? \App\Models\Componente::count() : 8,
             'unidades'    => class_exists('\App\Models\UnidadOrganica') ? \App\Models\UnidadOrganica::count() : 25,
             'avance'      => class_exists('\App\Models\Actividad') ? round(\App\Models\Actividad::avg('avance') ?? 85, 1) : 85,
-            'paci'        => (class_exists('\App\Models\Paci') && \Schema::hasTable('paci')) 
-                             ? (\App\Models\Paci::latest()->value('anio') ?? date('Y')) 
+            'paci'        => (class_exists('\App\Models\Paci') && \Schema::hasTable('paci'))
+                             ? (\App\Models\Paci::latest()->value('anio') ?? date('Y'))
                              : date('Y'),
-            'gestion'     => 5,
+            'gestion'     => max(1, date('Y') - $anioGestion),
         ];
 
         // Componentes (Módulos) desde la base de datos
@@ -91,12 +92,12 @@ class LandingController extends Controller
     private function seedInstituciones(): void
     {
         $items = [
-            ['nombre' => 'Contraloría General de la República', 'sigla' => 'CGR',    'color_acento' => '#c62828', 'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Escudo_nacional_del_Per%C3%BA.svg/240px-Escudo_nacional_del_Per%C3%BA.svg.png', 'orden' => 1],
-            ['nombre' => 'Presidencia del Consejo de Ministros','sigla' => 'PCM',    'color_acento' => '#1a237e', 'logo_url' => null, 'orden' => 2],
-            ['nombre' => 'Ministerio de Educación',             'sigla' => 'MINEDU', 'color_acento' => '#01579b', 'logo_url' => null, 'orden' => 3],
-            ['nombre' => 'Gobierno Regional Huánuco',           'sigla' => 'GORE',   'color_acento' => '#1b5e20', 'logo_url' => null, 'orden' => 4],
-            ['nombre' => 'Dirección Regional de Educación',     'sigla' => 'DRE',    'color_acento' => '#4a148c', 'logo_url' => null, 'orden' => 5],
-            ['nombre' => 'UGEL Huacaybamba',                    'sigla' => 'UGEL',   'color_acento' => '#e65100', 'logo_url' => null, 'orden' => 6],
+            ['nombre' => 'Contraloría General de la República', 'sigla' => 'CGR',    'color_acento' => '#c62828', 'logo_url' => null, 'url_sitio' => 'https://www.contraloria.gob.pe', 'descripcion' => 'Órgano superior de control gubernamental', 'orden' => 1],
+            ['nombre' => 'Presidencia del Consejo de Ministros','sigla' => 'PCM',    'color_acento' => '#1a237e', 'logo_url' => null, 'url_sitio' => 'https://www.gob.pe/pcm',            'descripcion' => 'Coordinación del Poder Ejecutivo',         'orden' => 2],
+            ['nombre' => 'Ministerio de Educación',             'sigla' => 'MINEDU', 'color_acento' => '#01579b', 'logo_url' => null, 'url_sitio' => 'https://www.minedu.gob.pe',         'descripcion' => 'Rector de la política educativa nacional',  'orden' => 3],
+            ['nombre' => 'Gobierno Regional Huánuco',           'sigla' => 'GORE',   'color_acento' => '#1b5e20', 'logo_url' => null, 'url_sitio' => 'https://www.regionhuanuco.gob.pe',  'descripcion' => 'Gobierno Regional de Huánuco',              'orden' => 4],
+            ['nombre' => 'Dirección Regional de Educación',     'sigla' => 'DRE',    'color_acento' => '#4a148c', 'logo_url' => null, 'url_sitio' => null,                                'descripcion' => 'Dirección Regional de Educación Huánuco',   'orden' => 5],
+            ['nombre' => 'UGEL Huacaybamba',                    'sigla' => 'UGEL',   'color_acento' => '#e65100', 'logo_url' => null, 'url_sitio' => null,                                'descripcion' => 'Unidad de Gestión Educativa Local',         'orden' => 6],
         ];
         foreach ($items as $item) {
             InstitucionVinculada::create(array_merge($item, ['activo' => true]));

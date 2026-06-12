@@ -16,7 +16,7 @@ class Recomendacion extends Model
     protected $fillable = [
         'titulo', 'descripcion', 'tipo', 'actividad_id', 'unidad_organica_id',
         'responsable_id', 'estado', 'prioridad', 'fecha_emision', 'fecha_limite',
-        'fecha_atencion', 'numero_sgd', 'origen', 'observaciones', 'creado_por',
+        'fecha_atencion', 'numero_sgd', 'origen', 'modulo', 'observaciones', 'creado_por',
     ];
 
     protected $casts = [

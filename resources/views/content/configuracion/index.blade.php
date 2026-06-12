@@ -341,7 +341,39 @@ use Illuminate\Support\Facades\Storage;
               </div>
             </div>
 
-            <div class="row g-3">
+            {{-- Contacto directo del Coordinador SCI --}}
+            <div class="row g-3 mt-1">
+              <div class="col-12">
+                <p class="text-muted small mb-2"><i class="ti tabler-info-circle me-1"></i>Estos datos se muestran en el portal público para que los ciudadanos contacten directamente al Coordinador SCI.</p>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Cargo / Título del Coordinador SCI</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="ti tabler-id-badge"></i></span>
+                  <input type="text" name="cargo_sci" class="form-control"
+                    value="{{ old('cargo_sci', $config->cargo_sci) }}" placeholder="Coordinador SCI" maxlength="80">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">WhatsApp del Coordinador SCI</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="ti tabler-brand-whatsapp text-success"></i></span>
+                  <input type="text" name="whatsapp_sci" class="form-control"
+                    value="{{ old('whatsapp_sci', $config->whatsapp_sci) }}" placeholder="987654321" maxlength="20">
+                </div>
+                <div class="text-muted" style="font-size:.72rem;margin-top:.25rem;">Solo dígitos, sin prefijo +51. Se enlazará a WhatsApp.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Correo del Coordinador SCI</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="ti tabler-mail"></i></span>
+                  <input type="email" name="correo_sci" class="form-control"
+                    value="{{ old('correo_sci', $config->correo_sci) }}" placeholder="sci@ugel.gob.pe">
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
               <div class="col-md-7">
                 <label class="form-label">Correo Institucional</label>
                 <div class="input-group">

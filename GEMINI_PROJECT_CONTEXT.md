@@ -1,6 +1,22 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.1.0] - 2026-06-11 (Sesión Actual)
+## [v2.1.1] - 2026-06-11 (Sesión Actual)
+### Módulo de Recomendaciones, Contacto SCI y Ayuda
+- **Módulo de Recomendaciones**:
+    - Implementación de un sistema de gestión de recomendaciones institucionales con categorización por módulo.
+    - Actualización de la estructura de base de datos para soportar la trazabilidad de recomendaciones por áreas.
+- **Contacto SCI y Configuración**:
+    - Adición de campos de contacto específicos para el Sistema de Control Interno (SCI) en la configuración institucional.
+    - Mejora en la interfaz de configuración para gestionar estos nuevos canales de comunicación.
+- **Portal de Ayuda**: Rediseño y actualización de la sección de Ayuda para facilitar la navegación del usuario.
+- **Optimización de Vistas**: Refinamiento en el Landing Page y vistas de administración para integrar los nuevos componentes de contacto y recomendaciones.
+
+### Estructura Técnica
+- **Modelos y Controladores**: `Recomendacion`, `RecomendacionesController`.
+- **Migraciones**: Adición de campos `modulo` en recomendaciones y campos de contacto SCI en configuración.
+- **UI**: Nuevas interfaces en `resources/views/content/recomendaciones/` y actualización de `ayuda/index.blade.php`.
+
+## [v2.1.0] - 2026-06-11
 ### Módulo de Normativas, Refactorización de Buenas Prácticas y Alertas
 - **Módulo de Normativas**: Implementación completa del sistema de gestión de normativas legales e institucionales, incluyendo CRUD administrativo y vistas públicas.
 - **Refactorización de Buenas Prácticas**: 
