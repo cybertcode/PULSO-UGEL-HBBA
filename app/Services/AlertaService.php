@@ -5,28 +5,58 @@ namespace App\Services;
 use App\Jobs\EnviarAlertaEmail;
 use App\Models\Actividad;
 use App\Models\Alerta;
+use App\Models\ConfiguracionInstitucional;
 
 class AlertaService
 {
+    private ConfiguracionInstitucional $config;
+
+    public function __construct()
+    {
+        $this->config = ConfiguracionInstitucional::cached();
+    }
+
     /** Genera todas las alertas automáticas. Retorna cantidad creada. */
     public function generarAutomaticas(): int
     {
         $generadas = 0;
         $generadas += $this->alertasVencimiento();
-        $generadas += $this->alertasProximidad(10);
-        $generadas += $this->alertasProximidad(5);
-        $generadas += $this->alertasProximidad(1);
+
+        // Solo los niveles habilitados en configuración
+        if ($this->config->notif_10dias) $generadas += $this->alertasProximidad(10);
+        if ($this->config->notif_5dias)  $generadas += $this->alertasProximidad(5);
+        if ($this->config->notif_1dia)   $generadas += $this->alertasProximidad(1);
+
         $generadas += $this->alertasAvanceBajo();
         $generadas += $this->alertasEvidenciaFaltante();
         return $generadas;
     }
 
+    /** Filtra actividades según módulos habilitados en config */
+    private function queryActividades()
+    {
+        $modulosActivos = [];
+        if ($this->config->notif_modulo_sci)        $modulosActivos[] = 'sci';
+        if ($this->config->notif_modulo_integridad) $modulosActivos[] = 'integridad';
+
+        $query = Actividad::query();
+        if (!empty($modulosActivos)) {
+            $query->whereIn('modulo', $modulosActivos);
+        } else {
+            // Sin módulos activos, no generar alertas
+            $query->whereRaw('1 = 0');
+        }
+        return $query;
+    }
+
     /** Actividades ya vencidas sin alerta activa */
     private function alertasVencimiento(): int
     {
-        $generadas = 0;
+        if (!$this->config->notif_vencimiento) return 0;
 
-        Actividad::whereNotIn('estado', ['completada', 'observado'])
+        $generadas = 0;
+        $this->queryActividades()
+            ->whereNotIn('estado', ['completada', 'observado'])
             ->whereDate('fecha_limite', '<', now())
             ->whereDoesntHave('alertas', fn($q) => $q->where('tipo', 'vencimiento')->where('leida', false))
             ->each(function (Actividad $actividad) use (&$generadas) {
@@ -41,7 +71,9 @@ class AlertaService
                     'tipo'               => 'vencimiento',
                     'prioridad'          => 'alta',
                 ]);
-                dispatch(new EnviarAlertaEmail($alerta));
+                if ($this->config->notif_email) {
+                    dispatch(new EnviarAlertaEmail($alerta));
+                }
                 $generadas++;
             });
 
@@ -51,10 +83,13 @@ class AlertaService
     /** Alertas de proximidad: N días antes del vencimiento (10, 5, 1) */
     private function alertasProximidad(int $dias): int
     {
+        if (!$this->config->notif_vencimiento) return 0;
+
         $generadas = 0;
         $fecha = now()->addDays($dias)->toDateString();
 
-        Actividad::whereNotIn('estado', ['completada', 'observado'])
+        $this->queryActividades()
+            ->whereNotIn('estado', ['completada', 'observado'])
             ->whereDate('fecha_limite', $fecha)
             ->whereDoesntHave('alertas', fn($q) => $q
                 ->where('tipo', 'vencimiento_proximo')
@@ -63,7 +98,7 @@ class AlertaService
             )
             ->each(function (Actividad $actividad) use ($dias, &$generadas) {
                 $prioridad = $dias === 1 ? 'alta' : ($dias === 5 ? 'media' : 'baja');
-                Alerta::create([
+                $alerta = Alerta::create([
                     'actividad_id'       => $actividad->id,
                     'usuario_id'         => $actividad->responsablePrincipal()->first()?->id
                                          ?? $actividad->responsables()->first()?->id,
@@ -75,6 +110,10 @@ class AlertaService
                     'tipo'               => 'vencimiento_proximo',
                     'prioridad'          => $prioridad,
                 ]);
+                // Email solo en nivel urgente (1 día) o si está habilitado
+                if ($this->config->notif_email && $dias === 1) {
+                    dispatch(new EnviarAlertaEmail($alerta));
+                }
                 $generadas++;
             });
 
@@ -84,10 +123,14 @@ class AlertaService
     /** Actividades sin avance después de 7 días desde el inicio */
     private function alertasAvanceBajo(): int
     {
-        $generadas = 0;
+        if (!$this->config->notif_avance_bajo) return 0;
 
-        Actividad::where('estado', 'pendiente')
-            ->where('avance', 0)
+        $generadas = 0;
+        $umbral = $this->config->notif_umbral_avance ?? 30;
+
+        $this->queryActividades()
+            ->where('estado', 'pendiente')
+            ->where('avance', '<', $umbral)
             ->whereNotNull('fecha_inicio')
             ->whereDate('fecha_inicio', '<', now()->subDays(7))
             ->whereDoesntHave('alertas', fn($q) => $q->where('tipo', 'avance_bajo')->where('leida', false))
@@ -114,7 +157,8 @@ class AlertaService
     {
         $generadas = 0;
 
-        Actividad::where('estado', 'en_proceso')
+        $this->queryActividades()
+            ->where('estado', 'en_proceso')
             ->whereDoesntHave('evidencias')
             ->whereDoesntHave('alertas', fn($q) => $q->where('tipo', 'evidencia_falta')->where('leida', false))
             ->each(function (Actividad $actividad) use (&$generadas) {

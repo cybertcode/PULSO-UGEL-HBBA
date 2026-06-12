@@ -834,49 +834,97 @@
     {{-- ════ NORMATIVA ════ --}}
     <section class="ugel-section" id="normativa">
         <div class="container">
-            <div class="ugel-norm-grid">
 
-                <div>
-                    <span class="ugel-label">Marco Legal</span>
-                    <h2 class="ugel-section__title">Sustento Normativo</h2>
-                    <p class="ugel-section__sub">PULSO está alineado con las disposiciones vigentes del Estado peruano
-                        para el Sistema de Control Interno.</p>
+            {{-- Cabecera --}}
+            <span class="ugel-label">Marco Legal</span>
+            <h2 class="ugel-section__title">Sustento Normativo</h2>
+            <p class="ugel-section__sub">PULSO está alineado con las disposiciones vigentes del Estado peruano para el Sistema de Control Interno.</p>
 
-                    <div class="ugel-norm-list">
-                        @foreach ([['01', 'Ley N° 28716', 'Ley de Control Interno de las Entidades del Estado — Congreso de la República'], ['02', 'R.C. N° 320-2006-CG', 'Normas de Control Interno — Contraloría General de la República'], ['03', 'Directiva N° 006-2019-CG', 'Modelo de Integridad para el Sector Público Peruano'], ['04', 'R.C. N° 004-2017-CG', 'Guía para la Implementación y Fortalecimiento del SCI']] as $n)
-                            <div class="ugel-norm">
-                                <div class="ugel-norm__num">{{ $n[0] }}</div>
-                                <div class="ugel-norm__content">
-                                    <strong>{{ $n[1] }}</strong>
-                                    <p>{{ $n[2] }}</p>
-                                </div>
-                            </div>
-                        @endforeach
+            {{-- Lista de normativas full width --}}
+            <div class="ugel-norm-list" id="norm-list-landing" style="gap:.6rem;margin-top:1.5rem">
+                @forelse($normativas as $i => $n)
+                @php
+                    $num = str_pad($normativas->firstItem() + $i, 2, '0', STR_PAD_LEFT);
+                    $tipoColors = ['ley'=>'#dc3545','decreto'=>'#fd7e14','resolucion'=>'#0d6efd',
+                                   'directiva'=>'#0a98c0','manual'=>'#198754','reglamento'=>'#6c757d',
+                                   'oficio'=>'#495057','otro'=>'#6c757d'];
+                    $tc = $tipoColors[$n->tipo] ?? '#1340A0';
+                @endphp
+                <div class="ugel-norm" style="gap:1rem">
+                    <div class="ugel-norm__num" style="width:32px;height:32px;font-size:.72rem;flex-shrink:0">{{ $num }}</div>
+                    <div class="ugel-norm__content" style="padding:.7rem 1rem">
+                        <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.25rem">
+                            <span style="font-size:.6rem;font-weight:800;padding:.1rem .45rem;border-radius:20px;background:{{ $tc }}18;color:{{ $tc }};text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">{{ $n->tipo_label }}</span>
+                            @if($n->tiene_link)
+                            <a href="{{ $n->link_externo }}" target="_blank" rel="noopener"
+                               style="margin-left:auto;font-size:.68rem;color:#1340A0;text-decoration:none;white-space:nowrap;opacity:.75">↗ Ver norma</a>
+                            @elseif($n->tiene_archivo)
+                            <a href="{{ asset('storage/'.$n->archivo_path) }}" target="_blank"
+                               style="margin-left:auto;font-size:.68rem;color:#1340A0;text-decoration:none;white-space:nowrap;opacity:.75">↓ Descargar</a>
+                            @endif
+                        </div>
+                        <strong style="font-size:.85rem;display:block;line-height:1.3;color:#1e293b">{{ \Illuminate\Support\Str::limit($n->nombre, 100) }}</strong>
+                        @if($n->entidad_emisora)
+                        <span style="font-size:.72rem;color:#94a3b8;margin-top:.15rem;display:block">{{ $n->entidad_emisora }}</span>
+                        @endif
                     </div>
                 </div>
-
-                <div class="ugel-inst-col">
-                    <span class="ugel-label">Instituciones vinculadas</span>
-                    <div class="ugel-inst-grid">
-                        @foreach ($instituciones as $inst)
-                            <div class="ugel-inst" style="--ac:{{ $inst->color_acento }}">
-                                @if ($inst->logo_src)
-                                    <img src="{{ $inst->logo_src }}" alt="{{ $inst->sigla }}" class="ugel-inst__logo"
-                                        loading="lazy">
-                                @else
-                                    <span class="ugel-inst__abbr">{{ $inst->sigla }}</span>
-                                @endif
-                                <span class="ugel-inst__name">{{ $inst->nombre }}</span>
-                                @if ($inst->url_sitio)
-                                    <a href="{{ $inst->url_sitio }}" target="_blank" rel="noopener"
-                                        class="ugel-inst__link">Ver sitio</a>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
+                @empty
+                <p style="font-size:.85rem;color:#94a3b8;padding:.5rem 0">No hay normativas vigentes registradas.</p>
+                @endforelse
             </div>
+
+            {{-- Paginación --}}
+            @if($normativas->lastPage() > 1)
+            <div style="display:flex;align-items:center;gap:.4rem;margin-top:1rem">
+                @if($normativas->onFirstPage())
+                <span style="width:28px;height:28px;border-radius:6px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:.8rem;cursor:not-allowed">‹</span>
+                @else
+                <a href="{{ $normativas->previousPageUrl() }}#normativa"
+                   style="width:28px;height:28px;border-radius:6px;border:1px solid #1340A0;display:flex;align-items:center;justify-content:center;color:#1340A0;text-decoration:none;font-size:.8rem"
+                   onmouseover="this.style.background='#1340A0';this.style.color='#fff'"
+                   onmouseout="this.style.background='';this.style.color='#1340A0'">‹</a>
+                @endif
+                <span style="font-size:.75rem;color:#94a3b8;padding:0 .25rem">{{ $normativas->currentPage() }} / {{ $normativas->lastPage() }}</span>
+                @if($normativas->hasMorePages())
+                <a href="{{ $normativas->nextPageUrl() }}#normativa"
+                   style="width:28px;height:28px;border-radius:6px;border:1px solid #1340A0;display:flex;align-items:center;justify-content:center;color:#1340A0;text-decoration:none;font-size:.8rem"
+                   onmouseover="this.style.background='#1340A0';this.style.color='#fff'"
+                   onmouseout="this.style.background='';this.style.color='#1340A0'">›</a>
+                @else
+                <span style="width:28px;height:28px;border-radius:6px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:.8rem;cursor:not-allowed">›</span>
+                @endif
+                <span style="font-size:.72rem;color:#94a3b8;margin-left:.25rem">{{ $normativas->total() }} normas</span>
+            </div>
+            @endif
+
+            {{-- Divisor --}}
+            <hr style="margin:2.5rem 0;border-color:#e2e8f0">
+
+            {{-- Instituciones vinculadas full width --}}
+            <span class="ugel-label">Instituciones vinculadas</span>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.65rem;margin-top:1.25rem">
+                @foreach($instituciones as $inst)
+                <div style="display:flex;align-items:center;gap:.9rem;background:#fff;border:1px solid #e2e8f0;border-left:4px solid {{ $inst->color_acento }};border-radius:10px;padding:.65rem 1rem;transition:transform .2s,box-shadow .2s"
+                     onmouseover="this.style.transform='translateX(4px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'"
+                     onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    @if($inst->logo_src)
+                        <img src="{{ $inst->logo_src }}" alt="{{ $inst->sigla }}" style="height:32px;width:auto;object-fit:contain;flex-shrink:0" loading="lazy">
+                    @else
+                        <span style="width:38px;height:38px;border-radius:8px;background:{{ $inst->color_acento }}18;color:{{ $inst->color_acento }};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;flex-shrink:0">{{ $inst->sigla }}</span>
+                    @endif
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:.82rem;font-weight:800;color:#1e293b;line-height:1.2">{{ $inst->sigla }}</div>
+                        <div style="font-size:.72rem;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $inst->nombre }}</div>
+                    </div>
+                    @if($inst->url_sitio)
+                    <a href="{{ $inst->url_sitio }}" target="_blank" rel="noopener"
+                       style="font-size:.68rem;color:{{ $inst->color_acento }};text-decoration:none;flex-shrink:0;white-space:nowrap">↗ Ver</a>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+
         </div>
     </section>
 

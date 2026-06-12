@@ -4,6 +4,7 @@ namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
 use App\Models\InstitucionVinculada;
+use App\Models\Normativa;
 use App\Models\SliderLanding;
 
 class LandingController extends Controller
@@ -42,7 +43,13 @@ class LandingController extends Controller
             ? \App\Models\Componente::where('activo', true)->orderBy('numero')->limit(6)->get()
             : collect();
 
-        return view('content.landing.index', compact('config', 'slides', 'modulos', 'instituciones', 'stats'));
+        $paginaNorm  = max(1, (int) request('pnorm', 1));
+        $normativas  = Normativa::vigentes()
+            ->orderByDesc('created_at')
+            ->orderBy('orden')
+            ->paginate(5, ['*'], 'pnorm', $paginaNorm);
+
+        return view('content.landing.index', compact('config', 'slides', 'modulos', 'instituciones', 'stats', 'normativas'));
     }
 
     public function publicaciones()

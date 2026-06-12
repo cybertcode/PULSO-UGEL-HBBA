@@ -55,6 +55,11 @@ class TrabajadorDestacado extends Model
         if ($this->foto_ruta && Storage::disk('public')->exists($this->foto_ruta)) {
             return Storage::url($this->foto_ruta);
         }
+        // Fallback: usar foto de perfil del usuario vinculado
+        if ($this->user_id) {
+            $usuario = \App\Models\User::find($this->user_id);
+            if ($usuario) return $usuario->profile_photo_url;
+        }
         return asset('assets/img/avatars/1.png');
     }
 

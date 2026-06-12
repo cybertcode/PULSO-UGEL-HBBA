@@ -5,6 +5,18 @@ use Illuminate\Support\Facades\Storage;
 @extends('layouts/layoutMaster')
 @section('title', 'Configuración del Sistema')
 
+@section('vendor-style')
+  @vite([
+    'resources/assets/vendor/libs/select2/select2.scss',
+  ])
+@endsection
+
+@section('vendor-script')
+  @vite([
+    'resources/assets/vendor/libs/select2/select2.js',
+  ])
+@endsection
+
 @section('content')
 
 <div class="mb-4">
@@ -260,23 +272,76 @@ use Illuminate\Support\Facades\Storage;
             <h5 class="mb-0">Autoridades y Contacto</h5>
           </div>
           <div class="card-body">
+
+            {{-- Selector Director --}}
+            <div class="mb-4">
+              <label class="form-label fw-medium">
+                <i class="ti tabler-user-tie me-1 text-primary"></i>Director(a) de la Institución
+              </label>
+              <select name="director_id" id="selectDirector" class="form-select select2-usuarios @error('director_id') is-invalid @enderror"
+                      data-placeholder="Buscar y seleccionar director(a)...">
+                <option value=""></option>
+                @foreach($usuarios as $u)
+                  <option value="{{ $u['id'] }}"
+                    data-cargo="{{ $u['cargo'] }}"
+                    data-unidad="{{ $u['unidad'] }}"
+                    data-email="{{ $u['email'] }}"
+                    data-foto="{{ $u['foto_url'] }}"
+                    {{ old('director_id', $config->director_id) == $u['id'] ? 'selected' : '' }}>
+                    {{ $u['name'] }}
+                  </option>
+                @endforeach
+              </select>
+              @error('director_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              {{-- Tarjeta de preview del director seleccionado --}}
+              <div id="previewDirector" class="{{ $config->director_id ? '' : 'd-none' }} mt-3">
+                <div class="d-flex align-items-center gap-3 p-3 rounded border bg-label-primary">
+                  <div id="previewDirectorFoto" class="flex-shrink-0"></div>
+                  <div>
+                    <div class="fw-semibold" id="previewDirectorNombre">{{ $config->directorUser?->name }}</div>
+                    <div class="small text-muted" id="previewDirectorCargo">{{ $config->directorUser?->cargo?->nombre }}</div>
+                    <div class="small text-muted" id="previewDirectorUnidad">{{ $config->directorUser?->unidadOrganica?->nombre }}</div>
+                    <div class="small" id="previewDirectorEmail">{{ $config->directorUser?->email }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{-- Selector Coordinador SCI --}}
+            <div class="mb-4">
+              <label class="form-label fw-medium">
+                <i class="ti tabler-user-check me-1 text-success"></i>Coordinador(a) del SCI
+              </label>
+              <select name="coordinador_sci_id" id="selectCoordinadorSci" class="form-select select2-usuarios @error('coordinador_sci_id') is-invalid @enderror"
+                      data-placeholder="Buscar y seleccionar coordinador(a) SCI...">
+                <option value=""></option>
+                @foreach($usuarios as $u)
+                  <option value="{{ $u['id'] }}"
+                    data-cargo="{{ $u['cargo'] }}"
+                    data-unidad="{{ $u['unidad'] }}"
+                    data-email="{{ $u['email'] }}"
+                    data-foto="{{ $u['foto_url'] }}"
+                    {{ old('coordinador_sci_id', $config->coordinador_sci_id) == $u['id'] ? 'selected' : '' }}>
+                    {{ $u['name'] }}
+                  </option>
+                @endforeach
+              </select>
+              @error('coordinador_sci_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              {{-- Tarjeta de preview del coordinador seleccionado --}}
+              <div id="previewCoordinador" class="{{ $config->coordinador_sci_id ? '' : 'd-none' }} mt-3">
+                <div class="d-flex align-items-center gap-3 p-3 rounded border bg-label-success">
+                  <div id="previewCoordinadorFoto" class="flex-shrink-0"></div>
+                  <div>
+                    <div class="fw-semibold" id="previewCoordinadorNombre">{{ $config->coordinadorSciUser?->name }}</div>
+                    <div class="small text-muted" id="previewCoordinadorCargo">{{ $config->coordinadorSciUser?->cargo?->nombre }}</div>
+                    <div class="small text-muted" id="previewCoordinadorUnidad">{{ $config->coordinadorSciUser?->unidadOrganica?->nombre }}</div>
+                    <div class="small" id="previewCoordinadorEmail">{{ $config->coordinadorSciUser?->email }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Director(a)</label>
-                <div class="input-group">
-                  <span class="input-group-text"><i class="ti tabler-user-tie"></i></span>
-                  <input type="text" name="director" class="form-control"
-                    value="{{ old('director', $config->director) }}" placeholder="Nombres y apellidos completos">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Coordinador(a) SCI</label>
-                <div class="input-group">
-                  <span class="input-group-text"><i class="ti tabler-user-check"></i></span>
-                  <input type="text" name="coordinador_sci" class="form-control"
-                    value="{{ old('coordinador_sci', $config->coordinador_sci) }}" placeholder="Nombres y apellidos completos">
-                </div>
-              </div>
               <div class="col-md-7">
                 <label class="form-label">Correo Institucional</label>
                 <div class="input-group">
@@ -387,7 +452,13 @@ use Illuminate\Support\Facades\Storage;
             <h5 class="mb-0">Umbrales del Semáforo</h5>
           </div>
           <div class="card-body">
-            <p class="text-muted mb-4">Define los porcentajes de avance que determinan el color del semáforo para cada actividad.</p>
+            <div class="alert alert-info d-flex gap-2 mb-4 p-3">
+              <i class="ti tabler-info-circle mt-1 flex-shrink-0"></i>
+              <div class="small">
+                Estos umbrales aplican globalmente al <strong>Sistema de Control Interno (SCI)</strong> y al <strong>Módulo de Integridad</strong>.
+                Todos los cálculos de avance, semáforo institucional, ranking y cumplimiento usan esta configuración.
+              </div>
+            </div>
             <div class="row g-4">
               <div class="col-md-4">
                 <div class="card border border-success">
@@ -475,32 +546,45 @@ use Illuminate\Support\Facades\Storage;
       </div>
 
       <div class="col-xl-4">
-        <div class="card">
+        <div class="card mb-4">
           <div class="card-header"><h6 class="mb-0"><i class="ti tabler-info-circle me-1"></i>¿Cómo funciona?</h6></div>
           <div class="card-body">
             <ul class="list-unstyled mb-0">
               <li class="d-flex gap-2 mb-3">
-                <span class="badge bg-success mt-1 flex-shrink-0" style="width:12px;height:12px;border-radius:50%"></span>
+                <span class="bg-success mt-1 flex-shrink-0 rounded-circle" style="width:12px;height:12px;min-width:12px"></span>
                 <div>
                   <div class="fw-medium text-success small">VERDE</div>
-                  <div class="text-muted small">La actividad tiene un avance igual o superior al umbral verde. Está en buen camino.</div>
+                  <div class="text-muted small">Avance igual o superior al umbral verde. En buen camino.</div>
                 </div>
               </li>
               <li class="d-flex gap-2 mb-3">
-                <span class="badge bg-warning mt-1 flex-shrink-0" style="width:12px;height:12px;border-radius:50%"></span>
+                <span class="bg-warning mt-1 flex-shrink-0 rounded-circle" style="width:12px;height:12px;min-width:12px"></span>
                 <div>
                   <div class="fw-medium text-warning small">AMARILLO</div>
-                  <div class="text-muted small">El avance está entre el umbral amarillo y el verde. Requiere seguimiento.</div>
+                  <div class="text-muted small">Entre el umbral amarillo y verde. Requiere seguimiento.</div>
                 </div>
               </li>
-              <li class="d-flex gap-2">
-                <span class="badge bg-danger mt-1 flex-shrink-0" style="width:12px;height:12px;border-radius:50%"></span>
+              <li class="d-flex gap-2 mb-4">
+                <span class="bg-danger mt-1 flex-shrink-0 rounded-circle" style="width:12px;height:12px;min-width:12px"></span>
                 <div>
                   <div class="fw-medium text-danger small">ROJO</div>
-                  <div class="text-muted small">El avance está por debajo del umbral amarillo. Requiere acción inmediata.</div>
+                  <div class="text-muted small">Por debajo del umbral amarillo. Requiere acción inmediata.</div>
                 </div>
               </li>
             </ul>
+            <hr>
+            <div class="small text-muted">
+              <i class="ti tabler-refresh me-1"></i>
+              <strong>Módulos que usan este semáforo:</strong>
+              <ul class="mt-1 mb-0 ps-3">
+                <li>Sistema de Control Interno (SCI)</li>
+                <li>Módulo de Integridad</li>
+                <li>Semáforo Institucional</li>
+                <li>Ranking de Unidades</li>
+                <li>Avance por Unidades</li>
+                <li>Panel de Cumplimiento</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -513,101 +597,241 @@ use Illuminate\Support\Facades\Storage;
   <div class="tab-pane fade" id="tab-notificaciones">
     <div class="row g-4">
       <div class="col-xl-8">
+
+        {{-- Módulos a notificar --}}
         <div class="card mb-4">
           <div class="card-header d-flex align-items-center gap-2">
-            <span class="badge bg-label-primary p-2"><i class="ti tabler-bell icon-20px"></i></span>
-            <h5 class="mb-0">Alertas y Notificaciones</h5>
+            <span class="badge bg-label-secondary p-2"><i class="ti tabler-layout-2 icon-20px"></i></span>
+            <h5 class="mb-0">Módulos con Notificaciones</h5>
           </div>
           <div class="card-body pb-2">
-
-            {{-- Alertas de vencimiento --}}
             <div class="d-flex align-items-start gap-3 py-3 border-bottom">
               <div class="avatar flex-shrink-0">
-                <span class="avatar-initial rounded bg-label-warning">
-                  <i class="ti tabler-calendar-x icon-20px"></i>
+                <span class="avatar-initial rounded bg-label-primary">
+                  <i class="ti tabler-clipboard-check icon-20px"></i>
                 </span>
               </div>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <div>
-                    <h6 class="mb-0">Alertas de Vencimiento</h6>
-                    <small class="text-muted">Notificar cuando una actividad esté próxima a vencer</small>
-                  </div>
-                  <div class="form-check form-switch ms-3 mb-0">
-                    <input class="form-check-input" type="checkbox" name="notif_vencimiento" value="1"
-                      id="switchVencimiento" {{ $config->notif_vencimiento ? 'checked' : '' }}
-                      onchange="toggleField('vencimientoDias', this.checked)">
-                  </div>
+              <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0">Sistema de Control Interno (SCI)</h6>
+                  <small class="text-muted">Actividades, evidencias y cumplimiento SCI</small>
                 </div>
-                <div id="vencimientoDias" class="{{ $config->notif_vencimiento ? '' : 'd-none' }} mt-2">
-                  <label class="form-label small">Días de anticipación</label>
-                  <div class="input-group" style="max-width:200px">
-                    <span class="input-group-text"><i class="ti tabler-clock"></i></span>
-                    <input type="number" name="notif_dias_anticipacion" class="form-control"
-                      value="{{ old('notif_dias_anticipacion', $config->notif_dias_anticipacion) }}" min="1" max="30">
-                    <span class="input-group-text">días</span>
-                  </div>
+                <div class="form-check form-switch ms-3 mb-0">
+                  <input class="form-check-input" type="checkbox" name="notif_modulo_sci" value="1"
+                    {{ $config->notif_modulo_sci ? 'checked' : '' }}>
                 </div>
               </div>
             </div>
-
-            {{-- Alertas de avance bajo --}}
-            <div class="d-flex align-items-start gap-3 py-3 border-bottom">
-              <div class="avatar flex-shrink-0">
-                <span class="avatar-initial rounded bg-label-danger">
-                  <i class="ti tabler-trending-down icon-20px"></i>
-                </span>
-              </div>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <div>
-                    <h6 class="mb-0">Alertas de Avance Bajo</h6>
-                    <small class="text-muted">Notificar cuando el avance de una actividad sea insuficiente</small>
-                  </div>
-                  <div class="form-check form-switch ms-3 mb-0">
-                    <input class="form-check-input" type="checkbox" name="notif_avance_bajo" value="1"
-                      id="switchAvanceBajo" {{ $config->notif_avance_bajo ? 'checked' : '' }}
-                      onchange="toggleField('avanceBajoUmbral', this.checked)">
-                  </div>
-                </div>
-                <div id="avanceBajoUmbral" class="{{ $config->notif_avance_bajo ? '' : 'd-none' }} mt-2">
-                  <label class="form-label small">Umbral de avance bajo (%)</label>
-                  <div class="input-group" style="max-width:200px">
-                    <span class="input-group-text"><i class="ti tabler-percentage"></i></span>
-                    <input type="number" name="notif_umbral_avance" class="form-control"
-                      value="{{ old('notif_umbral_avance', $config->notif_umbral_avance) }}" min="1" max="100">
-                    <span class="input-group-text">%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {{-- Notificaciones por correo --}}
             <div class="d-flex align-items-start gap-3 py-3">
               <div class="avatar flex-shrink-0">
-                <span class="avatar-initial rounded bg-label-info">
-                  <i class="ti tabler-mail icon-20px"></i>
+                <span class="avatar-initial rounded bg-label-success">
+                  <i class="ti tabler-shield-check icon-20px"></i>
                 </span>
               </div>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="mb-0">Notificaciones por Correo</h6>
-                    <small class="text-muted">Enviar alertas al correo institucional configurado</small>
-                    @if($config->correo_institucional)
-                      <div class="small text-muted mt-1"><i class="ti tabler-send icon-14px me-1"></i>{{ $config->correo_institucional }}</div>
-                    @else
-                      <div class="small text-warning mt-1"><i class="ti tabler-alert-triangle icon-14px me-1"></i>Sin correo institucional configurado</div>
-                    @endif
+              <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0">Módulo de Integridad</h6>
+                  <small class="text-muted">Actividades del modelo PCM — 9 componentes</small>
+                </div>
+                <div class="form-check form-switch ms-3 mb-0">
+                  <input class="form-check-input" type="checkbox" name="notif_modulo_integridad" value="1"
+                    {{ $config->notif_modulo_integridad ? 'checked' : '' }}>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{-- Alertas de vencimiento con 3 niveles --}}
+        <div class="card mb-4">
+          <div class="card-header d-flex align-items-center gap-2">
+            <span class="badge bg-label-warning p-2"><i class="ti tabler-calendar-x icon-20px"></i></span>
+            <h5 class="mb-0">Alertas de Vencimiento</h5>
+          </div>
+          <div class="card-body pb-2">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h6 class="mb-0">Activar alertas de proximidad</h6>
+                <small class="text-muted">Notificar cuando una actividad esté próxima a vencer</small>
+              </div>
+              <div class="form-check form-switch ms-3 mb-0">
+                <input class="form-check-input" type="checkbox" name="notif_vencimiento" value="1"
+                  id="switchVencimiento" {{ $config->notif_vencimiento ? 'checked' : '' }}
+                  onchange="toggleField('vencimientoNiveles', this.checked)">
+              </div>
+            </div>
+
+            <div id="vencimientoNiveles" class="{{ $config->notif_vencimiento ? '' : 'd-none' }}">
+              <p class="text-muted small mb-3">Selecciona los niveles de anticipación para las alertas:</p>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <div class="card border {{ $config->notif_10dias ? 'border-warning' : '' }} h-100">
+                    <div class="card-body text-center py-3">
+                      <div class="avatar avatar-md bg-label-warning rounded mx-auto mb-2">
+                        <i class="ti tabler-clock icon-24px"></i>
+                      </div>
+                      <h6 class="mb-1">10 días antes</h6>
+                      <div class="small text-muted mb-3">Alerta temprana</div>
+                      <div class="form-check form-switch d-flex justify-content-center mb-0">
+                        <input class="form-check-input" type="checkbox" name="notif_10dias" value="1"
+                          id="switch10dias" {{ $config->notif_10dias ? 'checked' : '' }}
+                          onchange="this.closest('.card').classList.toggle('border-warning', this.checked)">
+                      </div>
+                    </div>
                   </div>
-                  <div class="form-check form-switch ms-3 mb-0">
-                    <input class="form-check-input" type="checkbox" name="notif_email" value="1"
-                      {{ $config->notif_email ? 'checked' : '' }}>
+                </div>
+                <div class="col-md-4">
+                  <div class="card border {{ $config->notif_5dias ? 'border-warning' : '' }} h-100">
+                    <div class="card-body text-center py-3">
+                      <div class="avatar avatar-md bg-label-warning rounded mx-auto mb-2">
+                        <i class="ti tabler-clock-hour-4 icon-24px"></i>
+                      </div>
+                      <h6 class="mb-1">5 días antes</h6>
+                      <div class="small text-muted mb-3">Alerta media</div>
+                      <div class="form-check form-switch d-flex justify-content-center mb-0">
+                        <input class="form-check-input" type="checkbox" name="notif_5dias" value="1"
+                          id="switch5dias" {{ $config->notif_5dias ? 'checked' : '' }}
+                          onchange="this.closest('.card').classList.toggle('border-warning', this.checked)">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card border {{ $config->notif_1dia ? 'border-danger' : '' }} h-100">
+                    <div class="card-body text-center py-3">
+                      <div class="avatar avatar-md bg-label-danger rounded mx-auto mb-2">
+                        <i class="ti tabler-clock-hour-12 icon-24px"></i>
+                      </div>
+                      <h6 class="mb-1">1 día antes</h6>
+                      <div class="small text-muted mb-3">Alerta urgente</div>
+                      <div class="form-check form-switch d-flex justify-content-center mb-0">
+                        <input class="form-check-input" type="checkbox" name="notif_1dia" value="1"
+                          id="switch1dia" {{ $config->notif_1dia ? 'checked' : '' }}
+                          onchange="this.closest('.card').classList.toggle('border-danger', this.checked)">
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
+        {{-- Avance bajo --}}
+        <div class="card mb-4">
+          <div class="card-header d-flex align-items-center gap-2">
+            <span class="badge bg-label-danger p-2"><i class="ti tabler-trending-down icon-20px"></i></span>
+            <h5 class="mb-0">Alertas de Avance Bajo</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h6 class="mb-0">Activar alertas de avance bajo</h6>
+                <small class="text-muted">Notificar cuando el avance de una actividad sea insuficiente</small>
+              </div>
+              <div class="form-check form-switch ms-3 mb-0">
+                <input class="form-check-input" type="checkbox" name="notif_avance_bajo" value="1"
+                  id="switchAvanceBajo" {{ $config->notif_avance_bajo ? 'checked' : '' }}
+                  onchange="toggleField('avanceBajoUmbral', this.checked)">
+              </div>
+            </div>
+            <div id="avanceBajoUmbral" class="{{ $config->notif_avance_bajo ? '' : 'd-none' }}">
+              <label class="form-label small">Umbral de avance bajo (%)</label>
+              <div class="input-group" style="max-width:220px">
+                <span class="input-group-text"><i class="ti tabler-percentage"></i></span>
+                <input type="number" name="notif_umbral_avance" class="form-control"
+                  value="{{ old('notif_umbral_avance', $config->notif_umbral_avance) }}" min="1" max="100">
+                <span class="input-group-text">%</span>
+              </div>
+              <div class="form-text">Actividades con avance menor a este % generan alerta</div>
+            </div>
+          </div>
+        </div>
+
+        {{-- Correo electrónico --}}
+        <div class="card mb-4">
+          <div class="card-header d-flex align-items-center gap-2">
+            <span class="badge bg-label-info p-2"><i class="ti tabler-mail icon-20px"></i></span>
+            <h5 class="mb-0">Envío por Correo Electrónico</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h6 class="mb-0">Activar envío de correos</h6>
+                <small class="text-muted">Las alertas se enviarán al responsable de cada actividad y al correo institucional</small>
+              </div>
+              <div class="form-check form-switch ms-3 mb-0">
+                <input class="form-check-input" type="checkbox" name="notif_email" value="1"
+                  id="switchEmail" {{ $config->notif_email ? 'checked' : '' }}
+                  onchange="toggleField('smtpConfig', this.checked)">
+              </div>
+            </div>
+
+            <div id="smtpConfig" class="{{ $config->notif_email ? '' : 'd-none' }}">
+              <div class="alert alert-warning d-flex gap-2 p-3 mb-4">
+                <i class="ti tabler-alert-triangle mt-1 flex-shrink-0"></i>
+                <div class="small">
+                  Configura el servidor SMTP. Si dejas estos campos vacíos, se usará la configuración del archivo <code>.env</code>.
+                  La contraseña solo es necesaria si la cambias.
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-8">
+                  <label class="form-label">Servidor SMTP</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="ti tabler-server"></i></span>
+                    <input type="text" name="mail_host" class="form-control"
+                      value="{{ old('mail_host', $config->mail_host) }}"
+                      placeholder="smtp.gmail.com / smtp.office365.com">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Puerto</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="ti tabler-plug"></i></span>
+                    <input type="number" name="mail_port" class="form-control"
+                      value="{{ old('mail_port', $config->mail_port ?? 587) }}"
+                      placeholder="587">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Usuario / Correo remitente</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="ti tabler-at"></i></span>
+                    <input type="text" name="mail_username" class="form-control"
+                      value="{{ old('mail_username', $config->mail_username) }}"
+                      placeholder="correo@gmail.com">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Contraseña</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="ti tabler-lock"></i></span>
+                    <input type="password" name="mail_password" class="form-control"
+                      placeholder="{{ $config->mail_password ? '••••••••••••' : 'Ingresar contraseña' }}"
+                      autocomplete="new-password">
+                  </div>
+                  <div class="form-text">Dejar vacío para mantener la contraseña actual</div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Cifrado</label>
+                  <select name="mail_encryption" class="form-select">
+                    @foreach(['tls'=>'TLS (recomendado)', 'ssl'=>'SSL', 'none'=>'Sin cifrado'] as $val => $lbl)
+                      <option value="{{ $val }}" {{ old('mail_encryption', $config->mail_encryption ?? 'tls') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                    @endforeach
+                  </select>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label">Nombre del remitente</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="ti tabler-pencil"></i></span>
+                    <input type="text" name="mail_from_name" class="form-control"
+                      value="{{ old('mail_from_name', $config->mail_from_name ?? $config->nombre_institucion) }}"
+                      placeholder="PULSO UGEL — Sistema de Control Interno">
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -619,13 +843,55 @@ use Illuminate\Support\Facades\Storage;
       </div>
 
       <div class="col-xl-4">
-        <div class="card">
+        <div class="card mb-4">
           <div class="card-header"><h6 class="mb-0"><i class="ti tabler-info-circle me-1"></i>Sobre las Notificaciones</h6></div>
           <div class="card-body">
-            <div class="alert alert-info mb-0 p-3">
-              <i class="ti tabler-info-circle me-2"></i>
-              Las notificaciones se generan automáticamente según los parámetros configurados y son visibles en el panel de alertas del sistema.
+            <div class="small text-muted mb-3">
+              Las alertas se generan automáticamente por el sistema y aplican a ambos módulos según la configuración.
             </div>
+            <ul class="list-unstyled mb-0">
+              <li class="d-flex gap-2 mb-2">
+                <i class="ti tabler-point-filled text-warning mt-1 flex-shrink-0"></i>
+                <div class="small"><strong>Vencimiento:</strong> Cuando una actividad ya venció sin completarse</div>
+              </li>
+              <li class="d-flex gap-2 mb-2">
+                <i class="ti tabler-point-filled text-warning mt-1 flex-shrink-0"></i>
+                <div class="small"><strong>10 días:</strong> Alerta temprana, prioridad baja</div>
+              </li>
+              <li class="d-flex gap-2 mb-2">
+                <i class="ti tabler-point-filled text-warning mt-1 flex-shrink-0"></i>
+                <div class="small"><strong>5 días:</strong> Alerta media, prioridad media</div>
+              </li>
+              <li class="d-flex gap-2 mb-2">
+                <i class="ti tabler-point-filled text-danger mt-1 flex-shrink-0"></i>
+                <div class="small"><strong>1 día:</strong> Alerta urgente, prioridad alta</div>
+              </li>
+              <li class="d-flex gap-2 mb-2">
+                <i class="ti tabler-point-filled text-danger mt-1 flex-shrink-0"></i>
+                <div class="small"><strong>Avance bajo:</strong> Actividades sin progreso después de 7 días</div>
+              </li>
+              <li class="d-flex gap-2">
+                <i class="ti tabler-point-filled text-info mt-1 flex-shrink-0"></i>
+                <div class="small"><strong>Evidencia faltante:</strong> Actividades en proceso sin documentos</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h6 class="mb-0"><i class="ti tabler-mail-check me-1"></i>Correo Institucional</h6></div>
+          <div class="card-body">
+            @if($config->correo_institucional)
+              <div class="d-flex align-items-center gap-2">
+                <i class="ti tabler-send text-primary"></i>
+                <span class="small">{{ $config->correo_institucional }}</span>
+              </div>
+              <div class="small text-muted mt-1">Destino de alertas sin responsable asignado</div>
+            @else
+              <div class="alert alert-warning p-2 mb-0">
+                <i class="ti tabler-alert-triangle me-1"></i>
+                <span class="small">Sin correo institucional. Configúralo en la pestaña <strong>Datos Institucionales</strong>.</span>
+              </div>
+            @endif
           </div>
         </div>
       </div>
@@ -640,29 +906,103 @@ use Illuminate\Support\Facades\Storage;
      TAB: ACCESOS RÁPIDOS (fuera del form)
      ============================ --}}
 <div id="tabAccesosContent" class="d-none">
-  <div class="row g-4">
+
+  {{-- SCI --}}
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="badge bg-label-primary p-2"><i class="ti tabler-clipboard-check icon-16px"></i></span>
+    <h6 class="mb-0 text-primary">Sistema de Control Interno (SCI)</h6>
+    <hr class="flex-grow-1 my-0 ms-2">
+  </div>
+  <div class="row g-4 mb-5">
     @php
-    $accesos = [
-      ['route'=>'adm-usuarios','icon'=>'tabler-users','color'=>'primary','title'=>'Gestión de Usuarios','desc'=>'Crear, editar y gestionar usuarios del sistema'],
-      ['route'=>'adm-roles','icon'=>'tabler-user-shield','color'=>'success','title'=>'Roles del Sistema','desc'=>'Definir roles y sus permisos asociados'],
-      ['route'=>'adm-permisos','icon'=>'tabler-lock','color'=>'warning','title'=>'Permisos','desc'=>'Gestionar permisos granulares del sistema'],
-      ['route'=>'sci-control-interno','icon'=>'tabler-clipboard-list','color'=>'info','title'=>'Control Interno','desc'=>'Módulo SCI - Componentes y actividades'],
+    $accesos_sci = [
+      ['route'=>'sci-control-interno',  'icon'=>'tabler-clipboard-check', 'color'=>'primary',   'title'=>'Control Interno',    'desc'=>'Actividades y compromisos SCI'],
+      ['route'=>'sci-evidencias',       'icon'=>'tabler-files',           'color'=>'info',       'title'=>'Evidencias',         'desc'=>'Documentos y registros de avance'],
+      ['route'=>'cumplimiento.panel',   'icon'=>'tabler-chart-dots',      'color'=>'secondary',  'title'=>'Cumplimiento SCI',   'desc'=>'Panel ejecutivo de cumplimiento'],
+      ['route'=>'mon-avance-unidades',  'icon'=>'tabler-building-community','color'=>'warning',  'title'=>'Avance por Unidades','desc'=>'Seguimiento por área orgánica'],
+      ['route'=>'mon-ranking-unidades', 'icon'=>'tabler-podium',          'color'=>'success',    'title'=>'Ranking de Unidades','desc'=>'Clasificación general por avance'],
+      ['route'=>'adm-sci-estructura',   'icon'=>'tabler-layout-grid',     'color'=>'secondary',  'title'=>'Estructura SCI',     'desc'=>'Administrar ejes, componentes y preguntas'],
     ];
     @endphp
-    @foreach($accesos as $acc)
-    <div class="col-md-6 col-xl-3">
+    @foreach($accesos_sci as $acc)
+    <div class="col-md-6 col-xl-2">
       <a href="{{ route($acc['route']) }}" class="card card-hover-shadow text-decoration-none h-100">
-        <div class="card-body text-center py-5">
-          <div class="avatar avatar-lg bg-label-{{ $acc['color'] }} rounded mx-auto mb-3">
-            <i class="ti {{ $acc['icon'] }} icon-30px"></i>
+        <div class="card-body text-center py-4">
+          <div class="avatar avatar-md bg-label-{{ $acc['color'] }} rounded mx-auto mb-2">
+            <i class="ti {{ $acc['icon'] }} icon-24px"></i>
           </div>
-          <h6 class="mb-1 text-heading">{{ $acc['title'] }}</h6>
-          <p class="text-muted small mb-0">{{ $acc['desc'] }}</p>
+          <h6 class="mb-1 text-heading" style="font-size:12px">{{ $acc['title'] }}</h6>
+          <p class="text-muted mb-0" style="font-size:11px">{{ $acc['desc'] }}</p>
         </div>
       </a>
     </div>
     @endforeach
   </div>
+
+  {{-- Integridad --}}
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="badge bg-label-success p-2"><i class="ti tabler-shield-check icon-16px"></i></span>
+    <h6 class="mb-0 text-success">Módulo de Integridad</h6>
+    <hr class="flex-grow-1 my-0 ms-2">
+  </div>
+  <div class="row g-4 mb-5">
+    @php
+    $accesos_integridad = [
+      ['route'=>'sci-modelo-integridad',     'icon'=>'tabler-shield-check',    'color'=>'success', 'title'=>'Modelo de Integridad',   'desc'=>'PCM — 9 componentes'],
+      ['route'=>'sci-semaforo',              'icon'=>'tabler-traffic-lights',  'color'=>'warning', 'title'=>'Semáforo Institucional', 'desc'=>'Estado en tiempo real'],
+      ['route'=>'mon-alertas',               'icon'=>'tabler-bell',            'color'=>'danger',  'title'=>'Alertas',                'desc'=>'Notificaciones y pendientes'],
+      ['route'=>'buenas-practicas',          'icon'=>'tabler-rosette-discount-check','color'=>'info','title'=>'Buenas Prácticas',     'desc'=>'Registro y seguimiento'],
+      ['route'=>'recomendaciones',           'icon'=>'tabler-message-report',  'color'=>'secondary','title'=>'Recomendaciones',        'desc'=>'Observaciones institucionales'],
+      ['route'=>'adm-integridad-estructura', 'icon'=>'tabler-layers-intersect','color'=>'success', 'title'=>'Estructura Integridad',  'desc'=>'Etapas, componentes y preguntas PCM'],
+    ];
+    @endphp
+    @foreach($accesos_integridad as $acc)
+    <div class="col-md-6 col-xl-2">
+      <a href="{{ route($acc['route']) }}" class="card card-hover-shadow text-decoration-none h-100">
+        <div class="card-body text-center py-4">
+          <div class="avatar avatar-md bg-label-{{ $acc['color'] }} rounded mx-auto mb-2">
+            <i class="ti {{ $acc['icon'] }} icon-24px"></i>
+          </div>
+          <h6 class="mb-1 text-heading" style="font-size:12px">{{ $acc['title'] }}</h6>
+          <p class="text-muted mb-0" style="font-size:11px">{{ $acc['desc'] }}</p>
+        </div>
+      </a>
+    </div>
+    @endforeach
+  </div>
+
+  {{-- Administración --}}
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="badge bg-label-secondary p-2"><i class="ti tabler-settings icon-16px"></i></span>
+    <h6 class="mb-0 text-secondary">Administración</h6>
+    <hr class="flex-grow-1 my-0 ms-2">
+  </div>
+  <div class="row g-4">
+    @php
+    $accesos_adm = [
+      ['route'=>'adm-usuarios',  'icon'=>'tabler-users',      'color'=>'primary',   'title'=>'Usuarios',          'desc'=>'Cuentas y accesos'],
+      ['route'=>'adm-roles',     'icon'=>'tabler-user-shield','color'=>'warning',   'title'=>'Roles',             'desc'=>'Perfiles de usuario'],
+      ['route'=>'adm-permisos',  'icon'=>'tabler-lock',       'color'=>'danger',    'title'=>'Permisos',          'desc'=>'Control de acceso'],
+      ['route'=>'adm-unidades',  'icon'=>'tabler-sitemap',    'color'=>'info',      'title'=>'Unidades Orgánicas','desc'=>'Estructura institucional'],
+      ['route'=>'rep-reportes',  'icon'=>'tabler-chart-bar',  'color'=>'secondary', 'title'=>'Reportes',          'desc'=>'Análisis y exportación'],
+      ['route'=>'slider-landing.index','icon'=>'tabler-slideshow','color'=>'secondary','title'=>'Slider Landing', 'desc'=>'Slides de la página principal'],
+    ];
+    @endphp
+    @foreach($accesos_adm as $acc)
+    <div class="col-md-6 col-xl-2">
+      <a href="{{ route($acc['route']) }}" class="card card-hover-shadow text-decoration-none h-100">
+        <div class="card-body text-center py-4">
+          <div class="avatar avatar-md bg-label-{{ $acc['color'] }} rounded mx-auto mb-2">
+            <i class="ti {{ $acc['icon'] }} icon-24px"></i>
+          </div>
+          <h6 class="mb-1 text-heading" style="font-size:12px">{{ $acc['title'] }}</h6>
+          <p class="text-muted mb-0" style="font-size:11px">{{ $acc['desc'] }}</p>
+        </div>
+      </a>
+    </div>
+    @endforeach
+  </div>
+
 </div>
 
 
@@ -670,114 +1010,183 @@ use Illuminate\Support\Facades\Storage;
 
 @section('page-script')
 <script>
-// Mostrar/ocultar campo dependiente del switch
+window.addEventListener('load', function () {
+const $ = window.jQuery;
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function avatarHtml(foto, nombre, size) {
+    if (foto) {
+      return `<img src="${foto}" class="rounded-circle me-2" style="width:${size}px;height:${size}px;object-fit:cover">`;
+    }
+    const ini = nombre ? nombre.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase() : '?';
+    return `<div class="rounded-circle d-inline-flex align-items-center justify-content-center fw-bold me-2"
+      style="width:${size}px;height:${size}px;background:linear-gradient(135deg,var(--bs-primary),rgba(var(--bs-primary-rgb),.6));color:#fff;font-size:${Math.round(size/3)}px;flex-shrink:0">${ini}</div>`;
+  }
+
+  function formatUsuarioOption(option) {
+    if (!option.id) return $(`<span class="text-muted">${option.text}</span>`);
+    const el = option.element;
+    const cargo  = el.dataset.cargo  || '';
+    const unidad = el.dataset.unidad || '';
+    const email  = el.dataset.email  || '';
+    const foto   = el.dataset.foto   || '';
+    return $(`<div class="d-flex align-items-center gap-2 py-1">
+      ${avatarHtml(foto, option.text, 36)}
+      <div>
+        <div class="fw-semibold" style="font-size:13px">${option.text}</div>
+        <div class="text-muted" style="font-size:11px">${cargo}${unidad ? ' · ' + unidad : ''}</div>
+        <div class="text-muted" style="font-size:11px">${email}</div>
+      </div>
+    </div>`);
+  }
+
+  function formatUsuarioSelected(option) {
+    if (!option.id) return option.text;
+    const el = option.element;
+    const cargo = el.dataset.cargo || '';
+    const foto  = el.dataset.foto  || '';
+    return $(`<div class="d-flex align-items-center gap-2">
+      ${avatarHtml(foto, option.text, 24)}
+      <span>${option.text}</span>
+      ${cargo ? `<span class="badge bg-label-secondary ms-1" style="font-size:10px">${cargo}</span>` : ''}
+    </div>`);
+  }
+
+  function actualizarPreview(previewId, data) {
+    $(`#${previewId} [id$="Nombre"]`).text(data.nombre || '');
+    $(`#${previewId} [id$="Cargo"]`).text(data.cargo || '');
+    $(`#${previewId} [id$="Unidad"]`).text(data.unidad || '');
+    $(`#${previewId} [id$="Email"]`).text(data.email || '');
+    $(`#${previewId} [id$="Foto"]`).html(avatarHtml(data.foto, data.nombre, 48));
+  }
+
+  // ── Select2 autoridades ───────────────────────────────────────────────────
+  function initSelect2Autoridad(selectId, previewId) {
+    $(`#${selectId}`).select2({
+      placeholder: $(`#${selectId}`).data('placeholder'),
+      allowClear: true,
+      templateResult: formatUsuarioOption,
+      templateSelection: formatUsuarioSelected,
+      dropdownParent: $(`#${selectId}`).closest('.card-body'),
+    }).on('select2:select', function (e) {
+      const el = e.params.data.element;
+      actualizarPreview(previewId, {
+        nombre: e.params.data.text,
+        cargo:  el.dataset.cargo  || '',
+        unidad: el.dataset.unidad || '',
+        email:  el.dataset.email  || '',
+        foto:   el.dataset.foto   || '',
+      });
+      $(`#${previewId}`).removeClass('d-none');
+    }).on('select2:unselect', function () {
+      $(`#${previewId}`).addClass('d-none');
+    });
+  }
+
+  initSelect2Autoridad('selectDirector',       'previewDirector');
+  initSelect2Autoridad('selectCoordinadorSci', 'previewCoordinador');
+
+  // Poblar avatar en previews ya visibles al cargar
+  ['Director', 'Coordinador'].forEach(function (key) {
+    const previewId = 'preview' + key;
+    const el = document.getElementById(previewId);
+    if (el && !el.classList.contains('d-none')) {
+      const fotoEl = document.getElementById('preview' + key + 'Foto');
+      const nombre = document.getElementById('preview' + key + 'Nombre')?.textContent || '';
+      if (fotoEl) fotoEl.innerHTML = avatarHtml('', nombre, 48);
+    }
+  });
+
+  // ── Logo / Favicon previews ───────────────────────────────────────────────
+  $('#logoUpload').on('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const preview = document.getElementById('logoPreview');
+      if (preview.tagName === 'IMG') {
+        preview.src = ev.target.result;
+      } else {
+        const img = document.createElement('img');
+        img.src = ev.target.result;
+        img.id = 'logoPreview';
+        img.className = 'rounded border';
+        img.style = 'width:120px;height:120px;object-fit:contain;background:#f8f9fa';
+        img.alt = 'Logo institucional';
+        preview.replaceWith(img);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $('#faviconUpload').on('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const preview = document.getElementById('faviconPreview');
+      if (preview.tagName === 'IMG') {
+        preview.src = ev.target.result;
+      } else {
+        const img = document.createElement('img');
+        img.src = ev.target.result;
+        img.id = 'faviconPreview';
+        img.className = 'rounded border';
+        img.style = 'width:64px;height:64px;object-fit:contain;background:#f8f9fa';
+        img.alt = 'Favicon';
+        preview.replaceWith(img);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $('#btnRemoveFavicon').on('click', function () {
+    $('#removeFavicon').val('1');
+    const placeholder = $('<div id="faviconPreview" class="rounded border d-flex align-items-center justify-content-center bg-label-secondary" style="width:64px;height:64px"><i class="ti tabler-browser icon-24px text-muted"></i></div>');
+    $('#faviconPreview').replaceWith(placeholder);
+    $(this).prop('disabled', true);
+  });
+
+  $('#btnRemoveLogo').on('click', function () {
+    $('#removeLogo').val('1');
+    const placeholder = $('<div id="logoPreview" class="rounded border d-flex align-items-center justify-content-center bg-label-secondary" style="width:120px;height:120px"><i class="ti tabler-building icon-40px text-muted"></i></div>');
+    $('#logoPreview').replaceWith(placeholder);
+    $(this).prop('disabled', true);
+  });
+
+  // ── Live preview nombre institución ──────────────────────────────────────
+  $('[name="nombre_institucion"]').on('input', function () {
+    $('#previewNombre').text(this.value || '—');
+  });
+
+  // ── Semáforo barra visual ─────────────────────────────────────────────────
+  function updateSemaforoBar() {
+    const verde    = parseInt($('[name="umbral_verde"]').val() || 75);
+    const amarillo = parseInt($('[name="umbral_amarillo"]').val() || 50);
+    $('#barRojo').text(`Rojo (0–${amarillo - 1}%)`);
+    $('#barAmarillo').text(`Amarillo (${amarillo}–${verde - 1}%)`);
+    $('#barVerde').text(`Verde (≥ ${verde}%)`);
+  }
+  $('[name="umbral_verde"], [name="umbral_amarillo"]').on('input', updateSemaforoBar);
+
+  // ── Tabs accesos rápidos (fuera del form) ─────────────────────────────────
+  $('#configTabs .nav-link').on('shown.bs.tab', function (e) {
+    const target = $(e.target).attr('href');
+    $('#tabAccesosContent').toggleClass('d-none', target !== '#tab-accesos');
+  });
+
+  // ── Activar tab por sesión ────────────────────────────────────────────────
+  @if(session('_tab'))
+    const tabEl = document.querySelector(`#configTabs [href="#{{ session('_tab') }}"]`);
+    if (tabEl) new bootstrap.Tab(tabEl).show();
+  @endif
+
+}); // fin window.load
+
+// toggleField global — usado inline en onchange de los switches
 function toggleField(id, show) {
   const el = document.getElementById(id);
   if (el) el.classList.toggle('d-none', !show);
 }
-
-// Preview del logo al seleccionar archivo
-document.getElementById('logoUpload')?.addEventListener('change', function (e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const preview = document.getElementById('logoPreview');
-    if (preview.tagName === 'IMG') {
-      preview.src = ev.target.result;
-    } else {
-      const img = document.createElement('img');
-      img.src = ev.target.result;
-      img.id = 'logoPreview';
-      img.className = 'rounded border';
-      img.style = 'width:120px;height:120px;object-fit:contain;background:#f8f9fa';
-      img.alt = 'Logo institucional';
-      preview.replaceWith(img);
-    }
-  };
-  reader.readAsDataURL(file);
-});
-
-// Preview del favicon al seleccionar archivo
-document.getElementById('faviconUpload')?.addEventListener('change', function (e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const preview = document.getElementById('faviconPreview');
-    if (preview.tagName === 'IMG') {
-      preview.src = ev.target.result;
-    } else {
-      const img = document.createElement('img');
-      img.src = ev.target.result;
-      img.id = 'faviconPreview';
-      img.className = 'rounded border';
-      img.style = 'width:64px;height:64px;object-fit:contain;background:#f8f9fa';
-      img.alt = 'Favicon';
-      preview.replaceWith(img);
-    }
-  };
-  reader.readAsDataURL(file);
-});
-
-// Botón eliminar favicon
-document.getElementById('btnRemoveFavicon')?.addEventListener('click', function () {
-  document.getElementById('removeFavicon').value = '1';
-  const preview = document.getElementById('faviconPreview');
-  const placeholder = document.createElement('div');
-  placeholder.id = 'faviconPreview';
-  placeholder.className = 'rounded border d-flex align-items-center justify-content-center bg-label-secondary';
-  placeholder.style = 'width:64px;height:64px';
-  placeholder.innerHTML = '<i class="ti tabler-browser icon-24px text-muted"></i>';
-  preview.replaceWith(placeholder);
-  this.disabled = true;
-});
-
-// Botón eliminar logo
-document.getElementById('btnRemoveLogo')?.addEventListener('click', function () {
-  document.getElementById('removeLogo').value = '1';
-  const preview = document.getElementById('logoPreview');
-  const placeholder = document.createElement('div');
-  placeholder.id = 'logoPreview';
-  placeholder.className = 'rounded border d-flex align-items-center justify-content-center bg-label-secondary';
-  placeholder.style = 'width:120px;height:120px';
-  placeholder.innerHTML = '<i class="ti tabler-building icon-40px text-muted"></i>';
-  preview.replaceWith(placeholder);
-  this.disabled = true;
-});
-
-// Live preview del nombre e institución
-document.querySelector('[name="nombre_institucion"]')?.addEventListener('input', function () {
-  const el = document.getElementById('previewNombre');
-  if (el) el.textContent = this.value || '—';
-});
-
-// Vista previa de rangos del semáforo
-function updateSemaforoBar() {
-  const verde    = parseInt(document.querySelector('[name="umbral_verde"]')?.value || 75);
-  const amarillo = parseInt(document.querySelector('[name="umbral_amarillo"]')?.value || 50);
-  const rojo     = document.getElementById('barRojo');
-  const am       = document.getElementById('barAmarillo');
-  const vd       = document.getElementById('barVerde');
-  if (rojo) rojo.textContent     = `Rojo (0–${amarillo - 1}%)`;
-  if (am)   am.textContent       = `Amarillo (${amarillo}–${verde - 1}%)`;
-  if (vd)   vd.textContent       = `Verde (≥ ${verde}%)`;
-}
-document.querySelector('[name="umbral_verde"]')?.addEventListener('input', updateSemaforoBar);
-document.querySelector('[name="umbral_amarillo"]')?.addEventListener('input', updateSemaforoBar);
-
-// Tabs con contenido fuera del form principal (accesos)
-document.querySelectorAll('#configTabs .nav-link').forEach(link => {
-  link.addEventListener('shown.bs.tab', function (e) {
-    const target = e.target.getAttribute('href');
-    document.getElementById('tabAccesosContent')?.classList.toggle('d-none', target !== '#tab-accesos');
-  });
-});
-
-// Activar tab correcto si hay sesión de éxito/error
-@if(session('_tab'))
-  const tabEl = document.querySelector(`#configTabs [href="#{{ session('_tab') }}"]`);
-  if (tabEl) new bootstrap.Tab(tabEl).show();
-@endif
 </script>
 @endsection

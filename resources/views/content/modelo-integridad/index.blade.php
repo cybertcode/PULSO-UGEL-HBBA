@@ -69,9 +69,9 @@ body.modal-open .layout-wrapper { overflow: visible !important; }
     </nav>
     <h4 class="mb-0 d-flex align-items-center gap-2">
       <i class="ti tabler-shield-check text-warning"></i> Modelo de Integridad
-      <span class="badge bg-label-warning rounded-pill" style="font-size:11px">PCM — 9 componentes</span>
+      <span class="badge bg-label-warning rounded-pill" style="font-size:11px">PCM — {{ $componentes->count() }} componentes</span>
     </h4>
-    <p class="mb-0 text-muted small mt-1">Monitoreo del cumplimiento de los nueve componentes del Modelo de Integridad de la PCM.</p>
+    <p class="mb-0 text-muted small mt-1">Monitoreo del cumplimiento de los {{ $componentes->count() ?: 'nueve' }} componentes del Modelo de Integridad de la PCM — {{ $anio }}.</p>
   </div>
   <div class="d-flex gap-2 align-self-start flex-wrap">
     @can('integridad.crear')
@@ -303,7 +303,7 @@ body.modal-open .layout-wrapper { overflow: visible !important; }
             {{-- Info --}}
             <div class="flex-grow-1 overflow-hidden">
               <div class="fw-semibold text-truncate" style="font-size:13px">{{ Str::limit($act->nombre, 48) }}</div>
-              <div class="text-muted text-truncate" style="font-size:11px">{{ $act->componente->nombre ?? '—' }}</div>
+              <div class="text-muted text-truncate" style="font-size:11px">{{ $act->componente?->nombre ?? '—' }}</div>
             </div>
             {{-- Badge días --}}
             <span class="badge bg-label-{{ $tc }} flex-shrink-0" style="font-size:10px;white-space:nowrap">

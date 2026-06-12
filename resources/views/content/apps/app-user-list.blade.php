@@ -39,7 +39,7 @@
 #dtCargos tbody tr:hover { background: rgba(105,108,255,.04) !important; }
 
 /* Avatar compacto */
-.user-avatar-xs { width: 30px; height: 30px; font-size: .72rem; font-weight: 700; }
+.user-avatar-xs { width: 30px; height: 30px; font-size: .72rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 
 /* Badge estado */
 .badge-estado { font-size: .7rem; padding: .28em .65em; border-radius: 6px; font-weight: 600; }
@@ -151,10 +151,15 @@
     <div class="d-flex align-items-center justify-content-between mb-2">
       <h6 class="mb-0 fw-semibold"><i class="ti tabler-filter text-primary me-2" style="font-size:.9rem"></i>Filtros rápidos</h6>
     </div>
-    <div class="row g-2 dt-filters-row">
+    <div class="row g-2 dt-filters-row align-items-end">
       <div class="col-md-4 user_rol"></div>
       <div class="col-md-4 user_unidad"></div>
-      <div class="col-md-4 user_estado"></div>
+      <div class="col-md-3 user_estado"></div>
+      <div class="col-md-1 d-flex align-items-end">
+        <button type="button" id="btnLimpiarFiltros" class="btn btn-sm btn-label-secondary w-100 d-none" title="Limpiar filtros">
+          <i class="ti tabler-filter-off" style="font-size:.9rem"></i>
+        </button>
+      </div>
     </div>
   </div>
   <div class="card-datatable">
@@ -705,6 +710,13 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Filtros en el header — server-side
+  const btnLimpiar = document.getElementById('btnLimpiarFiltros');
+
+  function actualizarBtnLimpiar() {
+    const activo = filtros.rol || filtros.unidad_id || filtros.estado;
+    btnLimpiar?.classList.toggle('d-none', !activo);
+  }
+
   setTimeout(() => {
     // Rol
     const rolDiv = document.querySelector('.user_rol');
@@ -716,6 +728,7 @@ document.addEventListener('DOMContentLoaded', function () {
       </select>`;
       rolDiv.querySelector('select').addEventListener('change', function () {
         filtros.rol = this.value;
+        actualizarBtnLimpiar();
         dt.ajax.reload();
       });
     }
@@ -730,6 +743,7 @@ document.addEventListener('DOMContentLoaded', function () {
       </select>`;
       unidadDiv.querySelector('select').addEventListener('change', function () {
         filtros.unidad_id = this.value;
+        actualizarBtnLimpiar();
         dt.ajax.reload();
       });
     }
@@ -745,9 +759,20 @@ document.addEventListener('DOMContentLoaded', function () {
       </select>`;
       estadoDiv.querySelector('select').addEventListener('change', function () {
         filtros.estado = this.value;
+        actualizarBtnLimpiar();
         dt.ajax.reload();
       });
     }
+
+    // Limpiar todos los filtros
+    btnLimpiar?.addEventListener('click', function () {
+      filtros = { rol: '', unidad_id: '', estado: '' };
+      document.querySelector('.user_rol select') && (document.querySelector('.user_rol select').value = '');
+      document.querySelector('.user_unidad select') && (document.querySelector('.user_unidad select').value = '');
+      document.querySelector('.user_estado select') && (document.querySelector('.user_estado select').value = '');
+      actualizarBtnLimpiar();
+      dt.ajax.reload();
+    });
 
     // Ajustes de clases del layout
     [

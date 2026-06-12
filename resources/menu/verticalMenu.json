@@ -9,33 +9,13 @@
       "i18n": "Resumen y estadísticas"
     },
 
-    { "menuHeader": "Control y Seguimiento" },
+    { "menuHeader": "Sistema de Control Interno" },
     {
       "url": "/control-interno",
       "name": "Control Interno",
       "icon": "menu-icon icon-base ti tabler-clipboard-check",
       "slug": "sci-control-interno",
-      "i18n": "Actividades y compromisos"
-    },
-    {
-      "name": "Modelo de Integridad",
-      "icon": "menu-icon icon-base ti tabler-shield-check",
-      "slug": ["sci-modelo-integridad", "mon-semaforo"],
-      "i18n": "PCM — 9 componentes",
-      "submenu": [
-        {
-          "url": "/modelo-integridad",
-          "name": "Vista General",
-          "slug": "sci-modelo-integridad",
-          "i18n": "Componentes y cumplimiento"
-        },
-        {
-          "url": "/semaforo",
-          "name": "Semáforo Institucional",
-          "slug": "mon-semaforo",
-          "i18n": "Estado en tiempo real"
-        }
-      ]
+      "i18n": "Actividades y compromisos SCI"
     },
     {
       "url": "/evidencias",
@@ -44,10 +24,8 @@
       "slug": "sci-evidencias",
       "i18n": "Documentos y registros"
     },
-
-    { "menuHeader": "Cumplimiento" },
     {
-      "name": "Seguimiento SCI",
+      "name": "Cumplimiento SCI",
       "icon": "menu-icon icon-base ti tabler-chart-dots",
       "slug": ["cumplimiento.panel", "cumplimiento.responsables", "cumplimiento.sin-evidencia"],
       "i18n": "Plazos, evidencias y responsables",
@@ -72,8 +50,6 @@
         }
       ]
     },
-
-    { "menuHeader": "Monitoreo" },
     {
       "url": "/avance-unidades",
       "name": "Avance por Unidades",
@@ -88,6 +64,22 @@
       "slug": "mon-ranking-unidades",
       "i18n": "Clasificación general"
     },
+
+    { "menuHeader": "Módulo de Integridad" },
+    {
+      "url": "/modelo-integridad",
+      "name": "Modelo de Integridad",
+      "icon": "menu-icon icon-base ti tabler-shield-check",
+      "slug": "sci-modelo-integridad",
+      "i18n": "PCM — 9 componentes"
+    },
+    {
+      "url": "/semaforo",
+      "name": "Semáforo Institucional",
+      "icon": "menu-icon icon-base ti tabler-traffic-lights",
+      "slug": "sci-semaforo",
+      "i18n": "Estado en tiempo real"
+    },
     {
       "url": "/alertas",
       "name": "Alertas",
@@ -95,8 +87,6 @@
       "slug": "mon-alertas",
       "i18n": "Notificaciones y pendientes"
     },
-
-    { "menuHeader": "Gestión" },
     {
       "url": "/buenas-practicas",
       "name": "Buenas Prácticas",
@@ -164,11 +154,30 @@
       "i18n": "Estructura institucional"
     },
     {
-      "url": "/administracion/componentes",
-      "name": "Componentes SCI",
+      "name": "Estructura del Sistema",
       "icon": "menu-icon icon-base ti tabler-layout-grid",
-      "slug": "adm-componentes",
-      "i18n": "Catálogo del modelo"
+      "slug": ["adm-componentes", "adm-sci-estructura", "adm-integridad-estructura"],
+      "i18n": "Catálogos SCI e Integridad",
+      "submenu": [
+        {
+          "url": "/administracion/componentes",
+          "name": "Componentes SCI",
+          "slug": "adm-componentes",
+          "i18n": "Catálogo del modelo SCI"
+        },
+        {
+          "url": "/administracion/sci",
+          "name": "Estructura SCI",
+          "slug": "adm-sci-estructura",
+          "i18n": "Configuración del SCI"
+        },
+        {
+          "url": "/administracion/integridad",
+          "name": "Estructura Integridad",
+          "slug": "adm-integridad-estructura",
+          "i18n": "Etapas y componentes PCM"
+        }
+      ]
     },
     {
       "url": "/configuracion",

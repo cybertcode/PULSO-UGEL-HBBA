@@ -4,8 +4,10 @@ namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
 use App\Models\ConfiguracionInstitucional;
+use App\Models\User;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ConfiguracionController extends Controller
 {
@@ -24,7 +26,22 @@ class ConfiguracionController extends Controller
             'umbral_amarillo'    => 50,
         ]);
 
-        return view('content.configuracion.index', compact('config'));
+        $usuarios = User::with(['cargo', 'unidadOrganica'])
+            ->where('estado', true)
+            ->orderBy('name')
+            ->get()
+            ->map(fn($u) => [
+                'id'           => $u->id,
+                'name'         => $u->name,
+                'email'        => $u->email,
+                'cargo'        => $u->cargo?->nombre,
+                'unidad'       => $u->unidadOrganica?->nombre,
+                'foto_url'     => $u->profile_photo_path
+                                    ? Storage::url($u->profile_photo_path)
+                                    : null,
+            ]);
+
+        return view('content.configuracion.index', compact('config', 'usuarios'));
     }
 
     public function update(Request $request)
@@ -43,18 +60,29 @@ class ConfiguracionController extends Controller
             'direccion'               => 'nullable|string|max:255',
             'sitio_web'               => 'nullable|url|max:255',
             'timezone'                => 'nullable|string|max:50',
-            'director'                => 'nullable|string|max:255',
-            'coordinador_sci'         => 'nullable|string|max:255',
+            'director_id'             => 'nullable|exists:users,id',
+            'coordinador_sci_id'      => 'nullable|exists:users,id',
             'correo_institucional'    => 'nullable|email|max:255',
             'telefono'                => 'nullable|string|max:20',
             'anio_gestion'            => 'nullable|integer|min:2020|max:2099',
             'umbral_verde'            => 'required|integer|min:1|max:100',
             'umbral_amarillo'         => 'required|integer|min:1|max:100',
-            'notif_vencimiento'       => 'boolean',
-            'notif_dias_anticipacion' => 'nullable|integer|min:1|max:30',
-            'notif_avance_bajo'       => 'boolean',
-            'notif_umbral_avance'     => 'nullable|integer|min:1|max:100',
-            'notif_email'             => 'boolean',
+            'notif_vencimiento'        => 'boolean',
+            'notif_dias_anticipacion'  => 'nullable|integer|min:1|max:30',
+            'notif_10dias'             => 'boolean',
+            'notif_5dias'              => 'boolean',
+            'notif_1dia'               => 'boolean',
+            'notif_modulo_sci'         => 'boolean',
+            'notif_modulo_integridad'  => 'boolean',
+            'notif_avance_bajo'        => 'boolean',
+            'notif_umbral_avance'      => 'nullable|integer|min:1|max:100',
+            'notif_email'              => 'boolean',
+            'mail_host'                => 'nullable|string|max:255',
+            'mail_port'                => 'nullable|integer|min:1|max:65535',
+            'mail_username'            => 'nullable|string|max:255',
+            'mail_password'            => 'nullable|string|max:255',
+            'mail_encryption'          => 'nullable|in:tls,ssl,none',
+            'mail_from_name'           => 'nullable|string|max:255',
             'logo'                    => 'nullable|image|mimes:' . ImageService::ALLOWED_MIMES . '|max:' . ImageService::MAX_SIZE_KB,
             'remove_logo'             => 'nullable|boolean',
             'favicon'                 => 'nullable|image|mimes:' . ImageService::ALLOWED_MIMES . '|max:10240',
@@ -73,8 +101,8 @@ class ConfiguracionController extends Controller
             'direccion.max'               => 'La dirección no puede superar los 255 caracteres.',
             'sitio_web.url'               => 'El sitio web debe ser una URL válida (ej: https://www.ugel.gob.pe).',
             'sitio_web.max'               => 'El sitio web no puede superar los 255 caracteres.',
-            'director.max'                => 'El nombre del director no puede superar los 255 caracteres.',
-            'coordinador_sci.max'         => 'El nombre del coordinador SCI no puede superar los 255 caracteres.',
+            'director_id.exists'          => 'El usuario seleccionado como Director no existe.',
+            'coordinador_sci_id.exists'   => 'El usuario seleccionado como Coordinador SCI no existe.',
             'correo_institucional.email'  => 'El correo institucional debe tener un formato válido.',
             'correo_institucional.max'    => 'El correo institucional no puede superar los 255 caracteres.',
             'telefono.max'                => 'El teléfono no puede superar los 20 caracteres.',
@@ -127,11 +155,36 @@ class ConfiguracionController extends Controller
 
         unset($validated['logo'], $validated['remove_logo'], $validated['favicon'], $validated['remove_favicon']);
 
-        $validated['notif_vencimiento'] = $request->boolean('notif_vencimiento');
-        $validated['notif_avance_bajo'] = $request->boolean('notif_avance_bajo');
-        $validated['notif_email']       = $request->boolean('notif_email');
+        $validated['notif_vencimiento']       = $request->boolean('notif_vencimiento');
+        $validated['notif_10dias']            = $request->boolean('notif_10dias');
+        $validated['notif_5dias']             = $request->boolean('notif_5dias');
+        $validated['notif_1dia']              = $request->boolean('notif_1dia');
+        $validated['notif_modulo_sci']        = $request->boolean('notif_modulo_sci');
+        $validated['notif_modulo_integridad'] = $request->boolean('notif_modulo_integridad');
+        $validated['notif_avance_bajo']       = $request->boolean('notif_avance_bajo');
+        $validated['notif_email']             = $request->boolean('notif_email');
         $validated['notif_dias_anticipacion'] ??= $config->notif_dias_anticipacion;
         $validated['notif_umbral_avance']     ??= $config->notif_umbral_avance;
+
+        // Si se guarda mail_password vacío, conservar el anterior
+        if (empty($validated['mail_password'])) {
+            $validated['mail_password'] = $config->mail_password;
+        }
+
+        // Sincronizar campos texto con el usuario seleccionado
+        if (!empty($validated['director_id'])) {
+            $director = User::find($validated['director_id']);
+            $validated['director'] = $director?->name;
+        } else {
+            $validated['director'] = null;
+        }
+
+        if (!empty($validated['coordinador_sci_id'])) {
+            $coord = User::find($validated['coordinador_sci_id']);
+            $validated['coordinador_sci'] = $coord?->name;
+        } else {
+            $validated['coordinador_sci'] = null;
+        }
 
         $config->update($validated);
 

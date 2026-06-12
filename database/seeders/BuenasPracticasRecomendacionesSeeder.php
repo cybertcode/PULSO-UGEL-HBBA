@@ -248,11 +248,14 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
             ],
         ];
 
-        foreach ($practicas as $p) {
+        foreach ($practicas as $idx => $p) {
+            // Alternar módulo: impares=sci, pares=integridad para variedad
+            $modulo = ($idx % 3 === 2) ? 'integridad' : 'sci';
             DB::table('buenas_practicas')->insert([
                 'titulo'             => $p['titulo'],
                 'descripcion'        => $p['descripcion'],
                 'categoria'          => $p['categoria'],
+                'modulo'             => $p['modulo'] ?? $modulo,
                 'unidad_organica_id' => $p['unidad_id'],
                 'responsable_id'     => $p['responsable'],
                 'estado'             => $p['estado'],
@@ -270,7 +273,60 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('✅ Buenas Prácticas UGEL Huacaybamba: ' . count($practicas) . ' registros insertados.');
+        // Proyectos del CONCURSO — flujo dos niveles: UGEL → Externo (MINEDU/DRE)
+        $now = now()->toDateTimeString();
+        $proyectosConcurso = [
+            // NIVEL 0: Presentados (esperan recepción SCI)
+            ['titulo'=>'App móvil de seguimiento de trámites docentes','descripcion'=>'Propongo crear una app móvil para que docentes rurales consulten el estado de sus trámites sin necesidad de viajar a la UGEL sede. Incluye notificaciones push y módulo de consulta de boletas.','categoria'=>'innovacion','modulo'=>'sci','unidad_id'=>2,'propuesto_por'=>3,'estado'=>'presentado','evidencias'=>'Encuesta a 45 docentes de Pinra (alta demanda). Prototipo en Figma adjunto.','expediente'=>null,'recepcion'=>null,'puntaje'=>null,'obs'=>null,'nivel_ext'=>null,'fecha_ext'=>null,'resultado_ext'=>null,'created_at'=>'2026-06-08 09:15:00'],
+            ['titulo'=>'Código de conducta digital para el personal administrativo','descripcion'=>'Elaborar código de conducta para uso ético de herramientas digitales y redes sociales institucionales, alineado al Modelo de Integridad de la CGR.','categoria'=>'integridad','modulo'=>'integridad','unidad_id'=>1,'propuesto_por'=>4,'estado'=>'presentado','evidencias'=>'Normativa CGR sobre modelo de integridad. Experiencias de otras UGEL de Huánuco.','expediente'=>null,'recepcion'=>null,'puntaje'=>null,'obs'=>null,'nivel_ext'=>null,'fecha_ext'=>null,'resultado_ext'=>null,'created_at'=>'2026-06-09 10:00:00'],
+            // NIVEL 1a: Recepcionado (SCI confirmó — comisión pendiente de evaluar)
+            ['titulo'=>'Programa semestral de reconocimiento al personal','descripcion'=>'Crear programa de reconocimiento público al personal administrativo que cumpla metas de gestión, como incentivo no económico que fortalezca la cultura institucional.','categoria'=>'gestion','modulo'=>'sci','unidad_id'=>null,'propuesto_por'=>5,'estado'=>'recepcionado','evidencias'=>'Benchmarking de 3 UGEL que aplican reconocimientos similares.','expediente'=>'EXP-001-2026','recepcion'=>'2026-06-05','puntaje'=>null,'obs'=>null,'nivel_ext'=>null,'fecha_ext'=>null,'resultado_ext'=>null,'created_at'=>'2026-06-03 11:30:00'],
+            // NIVEL 1b: Elegible (admitido al concurso interno UGEL)
+            ['titulo'=>'Sistema de alertas tempranas para docentes en riesgo de abandono','descripcion'=>'Sistema automatizado que detecta patrones de inasistencia y bajo rendimiento en docentes para intervención oportuna del área de personal, reduciendo la deserción laboral.','categoria'=>'gestion','modulo'=>'sci','unidad_id'=>1,'propuesto_por'=>3,'estado'=>'elegible','evidencias'=>'Datos estadísticos de asistencia 2024-2025. Propuesta técnica con wireframes.','expediente'=>'EXP-002-2026','recepcion'=>'2026-05-20','puntaje'=>85,'obs'=>'Proyecto con alto impacto en la gestión del capital humano. La comisión valora la propuesta técnica detallada y la viabilidad de implementación.','nivel_ext'=>null,'fecha_ext'=>null,'resultado_ext'=>null,'created_at'=>'2026-05-15 08:00:00'],
+            ['titulo'=>'Portal de transparencia interactivo para la comunidad educativa','descripcion'=>'Rediseño del portal de transparencia para hacerlo accesible e interactivo, con infografías, datos abiertos y un chatbot de consultas, alineado al Modelo de Integridad.','categoria'=>'transparencia','modulo'=>'integridad','unidad_id'=>2,'propuesto_por'=>4,'estado'=>'elegible','evidencias'=>'Comparativo de portales de transparencia UGEL a nivel nacional. Maqueta HTML adjunta.','expediente'=>'EXP-003-2026','recepcion'=>'2026-05-22','puntaje'=>78,'obs'=>'Iniciativa alineada al pilar de transparencia del Modelo de Integridad. La comisión reconoce el enfoque en accesibilidad ciudadana.','nivel_ext'=>null,'fecha_ext'=>null,'resultado_ext'=>null,'created_at'=>'2026-05-18 09:00:00'],
+            // NIVEL 1c: Ganador UGEL → va a concurso externo DRE Huánuco
+            ['titulo'=>'Modelo de gestión documental cero papel en la UGEL Huacaybamba','descripcion'=>'Implementación integral de gestión documental electrónica eliminando el uso de papel en todos los procesos internos, con firma digital, flujos de aprobación automatizados y archivo digital centralizado.','categoria'=>'innovacion','modulo'=>'sci','unidad_id'=>1,'propuesto_por'=>5,'estado'=>'ganador_ugel','evidencias'=>'Piloto exitoso en área de personal (3 meses). Ahorro estimado S/. 8,400 anuales en papel e impresión.','expediente'=>'EXP-004-2026','recepcion'=>'2026-04-10','puntaje'=>96,'obs'=>'¡Felicitaciones! Tu proyecto fue seleccionado por unanimidad para representar a la UGEL Huacaybamba. Puntaje: 96/100.','nivel_ext'=>null,'fecha_ext'=>null,'resultado_ext'=>null,'created_at'=>'2026-04-05 07:30:00'],
+            // NIVEL 2a: Participante externo DRE Huánuco (en curso)
+            ['titulo'=>'Plataforma de gestión de riesgos de control interno','descripcion'=>'Plataforma web para identificar, registrar y monitorear riesgos del Sistema de Control Interno conforme a la Guía para la Gestión de Riesgos de la CGR, con alertas automáticas y reportes trimestrales.','categoria'=>'gestion','modulo'=>'sci','unidad_id'=>1,'propuesto_por'=>3,'estado'=>'participante_externo','evidencias'=>'Mapeo de riesgos 2025, Guía CGR, experiencias de otras UGEL en Ancash y Huánuco.','expediente'=>'EXP-005-2026','recepcion'=>'2026-03-15','puntaje'=>91,'obs'=>'Proyecto seleccionado para representar a la UGEL en la DRE Huánuco. Fecha del concurso: 20/06/2026.','nivel_ext'=>'dre','fecha_ext'=>'2026-06-20','resultado_ext'=>null,'created_at'=>'2026-03-10 08:00:00'],
+            // NIVEL 2b: Ganador externo MINEDU
+            ['titulo'=>'Programa de integridad escolar: formando líderes éticos','descripcion'=>'Programa de formación en valores y ética pública dirigido a estudiantes de secundaria de las II.EE. de la UGEL Huacaybamba, articulado al Modelo de Integridad y con participación de padres de familia.','categoria'=>'integridad','modulo'=>'integridad','unidad_id'=>2,'propuesto_por'=>4,'estado'=>'ganador_externo','evidencias'=>'Piloto en 3 IE (280 estudiantes). Evaluación pre/post con mejora del 34% en indicadores de integridad.','expediente'=>'EXP-006-2026','recepcion'=>'2026-02-20','puntaje'=>98,'obs'=>'¡FELICITACIONES! Ganador del Concurso Nacional de Buenas Prácticas MINEDU 2026. Logro histórico para la UGEL Huacaybamba.','nivel_ext'=>'minedu','fecha_ext'=>'2026-05-15','resultado_ext'=>'1er lugar — Concurso Nacional de Buenas Prácticas en Integridad MINEDU 2026. Puntaje: 98/100.','created_at'=>'2026-02-15 08:00:00'],
+            // No elegible
+            ['titulo'=>'Rediseño del uniforme institucional del personal','descripcion'=>'Propuesta para unificar la imagen institucional del personal administrativo con uniforme estándar que incluya colores corporativos de la UGEL.','categoria'=>'gestion','modulo'=>'sci','unidad_id'=>null,'propuesto_por'=>3,'estado'=>'no_elegible','evidencias'=>null,'expediente'=>'EXP-007-2026','recepcion'=>'2026-05-01','puntaje'=>null,'obs'=>'La propuesta no cumple con los criterios de innovación en gestión pública requeridos para el concurso. Se sugiere reformular el proyecto enfocándose en mejoras de proceso.','nivel_ext'=>null,'fecha_ext'=>null,'resultado_ext'=>null,'created_at'=>'2026-04-28 10:00:00'],
+        ];
+
+        foreach ($proyectosConcurso as $p) {
+            DB::table('buenas_practicas')->insert([
+                'titulo'                 => $p['titulo'],
+                'descripcion'            => $p['descripcion'],
+                'categoria'              => $p['categoria'],
+                'modulo'                 => $p['modulo'],
+                'unidad_organica_id'     => $p['unidad_id'],
+                'responsable_id'         => null,
+                'estado'                 => $p['estado'],
+                'avance'                 => 0,
+                'fecha_inicio'           => null,
+                'fecha_termino'          => null,
+                'numero_sgd'             => null,
+                'numero_expediente'      => $p['expediente'],
+                'fecha_recepcion'        => $p['recepcion'],
+                'impacto'                => null,
+                'evidencias'             => $p['evidencias'],
+                'observaciones'          => null,
+                'feedback_sci'           => $p['obs'],
+                'puntaje_comision'       => $p['puntaje'],
+                'observacion_comision'   => $p['obs'],
+                'nivel_externo'          => $p['nivel_ext'],
+                'fecha_concurso_externo' => $p['fecha_ext'],
+                'resultado_externo'      => $p['resultado_ext'],
+                'propuesto_por'          => $p['propuesto_por'],
+                'creado_por'             => $p['propuesto_por'],
+                'created_at'             => $p['created_at'],
+                'updated_at'             => $p['created_at'],
+                'deleted_at'             => null,
+            ]);
+        }
+
+        $this->command->info('✅ Buenas Prácticas UGEL Huacaybamba: ' . count($practicas) . ' prácticas + ' . count($proyectosConcurso) . ' proyectos del concurso insertados.');
     }
 
     private function seedRecomendaciones(): void

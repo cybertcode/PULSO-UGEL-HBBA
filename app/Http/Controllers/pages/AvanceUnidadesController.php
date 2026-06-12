@@ -7,6 +7,9 @@ use App\Models\Actividad;
 use App\Models\ConfiguracionInstitucional;
 use App\Models\UnidadOrganica;
 use App\Support\SemaforoHelper;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class AvanceUnidadesController extends Controller
 {
@@ -93,13 +96,104 @@ class AvanceUnidadesController extends Controller
 
         $ultima_actualizacion = Actividad::max('updated_at');
 
+        // Colores hex para los gauges de ApexCharts
+        $gc_sci    = SemaforoHelper::colorHex($sci_avance);
+        $gc_int    = SemaforoHelper::colorHex($int_avance);
+        $gc_global = SemaforoHelper::colorHex($avance_global);
+
         return view('content.avance-unidades.index', compact(
             'unidades',
             'total_actividades', 'total_completadas', 'total_en_proceso', 'total_pendientes', 'avance_global',
             'sci_total', 'sci_completadas', 'sci_en_proceso', 'sci_pendientes', 'sci_avance',
             'int_total', 'int_completadas', 'int_en_proceso', 'int_pendientes', 'int_avance',
             'medidas_remediacion', 'medidas_control',
-            'ultima_actualizacion'
+            'ultima_actualizacion',
+            'gc_sci', 'gc_int', 'gc_global'
         ));
+    }
+
+    public function exportar()
+    {
+        $config   = ConfiguracionInstitucional::cached();
+        $unidades = UnidadOrganica::where('activo', true)
+            ->withCount([
+                'actividades',
+                'actividades as completadas_count' => fn($q) => $q->where('estado', 'completada'),
+                'actividades as en_proceso_count'  => fn($q) => $q->where('estado', 'en_proceso'),
+                'actividades as pendientes_count'  => fn($q) => $q->where('estado', 'pendiente'),
+                'actividades as sci_total'         => fn($q) => $q->where('modulo', 'sci'),
+                'actividades as sci_completadas'   => fn($q) => $q->where('modulo', 'sci')->where('estado', 'completada'),
+                'actividades as int_total'         => fn($q) => $q->where('modulo', 'integridad'),
+                'actividades as int_completadas'   => fn($q) => $q->where('modulo', 'integridad')->where('estado', 'completada'),
+            ])
+            ->get()
+            ->map(function ($u) use ($config) {
+                SemaforoHelper::decorar($u, 'actividades_count', 'completadas_count', $config, 'En avance', 'En proceso', 'En riesgo');
+                $u->sci_porcentaje = $u->sci_total > 0 ? (int) round($u->sci_completadas / $u->sci_total * 100) : 0;
+                $u->int_porcentaje = $u->int_total > 0 ? (int) round($u->int_completadas / $u->int_total * 100) : 0;
+                return $u;
+            })
+            ->sortByDesc('porcentaje')
+            ->values();
+
+        return Excel::download(new class($unidades) implements
+            \Maatwebsite\Excel\Concerns\FromCollection,
+            \Maatwebsite\Excel\Concerns\WithHeadings,
+            \Maatwebsite\Excel\Concerns\WithStyles,
+            \Maatwebsite\Excel\Concerns\WithColumnWidths,
+            \Maatwebsite\Excel\Concerns\WithTitle
+        {
+            public function __construct(private $unidades) {}
+
+            public function collection()
+            {
+                return $this->unidades->map(fn($u) => [
+                    $u->sigla,
+                    $u->nombre,
+                    $u->actividades_count,
+                    $u->completadas_count,
+                    $u->en_proceso_count,
+                    $u->pendientes_count,
+                    $u->porcentaje . '%',
+                    $u->semaforo,
+                    $u->sci_total,
+                    $u->sci_completadas,
+                    $u->sci_porcentaje . '%',
+                    SemaforoHelper::label($u->sci_porcentaje, 75, 50, 'En avance', 'En proceso', 'En riesgo'),
+                    $u->int_total,
+                    $u->int_completadas,
+                    $u->int_porcentaje . '%',
+                    SemaforoHelper::label($u->int_porcentaje, 75, 50, 'En avance', 'En proceso', 'En riesgo'),
+                ]);
+            }
+
+            public function headings(): array
+            {
+                return [
+                    'Sigla', 'Unidad Orgánica',
+                    'Total', 'Completadas', 'En Proceso', 'Pendientes', '% General', 'Estado General',
+                    'SCI Total', 'SCI Complet.', 'SCI %', 'SCI Estado',
+                    'Integ. Total', 'Integ. Complet.', 'Integ. %', 'Integ. Estado',
+                ];
+            }
+
+            public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet)
+            {
+                return [
+                    1 => [
+                        'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                        'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF696CFF']],
+                        'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+                    ],
+                ];
+            }
+
+            public function columnWidths(): array
+            {
+                return ['A'=>8,'B'=>32,'C'=>8,'D'=>12,'E'=>12,'F'=>12,'G'=>10,'H'=>14,'I'=>10,'J'=>12,'K'=>10,'L'=>14,'M'=>12,'N'=>14,'O'=>10,'P'=>14];
+            }
+
+            public function title(): string { return 'Avance por Unidades'; }
+        }, 'PULSO-UGEL-Avance-Unidades-' . now()->format('Y-m-d') . '.xlsx');
     }
 }
