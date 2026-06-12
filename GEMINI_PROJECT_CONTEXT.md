@@ -1,6 +1,19 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.1.1] - 2026-06-11 (Sesión Actual)
+## [v2.1.2] - 2026-06-11 (Sesión Actual)
+### Módulo de Cumplimiento SCI y Gestión de Evidencias
+- **Módulo de Cumplimiento (SCI)**:
+    - Rediseño y optimización del Panel SCI para un seguimiento más intuitivo del cumplimiento normativo.
+    - Implementación de nuevas vistas para la gestión de Responsables y seguimiento de Actividades Sin Evidencia.
+- **Navegación Dinámica**: Actualización del menú vertical para integrar los nuevos accesos directos a los reportes de cumplimiento y paneles de control.
+- **Refinamiento UI/UX**: Mejora en la presentación de tablas de cumplimiento y filtros de responsables en el panel administrativo.
+
+### Estructura Técnica
+- **Controladores**: Actualización de `CumplimientoController` con nueva lógica de filtrado y métricas de avance.
+- **Vistas**: Implementación de `panel-sci.blade.php`, `responsables.blade.php` y `sin-evidencia.blade.php` en el módulo de cumplimiento.
+- **Configuración de Menú**: Actualización de `verticalMenu.json` con la nueva jerarquía de accesos.
+
+## [v2.1.1] - 2026-06-11
 ### Módulo de Recomendaciones, Contacto SCI y Ayuda
 - **Módulo de Recomendaciones**:
     - Implementación de un sistema de gestión de recomendaciones institucionales con categorización por módulo.
