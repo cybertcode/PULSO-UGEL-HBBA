@@ -106,7 +106,7 @@ use Illuminate\Support\Str;
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProponer">
         <i class="ti tabler-send me-1"></i>Presentar mi proyecto
       </button>
-      @can('buenas-practicas.ver')
+      @can('buenas-practicas.crear')
       <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalNueva">
         <i class="ti tabler-plus me-1"></i>Registrar práctica
       </button>
@@ -438,7 +438,7 @@ use Illuminate\Support\Str;
   </div>
 </div>
 
-@can('buenas-practicas.ver')
+@canany(['buenas-practicas.editar','buenas-practicas.crear','buenas-practicas.eliminar'])
 {{-- ══════════════════════════════════════════════════════════════
      MODAL: SCI Recepciona el proyecto
 ══════════════════════════════════════════════════════════════ --}}
@@ -717,6 +717,7 @@ use Illuminate\Support\Str;
 {{-- ══════════════════════════════════════════════════════════════
      MODAL: Registrar práctica institucional (SCI directo)
 ══════════════════════════════════════════════════════════════ --}}
+@can('buenas-practicas.crear')
 <div class="modal fade" id="modalNueva" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
@@ -834,10 +835,12 @@ use Illuminate\Support\Str;
     </div>
   </div>
 </div>
+@endcan
 
 {{-- ══════════════════════════════════════════════════════════════
      MODAL: Editar práctica institucional
 ══════════════════════════════════════════════════════════════ --}}
+@can('buenas-practicas.editar')
 <div class="modal fade" id="modalEditar" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
@@ -956,11 +959,12 @@ use Illuminate\Support\Str;
     </div>
   </div>
 </div>
+@endcan
 
 {{-- Forms ocultos para acciones PATCH/DELETE --}}
 <form id="formEliminar"   method="POST" style="display:none">@csrf @method('DELETE')</form>
 <form id="formNoElegible" method="POST" style="display:none">@csrf @method('PATCH')</form>
-@endcan
+@endcanany
 
 @endsection
 

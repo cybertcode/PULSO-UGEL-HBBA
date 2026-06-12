@@ -65,27 +65,19 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/diag', fn() => view('content.dashboard.diag'))->name('diag')->middleware('can:configuracion.ver');
 
-    // Slider del Landing (administrado desde el panel)
-    Route::middleware('can:configuracion.ver')->group(function () {
-        Route::get('/slider-landing', [SliderLandingController::class, 'index'])->name('slider-landing.index');
-    });
-    Route::middleware('can:configuracion.editar')->group(function () {
-        Route::post('/slider-landing',                         [SliderLandingController::class, 'store'])->name('slider-landing.store');
-        Route::put('/slider-landing/{sliderLanding}',          [SliderLandingController::class, 'update'])->name('slider-landing.update');
-        Route::delete('/slider-landing/{sliderLanding}',       [SliderLandingController::class, 'destroy'])->name('slider-landing.destroy');
-        Route::patch('/slider-landing/{sliderLanding}/toggle', [SliderLandingController::class, 'toggleActivo'])->name('slider-landing.toggle');
-    });
+    // Slider del Landing
+    Route::get('/slider-landing',                          [SliderLandingController::class, 'index'])->name('slider-landing.index')->middleware('can:slider.ver');
+    Route::post('/slider-landing',                         [SliderLandingController::class, 'store'])->name('slider-landing.store')->middleware('can:slider.crear');
+    Route::put('/slider-landing/{sliderLanding}',          [SliderLandingController::class, 'update'])->name('slider-landing.update')->middleware('can:slider.editar');
+    Route::delete('/slider-landing/{sliderLanding}',       [SliderLandingController::class, 'destroy'])->name('slider-landing.destroy')->middleware('can:slider.eliminar');
+    Route::patch('/slider-landing/{sliderLanding}/toggle', [SliderLandingController::class, 'toggleActivo'])->name('slider-landing.toggle')->middleware('can:slider.editar');
 
     // Instituciones Vinculadas del Landing
-    Route::middleware('can:configuracion.ver')->group(function () {
-        Route::get('/instituciones-vinculadas', [InstitucionVinculadaController::class, 'index'])->name('instituciones-vinculadas.index');
-    });
-    Route::middleware('can:configuracion.editar')->group(function () {
-        Route::post('/instituciones-vinculadas',                                   [InstitucionVinculadaController::class, 'store'])->name('instituciones-vinculadas.store');
-        Route::put('/instituciones-vinculadas/{institucionVinculada}',             [InstitucionVinculadaController::class, 'update'])->name('instituciones-vinculadas.update');
-        Route::delete('/instituciones-vinculadas/{institucionVinculada}',          [InstitucionVinculadaController::class, 'destroy'])->name('instituciones-vinculadas.destroy');
-        Route::patch('/instituciones-vinculadas/{institucionVinculada}/toggle',    [InstitucionVinculadaController::class, 'toggleActivo'])->name('instituciones-vinculadas.toggle');
-    });
+    Route::get('/instituciones-vinculadas',                                  [InstitucionVinculadaController::class, 'index'])->name('instituciones-vinculadas.index')->middleware('can:instituciones.ver');
+    Route::post('/instituciones-vinculadas',                                 [InstitucionVinculadaController::class, 'store'])->name('instituciones-vinculadas.store')->middleware('can:instituciones.crear');
+    Route::put('/instituciones-vinculadas/{institucionVinculada}',           [InstitucionVinculadaController::class, 'update'])->name('instituciones-vinculadas.update')->middleware('can:instituciones.editar');
+    Route::delete('/instituciones-vinculadas/{institucionVinculada}',        [InstitucionVinculadaController::class, 'destroy'])->name('instituciones-vinculadas.destroy')->middleware('can:instituciones.eliminar');
+    Route::patch('/instituciones-vinculadas/{institucionVinculada}/toggle',  [InstitucionVinculadaController::class, 'toggleActivo'])->name('instituciones-vinculadas.toggle')->middleware('can:instituciones.editar');
 
     // --- Control y Seguimiento (permisos: control-interno.*, integridad.*, evidencias.*) ---
     Route::middleware('can:control-interno.ver')->group(function () {
@@ -109,8 +101,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::middleware('can:evidencias.ver')->group(function () {
         Route::get('/evidencias', [EvidenciasController::class, 'index'])->name('sci-evidencias');
     });
-    Route::post('/evidencias',                        [EvidenciasController::class, 'store'])->name('sci-evidencias.store')->middleware('can:evidencias.subir');
-    Route::put('/evidencias/{evidencia}',             [EvidenciasController::class, 'update'])->name('sci-evidencias.update')->middleware('can:evidencias.subir');
+    Route::post('/evidencias',                        [EvidenciasController::class, 'store'])->name('sci-evidencias.store')->middleware('can:evidencias.crear');
+    Route::put('/evidencias/{evidencia}',             [EvidenciasController::class, 'update'])->name('sci-evidencias.update')->middleware('can:evidencias.crear');
     Route::patch('/evidencias/{evidencia}/validar',   [EvidenciasController::class, 'validar'])->name('sci-evidencias.validar')->middleware('can:evidencias.validar');
     Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.eliminar');
 
@@ -129,9 +121,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::patch('/alertas/{alerta}/leer',  [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
         Route::patch('/alertas/leer-todas',     [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
     });
-    Route::post('/alertas',    [AlertasController::class, 'store'])->name('mon-alertas.store')->middleware('can:alertas.crear');
-    Route::post('/alertas/{alerta}/email', [AlertasController::class, 'enviarEmail'])->name('mon-alertas.email')->middleware('can:alertas.ver');
-    Route::delete('/alertas/{alerta}', [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.eliminar');
+    Route::post('/alertas',              [AlertasController::class, 'store'])->name('mon-alertas.store')->middleware('can:alertas.crear');
+    Route::post('/alertas/{alerta}/email',[AlertasController::class, 'enviarEmail'])->name('mon-alertas.email')->middleware('can:alertas.ver');
+    Route::delete('/alertas/{alerta}',   [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.eliminar');
     Route::get('/ranking-unidades',      [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades')->middleware('can:reportes.ver');
     Route::get('/ranking-unidades/data',     [RankingUnidadesController::class, 'data'])->name('mon-ranking-unidades.data')->middleware('can:reportes.ver');
     Route::get('/ranking-unidades/usuarios', [RankingUnidadesController::class, 'dataUsuarios'])->name('mon-ranking-unidades.usuarios')->middleware('can:reportes.ver');
@@ -144,7 +136,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/cumplimiento/responsables',  [CumplimientoController::class, 'responsables'])->name('cumplimiento.responsables');
         Route::get('/cumplimiento/sin-evidencia', [CumplimientoController::class, 'sinEvidencia'])->name('cumplimiento.sin-evidencia');
     });
-    Route::get('/cumplimiento/exportar', [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar')->middleware('can:reportes.exportar');
+    Route::get('/cumplimiento/exportar', [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar')->middleware('can:cumplimiento.exportar');
 
     // --- Mis Actividades --- (accesible a cualquier usuario autenticado — muestra solo sus propias actividades)
     Route::get('/mis-actividades',                        [MisActividadesController::class, 'index'])->name('mis-actividades');
@@ -182,35 +174,24 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('/usuarios/seguridad', [UserViewSecurity::class, 'index'])->name('adm-usuarios-seguridad');
 
     // --- Administración: Roles y Permisos ---
-    Route::middleware('can:configuracion.ver')->group(function () {
-        Route::get('/roles',    [AccessRoles::class,      'index'])->name('adm-roles');
-        Route::get('/permisos', [AccessPermission::class, 'index'])->name('adm-permisos');
-    });
-    Route::middleware('can:configuracion.editar')->group(function () {
-        Route::post('/roles',                    [AccessRoles::class, 'store'])->name('adm-roles.store');
-        Route::put('/roles/{role}',              [AccessRoles::class, 'update'])->name('adm-roles.update');
-        Route::delete('/roles/{role}',           [AccessRoles::class, 'destroy'])->name('adm-roles.destroy');
-    });
-    Route::patch('/usuarios/{usuario}/rol',  [AccessRoles::class, 'cambiarRol'])->name('adm-roles.cambiar-rol')->middleware('can:usuarios.editar');
+    Route::get('/roles',    [AccessRoles::class,      'index'])->name('adm-roles')->middleware('can:roles.ver');
+    Route::get('/permisos', [AccessPermission::class, 'index'])->name('adm-permisos')->middleware('can:roles.ver');
+    Route::post('/roles',            [AccessRoles::class, 'store'])->name('adm-roles.store')->middleware('can:roles.crear');
+    Route::put('/roles/{role}',      [AccessRoles::class, 'update'])->name('adm-roles.update')->middleware('can:roles.editar');
+    Route::delete('/roles/{role}',   [AccessRoles::class, 'destroy'])->name('adm-roles.destroy')->middleware('can:roles.eliminar');
+    Route::patch('/usuarios/{usuario}/rol', [AccessRoles::class, 'cambiarRol'])->name('adm-roles.cambiar-rol')->middleware('can:usuarios.editar');
 
     // --- Administración: Estructura SCI (Ejes → Componentes → Preguntas) ---
-    Route::middleware('can:componentes.ver')->group(function () {
-        Route::get('/administracion/sci', [SciEstructuraController::class, 'index'])->name('adm-sci-estructura');
-    });
-    Route::middleware('can:componentes.editar')->group(function () {
-        // Ejes
-        Route::post('/administracion/sci/eje',              [SciEstructuraController::class, 'storeEje'])->name('adm-sci.eje.store');
-        Route::put('/administracion/sci/eje/{eje}',         [SciEstructuraController::class, 'updateEje'])->name('adm-sci.eje.update');
-        Route::delete('/administracion/sci/eje/{eje}',      [SciEstructuraController::class, 'destroyEje'])->name('adm-sci.eje.destroy');
-        // Componentes SCI
-        Route::post('/administracion/sci/componente',                    [SciEstructuraController::class, 'storeComponente'])->name('adm-sci.componente.store');
-        Route::put('/administracion/sci/componente/{componente}',        [SciEstructuraController::class, 'updateComponente'])->name('adm-sci.componente.update');
-        Route::delete('/administracion/sci/componente/{componente}',     [SciEstructuraController::class, 'destroyComponente'])->name('adm-sci.componente.destroy');
-        // Preguntas SCI
-        Route::post('/administracion/sci/pregunta',                  [SciEstructuraController::class, 'storePregunta'])->name('adm-sci.pregunta.store');
-        Route::put('/administracion/sci/pregunta/{pregunta}',        [SciEstructuraController::class, 'updatePregunta'])->name('adm-sci.pregunta.update');
-        Route::delete('/administracion/sci/pregunta/{pregunta}',     [SciEstructuraController::class, 'destroyPregunta'])->name('adm-sci.pregunta.destroy');
-    });
+    Route::get('/administracion/sci', [SciEstructuraController::class, 'index'])->name('adm-sci-estructura')->middleware('can:componentes.ver');
+    Route::post('/administracion/sci/eje',          [SciEstructuraController::class, 'storeEje'])->name('adm-sci.eje.store')->middleware('can:componentes.crear');
+    Route::put('/administracion/sci/eje/{eje}',     [SciEstructuraController::class, 'updateEje'])->name('adm-sci.eje.update')->middleware('can:componentes.editar');
+    Route::delete('/administracion/sci/eje/{eje}',  [SciEstructuraController::class, 'destroyEje'])->name('adm-sci.eje.destroy')->middleware('can:componentes.eliminar');
+    Route::post('/administracion/sci/componente',               [SciEstructuraController::class, 'storeComponente'])->name('adm-sci.componente.store')->middleware('can:componentes.crear');
+    Route::put('/administracion/sci/componente/{componente}',   [SciEstructuraController::class, 'updateComponente'])->name('adm-sci.componente.update')->middleware('can:componentes.editar');
+    Route::delete('/administracion/sci/componente/{componente}',[SciEstructuraController::class, 'destroyComponente'])->name('adm-sci.componente.destroy')->middleware('can:componentes.eliminar');
+    Route::post('/administracion/sci/pregunta',             [SciEstructuraController::class, 'storePregunta'])->name('adm-sci.pregunta.store')->middleware('can:componentes.crear');
+    Route::put('/administracion/sci/pregunta/{pregunta}',   [SciEstructuraController::class, 'updatePregunta'])->name('adm-sci.pregunta.update')->middleware('can:componentes.editar');
+    Route::delete('/administracion/sci/pregunta/{pregunta}',[SciEstructuraController::class, 'destroyPregunta'])->name('adm-sci.pregunta.destroy')->middleware('can:componentes.eliminar');
     // API cascada SCI
     Route::middleware('can:componentes.ver')->group(function () {
         Route::get('/api/sci/ejes',        [SciEstructuraController::class, 'apiEjes'])->name('api.sci.ejes');
@@ -219,23 +200,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
 
     // --- Administración: Estructura Integridad (Etapas → Componentes → Preguntas) ---
-    Route::middleware('can:integridad.ver')->group(function () {
-        Route::get('/administracion/integridad', [IntegridadEstructuraController::class, 'index'])->name('adm-integridad-estructura');
-    });
-    Route::middleware('can:integridad.editar')->group(function () {
-        // Etapas
-        Route::post('/administracion/integridad/etapa',             [IntegridadEstructuraController::class, 'storeEtapa'])->name('adm-integridad.etapa.store');
-        Route::put('/administracion/integridad/etapa/{etapa}',      [IntegridadEstructuraController::class, 'updateEtapa'])->name('adm-integridad.etapa.update');
-        Route::delete('/administracion/integridad/etapa/{etapa}',   [IntegridadEstructuraController::class, 'destroyEtapa'])->name('adm-integridad.etapa.destroy');
-        // Componentes Integridad
-        Route::post('/administracion/integridad/componente',                    [IntegridadEstructuraController::class, 'storeComponente'])->name('adm-integridad.componente.store');
-        Route::put('/administracion/integridad/componente/{componente}',        [IntegridadEstructuraController::class, 'updateComponente'])->name('adm-integridad.componente.update');
-        Route::delete('/administracion/integridad/componente/{componente}',     [IntegridadEstructuraController::class, 'destroyComponente'])->name('adm-integridad.componente.destroy');
-        // Preguntas Integridad
-        Route::post('/administracion/integridad/pregunta',                  [IntegridadEstructuraController::class, 'storePregunta'])->name('adm-integridad.pregunta.store');
-        Route::put('/administracion/integridad/pregunta/{pregunta}',        [IntegridadEstructuraController::class, 'updatePregunta'])->name('adm-integridad.pregunta.update');
-        Route::delete('/administracion/integridad/pregunta/{pregunta}',     [IntegridadEstructuraController::class, 'destroyPregunta'])->name('adm-integridad.pregunta.destroy');
-    });
+    Route::get('/administracion/integridad', [IntegridadEstructuraController::class, 'index'])->name('adm-integridad-estructura')->middleware('can:integridad.ver');
+    Route::post('/administracion/integridad/etapa',           [IntegridadEstructuraController::class, 'storeEtapa'])->name('adm-integridad.etapa.store')->middleware('can:integridad.crear');
+    Route::put('/administracion/integridad/etapa/{etapa}',    [IntegridadEstructuraController::class, 'updateEtapa'])->name('adm-integridad.etapa.update')->middleware('can:integridad.editar');
+    Route::delete('/administracion/integridad/etapa/{etapa}', [IntegridadEstructuraController::class, 'destroyEtapa'])->name('adm-integridad.etapa.destroy')->middleware('can:integridad.eliminar');
+    Route::post('/administracion/integridad/componente',                  [IntegridadEstructuraController::class, 'storeComponente'])->name('adm-integridad.componente.store')->middleware('can:integridad.crear');
+    Route::put('/administracion/integridad/componente/{componente}',      [IntegridadEstructuraController::class, 'updateComponente'])->name('adm-integridad.componente.update')->middleware('can:integridad.editar');
+    Route::delete('/administracion/integridad/componente/{componente}',   [IntegridadEstructuraController::class, 'destroyComponente'])->name('adm-integridad.componente.destroy')->middleware('can:integridad.eliminar');
+    Route::post('/administracion/integridad/pregunta',              [IntegridadEstructuraController::class, 'storePregunta'])->name('adm-integridad.pregunta.store')->middleware('can:integridad.crear');
+    Route::put('/administracion/integridad/pregunta/{pregunta}',    [IntegridadEstructuraController::class, 'updatePregunta'])->name('adm-integridad.pregunta.update')->middleware('can:integridad.editar');
+    Route::delete('/administracion/integridad/pregunta/{pregunta}', [IntegridadEstructuraController::class, 'destroyPregunta'])->name('adm-integridad.pregunta.destroy')->middleware('can:integridad.eliminar');
     // API cascada Integridad
     Route::middleware('can:integridad.ver')->group(function () {
         Route::get('/api/integridad/etapas',      [IntegridadEstructuraController::class, 'apiEtapas'])->name('api.integridad.etapas');
@@ -283,10 +257,10 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/normativas/data',        [NormativasController::class, 'data'])->name('normativas.data');
         Route::get('/normativas/{normativa}', [NormativasController::class, 'show'])->name('normativas.show');
     });
-    Route::post('/normativas',                             [NormativasController::class, 'store'])->name('normativas.store')->middleware('can:normativas.gestionar');
-    Route::put('/normativas/{normativa}',                  [NormativasController::class, 'update'])->name('normativas.update')->middleware('can:normativas.gestionar');
-    Route::delete('/normativas/{normativa}',               [NormativasController::class, 'destroy'])->name('normativas.destroy')->middleware('can:normativas.gestionar');
-    Route::patch('/normativas/{normativa}/toggle-vigente', [NormativasController::class, 'toggleVigente'])->name('normativas.toggle')->middleware('can:normativas.gestionar');
+    Route::post('/normativas',                             [NormativasController::class, 'store'])->name('normativas.store')->middleware('can:normativas.crear');
+    Route::put('/normativas/{normativa}',                  [NormativasController::class, 'update'])->name('normativas.update')->middleware('can:normativas.editar');
+    Route::delete('/normativas/{normativa}',               [NormativasController::class, 'destroy'])->name('normativas.destroy')->middleware('can:normativas.eliminar');
+    Route::patch('/normativas/{normativa}/toggle-vigente', [NormativasController::class, 'toggleVigente'])->name('normativas.toggle')->middleware('can:normativas.editar');
 
     // --- Ayuda --- (accesible a cualquier usuario autenticado)
     Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda');
@@ -311,13 +285,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
 
     // --- Unidades Orgánicas ---
-    Route::middleware('can:configuracion.ver')->group(function () {
-        Route::get('/unidades-organicas', [UnidadesOrganicasController::class, 'index'])->name('adm-unidades');
-    });
-    Route::middleware('can:configuracion.editar')->group(function () {
-        Route::post('/unidades-organicas',                  [UnidadesOrganicasController::class, 'store'])->name('adm-unidades.store');
-        Route::put('/unidades-organicas/{unidad}',          [UnidadesOrganicasController::class, 'update'])->name('adm-unidades.update');
-        Route::patch('/unidades-organicas/{unidad}/toggle', [UnidadesOrganicasController::class, 'toggle'])->name('adm-unidades.toggle');
-        Route::delete('/unidades-organicas/{unidad}',       [UnidadesOrganicasController::class, 'destroy'])->name('adm-unidades.destroy');
-    });
+    Route::get('/unidades-organicas',                  [UnidadesOrganicasController::class, 'index'])->name('adm-unidades')->middleware('can:unidades.ver');
+    Route::post('/unidades-organicas',                 [UnidadesOrganicasController::class, 'store'])->name('adm-unidades.store')->middleware('can:unidades.crear');
+    Route::put('/unidades-organicas/{unidad}',         [UnidadesOrganicasController::class, 'update'])->name('adm-unidades.update')->middleware('can:unidades.editar');
+    Route::patch('/unidades-organicas/{unidad}/toggle',[UnidadesOrganicasController::class, 'toggle'])->name('adm-unidades.toggle')->middleware('can:unidades.editar');
+    Route::delete('/unidades-organicas/{unidad}',      [UnidadesOrganicasController::class, 'destroy'])->name('adm-unidades.destroy')->middleware('can:unidades.eliminar');
 });

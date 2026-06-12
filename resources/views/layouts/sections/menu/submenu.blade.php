@@ -1,10 +1,48 @@
 @php
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
+// Reutiliza el mismo mapa de permisos definido en verticalMenu
+$menuPermisosLocal = [
+  'sci-control-interno'         => 'control-interno.ver',
+  'sci-evidencias'              => 'evidencias.ver',
+  'cumplimiento.panel'          => 'cumplimiento.ver',
+  'cumplimiento.responsables'   => 'cumplimiento.ver',
+  'cumplimiento.sin-evidencia'  => 'cumplimiento.ver',
+  'mon-avance-unidades'         => 'reportes.ver',
+  'mon-ranking-unidades'        => 'reportes.ver',
+  'sci-modelo-integridad'       => 'integridad.ver',
+  'sci-semaforo'                => 'semaforo.ver',
+  'buenas-practicas'            => 'buenas-practicas.ver',
+  'recomendaciones'             => 'recomendaciones.ver',
+  'rep-reconocimientos'         => 'reconocimientos.ver',
+  'mon-alertas'                 => 'alertas.ver',
+  'rep-reportes'                => 'reportes.ver',
+  'adm-usuarios'                => 'usuarios.ver',
+  'adm-roles'                   => 'roles.ver',
+  'adm-permisos'                => 'roles.ver',
+  'adm-unidades'                => 'unidades.ver',
+  'adm-componentes'             => 'componentes.ver',
+  'adm-sci-estructura'          => 'componentes.ver',
+  'adm-integridad-estructura'   => 'integridad.ver',
+  'adm-configuracion'           => 'configuracion.ver',
+  'slider-landing'              => 'slider.ver',
+  'encuestas.index'             => 'encuesta.ver',
+  'normativas'                  => 'normativas.ver',
+];
+$subAuthUser = Auth::user();
 @endphp
 
 <ul class="menu-sub">
   @if (isset($menu))
     @foreach ($menu as $submenu)
+
+    @php
+      // Verificar permiso del subítem
+      $subSlug = is_array($submenu->slug ?? null) ? ($submenu->slug[0] ?? '') : ($submenu->slug ?? '');
+      $subVisible = !$subAuthUser || !isset($menuPermisosLocal[$subSlug]) || $subAuthUser->can($menuPermisosLocal[$subSlug]);
+    @endphp
+    @if($subVisible)
 
     {{-- active menu method --}}
     @php
@@ -52,6 +90,7 @@ use Illuminate\Support\Facades\Route;
           @include('layouts.sections.menu.submenu',['menu' => $submenu->submenu])
         @endif
       </li>
+    @endif
     @endforeach
   @endif
 </ul>

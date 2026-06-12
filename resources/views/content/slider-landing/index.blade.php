@@ -23,9 +23,11 @@
             <a href="{{ route('landing') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
                 <i class="icon-base ti tabler-external-link me-1"></i>Ver Landing
             </a>
+            @can('slider.crear')
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrear">
                 <i class="icon-base ti tabler-plus me-1"></i> Nuevo Slide
             </button>
+            @endcan
         </div>
     </div>
 
@@ -76,12 +78,19 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
+                                    @can('slider.editar')
                                     <div class="form-check form-switch d-flex justify-content-center mb-0">
                                         <input class="form-check-input toggle-activo" type="checkbox"
                                             data-id="{{ $slide->id }}" {{ $slide->activo ? 'checked' : '' }}>
                                     </div>
+                                    @else
+                                    <span class="badge bg-label-{{ $slide->activo ? 'success' : 'secondary' }}">
+                                        {{ $slide->activo ? 'Activo' : 'Inactivo' }}
+                                    </span>
+                                    @endcan
                                 </td>
                                 <td class="text-center">
+                                    @can('slider.editar')
                                     <button class="btn btn-icon btn-sm btn-label-primary me-1 btn-editar"
                                         data-id="{{ $slide->id }}" data-tipo="{{ $slide->tipo }}"
                                         data-titulo="{{ e($slide->titulo) }}"
@@ -93,6 +102,8 @@
                                         data-activo="{{ $slide->activo ? '1' : '0' }}" title="Editar">
                                         <i class="icon-base ti tabler-pencil"></i>
                                     </button>
+                                    @endcan
+                                    @can('slider.eliminar')
                                     <form method="POST" action="{{ route('slider-landing.destroy', $slide) }}"
                                         class="d-inline form-eliminar"
                                         data-titulo="{{ e(Str::limit($slide->titulo, 50)) }}">
@@ -102,6 +113,7 @@
                                             <i class="icon-base ti tabler-trash"></i>
                                         </button>
                                     </form>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
@@ -126,6 +138,7 @@
 
 
     {{-- ════════════ MODAL CREAR ════════════ --}}
+    @can('slider.crear')
     <div class="modal fade" id="modalCrear" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <form method="POST" action="{{ route('slider-landing.store') }}" enctype="multipart/form-data"
@@ -149,10 +162,10 @@
             </form>
         </div>
     </div>
-
+    @endcan
 
     {{-- ════════════ MODAL EDITAR ════════════ --}}
-    {{-- El modal de edición se construye dinámicamente para cada slide --}}
+    @can('slider.editar')
     @foreach ($slides as $slide)
         <div class="modal fade" id="modalEditar{{ $slide->id }}" tabindex="-1">
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -179,6 +192,7 @@
             </div>
         </div>
     @endforeach
+    @endcan
 
 @endsection
 

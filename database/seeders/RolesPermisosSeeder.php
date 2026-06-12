@@ -12,81 +12,108 @@ class RolesPermisosSeeder extends Seeder
     {
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // ─── Permisos del sistema ─────────────────────────────────────────────
-        // Patrón: modulo.accion — solo se crean permisos con rutas activas reales
+        // ─── Permisos granulados — patrón modulo.accion ───────────────────────
         $permisos = [
 
-            // Usuarios & Acceso (rutas: /usuarios, /cargos)
+            // Usuarios (/usuarios, /cargos)
             'usuarios.ver',
             'usuarios.crear',
             'usuarios.editar',
             'usuarios.eliminar',
 
-            // Configuración: Roles, Permisos, Unidades Orgánicas, Estructura, Config
+            // Roles (/roles)
+            'roles.ver',
+            'roles.crear',
+            'roles.editar',
+            'roles.eliminar',
+
+            // Configuración institucional (/configuracion)
             'configuracion.ver',
             'configuracion.editar',
 
-            // Estructura SCI (rutas: /administracion/sci)
-            'componentes.ver',
-            'componentes.editar',
+            // Unidades Orgánicas (/unidades-organicas)
+            'unidades.ver',
+            'unidades.crear',
+            'unidades.editar',
+            'unidades.eliminar',
 
-            // Control Interno — Actividades SCI (rutas: /control-interno)
+            // Landing — Slider (/slider-landing)
+            'slider.ver',
+            'slider.crear',
+            'slider.editar',
+            'slider.eliminar',
+
+            // Landing — Instituciones Vinculadas (/instituciones-vinculadas)
+            'instituciones.ver',
+            'instituciones.crear',
+            'instituciones.editar',
+            'instituciones.eliminar',
+
+            // Estructura SCI (/administracion/sci)
+            'componentes.ver',
+            'componentes.crear',
+            'componentes.editar',
+            'componentes.eliminar',
+
+            // Control Interno — Actividades SCI (/control-interno)
             'control-interno.ver',
             'control-interno.crear',
             'control-interno.editar',
             'control-interno.eliminar',
 
-            // Modelo de Integridad (rutas: /modelo-integridad)
+            // Modelo de Integridad (/modelo-integridad, /administracion/integridad)
             'integridad.ver',
             'integridad.crear',
             'integridad.editar',
             'integridad.eliminar',
 
-            // Evidencias (rutas: /evidencias)
+            // Evidencias (/evidencias)
             'evidencias.ver',
-            'evidencias.subir',
+            'evidencias.crear',
             'evidencias.validar',
             'evidencias.eliminar',
 
-            // Semáforo (ruta: /semaforo)
+            // Semáforo (/semaforo)
             'semaforo.ver',
 
-            // Alertas (rutas: /alertas)
+            // Alertas (/alertas)
             'alertas.ver',
             'alertas.crear',
-            'alertas.configurar',
             'alertas.eliminar',
 
-            // Seguimiento / Cumplimiento SCI (rutas: /cumplimiento/*)
+            // Cumplimiento SCI (/cumplimiento/*)
             'cumplimiento.ver',
+            'cumplimiento.exportar',
 
-            // Reportes y análisis (rutas: /reportes, /avance-unidades, /ranking-unidades)
+            // Reportes (/reportes, /ranking-unidades, /avance-unidades)
             'reportes.ver',
             'reportes.exportar',
 
-            // Reconocimientos (rutas: /reconocimientos)
+            // Reconocimientos (/reconocimientos)
             'reconocimientos.ver',
             'reconocimientos.crear',
             'reconocimientos.editar',
             'reconocimientos.eliminar',
 
-            // Buenas Prácticas (rutas: /buenas-practicas)
+            // Buenas Prácticas (/buenas-practicas)
             'buenas-practicas.ver',
             'buenas-practicas.crear',
             'buenas-practicas.editar',
             'buenas-practicas.eliminar',
 
-            // Recomendaciones (rutas: /recomendaciones)
+            // Recomendaciones (/recomendaciones)
             'recomendaciones.ver',
             'recomendaciones.crear',
             'recomendaciones.editar',
             'recomendaciones.eliminar',
 
-            // Normativas (rutas: /normativas)
+            // Normativas (/normativas)
             'normativas.ver',
-            'normativas.gestionar',
+            'normativas.crear',
+            'normativas.editar',
+            'normativas.eliminar',
 
-            // Encuestas (rutas: /encuestas/*)
+            // Encuestas (/encuestas/*)
             'encuesta.ver',
             'encuesta.crear',
             'encuesta.editar',
@@ -103,143 +130,67 @@ class RolesPermisosSeeder extends Seeder
 
         // ─── Roles ────────────────────────────────────────────────────────────
 
-        // Super Admin — bypasa todos los Gates vía Gate::before(), no necesita permisos
+        // Super Admin — bypasa todos los Gates vía Gate::before()
         Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
 
-        // Administrador — acceso total explícito a todos los permisos del sistema
+        // Administrador — todos los permisos
         $admin = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
         $admin->syncPermissions(Permission::where('guard_name', 'web')->pluck('name'));
 
-        // Coordinador SCI — gestión completa del SCI e Integridad, sin admin de usuarios/config
+        // Coordinador SCI — gestión completa SCI/Integridad, sin administración de sistema
         $coordinador = Role::firstOrCreate(['name' => 'Coordinador SCI', 'guard_name' => 'web']);
         $coordinador->syncPermissions([
-            // SCI
-            'control-interno.ver',
-            'control-interno.crear',
-            'control-interno.editar',
-            'control-interno.eliminar',
-            'componentes.ver',
-            'componentes.editar',
-            // Integridad
-            'integridad.ver',
-            'integridad.crear',
-            'integridad.editar',
-            'integridad.eliminar',
-            // Evidencias
-            'evidencias.ver',
-            'evidencias.subir',
-            'evidencias.validar',
-            'evidencias.eliminar',
-            // Monitoreo
+            'control-interno.ver', 'control-interno.crear', 'control-interno.editar', 'control-interno.eliminar',
+            'componentes.ver', 'componentes.crear', 'componentes.editar', 'componentes.eliminar',
+            'integridad.ver', 'integridad.crear', 'integridad.editar', 'integridad.eliminar',
+            'evidencias.ver', 'evidencias.crear', 'evidencias.validar', 'evidencias.eliminar',
             'semaforo.ver',
-            'alertas.ver',
-            'alertas.crear',
-            'alertas.configurar',
-            'alertas.eliminar',
-            // Seguimiento
-            'cumplimiento.ver',
-            // Reportes
-            'reportes.ver',
-            'reportes.exportar',
-            // Reconocimientos
-            'reconocimientos.ver',
-            'reconocimientos.crear',
-            'reconocimientos.editar',
-            'reconocimientos.eliminar',
-            // Buenas Prácticas
-            'buenas-practicas.ver',
-            'buenas-practicas.crear',
-            'buenas-practicas.editar',
-            'buenas-practicas.eliminar',
-            // Recomendaciones
-            'recomendaciones.ver',
-            'recomendaciones.crear',
-            'recomendaciones.editar',
-            'recomendaciones.eliminar',
-            // Normativas
-            'normativas.ver',
-            'normativas.gestionar',
-            // Encuestas
-            'encuesta.ver',
-            'encuesta.crear',
-            'encuesta.editar',
-            'encuesta.eliminar',
-            'encuesta.publicar',
-            'encuesta.resultados',
-            'encuesta.exportar',
+            'alertas.ver', 'alertas.crear', 'alertas.eliminar',
+            'cumplimiento.ver', 'cumplimiento.exportar',
+            'reportes.ver', 'reportes.exportar',
+            'reconocimientos.ver', 'reconocimientos.crear', 'reconocimientos.editar', 'reconocimientos.eliminar',
+            'buenas-practicas.ver', 'buenas-practicas.crear', 'buenas-practicas.editar', 'buenas-practicas.eliminar',
+            'recomendaciones.ver', 'recomendaciones.crear', 'recomendaciones.editar', 'recomendaciones.eliminar',
+            'normativas.ver', 'normativas.crear', 'normativas.editar', 'normativas.eliminar',
+            'encuesta.ver', 'encuesta.crear', 'encuesta.editar', 'encuesta.eliminar',
+            'encuesta.publicar', 'encuesta.resultados', 'encuesta.exportar',
         ]);
 
-        // Responsable de Unidad — gestiona actividades de su unidad, no puede eliminar ni configurar
+        // Responsable de Unidad — gestiona actividades de su unidad, sin eliminar ni configurar sistema
         $responsable = Role::firstOrCreate(['name' => 'Responsable de Unidad', 'guard_name' => 'web']);
         $responsable->syncPermissions([
-            // SCI
-            'control-interno.ver',
-            'control-interno.crear',
-            'control-interno.editar',
+            'control-interno.ver', 'control-interno.crear', 'control-interno.editar',
             'componentes.ver',
-            // Integridad
-            'integridad.ver',
-            'integridad.crear',
-            'integridad.editar',
-            // Evidencias
-            'evidencias.ver',
-            'evidencias.subir',
-            // Monitoreo
+            'integridad.ver', 'integridad.crear', 'integridad.editar',
+            'evidencias.ver', 'evidencias.crear',
             'semaforo.ver',
-            'alertas.ver',
-            'alertas.crear',
-            // Seguimiento
+            'alertas.ver', 'alertas.crear',
             'cumplimiento.ver',
-            // Reportes
             'reportes.ver',
-            // Reconocimientos
             'reconocimientos.ver',
-            // Buenas Prácticas
-            'buenas-practicas.ver',
-            'buenas-practicas.crear',
-            'buenas-practicas.editar',
-            // Recomendaciones
-            'recomendaciones.ver',
-            'recomendaciones.crear',
-            'recomendaciones.editar',
-            // Normativas
+            'buenas-practicas.ver', 'buenas-practicas.crear', 'buenas-practicas.editar',
+            'recomendaciones.ver', 'recomendaciones.crear', 'recomendaciones.editar',
             'normativas.ver',
-            // Encuestas
-            'encuesta.ver',
-            'encuesta.responder',
-            'encuesta.resultados',
+            'encuesta.ver', 'encuesta.responder', 'encuesta.resultados',
         ]);
 
         // Operador — registra avances y sube evidencias, solo lectura en análisis
         $operador = Role::firstOrCreate(['name' => 'Operador', 'guard_name' => 'web']);
         $operador->syncPermissions([
-            // SCI
-            'control-interno.ver',
-            'control-interno.editar',
+            'control-interno.ver', 'control-interno.editar',
             'componentes.ver',
-            // Integridad
-            'integridad.ver',
-            'integridad.editar',
-            // Evidencias
-            'evidencias.ver',
-            'evidencias.subir',
-            // Monitoreo
+            'integridad.ver', 'integridad.editar',
+            'evidencias.ver', 'evidencias.crear',
             'semaforo.ver',
             'alertas.ver',
-            // Reportes
             'reportes.ver',
-            // Buenas Prácticas
             'buenas-practicas.ver',
-            // Recomendaciones
             'recomendaciones.ver',
-            // Normativas
             'normativas.ver',
-            // Encuestas
-            'encuesta.ver',
-            'encuesta.responder',
+            'encuesta.ver', 'encuesta.responder',
         ]);
 
-        // Visualizador — solo lectura total, sin modificar nada
+        // Visualizador — solo lectura total
         $visualizador = Role::firstOrCreate(['name' => 'Visualizador', 'guard_name' => 'web']);
         $visualizador->syncPermissions([
             'control-interno.ver',
@@ -254,8 +205,7 @@ class RolesPermisosSeeder extends Seeder
             'buenas-practicas.ver',
             'recomendaciones.ver',
             'normativas.ver',
-            'encuesta.ver',
-            'encuesta.responder',
+            'encuesta.ver', 'encuesta.responder',
         ]);
     }
 }

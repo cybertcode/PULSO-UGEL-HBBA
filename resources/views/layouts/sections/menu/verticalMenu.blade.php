@@ -45,15 +45,71 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
 
   <div class="menu-inner-shadow"></div>
 
+  @php
+  // Mapa slug → permiso requerido para ver el ítem de menú
+  $menuPermisos = [
+    'sci-control-interno'         => 'control-interno.ver',
+    'sci-evidencias'              => 'evidencias.ver',
+    'cumplimiento.panel'          => 'cumplimiento.ver',
+    'cumplimiento.responsables'   => 'cumplimiento.ver',
+    'cumplimiento.sin-evidencia'  => 'cumplimiento.ver',
+    'mon-avance-unidades'         => 'reportes.ver',
+    'mon-ranking-unidades'        => 'reportes.ver',
+    'sci-modelo-integridad'       => 'integridad.ver',
+    'sci-semaforo'                => 'semaforo.ver',
+    'buenas-practicas'            => 'buenas-practicas.ver',
+    'recomendaciones'             => 'recomendaciones.ver',
+    'rep-reconocimientos'         => 'reconocimientos.ver',
+    'mon-alertas'                 => 'alertas.ver',
+    'rep-reportes'                => 'reportes.ver',
+    'adm-usuarios'                => 'usuarios.ver',
+    'adm-roles'                   => 'roles.ver',
+    'adm-permisos'                => 'roles.ver',
+    'adm-unidades'                => 'unidades.ver',
+    'adm-componentes'             => 'componentes.ver',
+    'adm-sci-estructura'          => 'componentes.ver',
+    'adm-integridad-estructura'   => 'integridad.ver',
+    'adm-configuracion'           => 'configuracion.ver',
+    'slider-landing'              => 'slider.ver',
+    'encuestas.index'             => 'encuesta.ver',
+    'normativas'                  => 'normativas.ver',
+  ];
+
+  // Para ítems con submenu: si al menos un slug hijo es visible, el padre se muestra
+  function menuItemVisible($slugOrArray, $menuPermisos, $user): bool {
+    if (is_array($slugOrArray)) {
+      foreach ($slugOrArray as $slug) {
+        if (!isset($menuPermisos[$slug]) || $user->can($menuPermisos[$slug])) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return !isset($menuPermisos[$slugOrArray]) || $user->can($menuPermisos[$slugOrArray]);
+  }
+  @endphp
+
   <ul class="menu-inner py-1">
+    @php $pendingHeader = null; @endphp
     @foreach ($menuData[0]->menu as $menu)
 
     @if (isset($menu->menuHeader))
-    <li class="menu-header small">
-      <span class="menu-header-text">{{ __($menu->menuHeader) }}</span>
-    </li>
+    @php $pendingHeader = $menu->menuHeader; @endphp
     @else
     @php
+    // Verificar visibilidad del ítem
+    $slugVal = $menu->slug ?? null;
+    $isVisible = $authUser && menuItemVisible(
+      is_array($slugVal) ? $slugVal : (string)($slugVal ?? ''),
+      $menuPermisos,
+      $authUser
+    );
+
+    if ($isVisible && $pendingHeader !== null) {
+      echo '<li class="menu-header small"><span class="menu-header-text">' . e(__($pendingHeader)) . '</span></li>';
+      $pendingHeader = null;
+    }
+
     $activeClass = null;
     $currentRouteName = Route::currentRouteName();
 
@@ -74,6 +130,7 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
     }
     @endphp
 
+    @if($isVisible)
     <li class="menu-item {{ $activeClass }}">
       <a href="{{ isset($menu->url) ? url($menu->url) : 'javascript:void(0);' }}"
         class="{{ isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }}"
@@ -95,6 +152,7 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
       @include('layouts.sections.menu.submenu', ['menu' => $menu->submenu])
       @endisset
     </li>
+    @endif
     @endif
     @endforeach
   </ul>

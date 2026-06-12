@@ -117,7 +117,7 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
     <h4 class="mb-1"><i class="ti tabler-layout-grid me-2"></i>Componentes del Sistema de Control Interno</h4>
     <p class="mb-0 text-muted">Catálogo de componentes SCI</p>
   </div>
-  @can('componentes.editar')
+  @can('componentes.crear')
   <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoComponente">
     <i class="ti tabler-plus me-1"></i>Nuevo Componente
   </button>
@@ -213,6 +213,8 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
               title="{{ $comp->activo ? 'Desactivar' : 'Activar' }}">
               <i class="ti {{ $comp->activo ? 'tabler-eye-off' : 'tabler-eye' }}"></i>
             </button>
+            @endcan
+            @can('componentes.eliminar')
             <button type="button"
               class="btn btn-icon btn-sm btn-label-danger btn-eliminar-comp"
               data-id="{{ $comp->id }}"
@@ -258,7 +260,7 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
   @endforelse
 </div>
 
-@can('componentes.editar')
+@can('componentes.crear')
 {{-- Modal Nuevo --}}
 <div class="modal fade" id="modalNuevoComponente" tabindex="-1">
   <div class="modal-dialog modal-lg">
@@ -315,6 +317,8 @@ $semGlobal  = $pctGlobal >= 75 ? 'success' : ($pctGlobal >= 50 ? 'warning' : 'da
   </div>
 </div>
 
+@endcan
+@can('componentes.editar')
 {{-- Modal Editar --}}
 <div class="modal fade" id="modalEditarComponente" tabindex="-1">
   <div class="modal-dialog modal-lg">

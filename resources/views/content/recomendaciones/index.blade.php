@@ -24,9 +24,11 @@
       <h4 class="mb-1">Recomendaciones y Observaciones</h4>
       <p class="text-muted mb-0">Seguimiento en tiempo real de hallazgos del SCI y Modelo de Integridad</p>
     </div>
+    @can('recomendaciones.crear')
     <button class="btn btn-primary" id="btnNueva">
       <i class="ti tabler-plus me-1"></i> Nueva Recomendación
     </button>
+    @endcan
   </div>
 
   {{-- Tabs --}}
@@ -187,6 +189,7 @@
 </div>
 
 {{-- ══ MODAL NUEVA / EDITAR ══ --}}
+@canany(['recomendaciones.crear','recomendaciones.editar'])
 <div class="modal fade" id="modalForm" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
@@ -307,6 +310,7 @@
     </div>
   </div>
 </div>
+@endcanany
 @endsection
 
 @section('vendor-script')
@@ -323,6 +327,9 @@
 const CSRF   = '{{ csrf_token() }}';
 const URL_DATA  = '{{ route("recomendaciones.data") }}';
 const URL_STORE = '{{ route("recomendaciones.store") }}';
+const CAN_CREAR   = {{ auth()->user()->can('recomendaciones.crear')   ? 'true' : 'false' }};
+const CAN_EDITAR  = {{ auth()->user()->can('recomendaciones.editar')  ? 'true' : 'false' }};
+const CAN_ELIMINAR= {{ auth()->user()->can('recomendaciones.eliminar')? 'true' : 'false' }};
 
 let modulo      = 'sci';
 let currentPage = 1;
@@ -469,10 +476,20 @@ function renderTabla(rows) {
       ? `<br><small class="text-info"><i class="ti tabler-link me-1"></i>${r.actividad_nombre.substring(0,35)}</small>`
       : '';
 
-    const btnAtender = !['atendida','rechazada'].includes(r.estado)
+    const btnAtender = (CAN_EDITAR && !['atendida','rechazada'].includes(r.estado))
       ? `<button class="btn btn-sm btn-icon btn-label-success btn-atender" title="Marcar atendida"
            data-id="${r.id}" data-titulo="${escHtml(r.titulo)}"><i class="ti tabler-circle-check"></i></button>`
       : '';
+
+    const btnEditar   = CAN_EDITAR
+      ? `<button class="btn btn-sm btn-icon btn-label-primary btn-editar" title="Editar"
+           data-rec='${JSON.stringify(r).replace(/'/g,"&#39;")}'>
+           <i class="ti tabler-edit"></i></button>` : '';
+
+    const btnEliminar = CAN_ELIMINAR
+      ? `<button class="btn btn-sm btn-icon btn-label-danger btn-eliminar" title="Eliminar"
+           data-id="${r.id}" data-titulo="${escHtml(r.titulo)}">
+           <i class="ti tabler-trash"></i></button>` : '';
 
     return `<tr class="${rowClass}" data-id="${r.id}">
       <td>
@@ -493,12 +510,8 @@ function renderTabla(rows) {
             data-rec='${JSON.stringify(r).replace(/'/g,"&#39;")}'>
             <i class="ti tabler-eye"></i></button>
           ${btnAtender}
-          <button class="btn btn-sm btn-icon btn-label-primary btn-editar" title="Editar"
-            data-rec='${JSON.stringify(r).replace(/'/g,"&#39;")}'>
-            <i class="ti tabler-edit"></i></button>
-          <button class="btn btn-sm btn-icon btn-label-danger btn-eliminar" title="Eliminar"
-            data-id="${r.id}" data-titulo="${escHtml(r.titulo)}">
-            <i class="ti tabler-trash"></i></button>
+          ${btnEditar}
+          ${btnEliminar}
         </div>
       </td>
     </tr>`;

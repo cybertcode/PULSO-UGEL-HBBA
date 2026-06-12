@@ -486,7 +486,7 @@
       </div>
     </div>
 
-    @can('buenas-practicas.ver')
+    @canany(['buenas-practicas.editar','buenas-practicas.eliminar'])
     <div class="bp-actions">
       @if($p->estado === 'elegible')
         <button class="btn btn-sm btn-success flex-grow-1 btn-ganador-ugel"
@@ -513,12 +513,14 @@
           <i class="ti tabler-check-circle text-success"></i>Proceso concluido
         </span>
       @endif
+      @can('buenas-practicas.eliminar')
       <button class="btn btn-sm btn-icon btn-outline-danger btn-eliminar"
         data-id="{{ $p->id }}" data-titulo="{{ $p->titulo }}" title="Eliminar">
         <i class="ti tabler-trash"></i>
       </button>
+      @endcan
     </div>
-    @endcan
+    @endcanany
   </div>
 </div>
 
@@ -609,8 +611,9 @@
         @endif
       </div>
     </div>
-    @can('buenas-practicas.ver')
+    @canany(['buenas-practicas.editar','buenas-practicas.eliminar'])
     <div class="bp-actions">
+      @can('buenas-practicas.editar')
       <button class="btn btn-sm btn-outline-primary flex-grow-1 btn-editar"
         data-id="{{ $p->id }}"
         data-titulo="{{ $p->titulo }}"
@@ -629,12 +632,15 @@
         data-observaciones="{{ $p->observaciones }}">
         <i class="ti tabler-edit me-1"></i>Editar
       </button>
+      @endcan
+      @can('buenas-practicas.eliminar')
       <button class="btn btn-sm btn-icon btn-outline-danger btn-eliminar"
         data-id="{{ $p->id }}" data-titulo="{{ $p->titulo }}" title="Eliminar">
         <i class="ti tabler-trash"></i>
       </button>
+      @endcan
     </div>
-    @endcan
+    @endcanany
   </div>
 </div>
 @endif

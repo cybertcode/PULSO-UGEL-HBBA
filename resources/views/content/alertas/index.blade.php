@@ -53,9 +53,11 @@ $configData = Helper::appClasses();
       </button>
     </form>
     @endif
+    @can('alertas.crear')
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaAlerta">
       <i class="ti tabler-plus me-1"></i>Nueva alerta
     </button>
+    @endcan
   </div>
 </div>
 
@@ -358,6 +360,7 @@ $configData = Helper::appClasses();
           <td class="text-end px-4 py-3">
             <div class="d-flex align-items-center justify-content-end gap-2">
               {{-- Enviar email manual --}}
+              @can('alertas.crear')
               <form method="POST" action="{{ route('mon-alertas.email', $alerta) }}" class="d-inline"
                 title="{{ $alerta->email_enviado ? 'Email ya enviado el '.$alerta->email_enviado_at?->format('d/m/Y') : 'Enviar email al responsable' }}">
                 @csrf
@@ -366,6 +369,7 @@ $configData = Helper::appClasses();
                   <i class="ti tabler-mail icon-14px"></i>
                 </button>
               </form>
+              @endcan
               @if(!$isLeida)
               <form method="POST" action="{{ route('mon-alertas.leer', $alerta) }}" class="d-inline">
                 @csrf @method('PATCH')
@@ -378,6 +382,16 @@ $configData = Helper::appClasses();
                 <i class="ti tabler-circle-check me-1" style="font-size:10px"></i>Resuelta
               </span>
               @endif
+              @can('alertas.eliminar')
+              {{-- Eliminar alerta --}}
+              <form method="POST" action="{{ route('mon-alertas.destroy', $alerta) }}" class="d-inline form-eliminar-alerta"
+                data-titulo="{{ e($alerta->titulo) }}">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-sm btn-icon btn-label-danger" title="Eliminar alerta">
+                  <i class="ti tabler-trash icon-14px"></i>
+                </button>
+              </form>
+              @endcan
             </div>
           </td>
         </tr>
@@ -421,6 +435,7 @@ $configData = Helper::appClasses();
 {{-- ══════════════════════════════════════════════
      MODAL NUEVA ALERTA
 ══════════════════════════════════════════════ --}}
+@can('alertas.crear')
 <div class="modal fade" id="modalNuevaAlerta" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
@@ -494,6 +509,7 @@ $configData = Helper::appClasses();
     </div>
   </div>
 </div>
+@endcan
 
 @endsection
 
