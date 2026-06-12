@@ -1,7 +1,16 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
 ## [v2.1.3] - 2026-06-12 (Sesión Actual)
-### Refactorización de Seguridad y Limpieza de Base de Datos
+### Administración Pro y Refinamiento UI/UX (Módulo de Usuarios)
+- **Gestión Avanzada de Usuarios**:
+    - Implementación de **Reseteo de Contraseña Administrativo** vía AJAX, permitiendo a los administradores actualizar credenciales con validación de complejidad en tiempo real.
+    - Sistema de **Cambio de Rol Rápido** directamente desde la tabla de roles, utilizando peticiones asíncronas para una gestión de permisos más fluida.
+    - Protección de seguridad: bloqueo de cambios de rol y eliminación de la propia cuenta para el usuario autenticado.
+- **Ingeniería de Reciclaje Premium (UI/UX)**:
+    - Integración de **Toasts persistentes** mediante `sessionStorage`, permitiendo mostrar notificaciones de éxito tras recargas de página provocadas por acciones AJAX.
+    *   Refinamiento estético de las tablas de administración con badges de estado dinámicos, tooltips informativos e iconografía Tabler optimizada.
+    *   Mejora del layout `contentNavbarLayout` para soportar notificaciones globales del sistema.
+- **Refactorización de Seguridad y Limpieza de Base de Datos**:
 - **Sistema de Permisos y Roles**:
     - Refactorización profunda de `routes/web.php` para implementar una granularidad de permisos más estricta (`ver`, `crear`, `editar`, `eliminar`) en todos los módulos (Slider, Instituciones, SCI, Integridad, Normativas, Encuestas).
     - Normalización de los nombres de permisos para asegurar consistencia con el `RolesPermisosSeeder`.

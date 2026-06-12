@@ -188,6 +188,20 @@ class UserList extends Controller
         return redirect()->route('adm-usuarios')->with('success', 'Usuario eliminado correctamente.');
     }
 
+    public function resetPassword(Request $request, User $usuario)
+    {
+        $data = $request->validate([
+            'password' => ['required', Password::min(8)->mixedCase()->numbers()],
+        ]);
+
+        $usuario->update(['password' => Hash::make($data['password'])]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Contraseña de {$usuario->name} actualizada correctamente.",
+        ]);
+    }
+
     public function toggleEstado(User $usuario)
     {
         $usuario->update([

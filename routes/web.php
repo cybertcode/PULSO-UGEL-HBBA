@@ -169,7 +169,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::post('/usuarios',                  [UserList::class, 'store'])->name('adm-usuarios.store')->middleware('can:usuarios.crear');
     Route::put('/usuarios/{usuario}',         [UserList::class, 'update'])->name('adm-usuarios.update')->middleware('can:usuarios.editar');
     Route::delete('/usuarios/{usuario}',      [UserList::class, 'destroy'])->name('adm-usuarios.destroy')->middleware('can:usuarios.eliminar');
-    Route::patch('/usuarios/{usuario}/estado',[UserList::class, 'toggleEstado'])->name('adm-usuarios.estado')->middleware('can:usuarios.editar');
+    Route::patch('/usuarios/{usuario}/estado',    [UserList::class, 'toggleEstado'])->name('adm-usuarios.estado')->middleware('can:usuarios.editar');
+    Route::patch('/usuarios/{usuario}/password',  [UserList::class, 'resetPassword'])->name('adm-usuarios.password')->middleware('can:usuarios.editar');
 
     // Cargos (catálogo)
     Route::get('/cargos',             [CargosController::class, 'index'])->name('cargos.index')->middleware('can:usuarios.ver');
@@ -186,10 +187,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/permisos', [AccessPermission::class, 'index'])->name('adm-permisos');
     });
     Route::middleware('can:configuracion.editar')->group(function () {
-        Route::post('/roles',          [AccessRoles::class, 'store'])->name('adm-roles.store');
-        Route::put('/roles/{role}',    [AccessRoles::class, 'update'])->name('adm-roles.update');
-        Route::delete('/roles/{role}', [AccessRoles::class, 'destroy'])->name('adm-roles.destroy');
+        Route::post('/roles',                    [AccessRoles::class, 'store'])->name('adm-roles.store');
+        Route::put('/roles/{role}',              [AccessRoles::class, 'update'])->name('adm-roles.update');
+        Route::delete('/roles/{role}',           [AccessRoles::class, 'destroy'])->name('adm-roles.destroy');
     });
+    Route::patch('/usuarios/{usuario}/rol',  [AccessRoles::class, 'cambiarRol'])->name('adm-roles.cambiar-rol')->middleware('can:usuarios.editar');
 
     // --- Administración: Estructura SCI (Ejes → Componentes → Preguntas) ---
     Route::middleware('can:componentes.ver')->group(function () {

@@ -12,6 +12,7 @@ $configData = Helper::appClasses();
 ])
 @endsection
 
+
 @section('vendor-script')
 @vite([
   'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js',
@@ -125,6 +126,7 @@ $configData = Helper::appClasses();
             <th>Correo</th>
             <th>Rol</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -132,7 +134,9 @@ $configData = Helper::appClasses();
           @php
             $rolNombre = $u->roles->first()->name ?? '—';
             $rc = $colorMap[$rolNombre] ?? 'secondary';
-            $ec = $u->estado === 'activo' ? 'success' : 'danger';
+            $estadoVal = $u->estado ?? 'pendiente';
+            $ec = match($estadoVal) { 'activo' => 'success', 'inactivo' => 'danger', default => 'warning' };
+            $esTuCuenta = $u->id === auth()->id();
           @endphp
           <tr>
             <td></td>
@@ -141,12 +145,69 @@ $configData = Helper::appClasses();
                 <div class="avatar avatar-sm">
                   <span class="avatar-initial rounded-circle bg-label-{{ $rc }}">{{ strtoupper(substr($u->name,0,1)) }}</span>
                 </div>
-                <span class="fw-medium">{{ $u->name }}</span>
+                <div>
+                  <span class="fw-medium d-block">{{ $u->name }}</span>
+                  @if($esTuCuenta)
+                    <small class="text-muted">(tú)</small>
+                  @endif
+                </div>
               </div>
             </td>
             <td>{{ $u->email }}</td>
             <td><span class="badge bg-label-{{ $rc }}">{{ $rolNombre }}</span></td>
-            <td><span class="badge bg-label-{{ $ec }}">{{ ucfirst($u->estado ?? 'activo') }}</span></td>
+            <td><span class="badge bg-label-{{ $ec }}">{{ ucfirst($estadoVal) }}</span></td>
+            <td>
+              @can('usuarios.editar')
+              @if($esTuCuenta)
+                <span class="text-muted small" data-bs-toggle="tooltip" title="No puedes cambiar tu propio rol">
+                  <i class="ti tabler-lock icon-sm"></i>
+                </span>
+              @else
+              <div class="d-flex align-items-center gap-1">
+                {{-- Dropdown cambiar rol --}}
+                <div class="dropdown">
+                  <button type="button"
+                    class="btn btn-sm btn-icon btn-label-primary"
+                    data-bs-toggle="dropdown"
+                    data-bs-placement="top"
+                    title="Cambiar rol"
+                    aria-expanded="false">
+                    <i class="ti tabler-shield-cog icon-sm"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><h6 class="dropdown-header small">Asignar rol</h6></li>
+                    @foreach($roles as $rol)
+                    <li>
+                      <button type="button"
+                        class="dropdown-item btn-cambiar-rol d-flex align-items-center gap-2 {{ $rol->name === $rolNombre ? 'active' : '' }}"
+                        data-usuario-id="{{ $u->id }}"
+                        data-usuario-nombre="{{ $u->name }}"
+                        data-rol="{{ $rol->name }}"
+                        data-rol-actual="{{ $rolNombre }}">
+                        @if($rol->name === $rolNombre)
+                          <i class="ti tabler-check icon-xs text-success"></i>
+                        @else
+                          <i class="ti tabler-circle icon-xs text-muted"></i>
+                        @endif
+                        {{ $rol->name }}
+                      </button>
+                    </li>
+                    @endforeach
+                  </ul>
+                </div>
+                {{-- Ver perfil --}}
+                <a href="{{ route('adm-usuarios') }}?buscar={{ urlencode($u->email) }}"
+                  class="btn btn-sm btn-icon btn-label-secondary"
+                  data-bs-toggle="tooltip"
+                  title="Ver en Usuarios">
+                  <i class="ti tabler-external-link icon-sm"></i>
+                </a>
+              </div>
+              @endif
+              @else
+              <span class="text-muted small">—</span>
+              @endcan
+            </td>
           </tr>
           @endforeach
         </tbody>
@@ -293,17 +354,21 @@ $configData = Helper::appClasses();
 </div>
 @endcan
 
+
 @endsection
 
 @section('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  // DataTable usuarios — mismo layout que full-version
+  // DataTable usuarios
   new DataTable('.datatables-roles', {
     responsive: true,
     pageLength: 10,
-    columnDefs: [{ targets: 0, orderable: false, searchable: false, className: 'control' }],
+    columnDefs: [
+      { targets: 0, orderable: false, searchable: false, className: 'control' },
+      { targets: 5, orderable: false, searchable: false },
+    ],
     layout: {
       topStart: {
         rowClass: 'row m-3 my-0 justify-content-between',
@@ -415,6 +480,54 @@ document.addEventListener('DOMContentLoaded', function () {
       cancelButtonText: 'Cancelar'
     }).then(r => {
       if (r.isConfirmed) document.getElementById('formDeleteRole').submit();
+    });
+  });
+
+  // ── Cambiar rol desde tabla ──────────────────────────────────────────────
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-cambiar-rol');
+    if (!btn) return;
+
+    const usuarioId     = btn.dataset.usuarioId;
+    const usuarioNombre = btn.dataset.usuarioNombre;
+    const rolNuevo      = btn.dataset.rol;
+    const rolActual     = btn.dataset.rolActual;
+
+    if (rolNuevo === rolActual) return; // ya tiene ese rol
+
+    Swal.fire({
+      title: '¿Cambiar rol?',
+      html:  `<p class="mb-1">Usuario: <strong>${usuarioNombre}</strong></p>
+              <p class="mb-0">Nuevo rol: <strong>${rolNuevo}</strong></p>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#7367f0',
+      cancelButtonColor:  '#6e7881',
+      confirmButtonText:  'Sí, cambiar',
+      cancelButtonText:   'Cancelar'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+
+      fetch(`/usuarios/${usuarioId}/rol`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
+          'Accept':        'application/json',
+        },
+        body: JSON.stringify({ rol: rolNuevo }),
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          sessionStorage.setItem('flash_title', 'Rol actualizado');
+          sessionStorage.setItem('flash_success', `${usuarioNombre} → ${rolNuevo}`);
+          location.reload();
+        } else {
+          Swal.fire('Error', data.message, 'error');
+        }
+      })
+      .catch(() => Swal.fire('Error', 'No se pudo procesar la solicitud.', 'error'));
     });
   });
 
