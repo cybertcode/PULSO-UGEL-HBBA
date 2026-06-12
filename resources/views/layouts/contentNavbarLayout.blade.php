@@ -142,8 +142,34 @@
           </div>
           @endif
 
+          {{-- Toast desde sessionStorage (para AJAX + reload) --}}
+          <div id="toast-flash-js" class="toast border-0 shadow d-none" role="alert" data-bs-autohide="true" data-bs-delay="5000"
+               style="background:#fff;border-left:4px solid #28a745 !important;border-radius:8px">
+            <div class="toast-header border-0 pb-0" style="background:transparent">
+              <span class="me-2" style="color:#28a745"><i class="ti tabler-circle-check" style="font-size:18px"></i></span>
+              <strong class="me-auto toast-flash-title" style="color:#28a745">Operación exitosa</strong>
+              <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body pt-1 toast-flash-body" style="color:#333"></div>
+          </div>
+
         </div>
         <!-- / Toast Container Global -->
+
+        <script>
+        (function () {
+          const msg = sessionStorage.getItem('flash_success');
+          if (!msg) return;
+          sessionStorage.removeItem('flash_success');
+          const toastEl = document.getElementById('toast-flash-js');
+          const title   = sessionStorage.getItem('flash_title') || 'Operación exitosa';
+          sessionStorage.removeItem('flash_title');
+          toastEl.querySelector('.toast-flash-title').textContent = title;
+          toastEl.querySelector('.toast-flash-body').textContent  = msg;
+          toastEl.classList.remove('d-none');
+          new bootstrap.Toast(toastEl, { delay: 5000 }).show();
+        })();
+        </script>
 
         <div class="content-backdrop fade"></div>
       </div>

@@ -501,6 +501,10 @@ document.addEventListener('DOMContentLoaded', function () {
               data-unidad-id="${row.unidad_id}" data-rol="${row.rol}" data-estado="${row.estado}"
               data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditUser"
               title="Editar"><i class="ti tabler-edit" style="font-size:1rem"></i></button>`;
+            btns += `<button class="btn btn-icon btn-sm btn-text-warning rounded-2 btn-reset-password"
+              data-id="${row.id}" data-name="${row.name}"
+              data-url="${urlBase}/${row.id}/password"
+              title="Resetear contraseña"><i class="ti tabler-lock-password" style="font-size:1rem"></i></button>`;
           }
           if (canDelete) {
             btns += `<button class="btn btn-icon btn-sm btn-text-danger rounded-2 btn-delete-user"
@@ -949,6 +953,48 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!res.ok) { Swal.fire({ icon: 'error', title: 'Error', text: json.message }); return; }
         dt.ajax.reload(null, false);
         Swal.fire({ icon: 'success', title: 'Eliminado', text: json.message, timer: 2000, showConfirmButton: false });
+      });
+    });
+  });
+
+  // ── Resetear contraseña (AJAX) ──
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-reset-password');
+    if (!btn) return;
+
+    Swal.fire({
+      title: 'Nueva contraseña',
+      html: `<p class="mb-3">Ingresa la nueva contraseña para <strong>${btn.dataset.name}</strong></p>
+             <input type="password" id="swal-new-password" class="form-control" placeholder="Mín. 8 caracteres, mayúscula, número" autocomplete="new-password">
+             <div id="swal-pw-error" class="text-danger mt-1 small" style="display:none"></div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '<i class="ti tabler-lock-check me-1"></i>Guardar',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: 'rounded-3', confirmButton: 'btn btn-warning me-2', cancelButton: 'btn btn-label-secondary' },
+      buttonsStyling: false,
+      focusConfirm: false,
+      preConfirm: () => {
+        const pw = document.getElementById('swal-new-password').value;
+        const err = document.getElementById('swal-pw-error');
+        if (!pw || pw.length < 8 || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) {
+          err.style.display = 'block';
+          err.textContent = 'Mínimo 8 caracteres, al menos una mayúscula y un número.';
+          return false;
+        }
+        err.style.display = 'none';
+        return pw;
+      },
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      fetch(btn.dataset.url, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `_method=PATCH&password=${encodeURIComponent(r.value)}`,
+      }).then(async res => {
+        const json = await res.json();
+        if (!res.ok) { Swal.fire({ icon: 'error', title: 'Error', text: json.message || 'No se pudo actualizar la contraseña.' }); return; }
+        Swal.fire({ icon: 'success', title: 'Listo', text: json.message, timer: 2500, timerProgressBar: true, showConfirmButton: false });
       });
     });
   });

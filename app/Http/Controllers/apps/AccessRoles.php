@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Illuminate\Validation\Rule;
 
 class AccessRoles extends Controller
 {
@@ -70,6 +71,26 @@ class AccessRoles extends Controller
         $role->syncPermissions($data['permisos'] ?? []);
 
         return redirect()->route('adm-roles')->with('success', 'Rol actualizado correctamente.');
+    }
+
+    public function cambiarRol(Request $request, User $usuario)
+    {
+        $data = $request->validate([
+            'rol' => ['required', Rule::exists('roles', 'name')->where('guard_name', 'web')],
+        ]);
+
+        // Proteger: no se puede quitar el rol al propio usuario autenticado
+        if ($usuario->id === auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'No puedes cambiar tu propio rol.'], 422);
+        }
+
+        $usuario->syncRoles([$data['rol']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Rol de {$usuario->name} cambiado a \"{$data['rol']}\" correctamente.",
+            'rol'     => $data['rol'],
+        ]);
     }
 
     public function destroy(Role $role)
