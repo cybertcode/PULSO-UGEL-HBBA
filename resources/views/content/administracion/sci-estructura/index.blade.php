@@ -143,21 +143,25 @@
             @if(!$eje->activo)<span class="badge bg-label-danger badge-inactivo ms-1">Off</span>@endif
           </span>
           <span class="sci-item-meta">{{ $eje->componentes->count() }}c</span>
-          @can('componentes.editar')
+          @canany(['componentes.editar','componentes.eliminar'])
           <div class="sci-item-actions">
+            @can('componentes.editar')
             <button class="btn btn-icon btn-sm btn-info btn-editar-eje" title="Editar" onclick="event.stopPropagation()">
               <i class="ti tabler-edit"></i>
             </button>
+            @endcan
+            @can('componentes.eliminar')
             <button class="btn btn-icon btn-sm btn-danger btn-eliminar-eje" title="Eliminar"
               data-url="{{ route('adm-sci.eje.destroy', $eje) }}" data-nombre="{{ $eje->nombre }}" onclick="event.stopPropagation()">
               <i class="ti tabler-trash"></i>
             </button>
+            @endcan
           </div>
-          @endcan
+          @endcanany
         </div>
         @endforeach
       @endif
-      @can('componentes.editar')
+      @can('componentes.crear')
       <div class="p-2 border-top">
         <button class="btn btn-sm btn-primary w-100" data-bs-toggle="modal" data-bs-target="#modalNuevoEje">
           <i class="ti tabler-plus me-1"></i>Nuevo Eje
@@ -177,7 +181,7 @@
       <div id="lista-componentes">
         <div class="sci-empty"><i class="ti tabler-hand-click"></i>Selecciona un eje</div>
       </div>
-      @can('componentes.editar')
+      @can('componentes.crear')
       <div class="p-2 border-top" id="btn-nuevo-componente-wrap" style="display:none">
         <button class="btn btn-sm btn-info w-100" id="btn-nuevo-componente" data-bs-toggle="modal" data-bs-target="#modalNuevoComponente">
           <i class="ti tabler-plus me-1"></i>Nuevo Componente
@@ -197,7 +201,7 @@
       <div id="lista-preguntas">
         <div class="sci-empty"><i class="ti tabler-hand-click"></i>Selecciona un componente</div>
       </div>
-      @can('componentes.editar')
+      @can('componentes.crear')
       <div class="p-2 border-top" id="btn-nueva-pregunta-wrap" style="display:none">
         <button class="btn btn-sm btn-success w-100" id="btn-nueva-pregunta" data-bs-toggle="modal" data-bs-target="#modalNuevaPregunta">
           <i class="ti tabler-plus me-1"></i>Nueva Pregunta
@@ -264,7 +268,7 @@ $sciJson = $ejes->map(function($eje) {
 @endphp
 <script id="sci-data" type="application/json">{!! json_encode($sciJson) !!}</script>
 
-@can('componentes.editar')
+@canany(['componentes.crear','componentes.editar'])
 
 {{-- ══ MODAL: NUEVO EJE ══ --}}
 <div class="modal fade" id="modalNuevoEje" tabindex="-1" aria-labelledby="lblNuevoEje">
@@ -534,7 +538,7 @@ $sciJson = $ejes->map(function($eje) {
   </div>
 </div>
 
-@endcan
+@endcanany
 @endsection
 
 @section('page-script')
@@ -612,17 +616,21 @@ $sciJson = $ejes->map(function($eje) {
         ${c.icono ? `<i class="ti ${c.icono} text-info" style="font-size:.9rem;flex-shrink:0"></i>` : ''}
         <span class="sci-item-name">${escHtml(c.nombre)}${!c.activo?'<span class="badge bg-label-danger badge-inactivo ms-1">Off</span>':''}</span>
         <span class="sci-item-meta">${c.preguntas.length}p</span>
-        @can('componentes.editar')
+        @canany(['componentes.editar','componentes.eliminar'])
         <div class="sci-item-actions">
+          @can('componentes.editar')
           <button class="btn btn-icon btn-sm btn-info btn-editar-componente" title="Editar" onclick="event.stopPropagation()">
             <i class="ti tabler-edit"></i>
           </button>
+          @endcan
+          @can('componentes.eliminar')
           <button class="btn btn-icon btn-sm btn-danger btn-eliminar-comp" title="Eliminar"
             data-url="/administracion/sci/componente/${c.id}" data-nombre="${escHtml(c.nombre)}" onclick="event.stopPropagation()">
             <i class="ti tabler-trash"></i>
           </button>
+          @endcan
         </div>
-        @endcan
+        @endcanany
       </div>
     `).join('');
 
@@ -659,17 +667,21 @@ $sciJson = $ejes->map(function($eje) {
           <span style="font-size:.8125rem;white-space:normal;line-height:1.3">${escHtml(p.nombre)}${!p.activo?'<span class="badge bg-label-danger badge-inactivo ms-1">Off</span>':''}</span>
           ${p.link_ficha ? `<a href="${escHtml(p.link_ficha)}" target="_blank" class="link-ficha-text text-info mt-1" title="${escHtml(p.link_ficha)}"><i class="ti tabler-link me-1" style="font-size:.75rem"></i>${escHtml(p.link_ficha)}</a>` : '<span class="text-muted" style="font-size:.7rem"><i class="ti tabler-link-off me-1"></i>Sin ficha</span>'}
         </div>
-        @can('componentes.editar')
+        @canany(['componentes.editar','componentes.eliminar'])
         <div class="sci-item-actions flex-shrink-0 ms-1" style="flex-direction:column;gap:.2rem">
+          @can('componentes.editar')
           <button class="btn btn-icon btn-sm btn-success btn-editar-pregunta" title="Editar" onclick="event.stopPropagation()">
             <i class="ti tabler-edit"></i>
           </button>
+          @endcan
+          @can('componentes.eliminar')
           <button class="btn btn-icon btn-sm btn-danger btn-eliminar-preg" title="Eliminar"
             data-url="/administracion/sci/pregunta/${p.id}" data-nombre="${escHtml(p.nombre)}" onclick="event.stopPropagation()">
             <i class="ti tabler-trash"></i>
           </button>
+          @endcan
         </div>
-        @endcan
+        @endcanany
       </div>
     `).join('');
 

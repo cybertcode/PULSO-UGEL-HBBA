@@ -25,9 +25,11 @@ $breadcrumbs = [
     <a href="{{ route('landing') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
       <i class="icon-base ti tabler-external-link me-1"></i>Ver Landing
     </a>
+    @can('instituciones.crear')
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrear">
       <i class="icon-base ti tabler-plus me-1"></i> Nueva Institución
     </button>
+    @endcan
   </div>
 </div>
 
@@ -81,14 +83,21 @@ $breadcrumbs = [
               @endif
             </td>
             <td class="text-center">
+              @can('instituciones.editar')
               <div class="form-check form-switch d-flex justify-content-center mb-0">
                 <input class="form-check-input toggle-activo" type="checkbox"
                        data-id="{{ $inst->id }}"
                        data-url="{{ route('instituciones-vinculadas.toggle', $inst) }}"
                        {{ $inst->activo ? 'checked' : '' }}>
               </div>
+              @else
+              <span class="badge bg-label-{{ $inst->activo ? 'success' : 'secondary' }}">
+                {{ $inst->activo ? 'Activa' : 'Inactiva' }}
+              </span>
+              @endcan
             </td>
             <td class="text-center">
+              @can('instituciones.editar')
               <button class="btn btn-sm btn-icon btn-text-secondary btn-editar"
                       data-id="{{ $inst->id }}"
                       data-nombre="{{ $inst->nombre }}"
@@ -103,6 +112,8 @@ $breadcrumbs = [
                       title="Editar">
                 <i class="icon-base ti tabler-edit"></i>
               </button>
+              @endcan
+              @can('instituciones.eliminar')
                 <form method="POST" action="{{ route('instituciones-vinculadas.destroy', $inst) }}"
                     class="d-inline form-eliminar"
                     data-nombre="{{ e($inst->nombre) }}">
@@ -111,6 +122,7 @@ $breadcrumbs = [
                   <i class="icon-base ti tabler-trash"></i>
                 </button>
               </form>
+              @endcan
             </td>
           </tr>
           @empty
@@ -129,6 +141,7 @@ $breadcrumbs = [
 {{-- ══════════════════════════════
      MODAL CREAR
 ══════════════════════════════ --}}
+@can('instituciones.crear')
 <div class="modal fade" id="modalCrear" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <form method="POST" action="{{ route('instituciones-vinculadas.store') }}" enctype="multipart/form-data">
@@ -152,9 +165,12 @@ $breadcrumbs = [
   </div>
 </div>
 
+@endcan
+
 {{-- ══════════════════════════════
      MODAL EDITAR
 ══════════════════════════════ --}}
+@can('instituciones.editar')
 <div class="modal fade" id="modalEditar" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <form id="formEditar" method="POST" enctype="multipart/form-data">
@@ -190,6 +206,7 @@ $breadcrumbs = [
     </form>
   </div>
 </div>
+@endcan
 
 @endsection
 

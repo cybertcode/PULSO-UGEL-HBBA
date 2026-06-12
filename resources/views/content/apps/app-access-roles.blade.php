@@ -58,7 +58,7 @@ $configData = Helper::appClasses();
         <div class="d-flex justify-content-between align-items-end">
           <div class="role-heading">
             <h5 class="mb-1">{{ $rol->name }}</h5>
-            @can('configuracion.editar')
+            @can('roles.editar')
             <a href="javascript:;" class="btn-editar-rol"
               data-id="{{ $rol->id }}"
               data-name="{{ addslashes($rol->name) }}"
@@ -71,7 +71,7 @@ $configData = Helper::appClasses();
             <span class="text-muted small">{{ $rol->permissions->count() }} permisos</span>
             @endcan
           </div>
-          @can('configuracion.editar')
+          @can('roles.editar')
           <a href="javascript:;" class="btn-editar-rol"
             data-id="{{ $rol->id }}"
             data-name="{{ addslashes($rol->name) }}"
@@ -88,7 +88,7 @@ $configData = Helper::appClasses();
   @endforeach
 
   {{-- Add New Role Card --}}
-  @can('configuracion.editar')
+  @can('roles.crear')
   <div class="col-xl-4 col-lg-6 col-md-6">
     <div class="card h-100">
       <div class="row h-100">
@@ -217,7 +217,7 @@ $configData = Helper::appClasses();
 </div>
 
 {{-- Modal Agregar Rol --}}
-@can('configuracion.editar')
+@can('roles.crear')
 <div class="modal fade" id="addRoleModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-simple modal-dialog-centered modal-add-new-role">
     <div class="modal-content">

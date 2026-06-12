@@ -1,6 +1,22 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
 ## [v2.1.3] - 2026-06-12 (Sesión Actual)
+### Refactorización de Seguridad de Alto Impacto (Permisos Granulados v2)
+- **Granularidad Extrema de Accesos**:
+    - Evolución del sistema de permisos de un esquema genérico (`configuracion.ver/editar`) a uno **específico por módulo** (`slider.*`, `instituciones.*`, `unidades.*`, `roles.*`, `componentes.*`, `normativas.*`, etc.).
+    - Implementación de acciones CRUD completas (`ver`, `crear`, `editar`, `eliminar`) para cada entidad del sistema, permitiendo una delegación de funciones 100% precisa.
+    - Refactorización masiva de `routes/web.php` para desvincular las rutas de los permisos globales de configuración y asociarlas a sus nuevos permisos específicos.
+- **Optimización de Roles Institucionales**:
+    - Actualización de los roles maestros (`Administrador`, `Coordinador SCI`, `Responsable de Unidad`, `Operador`, `Visualizador`) para heredar el nuevo esquema de permisos granulados.
+    - Los permisos ahora siguen un estándar industrial: `[modulo].[accion]`, facilitando la auditoría y el mantenimiento.
+- **Refinamiento de UI/UX Administrativa**:
+    - Actualización de las vistas de administración para ocultar/mostrar botones de acción (Editar, Eliminar, Crear) basados estrictamente en los nuevos permisos granulados mediante directivas `@can`.
+    - Mejora de los menús laterales y submenús para respetar la visibilidad según los nuevos permisos.
+- **Estructura Técnica**:
+    - Migración: `2026_06_12_112045_refactorizar_permisos_granulados_v2.php`.
+    - Seeder: `RolesPermisosSeeder.php` totalmente reescrito con el nuevo mapa de permisos.
+    - Rutas: Limpieza y re-protección de más de 60 rutas del sistema.
+
 ### Administración Pro y Refinamiento UI/UX (Módulo de Usuarios)
 - **Gestión Avanzada de Usuarios**:
     - Implementación de **Reseteo de Contraseña Administrativo** vía AJAX, permitiendo a los administradores actualizar credenciales con validación de complejidad en tiempo real.

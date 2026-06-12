@@ -133,23 +133,27 @@
               @if(!$etapa->activo)<span class="badge bg-label-danger badge-inactivo ms-1">Off</span>@endif
             </span>
             <span class="sci-item-meta">{{ $etapa->componentes->count() }}c</span>
-            @can('integridad.editar')
+            @canany(['integridad.editar','integridad.eliminar'])
             <div class="sci-item-actions">
+              @can('integridad.editar')
               <button class="btn btn-icon btn-sm btn-warning btn-editar-etapa" title="Editar" onclick="event.stopPropagation()">
                 <i class="ti tabler-edit"></i>
               </button>
+              @endcan
+              @can('integridad.eliminar')
               <button class="btn btn-icon btn-sm btn-danger btn-eliminar-etapa" title="Eliminar"
                 data-url="{{ route('adm-integridad.etapa.destroy', $etapa) }}"
                 data-nombre="{{ e($etapa->nombre) }}" onclick="event.stopPropagation()">
                 <i class="ti tabler-trash"></i>
               </button>
+              @endcan
             </div>
-            @endcan
+            @endcanany
           </div>
           @endforeach
         @endif
       </div>
-      @can('integridad.editar')
+      @can('integridad.crear')
       <div class="p-2 border-top">
         <button class="btn btn-sm btn-warning w-100" id="btn-nueva-etapa-open">
           <i class="ti tabler-plus me-1"></i>Nueva Etapa
@@ -169,7 +173,7 @@
       <div id="lista-componentes">
         <div class="sci-empty"><i class="ti tabler-hand-click"></i>Selecciona una etapa</div>
       </div>
-      @can('integridad.editar')
+      @can('integridad.crear')
       <div class="p-2 border-top" id="btn-nuevo-comp-wrap" style="display:none">
         <button class="btn btn-sm btn-info w-100" id="btn-nuevo-comp-open">
           <i class="ti tabler-plus me-1"></i>Nuevo Componente
@@ -189,7 +193,7 @@
       <div id="lista-preguntas">
         <div class="sci-empty"><i class="ti tabler-hand-click"></i>Selecciona un componente</div>
       </div>
-      @can('integridad.editar')
+      @can('integridad.crear')
       <div class="p-2 border-top" id="btn-nueva-preg-wrap" style="display:none">
         <button class="btn btn-sm btn-success w-100" id="btn-nueva-preg-open">
           <i class="ti tabler-plus me-1"></i>Nueva Pregunta
@@ -225,7 +229,7 @@
   </span>
 </div>
 
-@can('integridad.editar')
+@canany(['integridad.crear','integridad.editar'])
 {{-- ══ MODAL: NUEVA ETAPA ══ --}}
 <div class="modal fade" id="modalNuevaEtapa" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -478,7 +482,7 @@
     </div>
   </div>
 </div>
-@endcan
+@endcanany
 @endsection
 
 @section('page-script')

@@ -36,7 +36,7 @@ class NormativasController extends Controller
 
     public function index(Request $request)
     {
-        $esGestor = Gate::check('normativas.gestionar');
+        $esGestor = Gate::check('normativas.crear') || Gate::check('normativas.editar') || Gate::check('normativas.eliminar');
 
         $stats = [
             'total'      => Normativa::count(),
@@ -82,7 +82,7 @@ class NormativasController extends Controller
         }
 
         $normativas = $query->paginate(12)->withQueryString();
-        $esGestor   = Gate::check('normativas.gestionar');
+        $esGestor   = Gate::check('normativas.crear') || Gate::check('normativas.editar') || Gate::check('normativas.eliminar');
 
         $stats = [
             'total'       => Normativa::count(),
@@ -103,7 +103,7 @@ class NormativasController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('normativas.gestionar');
+        Gate::authorize('normativas.crear');
 
         $validator = Validator::make($request->all(), [
             'nombre'          => 'required|string|max:255',
@@ -172,7 +172,7 @@ class NormativasController extends Controller
 
     public function update(Request $request, Normativa $normativa)
     {
-        Gate::authorize('normativas.gestionar');
+        Gate::authorize('normativas.editar');
 
         $validator = Validator::make($request->all(), [
             'nombre'          => 'required|string|max:255',
@@ -227,7 +227,7 @@ class NormativasController extends Controller
 
     public function toggleVigente(Normativa $normativa)
     {
-        Gate::authorize('normativas.gestionar');
+        Gate::authorize('normativas.editar');
         $nuevoValor = !$normativa->vigente;
         $normativa->update(['vigente' => $nuevoValor]);
         return response()->json([
@@ -239,7 +239,7 @@ class NormativasController extends Controller
 
     public function destroy(Normativa $normativa)
     {
-        Gate::authorize('normativas.gestionar');
+        Gate::authorize('normativas.eliminar');
 
         if ($normativa->archivo_path) {
             Storage::disk('public')->delete($normativa->archivo_path);

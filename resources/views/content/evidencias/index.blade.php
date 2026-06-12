@@ -125,9 +125,11 @@ $authId = auth()->id();
     <h4 class="mb-0">Gestión de Evidencias</h4>
     <p class="mb-0 text-muted small">Documentos de respaldo por actividad · SCI e Integridad</p>
   </div>
+  @can('evidencias.crear')
   <button class="btn btn-primary" id="btnNuevaEvidencia">
     <i class="ti tabler-plus me-1"></i>Nueva Evidencia
   </button>
+  @endcan
 </div>
 
 {{-- ── Tabs SCI / Integridad ─────────────────────────────────────────── --}}
@@ -321,6 +323,7 @@ $kpisConfig = [
                   @if($ev->url_documento)
                   <a href="{{ $ev->url_documento }}" target="_blank" class="btn btn-icon btn-label-secondary" title="Abrir"><i class="ti tabler-external-link icon-14px"></i></a>
                   @endif
+                  @can('evidencias.editar')
                   @if($ev->estado === 'pendiente' && $esMio)
                   <button class="btn btn-icon btn-label-primary btn-editar-ev"
                     data-id="{{ $ev->id }}" data-titulo="{{ $ev->titulo }}"
@@ -330,14 +333,19 @@ $kpisConfig = [
                     <i class="ti tabler-edit icon-14px"></i>
                   </button>
                   @endif
+                  @endcan
+                  @can('evidencias.validar')
                   @if($ev->estado === 'pendiente')
                   <button class="btn btn-icon btn-label-success btn-validar" data-url="{{ route('sci-evidencias.validar', $ev) }}" title="Validar"><i class="ti tabler-check icon-14px"></i></button>
                   <button class="btn btn-icon btn-label-danger btn-rechazar"  data-url="{{ route('sci-evidencias.validar', $ev) }}" title="Rechazar"><i class="ti tabler-x icon-14px"></i></button>
                   @endif
+                  @endcan
+                  @can('evidencias.eliminar')
                   <form method="POST" action="{{ route('sci-evidencias.destroy', $ev) }}" class="form-eliminar-ev d-inline">
                     @csrf @method('DELETE')
                     <button type="submit" class="btn btn-icon btn-label-secondary" title="Eliminar"><i class="ti tabler-trash icon-14px"></i></button>
                   </form>
+                  @endcan
                 </div>
               </td>
             </tr>
@@ -369,6 +377,7 @@ $kpisConfig = [
 {{-- ════════════════════════════════════════════════════════════════════ --}}
 {{-- Modal Nueva Evidencia                                               --}}
 {{-- ════════════════════════════════════════════════════════════════════ --}}
+@can('evidencias.crear')
 <div class="modal fade" id="modalNuevaEvidencia" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
@@ -428,8 +437,10 @@ $kpisConfig = [
     </div>
   </div>
 </div>
+@endcan
 
 {{-- Modal Editar Evidencia --}}
+@can('evidencias.editar')
 <div class="modal fade" id="modalEditarEvidencia" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
@@ -477,9 +488,13 @@ $kpisConfig = [
   </div>
 </div>
 
+@endcan
+
 {{-- Forms ocultos validar/rechazar --}}
+@can('evidencias.validar')
 <form method="POST" id="formValidar" style="display:none">@csrf @method('PATCH')<input type="hidden" name="accion" value="validado"></form>
 <form method="POST" id="formRechazar" style="display:none">@csrf @method('PATCH')<input type="hidden" name="accion" value="rechazado"><input type="hidden" name="motivo_rechazo" id="motivoInput"></form>
+@endcan
 
 @endsection
 
@@ -488,9 +503,13 @@ $kpisConfig = [
 document.addEventListener('DOMContentLoaded', function () {
 
   // ── Config ────────────────────────────────────────────────────────────────
-  const RUTA       = '{{ route('sci-evidencias') }}';
-  const STATS_INIT = @json($stats);
-  const AUTH_ID    = {{ auth()->id() }};
+  const RUTA        = '{{ route('sci-evidencias') }}';
+  const STATS_INIT  = @json($stats);
+  const AUTH_ID     = {{ auth()->id() }};
+  const CAN_CREAR   = {{ auth()->user()->can('evidencias.crear')   ? 'true' : 'false' }};
+  const CAN_EDITAR  = {{ auth()->user()->can('evidencias.editar')  ? 'true' : 'false' }};
+  const CAN_VALIDAR = {{ auth()->user()->can('evidencias.validar') ? 'true' : 'false' }};
+  const CAN_ELIMINAR= {{ auth()->user()->can('evidencias.eliminar')? 'true' : 'false' }};
 
   let moduloActivo = '{{ $modulo }}';
   let debounce;
@@ -546,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ? `<a href="${esc(ev.url_documento)}" target="_blank" class="btn btn-icon btn-label-secondary" title="Abrir">
             <i class="ti tabler-external-link icon-14px"></i></a>` : '';
 
-      const editBtn = (pend && esMio)
+      const editBtn = (CAN_EDITAR && pend && esMio)
         ? `<button class="btn btn-icon btn-label-primary btn-editar-ev"
               data-id="${ev.id}" data-titulo="${esc(ev.titulo)}"
               data-sgd="${esc(ev.numero_sgd??'')}" data-url="${esc(ev.url_documento??'')}"
@@ -554,17 +573,18 @@ document.addEventListener('DOMContentLoaded', function () {
               data-action="${esc(ev.url_editar)}" title="Editar">
               <i class="ti tabler-edit icon-14px"></i></button>` : '';
 
-      const validarBtns = pend
+      const validarBtns = (CAN_VALIDAR && pend)
         ? `<button class="btn btn-icon btn-label-success btn-validar" data-url="${esc(ev.url_validar)}" title="Validar">
              <i class="ti tabler-check icon-14px"></i></button>
            <button class="btn btn-icon btn-label-danger btn-rechazar" data-url="${esc(ev.url_validar)}" title="Rechazar">
              <i class="ti tabler-x icon-14px"></i></button>` : '';
 
-      const eliminarForm = `<form method="POST" action="${esc(ev.url_eliminar)}" class="form-eliminar-ev d-inline">
-        <input type="hidden" name="_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="_method" value="DELETE">
-        <button type="submit" class="btn btn-icon btn-label-secondary" title="Eliminar">
-          <i class="ti tabler-trash icon-14px"></i></button></form>`;
+      const eliminarForm = CAN_ELIMINAR
+        ? `<form method="POST" action="${esc(ev.url_eliminar)}" class="form-eliminar-ev d-inline">
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-icon btn-label-secondary" title="Eliminar">
+              <i class="ti tabler-trash icon-14px"></i></button></form>` : '';
 
       const motiRech = (ev.estado === 'rechazado' && ev.motivo_rechazo)
         ? `<div class="text-danger mt-1" style="font-size:10px" title="${esc(ev.motivo_rechazo)}">${esc(ev.motivo_rechazo)}</div>` : '';

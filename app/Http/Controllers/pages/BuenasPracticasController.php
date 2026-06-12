@@ -193,7 +193,7 @@ class BuenasPracticasController extends Controller
     // SCI recepciona el documento del proyecto (confirma que lo recibió)
     public function recepcionar(Request $request, BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.editar');
 
         $request->validate([
             'numero_expediente' => 'nullable|string|max:50',
@@ -214,7 +214,7 @@ class BuenasPracticasController extends Controller
     // NIVEL 1: Comisión declara proyecto ELEGIBLE → pasa al concurso interno UGEL
     public function declararElegible(Request $request, BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.editar');
 
         $request->validate([
             'puntaje_comision'    => 'required|integer|min:0|max:100',
@@ -236,7 +236,7 @@ class BuenasPracticasController extends Controller
     // NIVEL 1: Comisión declara proyecto NO ELEGIBLE
     public function noElegible(Request $request, BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.editar');
 
         $request->validate([
             'observacion_comision' => 'required|string|max:500',
@@ -254,7 +254,7 @@ class BuenasPracticasController extends Controller
     // NIVEL 1: Comisión declara GANADOR UGEL → representará a la UGEL en concurso externo
     public function declararGanadorUgel(Request $request, BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.editar');
 
         $request->validate([
             'observacion_comision' => 'nullable|string|max:500',
@@ -273,7 +273,7 @@ class BuenasPracticasController extends Controller
     // NIVEL 2: Registrar participación en concurso externo (MINEDU o DRE Huánuco)
     public function registrarExterno(Request $request, BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.editar');
 
         $request->validate([
             'nivel_externo'          => 'required|in:minedu,dre',
@@ -296,7 +296,7 @@ class BuenasPracticasController extends Controller
     // NIVEL 2: Registrar resultado del concurso externo
     public function resultadoExterno(Request $request, BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.editar');
 
         $request->validate([
             'gano_externo'    => 'required|boolean',
@@ -321,7 +321,7 @@ class BuenasPracticasController extends Controller
     // SCI registra práctica institucional directamente (no es concurso)
     public function store(Request $request)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.crear');
 
         $validator = Validator::make($request->all(), [
             'titulo'             => 'required|string|max:255',
@@ -355,7 +355,7 @@ class BuenasPracticasController extends Controller
 
     public function update(Request $request, BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.editar');
 
         $validator = Validator::make($request->all(), [
             'titulo'             => 'required|string|max:255',
@@ -389,14 +389,14 @@ class BuenasPracticasController extends Controller
 
     public function destroy(BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.eliminar');
         $buenaPractica->delete();
         return back()->with('success', 'Proyecto eliminado.');
     }
 
     public function updateAvance(Request $request, BuenaPractica $buenaPractica)
     {
-        Gate::authorize('buenas-practicas.ver');
+        Gate::authorize('buenas-practicas.editar');
         $request->validate(['avance' => 'required|integer|min:0|max:100']);
         $data = ['avance' => $request->avance];
         if ($request->avance == 100) {

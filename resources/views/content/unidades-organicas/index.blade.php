@@ -14,9 +14,11 @@
     <h4 class="mb-1"><i class="ti tabler-sitemap me-2 text-primary"></i>Unidades Orgánicas</h4>
     <p class="mb-0 text-muted">Gestión de unidades orgánicas de la institución</p>
   </div>
+  @can('unidades.crear')
   <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaUnidad">
     <i class="ti tabler-plus me-1"></i>Nueva Unidad
   </button>
+  @endcan
 </div>
 
 {{-- Tarjetas de resumen --}}
@@ -147,6 +149,7 @@
             @endif
           </td>
           <td class="text-center">
+            @can('unidades.editar')
             <span class="badge cursor-pointer bg-label-{{ $u->activo ? 'success' : 'secondary' }} btn-toggle"
               data-id="{{ $u->id }}"
               data-nombre="{{ $u->nombre }}"
@@ -154,9 +157,16 @@
               <i class="ti tabler-{{ $u->activo ? 'check' : 'x' }} me-1"></i>
               {{ $u->activo ? 'Activa' : 'Inactiva' }}
             </span>
+            @else
+            <span class="badge bg-label-{{ $u->activo ? 'success' : 'secondary' }}">
+              <i class="ti tabler-{{ $u->activo ? 'check' : 'x' }} me-1"></i>
+              {{ $u->activo ? 'Activa' : 'Inactiva' }}
+            </span>
+            @endcan
           </td>
           <td class="text-center pe-4">
             <div class="d-flex gap-1 justify-content-center">
+              @can('unidades.editar')
               <button type="button"
                 class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-editar"
                 title="Editar"
@@ -170,6 +180,8 @@
                 data-descripcion="{{ $u->descripcion }}">
                 <i class="ti tabler-edit"></i>
               </button>
+              @endcan
+              @can('unidades.eliminar')
               <button type="button"
                 class="btn btn-sm btn-icon btn-text-danger rounded-pill btn-eliminar"
                 title="Eliminar"
@@ -177,6 +189,7 @@
                 data-nombre="{{ $u->nombre }}">
                 <i class="ti tabler-trash"></i>
               </button>
+              @endcan
             </div>
           </td>
         </tr>
@@ -195,6 +208,7 @@
 </div>
 
 {{-- Modal Nueva Unidad --}}
+@can('unidades.crear')
 <div class="modal fade" id="modalNuevaUnidad" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -247,7 +261,10 @@
   </div>
 </div>
 
+@endcan
+
 {{-- Modal Editar Unidad --}}
+@can('unidades.editar')
 <div class="modal fade" id="modalEditarUnidad" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -306,13 +323,19 @@
   </div>
 </div>
 
+@endcan
+
 {{-- Formularios ocultos --}}
+@can('unidades.editar')
 <form id="formToggle" method="POST" style="display:none">
   @csrf @method('PATCH')
 </form>
+@endcan
+@can('unidades.eliminar')
 <form id="formEliminar" method="POST" style="display:none">
   @csrf @method('DELETE')
 </form>
+@endcan
 
 @endsection
 
