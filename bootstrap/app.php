@@ -15,5 +15,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(LocaleMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            return redirect()->route('pages-misc-error');
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, $request) {
+            return redirect()->route('pages-misc-not-authorized');
+        });
+
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if (!$request->expectsJson()) {
+                return redirect()->route('auth-login-basic');
+            }
+        });
     })->create();

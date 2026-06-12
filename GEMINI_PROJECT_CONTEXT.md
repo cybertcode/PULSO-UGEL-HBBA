@@ -1,6 +1,18 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.1.2] - 2026-06-11 (Sesión Actual)
+## [v2.1.3] - 2026-06-12 (Sesión Actual)
+### Refinamiento de Autenticación y Páginas Especiales
+- **Vistas de Autenticación**:
+    - Personalización integral de `login`, `register`, `forgot-password`, `reset-password`, `verify-email` y `two-factor` con la identidad institucional (logo y nombre dinámico).
+    - Optimización de los layouts de autenticación para una experiencia de usuario más profesional y coherente con la marca UGEL Huacaybamba.
+- **Páginas de Error y Estado (Misc)**:
+    - Implementación de controladores y vistas para estados especiales del sistema: `Error 404`, `No Autorizado`, `En Mantenimiento` y `Próximamente`.
+    - Integración de rutas dedicadas para la gestión de estas páginas bajo el prefijo `/pages/misc-`.
+- **Estructura Técnica**:
+    - Nuevos controladores: `MiscComingSoon`, `MiscNotAuthorized`, `MiscUnderMaintenance`.
+    - Actualización de `MiscError` y `commonMaster` para soportar la carga dinámica de configuración institucional en páginas públicas y de error.
+
+## [v2.1.2] - 2026-06-11
 ### Módulo de Cumplimiento SCI y Gestión de Evidencias
 - **Módulo de Cumplimiento (SCI)**:
     - Rediseño y optimización del Panel SCI para un seguimiento más intuitivo del cumplimiento normativo.
