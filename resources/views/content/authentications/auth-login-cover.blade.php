@@ -5,9 +5,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
 @endphp
 
-@extends('layouts/layoutMaster')
+@extends('layouts/blankLayout')
 
-@section('title', 'Iniciar Sesión')
+@section('title', 'Iniciar Sesión - ' . ($ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL'))
 
 @section('vendor-style')
 @vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])

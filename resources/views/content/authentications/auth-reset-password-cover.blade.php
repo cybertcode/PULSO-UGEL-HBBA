@@ -4,9 +4,10 @@ $configData = Helper::appClasses();
 use Illuminate\Support\Facades\Storage;
 @endphp
 
-@extends('layouts/layoutMaster')
+@php $ci = AppModelsConfiguracionInstitucional::cached(); @endphp
+@extends('layouts/blankLayout')
 
-@section('title', 'Restablecer Contraseña - PULSO UGEL')
+@section('title', 'Restablecer Contraseña - ' . ($ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL'))
 
 @section('vendor-style')
 @vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])

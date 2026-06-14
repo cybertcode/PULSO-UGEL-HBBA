@@ -212,25 +212,25 @@
 }
 
 /* ── Fix global: modal-dialog-scrollable con <form> dentro de modal-content ──
-   Bootstrap asume que los hijos directos de .modal-content son header/body/footer.
-   Cuando hay un <form> en el medio, rompe la cadena flex y el scroll desaparece.
-   Esta regla restaura el flex chain sin importar la profundidad del form.
+   Bootstrap asume hijos directos header/body/footer de .modal-content.
+   Un <form> intermedio rompe la cadena flex y elimina el scroll.
    ─────────────────────────────────────────────────────────────────────────────*/
 .modal-dialog-scrollable .modal-content > form {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  max-height: 100% !important;
 }
 .modal-dialog-scrollable .modal-content > form .modal-body {
-  overflow-y: auto;
-  flex: 1 1 auto;
-  min-height: 0;
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
 }
 .modal-dialog-scrollable .modal-content > form .modal-header,
 .modal-dialog-scrollable .modal-content > form .modal-footer {
-  flex-shrink: 0;
+  flex-shrink: 0 !important;
 }
 
 /* ── Scroll suave para modales con timeline ───────────────────────────────── */
