@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Paginación con Bootstrap 5
         Paginator::useBootstrapFive();
+
+        // Reglas de contraseña por defecto (usadas en registro, reset y cambio de clave)
+        Password::defaults(fn () => Password::min(8)->mixedCase()->numbers());
 
         // Super Admin bypasses all permission checks via Gate
         Gate::before(function ($user, $ability) {

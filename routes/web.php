@@ -56,11 +56,11 @@ Route::get('/pages/misc-comingsoon',      [MiscComingSoon::class,      'index'])
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
 
-    // Perfil de usuario (reemplaza el Livewire de Jetstream)
-    Route::get('/user/profile',           [PerfilController::class, 'show'])->name('profile.show');
-    Route::post('/user/profile/info',     [PerfilController::class, 'updateInfo'])->name('profile.update-info');
-    Route::post('/user/profile/password', [PerfilController::class, 'updatePassword'])->name('profile.update-password');
-    Route::delete('/user/profile/photo',  [PerfilController::class, 'deletePhoto'])->name('profile.delete-photo');
+    // Perfil de usuario propio
+    Route::get('/user/profile',           [PerfilController::class, 'show'])->name('profile.show')->middleware('can:perfil.ver');
+    Route::post('/user/profile/info',     [PerfilController::class, 'updateInfo'])->name('profile.update-info')->middleware('can:perfil.editar');
+    Route::post('/user/profile/password', [PerfilController::class, 'updatePassword'])->name('profile.update-password')->middleware('can:perfil.editar');
+    Route::delete('/user/profile/photo',  [PerfilController::class, 'deletePhoto'])->name('profile.delete-photo')->middleware('can:perfil.editar');
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -97,8 +97,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::delete('/modelo-integridad/{actividad}',          [ModeloIntegridadController::class, 'destroy'])->name('integridad.destroy')->middleware('can:integridad.eliminar');
     Route::patch('/modelo-integridad/{actividad}/avance',    [ModeloIntegridadController::class, 'updateAvance'])->name('integridad.avance')->middleware('can:integridad.editar');
     Route::get('/modelo-integridad/{actividad}/historial',   [ModeloIntegridadController::class, 'historial'])->name('integridad.historial')->middleware('can:integridad.ver');
-    Route::get('/integridad/componentes',                    [ModeloIntegridadController::class, 'componentesPorEtapa'])->name('integridad.componentes');
-    Route::get('/integridad/preguntas',                      [ModeloIntegridadController::class, 'preguntasPorComponente'])->name('integridad.preguntas');
+    Route::get('/integridad/componentes',                    [ModeloIntegridadController::class, 'componentesPorEtapa'])->name('integridad.componentes')->middleware('can:integridad.ver');
+    Route::get('/integridad/preguntas',                      [ModeloIntegridadController::class, 'preguntasPorComponente'])->name('integridad.preguntas')->middleware('can:integridad.ver');
 
     Route::middleware('can:evidencias.ver')->group(function () {
         Route::get('/evidencias', [EvidenciasController::class, 'index'])->name('sci-evidencias');
@@ -140,10 +140,10 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
     Route::get('/cumplimiento/exportar', [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar')->middleware('can:cumplimiento.exportar');
 
-    // --- Mis Actividades --- (accesible a cualquier usuario autenticado — muestra solo sus propias actividades)
-    Route::get('/mis-actividades',                        [MisActividadesController::class, 'index'])->name('mis-actividades');
-    Route::get('/mis-actividades/{actividad}/historial',  [MisActividadesController::class, 'historial'])->name('mis-actividades.historial');
-    Route::patch('/mis-actividades/{actividad}/avance',   [MisActividadesController::class, 'updateAvance'])->name('mis-actividades.avance');
+    // --- Mis Actividades ---
+    Route::get('/mis-actividades',                        [MisActividadesController::class, 'index'])->name('mis-actividades')->middleware('can:mis-actividades.ver');
+    Route::get('/mis-actividades/{actividad}/historial',  [MisActividadesController::class, 'historial'])->name('mis-actividades.historial')->middleware('can:mis-actividades.ver');
+    Route::patch('/mis-actividades/{actividad}/avance',   [MisActividadesController::class, 'updateAvance'])->name('mis-actividades.avance')->middleware('can:mis-actividades.ver');
 
     // --- Reportes ---
     Route::get('/reportes',        [ReportesController::class,       'index'])->name('rep-reportes')->middleware('can:reportes.ver');
@@ -172,8 +172,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::put('/cargos/{cargo}',     [CargosController::class, 'update'])->name('cargos.update')->middleware('can:usuarios.editar');
     Route::delete('/cargos/{cargo}',  [CargosController::class, 'destroy'])->name('cargos.destroy')->middleware('can:usuarios.eliminar');
 
-    Route::get('/usuarios/ver',       [UserViewAccount::class,  'index'])->name('adm-usuarios-ver');
-    Route::get('/usuarios/seguridad', [UserViewSecurity::class, 'index'])->name('adm-usuarios-seguridad');
+    Route::get('/usuarios/ver',       [UserViewAccount::class,  'index'])->name('adm-usuarios-ver')->middleware('can:usuarios.ver');
+    Route::get('/usuarios/seguridad', [UserViewSecurity::class, 'index'])->name('adm-usuarios-seguridad')->middleware('can:usuarios.ver');
 
     // --- Administración: Roles y Permisos ---
     Route::get('/roles',    [AccessRoles::class,      'index'])->name('adm-roles')->middleware('can:roles.ver');
@@ -264,8 +264,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::delete('/normativas/{normativa}',               [NormativasController::class, 'destroy'])->name('normativas.destroy')->middleware('can:normativas.eliminar');
     Route::patch('/normativas/{normativa}/toggle-vigente', [NormativasController::class, 'toggleVigente'])->name('normativas.toggle')->middleware('can:normativas.editar');
 
-    // --- Ayuda --- (accesible a cualquier usuario autenticado)
-    Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda');
+    // --- Ayuda ---
+    Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda')->middleware('can:ayuda.ver');
 
     // ── ENCUESTAS ──────────────────────────────────────────────────────────────
     Route::prefix('encuestas')->name('encuestas.')->group(function () {

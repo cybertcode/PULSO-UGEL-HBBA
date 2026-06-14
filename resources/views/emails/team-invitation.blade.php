@@ -1,22 +1,24 @@
 @component('mail::message')
-  {{ __('You have been invited to join the :team team!', ['team' => $invitation->team->name]) }}
+Fuiste invitado a unirte al equipo **{{ $invitation->team->name }}** en PULSO UGEL.
 
-  @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::registration()))
-    {{ __('If you do not have an account, you may create one by clicking the button below. After creating an account, you may click the invitation acceptance button in this email to accept the team invitation:') }}
+@if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::registration()))
+Si aún no tienes una cuenta, puedes crear una haciendo clic en el botón de abajo. Luego podrás aceptar la invitación al equipo desde el correo.
 
-    @component('mail::button', ['url' => route('register')])
-      {{ __('Create Account') }}
-    @endcomponent
+@component('mail::button', ['url' => route('register')])
+Crear cuenta
+@endcomponent
 
-    {{ __('If you already have an account, you may accept this invitation by clicking the button below:') }}
-  @else
-    {{ __('You may accept this invitation by clicking the button below:') }}
-  @endif
+Si ya tienes una cuenta, acepta la invitación haciendo clic aquí:
+@else
+Acepta la invitación haciendo clic en el botón de abajo:
+@endif
 
+@component('mail::button', ['url' => $acceptUrl])
+Aceptar invitación al equipo
+@endcomponent
 
-  @component('mail::button', ['url' => $acceptUrl])
-    {{ __('Accept Invitation') }}
-  @endcomponent
+Si no esperabas recibir esta invitación, puedes ignorar este mensaje.
 
-  {{ __('If you did not expect to receive an invitation to this team, you may discard this email.') }}
+Atentamente,<br>
+**{{ config('app.name') }}**
 @endcomponent

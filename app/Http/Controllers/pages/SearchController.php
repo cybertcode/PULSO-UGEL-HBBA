@@ -13,11 +13,13 @@ class SearchController extends Controller
 
         // [nombre, route_name, icono, permiso_requerido|null]
         $allItems = [
-            // Sin permiso requerido — visibles para todos
+            // Acceso universal — dashboard siempre visible para autenticados
             ['name' => 'Panel Principal',             'route' => 'dashboard',                  'icon' => 'tabler-smart-home',         'permission' => null],
-            ['name' => 'Mi Perfil',                   'route' => 'profile.show',               'icon' => 'tabler-user-circle',        'permission' => null],
-            ['name' => 'Mis Actividades',             'route' => 'mis-actividades',            'icon' => 'tabler-checklist',          'permission' => null],
-            ['name' => 'Ayuda',                       'route' => 'ayuda',                      'icon' => 'tabler-help-circle',        'permission' => null],
+
+            // Perfil y acciones propias
+            ['name' => 'Mi Perfil',                   'route' => 'profile.show',               'icon' => 'tabler-user-circle',        'permission' => 'perfil.ver'],
+            ['name' => 'Mis Actividades',             'route' => 'mis-actividades',            'icon' => 'tabler-checklist',          'permission' => 'mis-actividades.ver'],
+            ['name' => 'Ayuda',                       'route' => 'ayuda',                      'icon' => 'tabler-help-circle',        'permission' => 'ayuda.ver'],
 
             // SCI
             ['name' => 'Control Interno',             'route' => 'sci-control-interno',        'icon' => 'tabler-clipboard-check',    'permission' => 'control-interno.ver'],

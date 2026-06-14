@@ -22,6 +22,7 @@ class ModeloIntegridadController extends Controller
     public function index(Request $request)
     {
         $anio = $request->input('anio', now()->year);
+        $user = Auth::user();
 
         $config          = ConfiguracionInstitucional::cached();
         $umbral_verde    = (int) ($config->umbral_verde    ?? 70);
@@ -35,7 +36,8 @@ class ModeloIntegridadController extends Controller
                 'unidadOrganica',
             ])
             ->where('modulo', 'integridad')
-            ->where('anio', $anio);
+            ->where('anio', $anio)
+            ->visiblesParaUsuario($user);
 
         // Filtros adicionales (para listado AJAX)
         if ($request->filled('etapa_id')) {
@@ -297,6 +299,8 @@ class ModeloIntegridadController extends Controller
 
     public function updateAvance(Request $request, Actividad $actividad)
     {
+        abort_unless($actividad->puedeEditarUsuario(), 403, 'No tienes permiso para actualizar esta actividad.');
+
         $request->validate(['avance' => 'required|integer|min:0|max:100']);
 
         $avance = $request->avance;
@@ -317,6 +321,8 @@ class ModeloIntegridadController extends Controller
 
     public function historial(Actividad $actividad)
     {
+        abort_unless($actividad->puedeEditarUsuario(), 403);
+
         $historial = ActividadHistorial::with('usuario')
             ->where('actividad_id', $actividad->id)
             ->latest()->get()

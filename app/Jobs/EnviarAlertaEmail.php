@@ -83,10 +83,9 @@ class EnviarAlertaEmail implements ShouldQueue
             Config::set('mail.from.address', $config->mail_username);
         }
 
-        // Reinicializar el mailer para que tome los nuevos valores
-        app()->forgetInstance('swift.mailer');
-        app()->forgetInstance('swift.transport');
+        // Reinicializar el mailer para que tome los nuevos valores (Laravel 11 / Symfony Mailer)
         app()->forgetInstance('mailer');
+        app()->forgetInstance('mail.manager');
     }
 
     public function failed(\Throwable $exception): void
