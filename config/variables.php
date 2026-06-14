@@ -5,7 +5,7 @@ return [
   "creatorUrl"     => env('APP_URL', 'http://localhost'),
   "templateName"   => env('APP_NAME', 'PULSO UGEL'),
   "templateSuffix" => "Sistema de Control Interno",
-  "templateVersion" => "1.0.0",
+  "templateVersion" => "2.1.3",
   "templateFree"   => false,
   "templateDescription" => "Sistema de Monitoreo de Control Interno e Integridad Institucional",
   "templateKeyword" => "control interno, UGEL, integridad, monitoreo, Perú",
