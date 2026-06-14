@@ -115,14 +115,15 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // --- Monitoreo ---
     Route::get('/semaforo/demo',      [SemaforoController::class, 'demo'])->name('sci-semaforo.demo')->middleware('can:semaforo.ver');
     Route::get('/semaforo',           [SemaforoController::class, 'index'])->name('sci-semaforo')->middleware('can:semaforo.ver');
-    Route::middleware('can:alertas.ver')->group(function () {
-        Route::get('/alertas', [AlertasController::class, 'index'])->name('mon-alertas');
-        Route::patch('/alertas/{alerta}/leer',  [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer');
-        Route::patch('/alertas/leer-todas',     [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas');
-    });
-    Route::post('/alertas',              [AlertasController::class, 'store'])->name('mon-alertas.store')->middleware('can:alertas.crear');
-    Route::post('/alertas/{alerta}/email',[AlertasController::class, 'enviarEmail'])->name('mon-alertas.email')->middleware('can:alertas.ver');
-    Route::delete('/alertas/{alerta}',   [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.eliminar');
+    Route::get('/alertas', [AlertasController::class, 'index'])->name('mon-alertas')->middleware('can:alertas.ver');
+    Route::get('/alertas/poll',                [AlertasController::class, 'poll'])->name('mon-alertas.poll')->middleware('can:alertas.ver');
+    Route::get('/alertas/actividades',         [AlertasController::class, 'actividadesPorModulo'])->name('mon-alertas.actividades')->middleware('can:alertas.crear');
+    Route::post('/alertas',                    [AlertasController::class, 'store'])->name('mon-alertas.store')->middleware('can:alertas.crear');
+    Route::put('/alertas/{alerta}',            [AlertasController::class, 'update'])->name('mon-alertas.update')->middleware('can:alertas.crear');
+    Route::post('/alertas/{alerta}/email',     [AlertasController::class, 'enviarEmail'])->name('mon-alertas.email')->middleware('can:alertas.crear');
+    Route::patch('/alertas/{alerta}/leer',     [AlertasController::class, 'marcarLeida'])->name('mon-alertas.leer')->middleware('can:alertas.ver');
+    Route::patch('/alertas/leer-todas',        [AlertasController::class, 'marcarTodasLeidas'])->name('mon-alertas.leer-todas')->middleware('can:alertas.ver');
+    Route::delete('/alertas/{alerta}',         [AlertasController::class, 'destroy'])->name('mon-alertas.destroy')->middleware('can:alertas.eliminar');
     Route::get('/ranking-unidades',      [RankingUnidadesController::class, 'index'])->name('mon-ranking-unidades')->middleware('can:reportes.ver');
     Route::get('/ranking-unidades/data',     [RankingUnidadesController::class, 'data'])->name('mon-ranking-unidades.data')->middleware('can:reportes.ver');
     Route::get('/ranking-unidades/usuarios', [RankingUnidadesController::class, 'dataUsuarios'])->name('mon-ranking-unidades.usuarios')->middleware('can:reportes.ver');
@@ -132,10 +133,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // --- Cumplimiento SCI ---
     Route::middleware('can:cumplimiento.ver')->group(function () {
         Route::get('/cumplimiento/panel',         [CumplimientoController::class, 'panelSci'])->name('cumplimiento.panel');
-        Route::get('/cumplimiento/responsables',  [CumplimientoController::class, 'responsables'])->name('cumplimiento.responsables');
         Route::get('/cumplimiento/sin-evidencia', [CumplimientoController::class, 'sinEvidencia'])->name('cumplimiento.sin-evidencia');
     });
-    Route::get('/cumplimiento/exportar', [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar')->middleware('can:cumplimiento.exportar');
+    // responsables y exportar requieren permiso elevado (Coordinador SCI / Admin)
+    Route::get('/cumplimiento/responsables', [CumplimientoController::class, 'responsables'])->name('cumplimiento.responsables')->middleware('can:cumplimiento.exportar');
+    Route::get('/cumplimiento/exportar',     [CumplimientoController::class, 'exportar'])->name('cumplimiento.exportar')->middleware('can:cumplimiento.exportar');
 
     // --- Mis Actividades ---
     Route::get('/mis-actividades',                        [MisActividadesController::class, 'index'])->name('mis-actividades')->middleware('can:mis-actividades.ver');

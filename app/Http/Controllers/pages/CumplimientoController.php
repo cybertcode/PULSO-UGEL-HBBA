@@ -10,6 +10,7 @@ use App\Models\UnidadOrganica;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CumplimientoController extends Controller
@@ -77,23 +78,26 @@ class CumplimientoController extends Controller
             ->orderByDesc('fecha_limite')
             ->limit(10)->get();
 
-        // ── Incumplidores top 8 ──────────────────────────────────────────────
-        $incumplidores = User::where('estado', 'activo')
-            ->whereHas('actividadesResponsable')
-            ->with(['unidadOrganica', 'cargo'])
-            ->get()
-            ->map(function (User $u) use ($anio, $modulo, $base) {
-                $q = Actividad::whereHas('responsables', fn($r) => $r->where('users.id', $u->id))
-                    ->whereYear('created_at', $anio)
-                    ->when($modulo !== 'ambos', fn($r) => $r->where('modulo', $modulo));
-                $u->inc_vencidas = (clone $q)->where('estado', 'vencida')->count();
-                $u->inc_sin_ev   = (clone $q)->whereNotIn('estado', ['pendiente'])->whereDoesntHave('evidencias')->count();
-                $u->inc_total    = $u->inc_vencidas + $u->inc_sin_ev;
-                $u->inc_unidad   = $u->unidadOrganica?->sigla ?? '—';
-                return $u;
-            })
-            ->filter(fn($u) => $u->inc_total > 0)
-            ->sortByDesc('inc_total')->take(8)->values();
+        // ── Incumplidores top 8 (solo para usuarios con permiso de gestión) ───
+        $incumplidores = collect();
+        if (Gate::allows('cumplimiento.exportar')) {
+            $incumplidores = User::where('estado', 'activo')
+                ->whereHas('actividadesResponsable')
+                ->with(['unidadOrganica', 'cargo'])
+                ->get()
+                ->map(function (User $u) use ($anio, $modulo, $base) {
+                    $q = Actividad::whereHas('responsables', fn($r) => $r->where('users.id', $u->id))
+                        ->whereYear('created_at', $anio)
+                        ->when($modulo !== 'ambos', fn($r) => $r->where('modulo', $modulo));
+                    $u->inc_vencidas = (clone $q)->where('estado', 'vencida')->count();
+                    $u->inc_sin_ev   = (clone $q)->whereNotIn('estado', ['pendiente'])->whereDoesntHave('evidencias')->count();
+                    $u->inc_total    = $u->inc_vencidas + $u->inc_sin_ev;
+                    $u->inc_unidad   = $u->unidadOrganica?->sigla ?? '—';
+                    return $u;
+                })
+                ->filter(fn($u) => $u->inc_total > 0)
+                ->sortByDesc('inc_total')->take(8)->values();
+        }
 
         // ── Avance por unidad ────────────────────────────────────────────────
         $avance_unidades = UnidadOrganica::where('activo', true)

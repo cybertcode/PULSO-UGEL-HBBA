@@ -10,6 +10,7 @@ use App\Models\IntegridadEtapa;
 use Illuminate\Http\Request;
 use App\Notifications\EvidenciaRevisada;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 class EvidenciasController extends Controller
@@ -226,6 +227,7 @@ class EvidenciasController extends Controller
 
     public function destroy(Evidencia $evidencia)
     {
+        Gate::authorize('evidencias.eliminar');
         $evidencia->delete();
         return back()->with('success', 'Evidencia eliminada.');
     }

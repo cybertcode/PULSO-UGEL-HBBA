@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class EncuestaController extends Controller
 {
@@ -141,6 +142,7 @@ class EncuestaController extends Controller
 
     public function update(Request $request, Encuesta $encuesta)
     {
+        Gate::authorize('encuesta.editar');
         abort_if($encuesta->estado !== 'borrador', 403, 'Solo se pueden editar encuestas en borrador.');
 
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
@@ -207,6 +209,7 @@ class EncuestaController extends Controller
 
     public function destroy(Encuesta $encuesta)
     {
+        Gate::authorize('encuesta.eliminar');
         $encuesta->delete();
         return redirect()->route('encuestas.index')
             ->with('success', 'Encuesta eliminada.');
