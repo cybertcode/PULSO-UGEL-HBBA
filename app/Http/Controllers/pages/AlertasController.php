@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\EnviarAlertaEmail;
 use App\Models\Alerta;
 use App\Services\AlertaService;
 use Illuminate\Http\Request;
@@ -65,8 +64,13 @@ class AlertasController extends Controller
 
         $alerta = Alerta::create($validated);
 
-        if ($request->boolean('enviar_email')) {
-            dispatch(new EnviarAlertaEmail($alerta));
+        // Si se marcó "enviar email" y notif_email está inactivo, forzar envío manual
+        if ($request->boolean('enviar_email') && !$alerta->email_enviado) {
+            try {
+                app(AlertaService::class)->enviarEmailManual($alerta);
+            } catch (\Throwable $e) {
+                return back()->with('warning', 'Alerta creada, pero no se pudo enviar el email: ' . $e->getMessage());
+            }
         }
 
         return back()->with('success', 'Alerta creada correctamente.');
@@ -90,8 +94,12 @@ class AlertasController extends Controller
 
     public function enviarEmail(Alerta $alerta, AlertaService $service)
     {
-        $service->enviarEmailManual($alerta);
-        return back()->with('success', 'Email de alerta enviado correctamente.');
+        try {
+            $service->enviarEmailManual($alerta);
+            return back()->with('success', 'Email de alerta enviado correctamente.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'No se pudo enviar el email: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Alerta $alerta)

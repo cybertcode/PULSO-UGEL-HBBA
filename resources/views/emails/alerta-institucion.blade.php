@@ -20,9 +20,10 @@
                 <td style="padding:26px 36px 22px;">
                   <table cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      @if (!empty($ci?->logo_ruta))
+                      @php $logoSrc = $ci?->logoUrlEmail(); @endphp
+                      @if ($logoSrc)
                       <td style="width:44px;height:44px;vertical-align:middle;">
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($ci->logo_ruta) }}"
+                        <img src="{{ $logoSrc }}"
                              width="44" height="44"
                              style="border-radius:10px;display:block;object-fit:cover;"
                              alt="{{ $instSigla ?? 'Logo' }}">

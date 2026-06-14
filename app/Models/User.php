@@ -75,16 +75,20 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token): void
     {
         $url = url(route('password.reset', ['token' => $token, 'email' => $this->email], false));
+        $ci  = ConfiguracionInstitucional::cached();
+        $nombre = $ci?->sigla ?? $ci?->nombre_institucion ?? config('app.name');
+        $lugar  = implode(' — ', array_filter([$ci?->nombre_institucion, $ci?->departamento]));
+        $expire = config('auth.passwords.users.expire', 60);
 
-        ResetPasswordNotification::toMailUsing(function ($notifiable, $url) {
+        ResetPasswordNotification::toMailUsing(function ($notifiable, $url) use ($nombre, $lugar, $expire) {
             return (new MailMessage)
-                ->subject('Restablecer contraseña — PULSO UGEL')
+                ->subject("Restablecer contraseña — {$nombre}")
                 ->greeting('Hola, ' . $notifiable->name . '.')
-                ->line('Recibimos una solicitud para restablecer la contraseña de tu cuenta.')
-                ->action('Restablecer contraseña', $url)
-                ->line('Este enlace expirará en ' . config('auth.passwords.users.expire', 60) . ' minutos.')
-                ->line('Si no solicitaste restablecer tu contraseña, ignora este mensaje.')
-                ->salutation('Atentamente, PULSO UGEL — UGEL Huacaybamba');
+                ->line('Recibimos una solicitud para restablecer la contraseña de tu cuenta en el sistema institucional.')
+                ->line('Haz clic en el botón a continuación para crear una nueva contraseña. Este enlace expirará en **' . $expire . ' minutos**.')
+                ->action('Restablecer mi contraseña', $url)
+                ->line('Si no solicitaste restablecer tu contraseña, puedes ignorar este mensaje. Tu cuenta permanece segura.')
+                ->salutation("Atentamente,\n{$lugar}");
         });
 
         $this->notify(new ResetPasswordNotification($token));
@@ -92,14 +96,18 @@ class User extends Authenticatable
 
     public function sendEmailVerificationNotification(): void
     {
-        VerifyEmail::toMailUsing(function ($notifiable, $url) {
+        $ci     = ConfiguracionInstitucional::cached();
+        $nombre = $ci?->sigla ?? $ci?->nombre_institucion ?? config('app.name');
+        $lugar  = implode(' — ', array_filter([$ci?->nombre_institucion, $ci?->departamento]));
+
+        VerifyEmail::toMailUsing(function ($notifiable, $url) use ($nombre, $lugar) {
             return (new MailMessage)
-                ->subject('Verifica tu correo electrónico — PULSO UGEL')
+                ->subject("Verifica tu correo electrónico — {$nombre}")
                 ->greeting('Hola, ' . $notifiable->name . '.')
-                ->line('Haz clic en el botón de abajo para verificar tu dirección de correo electrónico.')
-                ->action('Verificar correo electrónico', $url)
+                ->line('Para completar el acceso al sistema, necesitamos verificar tu dirección de correo electrónico.')
+                ->action('Verificar mi correo', $url)
                 ->line('Si no creaste esta cuenta, no es necesario realizar ninguna acción.')
-                ->salutation('Atentamente, PULSO UGEL — UGEL Huacaybamba');
+                ->salutation("Atentamente,\n{$lugar}");
         });
 
         $this->notify(new VerifyEmail);

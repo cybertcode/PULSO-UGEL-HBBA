@@ -48,7 +48,7 @@ class ConfiguracionInstitucional extends Model
         'director', 'director_id', 'coordinador_sci', 'coordinador_sci_id',
         'whatsapp_sci', 'correo_sci', 'cargo_sci',
         'correo_institucional', 'telefono',
-        'logo_ruta', 'favicon_ruta', 'anio_gestion',
+        'logo_ruta', 'logo_url_publica', 'favicon_ruta', 'anio_gestion',
         'umbral_verde', 'umbral_amarillo',
         'notif_vencimiento', 'notif_dias_anticipacion',
         'notif_10dias', 'notif_5dias', 'notif_1dia',
@@ -93,9 +93,57 @@ class ConfiguracionInstitucional extends Model
         return \Illuminate\Support\Facades\Cache::remember('config_institucional', 600, fn() => static::firstOrFail());
     }
 
+    public function setSiglaAttribute(string $value): void
+    {
+        $this->attributes['sigla'] = strtoupper($value);
+    }
+
+    /**
+     * URL pública del logo para incrustar en emails.
+     * Prioridad: 1) logo_url_publica (campo BD, URL externa como CDN/hosting)
+     *            2) APP_URL/storage/... si APP_URL es público (producción)
+     *            3) base64 embebido como último recurso (local/desarrollo)
+     */
+    public function logoUrlEmail(): ?string
+    {
+        if (empty($this->logo_ruta)) {
+            return null;
+        }
+
+        // 1. URL externa configurada explícitamente (CDN, hosting público)
+        if (!empty($this->logo_url_publica)) {
+            return $this->logo_url_publica;
+        }
+
+        // 2. En producción usa la URL absoluta del storage
+        $host = parse_url(config('app.url', ''), PHP_URL_HOST) ?? '';
+        $esLocal = in_array($host, ['localhost', '127.0.0.1'])
+                || str_ends_with($host, '.test')
+                || str_ends_with($host, '.local');
+
+        if (!$esLocal) {
+            return rtrim(config('app.url'), '/') . '/storage/' . $this->logo_ruta;
+        }
+
+        // 3. Local: base64 embebido
+        try {
+            $disk = \Illuminate\Support\Facades\Storage::disk('public');
+            if (!$disk->exists($this->logo_ruta)) {
+                return null;
+            }
+            $path = $disk->path($this->logo_ruta);
+            $mime = mime_content_type($path) ?: 'image/jpeg';
+            return 'data:' . $mime . ';base64,' . base64_encode($disk->get($this->logo_ruta));
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     /** Limpia el cache al actualizar la configuración */
     protected static function booted(): void
     {
-        static::saved(fn() => \Illuminate\Support\Facades\Cache::forget('config_institucional'));
+        static::saved(static function () {
+            \Illuminate\Support\Facades\Cache::forget('config_institucional');
+        });
     }
 }
