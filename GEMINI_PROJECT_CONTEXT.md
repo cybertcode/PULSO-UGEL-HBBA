@@ -59,9 +59,15 @@
 - **Páginas de Error y Estado (Misc)**:
     - Implementación de controladores y vistas para estados especiales del sistema: `Error 404`, `No Autorizado`, `En Mantenimiento` y `Próximamente`.
     - Integración de rutas dedicadas para la gestión de estas páginas bajo el prefijo `/pages/misc-`.
+- **Sistema de Alertas e Identidad Dinámica**:
+    - Implementación de `AlertaObserver` para la automatización de notificaciones institucionales.
+    - Soporte para logotipos dinámicos diferenciados para emails y portal público mediante nuevas columnas en configuración.
+    - Actualización de `AlertaService` para gestionar el flujo de alertas por vencimiento próximo.
 - **Estructura Técnica**:
     - Nuevos controladores: `MiscComingSoon`, `MiscNotAuthorized`, `MiscUnderMaintenance`.
-    - Actualización de `MiscError` y `commonMaster` para soportar la carga dinámica de configuración institucional en páginas públicas y de error.
+    - Migraciones: `add_vencimiento_proximo_to_alertas_tipo_enum`, `add_logo_url_email_to_configuracion_institucional`.
+    - Observer: `AlertaObserver.php`.
+    - Esquema: Actualización integral de `mysql-schema.sql`.
 
 ## [v2.1.2] - 2026-06-11
 ### Módulo de Cumplimiento SCI y Gestión de Evidencias
