@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\EnviarAlertaEmail;
 use App\Models\Actividad;
 use App\Models\Alerta;
 use App\Models\ConfiguracionInstitucional;
@@ -71,9 +70,6 @@ class AlertaService
                     'tipo'               => 'vencimiento',
                     'prioridad'          => 'alta',
                 ]);
-                if ($this->config->notif_email) {
-                    dispatch(new EnviarAlertaEmail($alerta));
-                }
                 $generadas++;
             });
 
@@ -110,10 +106,6 @@ class AlertaService
                     'tipo'               => 'vencimiento_proximo',
                     'prioridad'          => $prioridad,
                 ]);
-                // Email solo en nivel urgente (1 día) o si está habilitado
-                if ($this->config->notif_email && $dias === 1) {
-                    dispatch(new EnviarAlertaEmail($alerta));
-                }
                 $generadas++;
             });
 
@@ -179,13 +171,51 @@ class AlertaService
         return $generadas;
     }
 
-    /** Envía email manual a los responsables de una alerta */
+    /**
+     * Envío manual de email para una alerta existente.
+     * Síncrono — no usa Queue. Lanza excepción si falla para que el controller la capture.
+     */
     public function enviarEmailManual(Alerta $alerta): void
     {
-        dispatch(new EnviarAlertaEmail($alerta));
-        $alerta->update([
-            'email_enviado'    => true,
-            'email_enviado_at' => now(),
+        $config = ConfiguracionInstitucional::cached();
+
+        $destinatario = $this->resolverDestinatario($alerta, $config);
+
+        if (!$destinatario) {
+            throw new \RuntimeException('No hay destinatario configurado. Asigna un responsable o un correo institucional.');
+        }
+
+        \Illuminate\Support\Facades\Notification::sendNow(
+            $destinatario,
+            new \App\Notifications\AlertaInstitucion($alerta)
+        );
+
+        $email = $destinatario instanceof \App\Models\User
+            ? $destinatario->email
+            : $config->correo_institucional;
+
+        $alerta->updateQuietly([
+            'email_enviado'      => true,
+            'email_enviado_at'   => now(),
+            'destinatario_email' => $email,
         ]);
+    }
+
+    /** Resuelve el destinatario: responsable directo o correo institucional como fallback */
+    private function resolverDestinatario(Alerta $alerta, ConfiguracionInstitucional $config): mixed
+    {
+        if ($alerta->usuario_id) {
+            $usuario = \App\Models\User::find($alerta->usuario_id);
+            if ($usuario?->email) {
+                return $usuario;
+            }
+        }
+
+        if ($config->correo_institucional) {
+            return (new \Illuminate\Notifications\AnonymousNotifiable)
+                ->route('mail', $config->correo_institucional);
+        }
+
+        return null;
     }
 }

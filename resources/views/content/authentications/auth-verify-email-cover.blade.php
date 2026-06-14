@@ -4,7 +4,7 @@ $configData = Helper::appClasses();
 use Illuminate\Support\Facades\Storage;
 @endphp
 
-@php $ci = AppModelsConfiguracionInstitucional::cached(); @endphp
+@php $ci = \App\Models\ConfiguracionInstitucional::cached(); @endphp
 @extends('layouts/blankLayout')
 
 @section('title', 'Verificar Correo - ' . ($ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL'))
@@ -59,19 +59,21 @@ use Illuminate\Support\Facades\Storage;
         @endif
 
         <div class="d-flex gap-3 mb-6">
+          @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::emailVerification()))
           <form method="POST" action="{{ route('verification.send') }}" class="flex-grow-1">
             @csrf
             <button type="submit" class="btn btn-primary w-100">Reenviar correo</button>
           </form>
+          @endif
           <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="btn btn-label-secondary">Cerrar sesión</button>
+            <button type="submit" class="btn btn-label-secondary {{ Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::emailVerification()) ? '' : 'w-100' }}">Cerrar sesión</button>
           </form>
         </div>
 
         <p class="text-center text-muted small mb-0">
           <i class="ti tabler-shield-check me-1 text-success"></i>
-          UGEL Huacaybamba · Sistema de Control Interno
+          {{ $ci?->nombre_institucion ?? 'PULSO UGEL' }} · Sistema de Control Interno
         </p>
       </div>
     </div>

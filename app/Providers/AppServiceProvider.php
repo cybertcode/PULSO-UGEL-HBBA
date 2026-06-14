@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Alerta;
 use App\Models\ConfiguracionInstitucional;
+use App\Observers\AlertaObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
@@ -26,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Observer: envío síncrono de email al crear una alerta
+        Alerta::observe(AlertaObserver::class);
+
         // Forzar español como locale de la aplicación
         App::setLocale('es');
 

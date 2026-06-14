@@ -158,6 +158,11 @@ class ConfiguracionController extends Controller
 
         unset($validated['logo'], $validated['remove_logo'], $validated['favicon'], $validated['remove_favicon']);
 
+        // Sigla siempre en mayúsculas
+        if (isset($validated['sigla'])) {
+            $validated['sigla'] = strtoupper($validated['sigla']);
+        }
+
         $validated['notif_vencimiento']       = $request->boolean('notif_vencimiento');
         $validated['notif_10dias']            = $request->boolean('notif_10dias');
         $validated['notif_5dias']             = $request->boolean('notif_5dias');

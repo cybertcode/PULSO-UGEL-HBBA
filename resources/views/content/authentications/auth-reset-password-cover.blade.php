@@ -4,7 +4,7 @@ $configData = Helper::appClasses();
 use Illuminate\Support\Facades\Storage;
 @endphp
 
-@php $ci = AppModelsConfiguracionInstitucional::cached(); @endphp
+@php $ci = \App\Models\ConfiguracionInstitucional::cached(); @endphp
 @extends('layouts/blankLayout')
 
 @section('title', 'Restablecer Contraseña - ' . ($ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL'))

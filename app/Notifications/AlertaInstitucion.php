@@ -4,14 +4,11 @@ namespace App\Notifications;
 
 use App\Models\Alerta;
 use App\Models\ConfiguracionInstitucional;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class AlertaInstitucion extends Notification implements ShouldQueue
+class AlertaInstitucion extends Notification
 {
-    use Queueable;
 
     public function __construct(public Alerta $alerta) {}
 
@@ -22,11 +19,13 @@ class AlertaInstitucion extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $dias = $this->alerta->dias_anticipacion;
         $tipo = match($this->alerta->tipo) {
-            'vencimiento'     => 'Actividad Vencida',
-            'avance_bajo'     => 'Avance Insuficiente',
-            'evidencia_falta' => 'Evidencia Faltante',
-            default           => 'Notificación del Sistema',
+            'vencimiento'          => 'Actividad Vencida',
+            'vencimiento_proximo'  => $dias ? "Vence en {$dias} día(s)" : 'Próximo Vencimiento',
+            'avance_bajo'          => 'Avance Insuficiente',
+            'evidencia_falta'      => 'Evidencia Faltante',
+            default                => 'Notificación del Sistema',
         };
 
         $colorBorde = match($this->alerta->prioridad) {
@@ -36,10 +35,11 @@ class AlertaInstitucion extends Notification implements ShouldQueue
         };
 
         $iconoTexto = match($this->alerta->tipo) {
-            'vencimiento'     => '⏰',
-            'avance_bajo'     => '📉',
-            'evidencia_falta' => '📎',
-            default           => '🔔',
+            'vencimiento'         => '⏰',
+            'vencimiento_proximo' => '⚠️',
+            'avance_bajo'         => '📉',
+            'evidencia_falta'     => '📎',
+            default               => '🔔',
         };
 
         $prioridadLabel = match($this->alerta->prioridad) {

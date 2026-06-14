@@ -28,12 +28,14 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
         <span class="app-brand-logo demo">
           <img src="{{ Storage::url($configInstitucional->logo_ruta) }}" height="28" alt="logo" class="rounded">
         </span>
-        <span class="app-brand-text demo menu-text fw-bold ms-2" style="font-size:.85rem;line-height:1.2">
+        <span class="app-brand-text demo menu-text fw-bold ms-2" style="font-size:.85rem;line-height:1.2;text-transform:uppercase;">
           {{ $configInstitucional->sigla ?? $configInstitucional->nombre_institucion }}
         </span>
       @else
         <span class="app-brand-logo demo">@include('_partials.macros')</span>
-        <span class="app-brand-text demo menu-text fw-bold ms-3">PULSO UGEL</span>
+        <span class="app-brand-text demo menu-text fw-bold ms-3" style="text-transform:uppercase;">
+          {{ $configInstitucional?->sigla ?? $configInstitucional?->nombre_institucion ?? config('variables.templateName', 'PULSO UGEL') }}
+        </span>
       @endif
     </a>
     <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
