@@ -65,9 +65,13 @@ class SearchController extends Controller
             if (!app('router')->has($item['route'])) {
                 continue;
             }
+            $fullUrl  = route($item['route']);
+            $base     = rtrim(url('/'), '/');
+            $relative = ltrim(str_replace($base, '', $fullUrl), '/');
+
             $entries[] = [
                 'name' => $item['name'],
-                'url'  => route($item['route']),
+                'url'  => $relative,
                 'icon' => $item['icon'],
             ];
         }

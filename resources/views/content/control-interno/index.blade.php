@@ -1149,22 +1149,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('respAddAllBtnEditar')?.addEventListener('click', () => respEditar.addAll(document.getElementById('respTipoEditar').value));
   modalNuevo.addEventListener('show.bs.modal', () => respNuevo.clear());
 
-  function fixModalScroll(modal) {
-    const body = modal.querySelector('.modal-body'), content = modal.querySelector('.modal-content');
-    const header = modal.querySelector('.modal-header'), footer = modal.querySelector('.modal-footer');
-    if (!body || !content) return;
-    const maxH = Math.floor(window.innerHeight * 0.88);
-    const bodyMaxH = maxH - (header?.offsetHeight ?? 0) - (footer?.offsetHeight ?? 0);
-    content.style.setProperty('max-height', maxH + 'px', 'important');
-    content.style.setProperty('overflow', 'hidden', 'important');
-    content.style.setProperty('display', 'flex', 'important');
-    content.style.setProperty('flex-direction', 'column', 'important');
-    body.style.setProperty('overflow-y', 'auto', 'important');
-    body.style.setProperty('max-height', bodyMaxH + 'px', 'important');
-    body.style.setProperty('min-height', '0', 'important');
-  }
-  modalNuevo.addEventListener('shown.bs.modal',  () => fixModalScroll(modalNuevo));
-  modalEditar.addEventListener('shown.bs.modal', () => fixModalScroll(modalEditar));
+  // Fix de scroll manejado globalmente en main.js (shown.bs.modal)
 
   // ── Cascada modal NUEVO ───────────────────────────────────────────────────
   $('#nuevo_eje').on('change', function () {

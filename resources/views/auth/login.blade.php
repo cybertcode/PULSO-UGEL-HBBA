@@ -70,7 +70,7 @@
                         <div class="mb-6">
                             <label for="login-email" class="form-label">Correo electrónico</label>
                             <input type="email" class="form-control @error('email') is-invalid @enderror" id="login-email"
-                                name="email"
+                                name="email" autocomplete="email"
                                 placeholder="{{ $ci?->correo_institucional ? 'usuario@' . explode('@', $ci->correo_institucional)[1] : 'tu.correo@ugel.gob.pe' }}"
                                 autofocus value="{{ old('email') }}" />
                             @error('email')
@@ -91,7 +91,7 @@
                             <div class="input-group input-group-merge @error('password') is-invalid @enderror">
                                 <input type="password" id="login-password"
                                     class="form-control @error('password') is-invalid @enderror" name="password"
-                                    placeholder="············" aria-describedby="password" />
+                                    placeholder="············" autocomplete="current-password" />
                                 <span class="input-group-text cursor-pointer">
                                     <i class="icon-base ti tabler-eye-off"></i>
                                 </span>

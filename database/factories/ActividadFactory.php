@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Actividad;
-use App\Models\Componente;
+use App\Models\SciPregunta;
 use App\Models\UnidadOrganica;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -72,9 +72,11 @@ class ActividadFactory extends Factory
 
         return [
             'codigo'             => "SCI-{$anio}-" . str_pad($offset, 3, '0', STR_PAD_LEFT),
+            'modulo'             => 'sci',
+            'anio'               => $anio,
             'nombre'             => fake()->randomElement($this->actividades),
             'descripcion'        => fake()->optional(0.6)->paragraph(2),
-            'componente_id'      => Componente::inRandomOrder()->value('id'),
+            'sci_pregunta_id'    => SciPregunta::inRandomOrder()->value('id'),
             'unidad_organica_id' => UnidadOrganica::inRandomOrder()->value('id'),
             'creado_por'         => User::where('estado', 'activo')->inRandomOrder()->value('id'),
             'numero_sgd'         => fake()->optional(0.7)->numerify("SGD-{$anio}-####"),

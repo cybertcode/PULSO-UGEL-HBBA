@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             TrabajadoresDestacadosSeeder::class,
             HistorialRankingSeeder::class,
             DatosComplementariosSeeder::class,
+            EstructuraSciIntegridadSeeder::class,
             NuevosModulosSeeder::class,
             BuenasPracticasRecomendacionesSeeder::class,
         ]);
