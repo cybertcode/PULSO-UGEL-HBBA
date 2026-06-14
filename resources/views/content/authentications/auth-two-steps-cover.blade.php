@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Storage;
 $configInstitucional = $configInstitucional ?? \App\Models\ConfiguracionInstitucional::first();
 @endphp
 
-@extends('layouts/layoutMaster')
+@extends('layouts/blankLayout')
 
 @section('title', 'Two Steps Verifications Cover - Pages')
 

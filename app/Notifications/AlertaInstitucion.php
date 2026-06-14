@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Alerta;
+use App\Models\ConfiguracionInstitucional;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -49,9 +50,17 @@ class AlertaInstitucion extends Notification implements ShouldQueue
 
         $actividad = $this->alerta->actividad;
         $unidad    = $this->alerta->unidadOrganica?->nombre ?? '—';
+        $ci        = ConfiguracionInstitucional::cached();
+        $instSigla = $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL';
+        $instNombre = $ci?->nombre_institucion ?? 'PULSO UGEL';
+        $instLugar = implode(' &bull; ', array_filter([
+            $ci?->provincia,
+            $ci?->departamento,
+            'Perú',
+        ]));
 
         return (new MailMessage)
-            ->subject("{$iconoTexto} [PULSO UGEL] {$tipo} — {$prioridadLabel}")
+            ->subject("{$iconoTexto} [{$instSigla}] {$tipo} — {$prioridadLabel}")
             ->view('emails.alerta-institucion', [
                 'alerta'         => $this->alerta,
                 'tipo'           => $tipo,
@@ -62,6 +71,10 @@ class AlertaInstitucion extends Notification implements ShouldQueue
                 'unidad'         => $unidad,
                 'urlSistema'     => url('/mis-actividades'),
                 'urlAlertas'     => url('/alertas'),
+                'instSigla'      => $instSigla,
+                'instNombre'     => $instNombre,
+                'instLugar'      => $instLugar,
+                'ci'             => $ci,
             ]);
     }
 }

@@ -4,9 +4,10 @@ $configData = Helper::appClasses();
 use Illuminate\Support\Facades\Storage;
 @endphp
 
-@extends('layouts/layoutMaster')
+@php $ci = AppModelsConfiguracionInstitucional::cached(); @endphp
+@extends('layouts/blankLayout')
 
-@section('title', 'Verificar Correo - PULSO UGEL')
+@section('title', 'Verificar Correo - ' . ($ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL'))
 
 @section('page-style')
 @vite('resources/assets/vendor/scss/pages/page-auth.scss')

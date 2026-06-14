@@ -422,7 +422,7 @@ const SearchConfig = {
     form: 'd-flex align-items-center',
     input: 'search-control border-none',
     detachedCancelButton: 'btn-search-close',
-    panel: 'flex-grow content-wrapper overflow-hidden position-relative',
+    panel: 'flex-grow content-wrapper overflow-y-auto position-relative',
     panelLayout: 'h-100',
     clearButton: 'd-none',
     item: 'd-block'
