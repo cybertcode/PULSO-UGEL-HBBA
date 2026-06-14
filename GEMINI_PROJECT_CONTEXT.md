@@ -1,6 +1,6 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.1.3] - 2026-06-13 (Sesión Actual)
+## [v2.1.3] - 2026-06-14 (Sesión Actual)
 ### Buscador Inteligente y Layout Dinámico (Protección de Interfaz)
 - **Buscador Global Sensible a Permisos**:
     - Implementación de `SearchController.php` para generar dinámicamente las sugerencias de búsqueda basadas en las capacidades reales del usuario logueado.
