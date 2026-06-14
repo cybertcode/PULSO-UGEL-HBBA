@@ -162,7 +162,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration(), // Registro deshabilitado: solo admins crean usuarios
         Features::resetPasswords(),
         // Features::emailVerification(),
         Features::updateProfileInformation(),
