@@ -44,6 +44,7 @@ use App\Http\Controllers\pages\NormativasController;
 use App\Http\Controllers\pages\SearchController;
 
 Route::get('/lang/{locale}', [LanguageController::class, 'swap']);
+Route::get('/register', fn() => redirect()->route('login'))->name('register');
 Route::get('/',                    [LandingController::class, 'index'])->name('landing');
 Route::get('/noticias/{id}',       [LandingController::class, 'show'])->name('landing.noticia');
 Route::get('/publicaciones',       [LandingController::class, 'publicaciones'])->name('landing.publicaciones');
