@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class ControlInternoController extends Controller
 {
@@ -158,6 +159,9 @@ class ControlInternoController extends Controller
 
     public function update(Request $request, Actividad $actividad)
     {
+        Gate::authorize('control-interno.editar');
+        abort_unless($actividad->puedeEditarUsuario(), 403, 'No tienes permiso para editar esta actividad.');
+
         $validated = $request->validate([
             'nombre'              => 'required|string|max:255',
             'sci_pregunta_id'     => 'nullable|exists:sci_preguntas,id',
@@ -199,6 +203,7 @@ class ControlInternoController extends Controller
 
     public function destroy(Actividad $actividad)
     {
+        Gate::authorize('control-interno.eliminar');
         $actividad->delete();
         return back()->with('success', 'Actividad eliminada.');
     }

@@ -16,6 +16,7 @@ use App\Models\ConfiguracionInstitucional;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class ModeloIntegridadController extends Controller
 {
@@ -253,6 +254,9 @@ class ModeloIntegridadController extends Controller
     // ── Actualizar actividad ──────────────────────────────────────────────────
     public function update(Request $request, Actividad $actividad)
     {
+        Gate::authorize('integridad.editar');
+        abort_unless($actividad->puedeEditarUsuario(), 403, 'No tienes permiso para editar esta actividad.');
+
         $validated = $request->validate([
             'nombre'                 => 'required|string|max:255',
             'integridad_pregunta_id' => 'required|exists:integridad_preguntas,id',
@@ -293,6 +297,7 @@ class ModeloIntegridadController extends Controller
 
     public function destroy(Actividad $actividad)
     {
+        Gate::authorize('integridad.eliminar');
         $actividad->delete();
         return back()->with('success', 'Actividad eliminada.');
     }

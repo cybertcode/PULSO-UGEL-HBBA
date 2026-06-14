@@ -10,9 +10,12 @@ class Alerta extends Model
 {
     use HasFactory;
 
+    const TIPOS_DESTINO = ['individual', 'unidad', 'todos'];
+
     protected $fillable = [
         'actividad_id', 'usuario_id', 'unidad_organica_id',
-        'modulo', 'dias_anticipacion', 'notificacion_enviada', 'notificacion_enviada_at',
+        'modulo', 'tipo_destino', 'dias_anticipacion',
+        'notificacion_enviada', 'notificacion_enviada_at',
         'titulo', 'mensaje', 'tipo', 'prioridad',
         'leida', 'leida_at',
         'email_enviado', 'email_enviado_at', 'destinatario_email',
@@ -76,6 +79,15 @@ class Alerta extends Model
             'evidencia_falta'=> 'Evidencia Faltante',
             'sistema'        => 'Sistema',
             default          => ucfirst($this->tipo),
+        };
+    }
+
+    public function getTipoDestinoLabelAttribute(): string
+    {
+        return match($this->tipo_destino) {
+            'unidad' => 'Por Unidad',
+            'todos'  => 'Toda la institución',
+            default  => 'Individual',
         };
     }
 }

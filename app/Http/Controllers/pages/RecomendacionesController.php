@@ -8,6 +8,7 @@ use App\Models\Actividad;
 use App\Models\UnidadOrganica;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 
 class RecomendacionesController extends Controller
@@ -162,6 +163,8 @@ class RecomendacionesController extends Controller
     // ── Update ────────────────────────────────────────────────────────────────
     public function update(Request $request, Recomendacion $recomendacion)
     {
+        Gate::authorize('recomendaciones.editar');
+
         $validator = Validator::make($request->all(), [
             'titulo'             => 'required|string|max:255',
             'descripcion'        => 'nullable|string',
@@ -204,6 +207,7 @@ class RecomendacionesController extends Controller
     // ── Destroy ───────────────────────────────────────────────────────────────
     public function destroy(Recomendacion $recomendacion)
     {
+        Gate::authorize('recomendaciones.eliminar');
         $recomendacion->delete();
         return response()->json(['success' => true]);
     }

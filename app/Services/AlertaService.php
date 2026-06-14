@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Actividad;
 use App\Models\Alerta;
 use App\Models\ConfiguracionInstitucional;
+use App\Models\UnidadOrganica;
+use App\Models\User;
 
 class AlertaService
 {
@@ -190,7 +192,7 @@ class AlertaService
             new \App\Notifications\AlertaInstitucion($alerta)
         );
 
-        $email = $destinatario instanceof \App\Models\User
+        $email = $destinatario instanceof User
             ? $destinatario->email
             : $config->correo_institucional;
 
@@ -201,11 +203,74 @@ class AlertaService
         ]);
     }
 
+    /**
+     * Envío masivo de emails según el tipo_destino de la alerta.
+     * Retorna array con conteos: ['enviados' => N, 'fallidos' => N, 'emails' => [...]]
+     */
+    public function enviarEmailGrupo(Alerta $alerta): array
+    {
+        $config = ConfiguracionInstitucional::cached();
+        $destinatarios = $this->resolverDestinatariosGrupo($alerta);
+
+        if (empty($destinatarios)) {
+            throw new \RuntimeException('No se encontraron destinatarios para este grupo.');
+        }
+
+        $enviados = 0;
+        $fallidos = 0;
+        $emailsEnviados = [];
+
+        foreach ($destinatarios as $usuario) {
+            try {
+                \Illuminate\Support\Facades\Notification::sendNow(
+                    $usuario,
+                    new \App\Notifications\AlertaInstitucion($alerta)
+                );
+                $enviados++;
+                $emailsEnviados[] = $usuario->email;
+            } catch (\Throwable) {
+                $fallidos++;
+            }
+        }
+
+        if ($enviados > 0) {
+            $alerta->updateQuietly([
+                'email_enviado'      => true,
+                'email_enviado_at'   => now(),
+                'destinatario_email' => implode(', ', array_slice($emailsEnviados, 0, 3))
+                                        . (count($emailsEnviados) > 3 ? ' y ' . (count($emailsEnviados) - 3) . ' más' : ''),
+            ]);
+        }
+
+        return compact('enviados', 'fallidos', 'emailsEnviados');
+    }
+
+    /**
+     * Resuelve la lista de usuarios destinatarios según tipo_destino de la alerta.
+     */
+    public function resolverDestinatariosGrupo(Alerta $alerta): \Illuminate\Support\Collection
+    {
+        return match($alerta->tipo_destino) {
+            'todos' => User::permission('alertas.ver')
+                          ->whereNotNull('email')
+                          ->get(),
+            'unidad' => $alerta->unidad_organica_id
+                          ? User::permission('alertas.ver')
+                                ->where('unidad_organica_id', $alerta->unidad_organica_id)
+                                ->whereNotNull('email')
+                                ->get()
+                          : collect(),
+            default => $alerta->usuario_id
+                          ? User::where('id', $alerta->usuario_id)->whereNotNull('email')->get()
+                          : collect(),
+        };
+    }
+
     /** Resuelve el destinatario: responsable directo o correo institucional como fallback */
     private function resolverDestinatario(Alerta $alerta, ConfiguracionInstitucional $config): mixed
     {
         if ($alerta->usuario_id) {
-            $usuario = \App\Models\User::find($alerta->usuario_id);
+            $usuario = User::find($alerta->usuario_id);
             if ($usuario?->email) {
                 return $usuario;
             }

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             EstructuraSciIntegridadSeeder::class,
             NuevosModulosSeeder::class,
             BuenasPracticasRecomendacionesSeeder::class,
+            AlertasPruebaSeeder::class,
         ]);
     }
 }

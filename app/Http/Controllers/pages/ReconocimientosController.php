@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class ReconocimientosController extends Controller
@@ -184,6 +185,8 @@ class ReconocimientosController extends Controller
 
     public function update(Request $request, TrabajadorDestacado $trabajador)
     {
+        Gate::authorize('reconocimientos.editar');
+
         $validated = $request->validate([
             'nombre'                   => 'required|string|max:255',
             'cargo'                    => 'nullable|string|max:255',
@@ -223,6 +226,7 @@ class ReconocimientosController extends Controller
 
     public function destroy(TrabajadorDestacado $trabajador)
     {
+        Gate::authorize('reconocimientos.eliminar');
         app(ImageService::class)->delete($trabajador->foto_ruta);
         $trabajador->delete();
         return back()->with('success', 'Reconocimiento eliminado.');

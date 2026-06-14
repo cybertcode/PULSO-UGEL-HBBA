@@ -10,6 +10,7 @@ use App\Models\UnidadOrganica;
 use App\Support\SemaforoHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ReportesController extends Controller
@@ -28,7 +29,10 @@ class ReportesController extends Controller
         $avance_max  = $request->input('avance_max', 100);
         $tab         = $request->input('tab', 'todos'); // todos | sci | integridad
 
+        $user  = Auth::user();
+
         $query = Actividad::with(['sciPregunta.componente', 'integridadPregunta.componente', 'unidadOrganica', 'responsables'])
+            ->visiblesParaUsuario($user)
             ->whereYear('fecha_limite', $anio);
 
         if ($modulo)      $query->where('modulo', $modulo);
@@ -44,7 +48,7 @@ class ReportesController extends Controller
         $actividades = $query->orderBy('fecha_limite')->paginate(25)->withQueryString();
 
         // Stats globales con los mismos filtros (sin paginar)
-        $statsQuery = Actividad::whereYear('fecha_limite', $anio);
+        $statsQuery = Actividad::visiblesParaUsuario($user)->whereYear('fecha_limite', $anio);
         if ($modulo)      $statsQuery->where('modulo', $modulo);
         if ($unidad)      $statsQuery->where('unidad_organica_id', $unidad);
         if ($prioridad)   $statsQuery->where('prioridad', $prioridad);
@@ -66,8 +70,8 @@ class ReportesController extends Controller
 
         // Resumen por módulo
         $config  = ConfiguracionInstitucional::cached();
-        $resumen = collect(['sci', 'integridad'])->map(function ($mod) use ($anio, $config, $unidad) {
-            $q = Actividad::where('modulo', $mod)->whereYear('fecha_limite', $anio);
+        $resumen = collect(['sci', 'integridad'])->map(function ($mod) use ($anio, $config, $unidad, $user) {
+            $q = Actividad::visiblesParaUsuario($user)->where('modulo', $mod)->whereYear('fecha_limite', $anio);
             if ($unidad) $q->where('unidad_organica_id', $unidad);
             $tot  = $q->count();
             $comp = (clone $q)->where('estado', 'completada')->count();
@@ -80,14 +84,16 @@ class ReportesController extends Controller
         });
 
         // Datos por mes para gráfica
-        $por_mes = Actividad::selectRaw('MONTH(fecha_limite) as mes, COUNT(*) as total, SUM(estado="completada") as completadas')
+        $por_mes = Actividad::visiblesParaUsuario($user)
+            ->selectRaw('MONTH(fecha_limite) as mes, COUNT(*) as total, SUM(estado="completada") as completadas')
             ->whereYear('fecha_limite', $anio)
             ->when($modulo,  fn($q) => $q->where('modulo', $modulo))
             ->when($unidad,  fn($q) => $q->where('unidad_organica_id', $unidad))
             ->groupBy('mes')->orderBy('mes')->get();
 
         // Avance por unidad orgánica
-        $por_unidad = Actividad::selectRaw('unidad_organica_id, COUNT(*) as total, SUM(estado="completada") as completadas')
+        $por_unidad = Actividad::visiblesParaUsuario($user)
+            ->selectRaw('unidad_organica_id, COUNT(*) as total, SUM(estado="completada") as completadas')
             ->whereYear('fecha_limite', $anio)
             ->when($modulo, fn($q) => $q->where('modulo', $modulo))
             ->whereNotNull('unidad_organica_id')
