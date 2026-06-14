@@ -24,8 +24,6 @@ use App\Http\Controllers\apps\UserViewAccount;
 use App\Http\Controllers\apps\UserViewSecurity;
 use App\Http\Controllers\apps\AccessRoles;
 use App\Http\Controllers\apps\AccessPermission;
-use App\Http\Controllers\authentications\LoginBasic;
-use App\Http\Controllers\authentications\RegisterBasic;
 use App\Http\Controllers\pages\PerfilController;
 use App\Http\Controllers\pages\BuenasPracticasController;
 use App\Http\Controllers\pages\RecomendacionesController;
@@ -48,8 +46,6 @@ Route::get('/register', fn() => redirect()->route('login'))->name('register');
 Route::get('/',                    [LandingController::class, 'index'])->name('landing');
 Route::get('/noticias/{id}',       [LandingController::class, 'show'])->name('landing.noticia');
 Route::get('/publicaciones',       [LandingController::class, 'publicaciones'])->name('landing.publicaciones');
-Route::get('/auth/login-basic',    [LoginBasic::class,    'index'])->name('auth-login-basic');
-Route::get('/auth/register-basic', [RegisterBasic::class, 'index'])->name('auth-register-basic');
 Route::get('/pages/misc-error',           [MiscError::class,          'index'])->name('pages-misc-error');
 Route::get('/pages/misc-not-authorized',  [MiscNotAuthorized::class,   'index'])->name('pages-misc-not-authorized');
 Route::get('/pages/misc-under-maintenance',[MiscUnderMaintenance::class,'index'])->name('pages-misc-under-maintenance');
@@ -105,7 +101,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/evidencias', [EvidenciasController::class, 'index'])->name('sci-evidencias');
     });
     Route::post('/evidencias',                        [EvidenciasController::class, 'store'])->name('sci-evidencias.store')->middleware('can:evidencias.crear');
-    Route::put('/evidencias/{evidencia}',             [EvidenciasController::class, 'update'])->name('sci-evidencias.update')->middleware('can:evidencias.crear');
+    Route::put('/evidencias/{evidencia}',             [EvidenciasController::class, 'update'])->name('sci-evidencias.update')->middleware('can:evidencias.editar');
     Route::patch('/evidencias/{evidencia}/validar',   [EvidenciasController::class, 'validar'])->name('sci-evidencias.validar')->middleware('can:evidencias.validar');
     Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.eliminar');
 

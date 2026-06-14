@@ -41,12 +41,7 @@ $configData = Helper::appClasses();
 /* ── Tab nav ──────────────────────────────────────────── */
 .nav-tabs .nav-link { font-size: 13px; padding: .5rem 1rem; }
 
-/* Vuexy overflow:hidden fix para modales */
-body.modal-open .layout-wrapper { overflow: visible !important; }
-#modalNuevaActInt .modal-content > form,
-#modalEditarActInt .modal-content > form {
-  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden;
-}
+/* El fix de scroll para modales está en main.js (shown.bs.modal global) */
 </style>
 @endsection
 

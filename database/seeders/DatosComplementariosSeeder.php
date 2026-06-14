@@ -14,8 +14,8 @@ class DatosComplementariosSeeder extends Seeder
     public function run(): void
     {
         $adminId = User::where('email', 'admin@admin.com')->value('id');
-        $sciId   = User::where('email', 'sci@ugel.gob.pe')->value('id');
-        $dirId   = User::where('email', 'director@ugel.gob.pe')->value('id');
+        $sciId   = User::where('email', 'sci@ugelhuacaybamba.edu.pe')->value('id') ?? $adminId;
+        $dirId   = User::where('email', 'director@ugelhuacaybamba.edu.pe')->value('id') ?? $adminId;
 
         // 1. Cambiar algunos en_proceso a observado para tener datos reales
         Actividad::where('estado', 'en_proceso')
@@ -95,7 +95,7 @@ class DatosComplementariosSeeder extends Seeder
                     'leida'               => false,
                     'email_enviado'       => true,
                     'email_enviado_at'    => Carbon::now()->subHours(2),
-                    'destinatario_email'  => 'director@ugel.gob.pe',
+                    'destinatario_email'  => 'director@ugelhuacaybamba.edu.pe',
                 ]
             );
         }

@@ -331,13 +331,23 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
 
     private function seedRecomendaciones(): void
     {
+        // Mapear IDs hardcodeados a IDs reales existentes en la BD
+        $actIds = DB::table('actividades')->orderBy('id')->pluck('id')->values();
+        $a2 = $actIds->get(1);
+        $a3 = $actIds->get(2);
+        $a4 = $actIds->get(3);
+        $a5 = $actIds->get(4);
+        $a6 = $actIds->get(5);
+        $a7 = $actIds->get(6);
+        $a8 = $actIds->get(7);
+
         $recomendaciones = [
             // Enero 2026
             [
                 'titulo'      => 'Actualizar procedimiento de rendición de cuentas de caja chica',
                 'descripcion' => 'Se identificó que el procedimiento de rendición de caja chica de la UGEL Huacaybamba no ha sido actualizado desde el año 2022 y no contempla los cambios normativos de la Directiva N° 005-2023-EF/43.01. Se recomienda actualizar el procedimiento en un plazo de 30 días.',
                 'tipo'        => 'recomendacion',
-                'actividad_id'=> 4,
+                'actividad_id'=> $a4,
                 'unidad_id'   => 6,
                 'responsable' => 9,
                 'estado'      => 'atendida',
@@ -355,7 +365,7 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
                 'titulo'      => 'Regularizar contratos de locadores de servicios vencidos',
                 'descripcion' => 'Verificación detectó 8 contratos de locación de servicios con vigencia vencida al 31/12/2025 que continuaban prestando servicios en la UGEL Huacaybamba sin renovación formal. Riesgo legal y presupuestal ante eventual auditoría de la CGR.',
                 'tipo'        => 'observacion',
-                'actividad_id'=> 5,
+                'actividad_id'=> $a5,
                 'unidad_id'   => 8,
                 'responsable' => 3,
                 'estado'      => 'atendida',
@@ -392,7 +402,7 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
                 'titulo'      => 'Actualizar la Matriz de Riesgos del Área de Logística',
                 'descripcion' => 'La matriz de riesgos del área de Logística de la UGEL Huacaybamba no incluye los riesgos asociados a adquisiciones para mantenimiento de locales escolares en zonas rurales de difícil acceso (Pinra, Canchabamba). Requiere actualización inmediata.',
                 'tipo'        => 'mejora',
-                'actividad_id'=> 7,
+                'actividad_id'=> $a7,
                 'unidad_id'   => 7,
                 'responsable' => 11,
                 'estado'      => 'atendida',
@@ -429,7 +439,7 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
                 'titulo'      => 'Establecer indicadores de efectividad para supervisión pedagógica en IIEE rurales',
                 'descripcion' => 'El Área de Gestión Pedagógica de la UGEL Huacaybamba no cuenta con indicadores cuantitativos para medir la efectividad de las visitas de supervisión en IIEE de los 4 distritos. Se recomienda diseñar ficha estandarizada con criterios medibles y diferenciados para IIEE unidocentes y multigrado.',
                 'tipo'        => 'mejora',
-                'actividad_id'=> 8,
+                'actividad_id'=> $a8,
                 'unidad_id'   => 3,
                 'responsable' => 7,
                 'estado'      => 'en_proceso',
@@ -466,7 +476,7 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
                 'titulo'      => 'Implementar control de asistencia biométrico en la sede',
                 'descripcion' => 'El sistema actual de control de asistencia del personal administrativo de la UGEL Huacaybamba mediante registro manual presenta riesgos de error e inconsistencias. Se recomienda implementar sistema biométrico para mayor confiabilidad y trazabilidad.',
                 'tipo'        => 'mejora',
-                'actividad_id'=> 6,
+                'actividad_id'=> $a6,
                 'unidad_id'   => 8,
                 'responsable' => 4,
                 'estado'      => 'en_proceso',
@@ -485,7 +495,7 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
                 'titulo'      => 'Actualizar el Plan de Contingencia ante desastres naturales',
                 'descripcion' => 'El plan de contingencia de la UGEL Huacaybamba data del año 2021 y no contempla los escenarios de desastres naturales frecuentes en la zona andina: huaycos, deslizamientos, lluvias intensas y bloqueo de vías de acceso a los distritos de Pinra y Canchabamba. Requiere actualización urgente coordinada con INDECI Huánuco.',
                 'tipo'        => 'recomendacion',
-                'actividad_id'=> 2,
+                'actividad_id'=> $a2,
                 'unidad_id'   => 4,
                 'responsable' => 13,
                 'estado'      => 'en_proceso',
@@ -558,7 +568,7 @@ class BuenasPracticasRecomendacionesSeeder extends Seeder
                 'titulo'      => 'Estandarizar formato de informes de gestión mensual por unidad',
                 'descripcion' => 'Los informes de gestión mensual presentados por cada unidad orgánica de la UGEL Huacaybamba no tienen formato uniforme, dificultando su consolidación y análisis comparativo por la Dirección. Se recomienda diseñar plantilla estándar alineada a los indicadores del PACI.',
                 'tipo'        => 'mejora',
-                'actividad_id'=> 3,
+                'actividad_id'=> $a3,
                 'unidad_id'   => 4,
                 'responsable' => 13,
                 'estado'      => 'pendiente',

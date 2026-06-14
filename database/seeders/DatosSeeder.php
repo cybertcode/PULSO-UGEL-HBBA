@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Actividad;
 use App\Models\ActividadHistorial;
 use App\Models\Alerta;
-use App\Models\Componente;
 use App\Models\Evidencia;
 use App\Models\Reconocimiento;
 use App\Models\UnidadOrganica;
@@ -17,12 +16,11 @@ class DatosSeeder extends Seeder
 {
     public function run(): void
     {
-        $unidades    = UnidadOrganica::all();
-        $componentes = Componente::all();
-        $usuarios    = User::where('estado', 'activo')->get();
+        $unidades = UnidadOrganica::all();
+        $usuarios = User::where('estado', 'activo')->get();
 
-        if ($unidades->isEmpty() || $componentes->isEmpty() || $usuarios->isEmpty()) {
-            $this->command->warn('Faltan datos base. Verifica que UnidadesOrganicasSeeder, ComponentesSeeder y UsuariosSeeder hayan corrido primero.');
+        if ($unidades->isEmpty() || $usuarios->isEmpty()) {
+            $this->command->warn('Faltan datos base. Verifica que UnidadesOrganicasSeeder y UsuariosSeeder hayan corrido primero.');
             return;
         }
 
@@ -38,7 +36,6 @@ class DatosSeeder extends Seeder
             $normales = Actividad::factory(4)->create([
                 'unidad_organica_id' => $unidad->id,
                 'creado_por'         => $responsableUnidad->id,
-                'componente_id'      => $componentes->random()->id,
             ]);
             foreach ($normales as $act) {
                 $act->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
@@ -48,7 +45,6 @@ class DatosSeeder extends Seeder
             $multiResp = Actividad::factory(2)->create([
                 'unidad_organica_id' => $unidad->id,
                 'creado_por'         => $responsableUnidad->id,
-                'componente_id'      => $componentes->random()->id,
             ]);
             foreach ($multiResp as $act) {
                 $act->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
@@ -64,8 +60,6 @@ class DatosSeeder extends Seeder
             $institucional = Actividad::factory()->create([
                 'unidad_organica_id' => $unidad->id,
                 'creado_por'         => $responsableUnidad->id,
-                'componente_id'      => $componentes->where('numero', 1)->first()?->id
-                                        ?? $componentes->first()->id,
                 'prioridad'          => 'alta',
             ]);
             $responsablesUnidades = $usuarios->whereIn(
@@ -81,7 +75,6 @@ class DatosSeeder extends Seeder
             $completada = Actividad::factory()->completada()->create([
                 'unidad_organica_id' => $unidad->id,
                 'creado_por'         => $responsableUnidad->id,
-                'componente_id'      => $componentes->random()->id,
             ]);
             $completada->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
             $this->generarHistorialAvance($completada, $responsableUnidad->id);
@@ -90,7 +83,6 @@ class DatosSeeder extends Seeder
             $vencida = Actividad::factory()->vencida()->create([
                 'unidad_organica_id' => $unidad->id,
                 'creado_por'         => $responsableUnidad->id,
-                'componente_id'      => $componentes->random()->id,
             ]);
             $vencida->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
 
@@ -98,7 +90,6 @@ class DatosSeeder extends Seeder
             $enProceso = Actividad::factory()->enProceso()->create([
                 'unidad_organica_id' => $unidad->id,
                 'creado_por'         => $responsableUnidad->id,
-                'componente_id'      => $componentes->random()->id,
             ]);
             $enProceso->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
             $director = $usuarios->where('unidad_organica_id',

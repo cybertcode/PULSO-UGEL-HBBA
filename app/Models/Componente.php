@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Componente extends Model
 {
@@ -13,10 +12,4 @@ class Componente extends Model
     {
         return ['activo' => 'boolean'];
     }
-
-    public function actividades(): HasMany
-    {
-        return $this->hasMany(Actividad::class, 'componente_id');
-    }
-
 }

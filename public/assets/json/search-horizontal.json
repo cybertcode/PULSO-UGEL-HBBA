@@ -1,31 +1,5 @@
 {
-  "suggestions": {
-    "Módulos principales": [
-      { "name": "Panel Principal", "url": "/", "icon": "tabler-smart-home" },
-      { "name": "Control Interno", "url": "/control-interno", "icon": "tabler-clipboard-check" },
-      { "name": "Modelo de Integridad", "url": "/modelo-integridad", "icon": "tabler-shield-check" },
-      { "name": "Alertas", "url": "/alertas", "icon": "tabler-bell" }
-    ],
-    "Reportes y seguimiento": [
-      { "name": "Evidencias", "url": "/evidencias", "icon": "tabler-file-upload" },
-      { "name": "Reportes", "url": "/reportes", "icon": "tabler-chart-bar" },
-      { "name": "Reconocimientos", "url": "/reconocimientos", "icon": "tabler-trophy" },
-      { "name": "Ranking de Unidades", "url": "/ranking-unidades", "icon": "tabler-award" }
-    ]
-  },
-  "navigation": {
-    "Menú principal": [
-      { "name": "Panel Principal", "url": "/", "icon": "tabler-smart-home" },
-      { "name": "Control Interno", "url": "/control-interno", "icon": "tabler-clipboard-check" },
-      { "name": "Modelo de Integridad", "url": "/modelo-integridad", "icon": "tabler-shield-check" },
-      { "name": "Evidencias", "url": "/evidencias", "icon": "tabler-file-upload" },
-      { "name": "Alertas", "url": "/alertas", "icon": "tabler-bell" },
-      { "name": "Reportes", "url": "/reportes", "icon": "tabler-chart-bar" },
-      { "name": "Reconocimientos", "url": "/reconocimientos", "icon": "tabler-trophy" },
-      { "name": "Ranking de Unidades", "url": "/ranking-unidades", "icon": "tabler-award" },
-      { "name": "Semáforo Institucional", "url": "/semaforo", "icon": "tabler-traffic-lights" },
-      { "name": "Usuarios", "url": "/usuarios", "icon": "tabler-users" },
-      { "name": "Configuración", "url": "/configuracion", "icon": "tabler-settings" }
-    ]
-  }
+  "_comment": "Este archivo es un residuo. El buscador usa /search/data (SearchController) con filtro por permisos.",
+  "suggestions": {},
+  "navigation": {}
 }
