@@ -1,12 +1,12 @@
 @php
 $customizerHidden = 'customizer-hide';
 $configData = Helper::appClasses();
-use Illuminate\Support\Facades\Storage;
+$ci = \App\Models\ConfiguracionInstitucional::cached();
 @endphp
 
-@extends('layouts/layoutMaster')
+@extends('layouts/blankLayout')
 
-@section('title', 'Registrarse')
+@section('title', 'Crear Cuenta - ' . ($ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL'))
 
 @section('vendor-style')
 @vite(['resources/assets/vendor/libs/@form-validation/form-validation.scss'])
@@ -14,6 +14,87 @@ use Illuminate\Support\Facades\Storage;
 
 @section('page-style')
 @vite(['resources/assets/vendor/scss/pages/page-auth.scss'])
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root{--gov-navy:#001a4d;--gov-blue:#003087;--gov-mid:#0047b3;--gold:#c9a227;--gold-light:#e8c547;--cream:#fafaf7;--text-dark:#0d1b2a;--text-muted:#5a6a7a;--border:#e2e8f0;--white:#ffffff}
+  *{box-sizing:border-box}html,body{height:100%;margin:0;font-family:'DM Sans',sans-serif}
+  .pulso-login-wrapper{display:flex;min-height:100vh;width:100%;overflow:hidden}
+  .pulso-left{flex:0 0 58.333%;max-width:58.333%;position:relative;background:var(--gov-navy);display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden;padding:3rem}
+  .pulso-left::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--gov-navy) 0%,var(--gov-blue) 50%,#002470 100%);z-index:0}
+  .pulso-left::after{content:'';position:absolute;top:-10%;right:-5%;width:3px;height:130%;background:linear-gradient(180deg,transparent 0%,var(--gold) 30%,var(--gold-light) 60%,transparent 100%);transform:rotate(-12deg);transform-origin:top center;opacity:.6;z-index:1}
+  .left-pattern{position:absolute;inset:0;z-index:1;background-image:radial-gradient(circle,rgba(201,162,39,.12) 1px,transparent 1px),radial-gradient(circle,rgba(201,162,39,.06) 1px,transparent 1px);background-size:40px 40px,80px 80px;background-position:0 0,20px 20px}
+  .left-geo{position:absolute;inset:0;z-index:1;overflow:hidden}
+  .left-geo .geo-line{position:absolute;background:linear-gradient(90deg,transparent,rgba(201,162,39,.15),transparent);height:1px;width:100%;animation:geo-pulse 4s ease-in-out infinite}
+  .left-geo .geo-line:nth-child(1){top:15%;animation-delay:0s}.left-geo .geo-line:nth-child(2){top:35%;animation-delay:1s;opacity:.6}.left-geo .geo-line:nth-child(3){top:60%;animation-delay:2s}.left-geo .geo-line:nth-child(4){top:80%;animation-delay:1.5s;opacity:.4}
+  .left-circle-top{position:absolute;top:-120px;left:-120px;width:400px;height:400px;border-radius:50%;border:1px solid rgba(201,162,39,.1);z-index:1}
+  .left-circle-bottom{position:absolute;bottom:-150px;right:-100px;width:450px;height:450px;border-radius:50%;border:1px solid rgba(255,255,255,.05);z-index:1}
+  .left-content{position:relative;z-index:2;text-align:center;color:var(--white);max-width:480px;width:100%;animation:fade-up .7s ease both}
+  .left-icon-big{width:90px;height:90px;margin:0 auto 1.75rem;background:linear-gradient(135deg,rgba(201,162,39,.15),rgba(201,162,39,.03));border:2px solid rgba(201,162,39,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;box-shadow:0 0 60px rgba(201,162,39,.12);animation:escudo-float 6s ease-in-out infinite}
+  .left-pretitle{font-size:.7rem;font-weight:500;letter-spacing:.35em;text-transform:uppercase;color:var(--gold-light);margin-bottom:.85rem;opacity:.9}
+  .left-title{font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.8rem,3vw,2.4rem);font-weight:900;line-height:1.1;margin-bottom:.65rem;color:var(--white)}
+  .left-title span{color:var(--gold-light);display:block}
+  .left-subtitle{font-size:.86rem;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:1.75rem;font-weight:300;max-width:340px;margin-left:auto;margin-right:auto}
+  .benefit-list{list-style:none;padding:0;margin:0;text-align:left}
+  .benefit-item{display:flex;align-items:flex-start;gap:.85rem;padding:.7rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .benefit-item:last-child{border-bottom:none}
+  .benefit-check{width:24px;height:24px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .benefit-check i{font-size:.7rem;color:var(--gov-navy)}
+  .benefit-text strong{display:block;font-size:.82rem;font-weight:600;color:rgba(255,255,255,.85);margin-bottom:.1rem}
+  .benefit-text span{font-size:.74rem;color:rgba(255,255,255,.4)}
+  .left-footer{position:absolute;bottom:2rem;left:0;right:0;text-align:center;z-index:2}
+  .left-footer-text{font-size:.65rem;color:rgba(255,255,255,.2);letter-spacing:.15em;text-transform:uppercase}
+  /* Panel derecho — formulario más largo, necesita scroll */
+  .pulso-right{flex:0 0 41.667%;max-width:41.667%;background:var(--cream);display:flex;align-items:flex-start;justify-content:center;padding:2rem 2.5rem;position:relative;overflow-y:auto}
+  .pulso-right::before{content:'';position:fixed;top:0;right:0;width:41.667%;bottom:0;background-image:radial-gradient(circle at 80% 20%,rgba(0,48,135,.04) 0%,transparent 60%),radial-gradient(circle at 20% 80%,rgba(201,162,39,.04) 0%,transparent 60%);pointer-events:none;z-index:0}
+  .pulso-right::after{content:'';position:fixed;left:58.333%;top:15%;height:70%;width:2px;background:linear-gradient(180deg,transparent,var(--gold),transparent);opacity:.5}
+  .form-container{position:relative;z-index:1;width:100%;max-width:400px;padding:1.5rem 0;animation:fade-up .6s ease both;animation-delay:.1s;opacity:0}
+  .form-header{margin-bottom:1.75rem;text-align:center}
+  .form-logo-wrap{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-bottom:1.25rem;text-decoration:none}
+  .form-logo-img{width:40px;height:40px;object-fit:contain;border-radius:9px;box-shadow:0 4px 12px rgba(0,48,135,.15)}
+  .form-logo-placeholder{width:40px;height:40px;background:linear-gradient(135deg,var(--gov-blue),var(--gov-mid));border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1rem;box-shadow:0 4px 12px rgba(0,48,135,.3);font-family:'Playfair Display',serif}
+  .form-brand-name{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--gov-navy)}
+  .form-title{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--text-dark);line-height:1.2;margin:0 0 .35rem}
+  .form-title-accent{display:inline-block;width:28px;height:2px;background:var(--gold);border-radius:2px;margin-right:5px;vertical-align:middle;position:relative;top:-2px}
+  .form-subtitle{font-size:.8rem;color:var(--text-muted);line-height:1.5;margin-bottom:0}
+  .pulso-alert{border-radius:10px;padding:.85rem 1rem;font-size:.82rem;margin-bottom:1rem;display:flex;align-items:flex-start;gap:.6rem;border:1px solid}
+  .pulso-alert.danger{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);color:#991b1b}
+  .pulso-field{margin-bottom:1rem}
+  .pulso-label{display:block;font-size:.74rem;font-weight:600;color:var(--text-dark);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.45rem}
+  .pulso-input-wrap{position:relative}
+  .pulso-input-icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:1rem;pointer-events:none;z-index:1;transition:color .2s}
+  .pulso-input{width:100%;height:46px;padding:0 1rem 0 2.75rem;border:1.5px solid var(--border);border-radius:10px;font-size:.875rem;font-family:'DM Sans',sans-serif;color:var(--text-dark);background:var(--white);transition:all .2s;outline:none;appearance:none}
+  .pulso-input::placeholder{color:#b8c3cc}
+  .pulso-input:focus{border-color:var(--gov-blue);box-shadow:0 0 0 3px rgba(0,48,135,.1)}
+  .pulso-input-wrap:focus-within .pulso-input-icon{color:var(--gov-blue)}
+  .pulso-input.is-invalid{border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.08)}
+  .pulso-toggle-pw{position:absolute;right:.9rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;padding:.25rem;line-height:1;transition:color .2s;z-index:2}
+  .pulso-toggle-pw:hover{color:var(--gov-blue)}
+  .pulso-invalid{font-size:.72rem;color:#ef4444;margin-top:.3rem;display:flex;align-items:center;gap:.3rem}
+  /* Términos */
+  .terms-wrap{display:flex;align-items:flex-start;gap:.6rem;margin:1rem 0 1.25rem;padding:.85rem 1rem;background:rgba(0,48,135,.03);border:1.5px solid var(--border);border-radius:10px;transition:border-color .2s}
+  .terms-wrap:focus-within{border-color:rgba(0,48,135,.3)}
+  .pulso-check{width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;appearance:none;cursor:pointer;position:relative;transition:all .15s;background:white;flex-shrink:0;margin-top:2px}
+  .pulso-check:checked{background:var(--gov-blue);border-color:var(--gov-blue)}
+  .pulso-check:checked::after{content:'';position:absolute;left:3px;top:0;width:5px;height:9px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg)}
+  .terms-label{font-size:.8rem;color:var(--text-muted);line-height:1.5;cursor:pointer}
+  .terms-label a{color:var(--gov-blue);text-decoration:none;font-weight:500}
+  .terms-label a:hover{color:var(--gold)}
+  .btn-pulso-primary{width:100%;height:50px;background:linear-gradient(135deg,var(--gov-navy) 0%,var(--gov-blue) 100%);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.04em;cursor:pointer;position:relative;overflow:hidden;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:.6rem;box-shadow:0 4px 20px rgba(0,48,135,.35)}
+  .btn-pulso-primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,48,135,.45)}
+  .login-link{text-align:center;font-size:.83rem;color:var(--text-muted);margin-top:1.25rem}
+  .login-link a{color:var(--gov-blue);text-decoration:none;font-weight:600}
+  .login-link a:hover{color:var(--gold)}
+  .form-inst-block{background:linear-gradient(135deg,rgba(0,48,135,.04),rgba(201,162,39,.04));border:1px solid rgba(0,48,135,.1);border-radius:12px;padding:.9rem 1.1rem;display:flex;align-items:center;gap:.65rem;margin-top:1.25rem}
+  .form-inst-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--gov-navy),var(--gov-blue));border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;font-size:.85rem;flex-shrink:0}
+  .form-inst-text{font-size:.73rem;color:var(--text-muted);line-height:1.4}
+  .form-inst-text strong{display:block;color:var(--text-dark);font-size:.77rem;margin-bottom:.1rem}
+  @keyframes geo-pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  @keyframes escudo-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes fade-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @media(max-width:1200px){.pulso-left{flex:0 0 50%;max-width:50%}.pulso-right{flex:0 0 50%;max-width:50%}}
+  @media(max-width:900px){.pulso-left{display:none}.pulso-right{flex:0 0 100%;max-width:100%;padding:2rem 1.5rem;align-items:center}.pulso-right::before,.pulso-right::after{display:none}}
+  .input-group.has-validation::before { pointer-events: none !important; }
+</style>
 @endsection
 
 @section('vendor-script')
@@ -29,123 +110,187 @@ use Illuminate\Support\Facades\Storage;
 @endsection
 
 @section('content')
-@php $ci = \App\Models\ConfiguracionInstitucional::cached(); @endphp
-<div class="authentication-wrapper authentication-cover">
-  <a href="{{ url('/') }}" class="app-brand auth-cover-brand">
-    @if(!empty($ci?->logo_ruta))
-      <span class="app-brand-logo demo">
-        <img src="{{ \Illuminate\Support\Facades\Storage::url($ci->logo_ruta) }}" height="28" alt="logo" class="rounded">
-      </span>
-    @endif
-    <span class="app-brand-text demo text-heading fw-bold">
-      {{ $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL' }}
-    </span>
-  </a>
+<div class="pulso-login-wrapper">
 
-  <div class="authentication-inner row m-0">
-    <!-- Ilustración lateral -->
-    <div class="d-none d-xl-flex col-xl-8 p-0">
-      <div class="auth-cover-bg d-flex justify-content-center align-items-center">
-        <img src="{{ asset('assets/img/illustrations/auth-register-illustration-' . $configData['theme'] . '.png') }}"
-          alt="register" class="my-5 auth-illustration"
-          data-app-light-img="illustrations/auth-register-illustration-light.png"
-          data-app-dark-img="illustrations/auth-register-illustration-dark.png" />
-        <img src="{{ asset('assets/img/illustrations/bg-shape-image-' . $configData['theme'] . '.png') }}"
-          alt="bg" class="platform-bg"
-          data-app-light-img="illustrations/bg-shape-image-light.png"
-          data-app-dark-img="illustrations/bg-shape-image-dark.png" />
-      </div>
+  {{-- PANEL IZQUIERDO --}}
+  <div class="pulso-left">
+    <div class="left-pattern"></div>
+    <div class="left-geo">
+      <div class="geo-line"></div><div class="geo-line"></div>
+      <div class="geo-line"></div><div class="geo-line"></div>
+    </div>
+    <div class="left-circle-top"></div>
+    <div class="left-circle-bottom"></div>
+
+    <div class="left-content">
+      <div class="left-icon-big">🏛️</div>
+
+      <p class="left-pretitle">Únete al Sistema &bull; {{ $ci?->sigla ?? 'PULSO UGEL' }}</p>
+      <h1 class="left-title">Crear<br><span>Cuenta</span></h1>
+      <p class="left-subtitle">
+        Accede a todas las herramientas de control interno e integridad
+        @if($ci?->nombre_institucion) de {{ $ci->nombre_institucion }}@else institucional@endif.
+      </p>
+
+      <ul class="benefit-list">
+        <li class="benefit-item">
+          <div class="benefit-check"><i class="ti tabler-check"></i></div>
+          <div class="benefit-text">
+            <strong>Monitoreo en tiempo real</strong>
+            <span>Seguimiento continuo de actividades e indicadores</span>
+          </div>
+        </li>
+        <li class="benefit-item">
+          <div class="benefit-check"><i class="ti tabler-check"></i></div>
+          <div class="benefit-text">
+            <strong>Reportes y semáforo SCI</strong>
+            <span>Visualización clara del estado de control interno</span>
+          </div>
+        </li>
+        <li class="benefit-item">
+          <div class="benefit-check"><i class="ti tabler-check"></i></div>
+          <div class="benefit-text">
+            <strong>Gestión de integridad</strong>
+            <span>Plan de integridad y modelo de conducta institucional</span>
+          </div>
+        </li>
+        <li class="benefit-item">
+          <div class="benefit-check"><i class="ti tabler-check"></i></div>
+          <div class="benefit-text">
+            <strong>Acceso seguro y auditado</strong>
+            <span>Sistema con trazabilidad y control de accesos</span>
+          </div>
+        </li>
+      </ul>
     </div>
 
-    <!-- Formulario de registro -->
-    <div class="d-flex col-12 col-xl-4 align-items-center authentication-bg p-sm-12 p-6">
-      <div class="w-px-400 mx-auto mt-12 pt-5">
-        <h4 class="mb-1">Crear Cuenta 🚀</h4>
-        <p class="mb-6 text-muted">Completa tus datos para acceder a {{ $ci?->sigla ?? $ci?->nombre_institucion ?? 'PULSO UGEL' }}</p>
+    <div class="left-footer">
+      <p class="left-footer-text">
+        @if($ci?->correo_institucional){{ $ci->correo_institucional }} &bull; @endif
+        @if($ci?->ugel_codigo)Código {{ $ci->ugel_codigo }} &bull; @endif
+        {{ date('Y') }}
+      </p>
+    </div>
+  </div>
 
-        @if ($errors->any())
-          <div class="alert alert-danger mb-4">
-            <ul class="mb-0 ps-3">
-              @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
-            </ul>
-          </div>
-        @endif
+  {{-- PANEL DERECHO --}}
+  <div class="pulso-right">
+    <div class="form-container">
 
-        <form id="formAuthentication" class="mb-6" action="{{ route('register') }}" method="POST">
-          @csrf
-
-          <div class="mb-5 form-control-validation">
-            <label for="name" class="form-label">Nombre completo</label>
-            <input type="text" class="form-control @error('name') is-invalid @enderror"
-              id="name" name="name" value="{{ old('name') }}"
-              placeholder="Ej: María García López" autofocus />
-            @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-          </div>
-
-          <div class="mb-5 form-control-validation">
-            <label for="email" class="form-label">Correo electrónico</label>
-            <input type="email" class="form-control @error('email') is-invalid @enderror"
-              id="email" name="email" value="{{ old('email') }}"
-              placeholder="tu.correo@ugel.gob.pe" />
-            @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-          </div>
-
-          <div class="mb-5 form-password-toggle form-control-validation">
-            <label class="form-label" for="password">Contraseña</label>
-            <div class="input-group input-group-merge">
-              <input type="password" id="password"
-                class="form-control @error('password') is-invalid @enderror"
-                name="password" placeholder="············" />
-              <span class="input-group-text cursor-pointer">
-                <i class="icon-base ti tabler-eye-off"></i>
-              </span>
-              @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+      <div class="form-header">
+        <a href="{{ url('/') }}" class="form-logo-wrap">
+          @if(!empty($ci?->logo_ruta))
+            <img src="{{ Storage::url($ci->logo_ruta) }}" alt="logo" class="form-logo-img">
+          @else
+            <div class="form-logo-placeholder">
+              {{ strtoupper(substr($ci?->sigla ?? $ci?->nombre_institucion ?? 'P', 0, 2)) }}
             </div>
-          </div>
+          @endif
+          <span class="form-brand-name">{{ $ci?->sigla ?? 'PULSO UGEL' }}</span>
+        </a>
+        <h2 class="form-title">
+          <span class="form-title-accent"></span>Crear cuenta
+        </h2>
+        <p class="form-subtitle">Completa tus datos para acceder al sistema institucional</p>
+      </div>
 
-          <div class="mb-5 form-password-toggle">
-            <label class="form-label" for="password_confirmation">Confirmar contraseña</label>
-            <div class="input-group input-group-merge">
-              <input type="password" id="password_confirmation"
-                class="form-control" name="password_confirmation" placeholder="············" />
-              <span class="input-group-text cursor-pointer">
-                <i class="icon-base ti tabler-eye-off"></i>
-              </span>
-            </div>
-          </div>
+      @if ($errors->any())
+        <div class="pulso-alert danger">
+          <i class="ti tabler-alert-circle" style="font-size:1rem;flex-shrink:0;margin-top:1px;"></i>
+          <div>@foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>
+        </div>
+      @endif
 
-          <div class="mb-6 mt-2">
-            <div class="form-check ms-2 form-control-validation">
-              <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" />
-              <label class="form-check-label" for="terms-conditions">
-                Acepto la <a href="javascript:void(0);">política de privacidad y términos de uso</a>
-              </label>
-            </div>
-          </div>
+      <form id="formAuthentication" action="{{ route('register') }}" method="POST" novalidate>
+        @csrf
 
-          <button class="btn btn-primary d-grid w-100" type="submit">Crear Cuenta</button>
-        </form>
-
-        <p class="text-center">
-          <span>¿Ya tienes cuenta?</span>
-          <a href="{{ route('login') }}"> Iniciar sesión</a>
-        </p>
-
-        <div class="divider my-6">
-          <div class="divider-text">
-            {{ $ci?->nombre_institucion ?? 'PULSO UGEL' }}
-            @if($ci?->distrito || $ci?->provincia)
-              &bull; {{ implode(', ', array_filter([$ci->distrito, $ci->provincia, $ci->departamento])) }}
-            @endif
+        {{-- Nombre --}}
+        <div class="pulso-field form-control-validation">
+          <label class="pulso-label" for="name">Nombre completo</label>
+          <div class="pulso-input-wrap">
+            <i class="ti tabler-user pulso-input-icon"></i>
+            <input type="text" id="name" name="name" value="{{ old('name') }}"
+              placeholder="Ej: María García López" autofocus autocomplete="name"
+              class="pulso-input @error('name') is-invalid @enderror" />
           </div>
         </div>
 
-        <p class="text-center text-muted small mb-0">
-          <i class="ti tabler-shield-check me-1 text-success"></i>
-          Sistema de Monitoreo de Control Interno e Integridad Institucional
-        </p>
+        {{-- Email --}}
+        <div class="pulso-field form-control-validation">
+          <label class="pulso-label" for="email">Correo electrónico</label>
+          <div class="pulso-input-wrap">
+            <i class="ti tabler-mail pulso-input-icon"></i>
+            <input type="email" id="email" name="email" value="{{ old('email') }}"
+              placeholder="tu.correo@ugel.gob.pe" autocomplete="email"
+              class="pulso-input @error('email') is-invalid @enderror" />
+          </div>
+        </div>
+
+        {{-- Contraseña --}}
+        <div class="pulso-field form-password-toggle form-control-validation">
+          <label class="pulso-label" for="password">Contraseña</label>
+          <div class="input-group input-group-merge">
+            <input type="password" id="password" name="password"
+              placeholder="············" autocomplete="new-password"
+              class="pulso-input @error('password') is-invalid @enderror"
+              style="border-radius:10px 0 0 10px;border-left-width:1.5px;border-right:none;padding-left:1rem;" />
+            <span class="input-group-text cursor-pointer" style="background:var(--white);border:1.5px solid var(--border);border-left:none;border-radius:0 10px 10px 0;padding:0 0.85rem;">
+              <i class="icon-base ti tabler-eye-off"></i>
+            </span>
+          </div>
+        </div>
+
+        {{-- Confirmar contraseña --}}
+        <div class="pulso-field form-password-toggle form-control-validation">
+          <label class="pulso-label" for="confirm-password">Confirmar contraseña</label>
+          <div class="input-group input-group-merge">
+            <input type="password" id="confirm-password"
+              name="password_confirmation" placeholder="············"
+              autocomplete="new-password" class="pulso-input"
+              style="border-radius:10px 0 0 10px;border-left-width:1.5px;border-right:none;padding-left:1rem;" />
+            <span class="input-group-text cursor-pointer" style="background:var(--white);border:1.5px solid var(--border);border-left:none;border-radius:0 10px 10px 0;padding:0 0.85rem;">
+              <i class="icon-base ti tabler-eye-off"></i>
+            </span>
+          </div>
+        </div>
+
+        {{-- Términos --}}
+        <div class="terms-wrap form-control-validation">
+          <input type="checkbox" id="terms-conditions" name="terms"
+                 class="pulso-check" />
+          <label class="terms-label" for="terms-conditions">
+            Acepto la <a href="javascript:void(0);">política de privacidad</a>
+            y los <a href="javascript:void(0);">términos de uso</a> del sistema institucional
+          </label>
+        </div>
+
+        <button type="submit" class="btn-pulso-primary">
+          <i class="ti tabler-user-plus" style="font-size:1rem;"></i>
+          Crear Cuenta
+        </button>
+      </form>
+
+      <p class="login-link">
+        ¿Ya tienes cuenta? <a href="{{ route('login') }}">Iniciar sesión</a>
+      </p>
+
+      <div class="form-inst-block">
+        <div class="form-inst-icon">
+          <i class="ti tabler-shield-check"></i>
+        </div>
+        <div class="form-inst-text">
+          <strong>{{ $ci?->nombre_institucion ?? 'PULSO UGEL' }}</strong>
+          @if($ci?->distrito || $ci?->provincia)
+            {{ implode(', ', array_filter([$ci?->distrito, $ci?->provincia, $ci?->departamento])) }}
+          @else
+            Control Interno e Integridad Institucional
+          @endif
+        </div>
       </div>
+
     </div>
   </div>
+
 </div>
+
 @endsection
