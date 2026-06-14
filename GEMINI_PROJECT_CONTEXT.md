@@ -1,6 +1,6 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.1.3] - 2026-06-12 (Sesión Actual)
+## [v2.1.3] - 2026-06-13 (Sesión Actual)
 ### Buscador Inteligente y Layout Dinámico (Protección de Interfaz)
 - **Buscador Global Sensible a Permisos**:
     - Implementación de `SearchController.php` para generar dinámicamente las sugerencias de búsqueda basadas en las capacidades reales del usuario logueado.
@@ -21,13 +21,14 @@
 - **Optimización de Roles Institucionales**:
     - Actualización de los roles maestros (`Administrador`, `Coordinador SCI`, `Responsable de Unidad`, `Operador`, `Visualizador`) para heredar el nuevo esquema de permisos granulados.
     - Los permisos ahora siguen un estándar industrial: `[modulo].[accion]`, facilitando la auditoría y el mantenimiento.
-- **Refinamiento de UI/UX Administrativa**:
+- **Refinamiento de UI/UX Administrativa (Autenticación y Registro)**:
+    - **Seguridad de Acceso**: Desactivación del registro público (`Fortify::registration`) para centralizar la creación de usuarios en la administración institucional.
+    - **Rediseño Premium**: Actualización de las vistas de `Registro` y `Verificación 2FA` con estética institucional (doble panel, branding UGEL).
     - Actualización de las vistas de administración para ocultar/mostrar botones de acción (Editar, Eliminar, Crear) basados estrictamente en los nuevos permisos granulados mediante directivas `@can`.
-    - Mejora de los menús laterales y submenús para respetar la visibilidad según los nuevos permisos.
 - **Estructura Técnica**:
     - Migración: `2026_06_12_112045_refactorizar_permisos_granulados_v2.php`.
     - Seeder: `RolesPermisosSeeder.php` totalmente reescrito con el nuevo mapa de permisos.
-    - Rutas: Limpieza y re-protección de más de 60 rutas del sistema.
+    - Rutas: Limpieza y re-protección de más de 60 rutas del sistema e inhabilitación de `/register`.
 
 ### Administración Pro y Refinamiento UI/UX (Módulo de Usuarios)
 - **Gestión Avanzada de Usuarios**:
