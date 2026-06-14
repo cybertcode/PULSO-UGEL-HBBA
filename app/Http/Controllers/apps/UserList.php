@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserList extends Controller
 {
@@ -127,6 +128,7 @@ class UserList extends Controller
         ]);
 
         $user->assignRole($data['rol']);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Usuario creado correctamente.']);
@@ -162,6 +164,7 @@ class UserList extends Controller
         }
 
         $usuario->syncRoles([$data['rol']]);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'Usuario actualizado correctamente.']);

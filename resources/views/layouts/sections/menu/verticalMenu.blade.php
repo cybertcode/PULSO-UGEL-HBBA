@@ -73,6 +73,7 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
     'slider-landing'              => 'slider.ver',
     'encuestas.index'             => 'encuesta.ver',
     'normativas'                  => 'normativas.ver',
+    'ayuda'                       => 'ayuda.ver',
   ];
 
   // Para ítems con submenu: si al menos un slug hijo es visible, el padre se muestra

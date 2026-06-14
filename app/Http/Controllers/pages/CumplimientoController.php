@@ -21,8 +21,10 @@ class CumplimientoController extends Controller
         $hoy    = now();
         $anio   = (int) $request->input('anio', $hoy->year);
         $modulo = $request->input('modulo', 'ambos'); // sci | integridad | ambos
+        $user   = \Illuminate\Support\Facades\Auth::user();
 
         $base = fn() => Actividad::whereYear('created_at', $anio)
+            ->visiblesParaUsuario($user)
             ->when($modulo !== 'ambos', fn($q) => $q->where('modulo', $modulo));
 
         // ── KPIs globales ────────────────────────────────────────────────────
@@ -39,25 +41,26 @@ class CumplimientoController extends Controller
 
         // ── KPIs por módulo (siempre para los tabs) ──────────────────────────
         $kpis_sci = [
-            'total'       => Actividad::whereYear('created_at', $anio)->where('modulo', 'sci')->count(),
-            'completadas' => Actividad::whereYear('created_at', $anio)->where('modulo', 'sci')->where('estado', 'completada')->count(),
-            'vencidas'    => Actividad::whereYear('created_at', $anio)->where('modulo', 'sci')->where('estado', 'vencida')->count(),
-            'sin_ev'      => Actividad::whereYear('created_at', $anio)->where('modulo', 'sci')->whereNotIn('estado', ['pendiente'])->whereDoesntHave('evidencias')->count(),
+            'total'       => Actividad::whereYear('created_at', $anio)->where('modulo', 'sci')->visiblesParaUsuario($user)->count(),
+            'completadas' => Actividad::whereYear('created_at', $anio)->where('modulo', 'sci')->visiblesParaUsuario($user)->where('estado', 'completada')->count(),
+            'vencidas'    => Actividad::whereYear('created_at', $anio)->where('modulo', 'sci')->visiblesParaUsuario($user)->where('estado', 'vencida')->count(),
+            'sin_ev'      => Actividad::whereYear('created_at', $anio)->where('modulo', 'sci')->visiblesParaUsuario($user)->whereNotIn('estado', ['pendiente'])->whereDoesntHave('evidencias')->count(),
         ];
         $kpis_sci['porcentaje'] = $kpis_sci['total'] > 0
             ? round(($kpis_sci['completadas'] / $kpis_sci['total']) * 100) : 0;
 
         $kpis_integridad = [
-            'total'       => Actividad::whereYear('created_at', $anio)->where('modulo', 'integridad')->count(),
-            'completadas' => Actividad::whereYear('created_at', $anio)->where('modulo', 'integridad')->where('estado', 'completada')->count(),
-            'vencidas'    => Actividad::whereYear('created_at', $anio)->where('modulo', 'integridad')->where('estado', 'vencida')->count(),
-            'sin_ev'      => Actividad::whereYear('created_at', $anio)->where('modulo', 'integridad')->whereNotIn('estado', ['pendiente'])->whereDoesntHave('evidencias')->count(),
+            'total'       => Actividad::whereYear('created_at', $anio)->where('modulo', 'integridad')->visiblesParaUsuario($user)->count(),
+            'completadas' => Actividad::whereYear('created_at', $anio)->where('modulo', 'integridad')->visiblesParaUsuario($user)->where('estado', 'completada')->count(),
+            'vencidas'    => Actividad::whereYear('created_at', $anio)->where('modulo', 'integridad')->visiblesParaUsuario($user)->where('estado', 'vencida')->count(),
+            'sin_ev'      => Actividad::whereYear('created_at', $anio)->where('modulo', 'integridad')->visiblesParaUsuario($user)->whereNotIn('estado', ['pendiente'])->whereDoesntHave('evidencias')->count(),
         ];
         $kpis_integridad['porcentaje'] = $kpis_integridad['total'] > 0
             ? round(($kpis_integridad['completadas'] / $kpis_integridad['total']) * 100) : 0;
 
         // ── Próximas a vencer (15 días) ──────────────────────────────────────
         $proximas = Actividad::with(['unidadOrganica', 'responsables'])
+            ->visiblesParaUsuario($user)
             ->whereNotIn('estado', ['completada', 'vencida', 'observado'])
             ->whereDate('fecha_limite', '>=', $hoy->toDateString())
             ->whereDate('fecha_limite', '<=', $hoy->copy()->addDays(15)->toDateString())
@@ -67,6 +70,7 @@ class CumplimientoController extends Controller
 
         // ── Vencidas recientes (30 días) ─────────────────────────────────────
         $vencidas = Actividad::with(['unidadOrganica', 'responsables'])
+            ->visiblesParaUsuario($user)
             ->where('estado', 'vencida')
             ->whereDate('fecha_limite', '>=', $hoy->copy()->subDays(30)->toDateString())
             ->when($modulo !== 'ambos', fn($q) => $q->where('modulo', $modulo))
@@ -256,12 +260,15 @@ class CumplimientoController extends Controller
         $anio          = (int) $request->input('anio', now()->year);
         $porPagina     = 20;
 
+        $user = \Illuminate\Support\Facades\Auth::user();
+
         $query = Actividad::with([
                 'sciPregunta.componente',
                 'integridadPregunta.componente',
                 'unidadOrganica',
                 'responsables',
             ])
+            ->visiblesParaUsuario($user)
             ->whereNotIn('estado', ['pendiente'])
             ->whereDoesntHave('evidencias')
             ->whereYear('created_at', $anio)
@@ -270,10 +277,11 @@ class CumplimientoController extends Controller
             ->when($prioridad,     fn($q) => $q->where('prioridad', $prioridad))
             ->when($responsableId, fn($q) => $q->whereHas('responsables', fn($r) => $r->where('users.id', $responsableId)))
             ->when($ejeId,         fn($q) => $q->whereHas('sciPregunta.componente', fn($r) => $r->where('sci_eje_id', $ejeId)))
-            ->orderByDesc('created_at'); // más recientes primero
+            ->orderByDesc('created_at');
 
-        // Stats siempre sin filtros adicionales del query para mostrar totales reales
-        $baseStats = Actividad::whereNotIn('estado', ['pendiente'])
+        // Stats con el mismo scope de visibilidad
+        $baseStats = Actividad::visiblesParaUsuario($user)
+            ->whereNotIn('estado', ['pendiente'])
             ->whereDoesntHave('evidencias')
             ->whereYear('created_at', $anio);
 

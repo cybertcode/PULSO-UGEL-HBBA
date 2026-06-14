@@ -15,6 +15,16 @@ class RolesPermisosSeeder extends Seeder
         // ─── Permisos granulados — patrón modulo.accion ───────────────────────
         $permisos = [
 
+            // Perfil propio (/user/profile) — todos los roles deben tenerlo
+            'perfil.ver',
+            'perfil.editar',
+
+            // Mis Actividades (/mis-actividades) — todos los roles
+            'mis-actividades.ver',
+
+            // Ayuda (/ayuda) — todos los roles
+            'ayuda.ver',
+
             // Usuarios (/usuarios, /cargos)
             'usuarios.ver',
             'usuarios.crear',
@@ -128,6 +138,15 @@ class RolesPermisosSeeder extends Seeder
             Permission::firstOrCreate(['name' => $p, 'guard_name' => 'web']);
         }
 
+        // Permisos base que todo usuario autenticado debe tener sin excepción
+        $permisosBase = [
+            'perfil.ver',
+            'perfil.editar',
+            'mis-actividades.ver',
+            'ayuda.ver',
+            'alertas.ver',  // notificaciones básicas del sistema
+        ];
+
         // ─── Roles ────────────────────────────────────────────────────────────
 
         // Super Admin — bypasa todos los Gates vía Gate::before()
@@ -139,7 +158,7 @@ class RolesPermisosSeeder extends Seeder
 
         // Coordinador SCI — gestión completa SCI/Integridad, sin administración de sistema
         $coordinador = Role::firstOrCreate(['name' => 'Coordinador SCI', 'guard_name' => 'web']);
-        $coordinador->syncPermissions([
+        $coordinador->syncPermissions(array_merge($permisosBase, [
             'control-interno.ver', 'control-interno.crear', 'control-interno.editar', 'control-interno.eliminar',
             'componentes.ver', 'componentes.crear', 'componentes.editar', 'componentes.eliminar',
             'integridad.ver', 'integridad.crear', 'integridad.editar', 'integridad.eliminar',
@@ -153,12 +172,12 @@ class RolesPermisosSeeder extends Seeder
             'recomendaciones.ver', 'recomendaciones.crear', 'recomendaciones.editar', 'recomendaciones.eliminar',
             'normativas.ver', 'normativas.crear', 'normativas.editar', 'normativas.eliminar',
             'encuesta.ver', 'encuesta.crear', 'encuesta.editar', 'encuesta.eliminar',
-            'encuesta.publicar', 'encuesta.resultados', 'encuesta.exportar',
-        ]);
+            'encuesta.publicar', 'encuesta.resultados', 'encuesta.exportar', 'encuesta.responder',
+        ]));
 
         // Responsable de Unidad — gestiona actividades de su unidad, sin eliminar ni configurar sistema
         $responsable = Role::firstOrCreate(['name' => 'Responsable de Unidad', 'guard_name' => 'web']);
-        $responsable->syncPermissions([
+        $responsable->syncPermissions(array_merge($permisosBase, [
             'control-interno.ver', 'control-interno.crear', 'control-interno.editar',
             'componentes.ver',
             'integridad.ver', 'integridad.crear', 'integridad.editar',
@@ -172,11 +191,11 @@ class RolesPermisosSeeder extends Seeder
             'recomendaciones.ver', 'recomendaciones.crear', 'recomendaciones.editar',
             'normativas.ver',
             'encuesta.ver', 'encuesta.responder', 'encuesta.resultados',
-        ]);
+        ]));
 
         // Operador — registra avances y sube evidencias, solo lectura en análisis
         $operador = Role::firstOrCreate(['name' => 'Operador', 'guard_name' => 'web']);
-        $operador->syncPermissions([
+        $operador->syncPermissions(array_merge($permisosBase, [
             'control-interno.ver', 'control-interno.editar',
             'componentes.ver',
             'integridad.ver', 'integridad.editar',
@@ -188,11 +207,11 @@ class RolesPermisosSeeder extends Seeder
             'recomendaciones.ver',
             'normativas.ver',
             'encuesta.ver', 'encuesta.responder',
-        ]);
+        ]));
 
         // Visualizador — solo lectura total
         $visualizador = Role::firstOrCreate(['name' => 'Visualizador', 'guard_name' => 'web']);
-        $visualizador->syncPermissions([
+        $visualizador->syncPermissions(array_merge($permisosBase, [
             'control-interno.ver',
             'componentes.ver',
             'integridad.ver',
@@ -206,6 +225,6 @@ class RolesPermisosSeeder extends Seeder
             'recomendaciones.ver',
             'normativas.ver',
             'encuesta.ver', 'encuesta.responder',
-        ]);
+        ]));
     }
 }

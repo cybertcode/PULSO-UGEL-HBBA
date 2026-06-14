@@ -227,7 +227,7 @@ class UsuariosSeeder extends Seeder
                 ['email' => $datos['email']],
                 [
                     'name'               => $datos['name'],
-                    'password'           => \Illuminate\Support\Facades\Hash::make('Ugel@2024'),
+                    'password'           => \Illuminate\Support\Facades\Hash::make(env('SEED_USERS_PASSWORD', 'Ugel@2024')),
                     'email_verified_at'  => now(),
                     'dni'                => $datos['dni'],
                     'cargo_id'           => $cargoId,

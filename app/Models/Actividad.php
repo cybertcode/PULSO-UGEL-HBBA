@@ -8,11 +8,59 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class Actividad extends Model
 {
     use HasFactory, SoftDeletes;
+
+    // Roles que tienen visibilidad total — ven todo sin filtro de asignación
+    const ROLES_VISION_GLOBAL = ['Super Admin', 'Administrador', 'Coordinador SCI'];
+
+    /**
+     * Scope de visibilidad por rol:
+     * - Super Admin / Administrador / Coordinador SCI → todo sin filtro
+     * - Responsable de Unidad → actividades de su unidad orgánica O asignadas a él
+     * - Operador → solo actividades asignadas a él
+     * - Visualizador → solo actividades asignadas a él (lectura)
+     */
+    public function scopeVisiblesParaUsuario(Builder $query, ?\App\Models\User $user = null): Builder
+    {
+        $user ??= Auth::user();
+
+        if (!$user) {
+            return $query->whereRaw('0=1'); // sin usuario: nada
+        }
+
+        // Roles con visión global: no aplica filtro
+        if ($user->hasAnyRole(self::ROLES_VISION_GLOBAL)) {
+            return $query;
+        }
+
+        // Responsable de Unidad: ve su unidad O sus asignaciones
+        if ($user->hasRole('Responsable de Unidad')) {
+            return $query->where(function (Builder $q) use ($user) {
+                $q->where('unidad_organica_id', $user->unidad_organica_id)
+                  ->orWhereHas('responsables', fn(Builder $r) => $r->where('users.id', $user->id));
+            });
+        }
+
+        // Operador y Visualizador: solo sus asignaciones
+        return $query->whereHas('responsables', fn(Builder $r) => $r->where('users.id', $user->id));
+    }
+
+    /**
+     * Verifica si el usuario puede mutar (editar/actualizar avance) esta actividad.
+     * Admins/Coordinadores pueden todo. Otros solo si son responsables asignados.
+     */
+    public function puedeEditarUsuario(?\App\Models\User $user = null): bool
+    {
+        $user ??= Auth::user();
+        if (!$user) return false;
+        if ($user->hasAnyRole(self::ROLES_VISION_GLOBAL)) return true;
+        return $this->responsables()->where('users.id', $user->id)->exists();
+    }
 
     protected $table = 'actividades';
 

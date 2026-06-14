@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
           trigger: new FormValidation.plugins.Trigger(),
           bootstrap5: new FormValidation.plugins.Bootstrap5({
             eleValidClass: '',
-            rowSelector: '.form-control-validation'
+            rowSelector: '.pulso-field'
           }),
           submitButton: new FormValidation.plugins.SubmitButton(),
           defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         init: instance => {
           instance.on('plugins.message.placed', e => {
-            if (e.element.parentElement.classList.contains('input-group')) {
+            if (e.element.parentElement && e.element.parentElement.classList.contains('input-group')) {
               e.element.parentElement.insertAdjacentElement('afterend', e.messageElement);
             }
           });

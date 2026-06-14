@@ -91,13 +91,15 @@ class EvidenciasController extends Controller
     // ── Query builder compartido ──────────────────────────────────────────────
     private function buildQuery(Request $request, string $modulo)
     {
+        $user = Auth::user();
+
         $query = Evidencia::with([
                 'actividad.sciPregunta.componente',
                 'actividad.integridadPregunta.componente',
                 'subidoPor',
                 'validadoPor',
             ])
-            ->whereHas('actividad', fn($q) => $q->where('modulo', $modulo))
+            ->whereHas('actividad', fn($q) => $q->where('modulo', $modulo)->visiblesParaUsuario($user))
             ->orderByDesc('created_at');
 
         if ($request->filled('actividad_id')) {
@@ -125,7 +127,8 @@ class EvidenciasController extends Controller
 
     private function countByModulo(string $modulo, ?string $estado = null)
     {
-        $q = Evidencia::whereHas('actividad', fn($q) => $q->where('modulo', $modulo));
+        $user = Auth::user();
+        $q = Evidencia::whereHas('actividad', fn($q) => $q->where('modulo', $modulo)->visiblesParaUsuario($user));
         if ($estado) $q->where('estado', $estado);
         return $q->count();
     }

@@ -19,13 +19,15 @@ class ControlInternoController extends Controller
     public function index(Request $request)
     {
         $anio = $request->input('anio', now()->year);
+        $user = Auth::user();
 
+        $baseStats = Actividad::where('modulo', 'sci')->visiblesParaUsuario($user);
         $stats = [
-            'total'       => Actividad::where('modulo', 'sci')->count(),
-            'completadas' => Actividad::where('modulo', 'sci')->where('estado', 'completada')->count(),
-            'en_proceso'  => Actividad::where('modulo', 'sci')->where('estado', 'en_proceso')->count(),
-            'observados'  => Actividad::where('modulo', 'sci')->where('estado', 'observado')->count(),
-            'vencidas'    => Actividad::where('modulo', 'sci')
+            'total'       => (clone $baseStats)->count(),
+            'completadas' => (clone $baseStats)->where('estado', 'completada')->count(),
+            'en_proceso'  => (clone $baseStats)->where('estado', 'en_proceso')->count(),
+            'observados'  => (clone $baseStats)->where('estado', 'observado')->count(),
+            'vencidas'    => (clone $baseStats)
                               ->whereNotIn('estado', ['completada', 'observado'])
                               ->whereDate('fecha_limite', '<', now())->count(),
         ];
@@ -36,6 +38,7 @@ class ControlInternoController extends Controller
                 'responsables',
             ])
             ->where('modulo', 'sci')
+            ->visiblesParaUsuario($user)
             ->orderBy('fecha_limite');
 
         if ($request->filled('anio')) {
@@ -202,6 +205,8 @@ class ControlInternoController extends Controller
 
     public function updateAvance(Request $request, Actividad $actividad)
     {
+        abort_unless($actividad->puedeEditarUsuario(), 403, 'No tienes permiso para actualizar esta actividad.');
+
         $request->validate(['avance' => 'required|integer|min:0|max:100']);
 
         $avance = $request->avance;
@@ -222,6 +227,8 @@ class ControlInternoController extends Controller
 
     public function historial(Actividad $actividad)
     {
+        abort_unless($actividad->puedeEditarUsuario(), 403);
+
         $historial = ActividadHistorial::with('usuario')
             ->where('actividad_id', $actividad->id)
             ->latest()

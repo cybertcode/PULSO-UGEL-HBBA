@@ -29,6 +29,7 @@ $menuPermisosLocal = [
   'slider-landing'              => 'slider.ver',
   'encuestas.index'             => 'encuesta.ver',
   'normativas'                  => 'normativas.ver',
+  'ayuda'                       => 'ayuda.ver',
 ];
 $subAuthUser = Auth::user();
 @endphp

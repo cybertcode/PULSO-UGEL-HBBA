@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\PermissionRegistrar;
 
 class AccessRoles extends Controller
 {
@@ -55,6 +56,7 @@ class AccessRoles extends Controller
         if (!empty($data['permisos'])) {
             $role->syncPermissions($data['permisos']);
         }
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('adm-roles')->with('success', 'Rol creado correctamente.');
     }
@@ -69,6 +71,7 @@ class AccessRoles extends Controller
 
         $role->update(['name' => $data['name']]);
         $role->syncPermissions($data['permisos'] ?? []);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect()->route('adm-roles')->with('success', 'Rol actualizado correctamente.');
     }
@@ -85,6 +88,7 @@ class AccessRoles extends Controller
         }
 
         $usuario->syncRoles([$data['rol']]);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return response()->json([
             'success' => true,

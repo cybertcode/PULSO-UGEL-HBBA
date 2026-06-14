@@ -22,19 +22,20 @@ class DashboardController extends Controller
         $anio   = now()->year;
         $config = ConfiguracionInstitucional::cached();
         [$umbral_verde, $umbral_amarillo] = SemaforoHelper::umbrales($config);
+        $user   = Auth::user();
 
-        // ── Stats SCI ─────────────────────────────────────────────────────────
-        $totalSci       = Actividad::where('modulo', 'sci')->count();
-        $completadasSci = Actividad::where('modulo', 'sci')->where('estado', 'completada')->count();
-        $vencidasSci    = Actividad::where('modulo', 'sci')
+        // ── Stats SCI (filtrados por visibilidad del usuario) ─────────────────
+        $totalSci       = Actividad::where('modulo', 'sci')->visiblesParaUsuario($user)->count();
+        $completadasSci = Actividad::where('modulo', 'sci')->visiblesParaUsuario($user)->where('estado', 'completada')->count();
+        $vencidasSci    = Actividad::where('modulo', 'sci')->visiblesParaUsuario($user)
                             ->whereNotIn('estado', ['completada', 'observado'])
                             ->whereDate('fecha_limite', '<', now())->count();
         $avanceSci      = $totalSci > 0 ? round(($completadasSci / $totalSci) * 100) : 0;
 
         // ── Stats Integridad ──────────────────────────────────────────────────
-        $totalInt       = Actividad::where('modulo', 'integridad')->count();
-        $completadasInt = Actividad::where('modulo', 'integridad')->where('estado', 'completada')->count();
-        $vencidasInt    = Actividad::where('modulo', 'integridad')
+        $totalInt       = Actividad::where('modulo', 'integridad')->visiblesParaUsuario($user)->count();
+        $completadasInt = Actividad::where('modulo', 'integridad')->visiblesParaUsuario($user)->where('estado', 'completada')->count();
+        $vencidasInt    = Actividad::where('modulo', 'integridad')->visiblesParaUsuario($user)
                             ->whereNotIn('estado', ['completada', 'observado'])
                             ->whereDate('fecha_limite', '<', now())->count();
         $avanceInt      = $totalInt > 0 ? round(($completadasInt / $totalInt) * 100) : 0;
@@ -42,9 +43,9 @@ class DashboardController extends Controller
         // ── Stats generales ───────────────────────────────────────────────────
         $total       = $totalSci + $totalInt;
         $completadas = $completadasSci + $completadasInt;
-        $en_proceso  = Actividad::where('estado', 'en_proceso')->count();
-        $pendientes  = Actividad::where('estado', 'pendiente')->count();
-        $observados  = Actividad::where('estado', 'observado')->count();
+        $en_proceso  = Actividad::visiblesParaUsuario($user)->where('estado', 'en_proceso')->count();
+        $pendientes  = Actividad::visiblesParaUsuario($user)->where('estado', 'pendiente')->count();
+        $observados  = Actividad::visiblesParaUsuario($user)->where('estado', 'observado')->count();
         $vencidas    = $vencidasSci + $vencidasInt;
 
         $totalUnidades = UnidadOrganica::where('activo', true)->count();
@@ -77,6 +78,7 @@ class DashboardController extends Controller
 
         for ($m = 1; $m <= 12; $m++) {
             $base = fn($modulo) => Actividad::where('modulo', $modulo)
+                ->visiblesParaUsuario($user)
                 ->whereYear('created_at', $anio)->whereMonth('created_at', $m);
 
             $tot = $base('sci')->count();
@@ -88,7 +90,7 @@ class DashboardController extends Controller
             $por_mes_integ[] = $totI > 0 ? round(($comI / $totI) * 100) : 0;
         }
 
-        // ── Ranking de unidades (ambos módulos) ───────────────────────────────
+        // ── Ranking de unidades ───────────────────────────────────────────────
         $areas_ranking = UnidadOrganica::withCount([
             'actividades',
             'actividades as completadas_count' => fn($q) => $q->where('estado', 'completada'),
@@ -106,10 +108,10 @@ class DashboardController extends Controller
             ->with(['componentes' => fn($q) => $q->where('activo', true)->with('preguntas')])
             ->orderBy('orden')
             ->get()
-            ->map(function ($eje) use ($config) {
+            ->map(function ($eje) use ($config, $user) {
                 $pregIds     = $eje->componentes->flatMap(fn($c) => $c->preguntas->pluck('id'));
-                $total       = Actividad::where('modulo', 'sci')->whereIn('sci_pregunta_id', $pregIds)->count();
-                $completadas = Actividad::where('modulo', 'sci')->whereIn('sci_pregunta_id', $pregIds)
+                $total       = Actividad::where('modulo', 'sci')->whereIn('sci_pregunta_id', $pregIds)->visiblesParaUsuario($user)->count();
+                $completadas = Actividad::where('modulo', 'sci')->whereIn('sci_pregunta_id', $pregIds)->visiblesParaUsuario($user)
                                 ->where('estado', 'completada')->count();
                 $eje->actividades_count = $total;
                 $eje->completadas_count = $completadas;
@@ -123,10 +125,10 @@ class DashboardController extends Controller
             ->with(['componentes' => fn($q) => $q->where('activo', true)->with('preguntas')])
             ->orderBy('orden')
             ->get()
-            ->map(function ($etapa) use ($config) {
+            ->map(function ($etapa) use ($config, $user) {
                 $pregIds     = $etapa->componentes->flatMap(fn($c) => $c->preguntas->pluck('id'));
-                $total       = Actividad::where('modulo', 'integridad')->whereIn('integridad_pregunta_id', $pregIds)->count();
-                $completadas = Actividad::where('modulo', 'integridad')->whereIn('integridad_pregunta_id', $pregIds)
+                $total       = Actividad::where('modulo', 'integridad')->whereIn('integridad_pregunta_id', $pregIds)->visiblesParaUsuario($user)->count();
+                $completadas = Actividad::where('modulo', 'integridad')->whereIn('integridad_pregunta_id', $pregIds)->visiblesParaUsuario($user)
                                 ->where('estado', 'completada')->count();
                 $etapa->actividades_count = $total;
                 $etapa->completadas_count = $completadas;
@@ -140,7 +142,6 @@ class DashboardController extends Controller
             ->orderByRaw("FIELD(prioridad,'alta','media','baja')")
             ->limit(6)->get();
 
-        // Stats alertas por tipo
         $alertas_stats = [
             'vencimiento'     => Alerta::where('leida', false)->where('tipo', 'vencimiento')->count(),
             'avance_bajo'     => Alerta::where('leida', false)->where('tipo', 'avance_bajo')->count(),
@@ -148,13 +149,14 @@ class DashboardController extends Controller
             'total'           => Alerta::where('leida', false)->count(),
         ];
 
-        // ── Actividades próximas a vencer (ambos módulos) ─────────────────────
+        // ── Actividades próximas a vencer ─────────────────────────────────────
         $actividades_proximas = Actividad::with([
                 'sciPregunta.componente',
                 'integridadPregunta.componente',
                 'responsables',
                 'unidadOrganica',
             ])
+            ->visiblesParaUsuario($user)
             ->whereNotIn('estado', ['completada', 'observado'])
             ->whereDate('fecha_limite', '>=', now())
             ->orderBy('fecha_limite')
@@ -162,12 +164,13 @@ class DashboardController extends Controller
 
         // ── Actividades vencidas recientes ────────────────────────────────────
         $actividades_vencidas = Actividad::with(['responsables', 'unidadOrganica'])
+            ->visiblesParaUsuario($user)
             ->whereNotIn('estado', ['completada', 'observado'])
             ->whereDate('fecha_limite', '<', now())
             ->orderByDesc('fecha_limite')
             ->limit(5)->get();
 
-        // ── Buenas Prácticas reales ───────────────────────────────────────────
+        // ── Buenas Prácticas ──────────────────────────────────────────────────
         $buenas_practicas = BuenaPractica::with(['unidadOrganica', 'responsable'])
             ->whereNotIn('estado', ['suspendida', 'no_elegible'])
             ->orderByDesc('updated_at')
@@ -180,8 +183,7 @@ class DashboardController extends Controller
             'implementadas'  => BuenaPractica::where('estado', 'en_implementacion')->count(),
         ];
 
-        // ── Usuario actual ────────────────────────────────────────────────────
-        $user = Auth::user();
+        // ── Mis actividades pendientes ────────────────────────────────────────
         $mis_actividades_count = Actividad::whereHas('responsables', fn($q) => $q->where('users.id', $user->id))
             ->whereNotIn('estado', ['completada'])->count();
 
