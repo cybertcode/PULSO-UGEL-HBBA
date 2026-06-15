@@ -19,13 +19,25 @@
   $prioIcon = match($act->prioridad) { 'alta' => 'tabler-flag-3', 'media' => 'tabler-flag-2', default => 'tabler-flag' };
   $miRol = $act->responsables->where('id', $user->id)->first()?->pivot->tipo ?? 'principal';
   $rolIcon = match($miRol) { 'principal' => 'tabler-crown', 'supervisor' => 'tabler-eye', default => 'tabler-users' };
-  $tieneEvidencias = $act->evidencias->count() > 0;
   $diasRestantes = $act->fecha_limite ? (int) round(now()->diffInDays($act->fecha_limite, false)) : null;
-  $canEdit = !in_array($act->estado, ['completada', 'vencida']);
   $actComp = $act->modulo === 'integridad'
     ? $act->integridadPregunta?->componente?->nombre
     : $act->sciPregunta?->componente?->nombre;
   $actModuloBadge = $act->modulo === 'integridad' ? 'warning' : 'primary';
+
+  // Estado de evidencias (debe calcularse antes de $canEdit)
+  $evTotal     = $act->evidencias->count();
+  $evValidadas = $act->evidencias->where('estado', 'validado')->count();
+  $evRechazadas= $act->evidencias->where('estado', 'rechazado')->count();
+  $evPendientes= $act->evidencias->where('estado', 'pendiente')->count();
+
+  // Si está "completada" pero tiene evidencia rechazada → mostrar como observado visualmente
+  $estadoEfectivo = ($act->estado === 'completada' && $evRechazadas > 0) ? 'observado' : $act->estado;
+  if ($estadoEfectivo !== $act->estado) {
+    $ec = 'warning'; // naranja para indicar problema
+    $estadoIcon = 'tabler-alert-circle';
+  }
+  $canEdit = !in_array($act->estado, ['completada', 'vencida']) || $evRechazadas > 0;
 @endphp
 <div class="col-md-6 col-xl-4">
   <div class="card act-card is-{{ $act->estado }} h-100">
@@ -78,14 +90,27 @@
             <span class="text-muted">Sin fecha límite</span>
           @endif
         </div>
-        <div class="d-flex align-items-center gap-1">
-          @if($tieneEvidencias)
-            <span class="dias-chip bg-label-success text-success">
-              <i class="ti tabler-file-check" style="font-size:.75rem"></i>
-              {{ $act->evidencias->count() }} ev.
+        <div class="d-flex align-items-center gap-1 flex-wrap">
+          @if($evRechazadas > 0)
+            <span class="dias-chip bg-label-danger text-danger" title="{{ $evRechazadas }} evidencia(s) rechazada(s) — requiere corrección">
+              <i class="ti tabler-file-x" style="font-size:.75rem"></i>
+              {{ $evRechazadas }} rechazada{{ $evRechazadas > 1 ? 's' : '' }}
             </span>
-          @elseif(!in_array($act->estado, ['pendiente']))
-            <span class="dias-chip bg-label-warning text-warning">
+          @endif
+          @if($evPendientes > 0)
+            <span class="dias-chip bg-label-warning text-warning" title="{{ $evPendientes }} evidencia(s) pendiente(s) de revisión">
+              <i class="ti tabler-file-time" style="font-size:.75rem"></i>
+              {{ $evPendientes }} en revisión
+            </span>
+          @endif
+          @if($evValidadas > 0)
+            <span class="dias-chip bg-label-success text-success" title="{{ $evValidadas }} evidencia(s) validada(s)">
+              <i class="ti tabler-file-check" style="font-size:.75rem"></i>
+              {{ $evValidadas }} validada{{ $evValidadas > 1 ? 's' : '' }}
+            </span>
+          @endif
+          @if($evTotal === 0 && !in_array($act->estado, ['pendiente', 'completada']))
+            <span class="dias-chip bg-label-warning text-warning" title="Sin evidencias registradas">
               <i class="ti tabler-file-off" style="font-size:.75rem"></i>
               Sin evidencia
             </span>
@@ -103,11 +128,67 @@
         <i class="ti tabler-pencil me-1"></i>Actualizar
       </button>
       @endif
-      <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id]) }}"
-         class="btn btn-sm btn-act {{ $tieneEvidencias ? 'btn-outline-success' : 'btn-outline-warning' }}"
-         title="{{ $tieneEvidencias ? 'Ver/subir evidencias' : 'Subir evidencia' }}">
-        <i class="ti {{ $tieneEvidencias ? 'tabler-file-check' : 'tabler-upload' }}"></i>
-      </a>
+      @php
+        // Determinar estado del botón de evidencia
+        if ($act->estado === 'completada' && $evRechazadas === 0) {
+          // Completada y validada: solo mostrar ícono, sin acción de subir
+          $evBtnClass   = 'btn-outline-success';
+          $evBtnIcon    = 'tabler-file-check';
+          $evBtnTitle   = 'Actividad completada y validada';
+          $evBtnDesact  = true;
+        } elseif ($evPendientes > 0) {
+          // En revisión: no puede subir otra mientras espera validación
+          $evBtnClass   = 'btn-outline-warning';
+          $evBtnIcon    = 'tabler-file-time';
+          $evBtnTitle   = 'Evidencia en revisión — espera la validación del coordinador';
+          $evBtnDesact  = true;
+        } elseif ($evRechazadas > 0) {
+          // Rechazada: enlace a evidencias para corregir
+          $evBtnClass   = 'btn-outline-danger';
+          $evBtnIcon    = 'tabler-file-x';
+          $evBtnTitle   = 'Evidencia rechazada — clic para corregir';
+          $evBtnDesact  = false;
+        } else {
+          // Libre: puede subir evidencia
+          $evBtnClass   = 'btn-outline-secondary';
+          $evBtnIcon    = 'tabler-upload';
+          $evBtnTitle   = 'Subir evidencia';
+          $evBtnDesact  = false;
+        }
+        $evNueva = (!$evBtnDesact) ? '1' : '0';
+      @endphp
+      @if($evBtnDesact)
+      <button type="button" class="btn btn-sm btn-act {{ $evBtnClass }}" title="{{ $evBtnTitle }}" disabled>
+        <i class="ti {{ $evBtnIcon }}"></i>
+      </button>
+      @elseif($evRechazadas > 0)
+      {{-- Corregir evidencia rechazada: abre modal local con datos pre-cargados --}}
+      @php $evRechazada = $act->evidencias->where('estado','rechazado')->first(); @endphp
+      <button type="button"
+        class="btn btn-sm btn-act {{ $evBtnClass }} btn-ev-corregir"
+        title="{{ $evBtnTitle }}"
+        data-actividad-id="{{ $act->id }}"
+        data-evidencia-id="{{ $evRechazada?->id }}"
+        data-titulo="{{ $evRechazada?->titulo }}"
+        data-sgd="{{ $evRechazada?->numero_sgd }}"
+        data-url-doc="{{ $evRechazada?->url_documento }}"
+        data-descripcion="{{ $evRechazada?->descripcion }}"
+        data-motivo="{{ $evRechazada?->motivo_rechazo }}"
+        data-action="{{ route('sci-evidencias.update', $evRechazada ?? 0) }}">
+        <i class="ti {{ $evBtnIcon }}"></i>
+      </button>
+      @else
+      {{-- Subir nueva evidencia: abre modal local --}}
+      <button type="button"
+        class="btn btn-sm btn-act {{ $evBtnClass }} btn-ev-nueva"
+        title="{{ $evBtnTitle }}"
+        data-actividad-id="{{ $act->id }}"
+        data-modulo="{{ $act->modulo }}"
+        data-nombre="{{ Str::limit($act->nombre, 60) }}"
+        data-action="{{ route('sci-evidencias.store') }}">
+        <i class="ti {{ $evBtnIcon }}"></i>
+      </button>
+      @endif
       <button class="btn btn-sm btn-act btn-outline-secondary btn-ver-historial"
         data-id="{{ $act->id }}"
         data-nombre="{{ Str::limit($act->nombre, 50) }}"

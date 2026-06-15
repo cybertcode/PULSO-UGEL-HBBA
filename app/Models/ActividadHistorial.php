@@ -35,6 +35,7 @@ class ActividadHistorial extends Model
             'unidad_organica_id'=> 'Unidad Orgánica',
             'fecha_limite'      => 'Fecha Límite',
             'observaciones'     => 'Observaciones',
+            'evidencia'         => 'Evidencia',
             default             => ucfirst(str_replace('_', ' ', $this->campo)),
         };
     }

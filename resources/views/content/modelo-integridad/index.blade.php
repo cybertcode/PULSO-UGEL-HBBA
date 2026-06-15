@@ -142,9 +142,35 @@ $configData = Helper::appClasses();
         <div class="text-muted" style="font-size:10px">cargadas</div>
       </div>
 
+      @if($observadas_count > 0)
+      <div class="kpi-divider d-none d-sm-block"></div>
+      {{-- Observadas --}}
+      <div class="col-4 col-sm px-3 py-2 border-start border-sm-0">
+        <a href="?estado=observado" class="text-decoration-none">
+          <div class="fw-bold lh-1 mb-1" style="font-size:2rem;color:#f59e0b">{{ $observadas_count }}</div>
+          <div class="fw-semibold" style="font-size:11px">Observadas</div>
+          <div class="text-muted" style="font-size:10px">requieren corrección</div>
+        </a>
+      </div>
+      @endif
+
     </div>
   </div>
 </div>
+
+{{-- Banner alerta rechazadas --}}
+@if($ev_rechazadas_count > 0)
+<div class="alert alert-danger d-flex align-items-center gap-3 py-2 px-3 mb-3" role="alert" style="border-radius:10px;border-left:4px solid #dc3545">
+  <i class="ti tabler-file-x" style="font-size:1.4rem;flex-shrink:0"></i>
+  <div class="flex-grow-1">
+    <strong>{{ $ev_rechazadas_count }} actividad(es)</strong> tienen evidencias rechazadas y requieren corrección.
+  </div>
+  <a href="{{ route('sci-evidencias', ['modulo' => 'integridad', 'estado' => 'rechazado']) }}"
+     class="btn btn-danger btn-sm ms-auto text-nowrap">
+    <i class="ti tabler-refresh-alert me-1"></i>Corregir evidencias
+  </a>
+</div>
+@endif
 
 {{-- ── Tabs ──────────────────────────────────────────────── --}}
 <ul class="nav nav-tabs mb-3" role="tablist">

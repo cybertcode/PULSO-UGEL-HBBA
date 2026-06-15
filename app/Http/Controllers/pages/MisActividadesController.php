@@ -24,7 +24,8 @@ class MisActividadesController extends Controller
             ])
             ->whereHas('responsables', fn($q) => $q->where('users.id', $user->id))
             ->orderByRaw("FIELD(estado,'vencida','observado','en_proceso','pendiente','completada')")
-            ->orderBy('fecha_limite');
+            ->orderBy('fecha_limite')
+            ->orderByDesc('created_at');
 
         if ($request->filled('modulo')) {
             $query->where('modulo', $request->modulo);
@@ -77,8 +78,15 @@ class MisActividadesController extends Controller
             'completadas' => (clone $base)->where('estado', 'completada')->count(),
             'en_proceso'  => (clone $base)->whereIn('estado', ['en_proceso', 'pendiente'])->count(),
             'vencidas'    => (clone $base)->where('estado', 'vencida')->count(),
+            'observadas'  => (clone $base)->where(fn($q) => $q
+                                ->where('estado', 'observado')
+                                ->orWhere(fn($q2) => $q2->where('estado', 'completada')
+                                    ->whereHas('evidencias', fn($e) => $e->where('estado', 'rechazado'))
+                                )
+                            )->count(),
             'sin_ev'      => (clone $base)->whereNotIn('estado', ['pendiente'])
                                 ->whereDoesntHave('evidencias')->count(),
+            'ev_rechazadas' => (clone $base)->whereHas('evidencias', fn($q) => $q->where('estado', 'rechazado'))->count(),
             'sci'         => (clone $base)->where('modulo', 'sci')->count(),
             'integridad'  => (clone $base)->where('modulo', 'integridad')->count(),
         ];
@@ -133,12 +141,30 @@ class MisActividadesController extends Controller
             'observaciones' => 'nullable|string|max:500',
         ]);
 
-        $data = ['avance' => $request->avance];
+        $avance = (int) $request->avance;
+        $data   = ['avance' => $avance];
 
-        if ($request->avance == 100 && $actividad->estado !== 'completada') {
-            $data['estado']             = 'completada';
-            $data['fecha_cumplimiento'] = now()->toDateString();
-        } elseif ($request->avance > 0 && $actividad->estado === 'pendiente') {
+        if ($avance == 100 && $actividad->estado !== 'completada') {
+            // Solo puede completarse si tiene al menos una evidencia validada
+            $tieneEvidenciaValidada = $actividad->evidencias()
+                ->where('estado', 'validado')->exists();
+
+            if ($tieneEvidenciaValidada) {
+                $data['estado']             = 'completada';
+                $data['fecha_cumplimiento'] = now()->toDateString();
+            } else {
+                // Llega a 100% pero sin evidencia validada → queda en_proceso
+                $data['estado'] = 'en_proceso';
+                $actividad->update($data);
+                return response()->json([
+                    'success'      => false,
+                    'avance'       => $avance,
+                    'estado'       => 'en_proceso',
+                    'estado_label' => 'En Proceso',
+                    'advertencia'  => 'El avance se guardó en 100%, pero la actividad no puede marcarse como completada hasta que tengas al menos una evidencia validada.',
+                ]);
+            }
+        } elseif ($avance > 0 && in_array($actividad->estado, ['pendiente', 'observado'])) {
             $data['estado'] = 'en_proceso';
         }
 
