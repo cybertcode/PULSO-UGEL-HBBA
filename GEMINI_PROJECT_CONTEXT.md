@@ -1,6 +1,25 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.1.3] - 2026-06-14 (Sesión Actual)
+## [v2.1.4] - 2026-06-15 (Sesión Actual)
+### Refactorización AJAX y Utilidades Globales de Notificación
+- **Buenas Prácticas (Flujo Asíncrono)**:
+    - Implementación de un flujo AJAX completo para la gestión de estados del concurso (Recepcionar, Declarar Elegible, No Elegible, Ganador UGEL y Resultados Externos).
+    - Eliminación de recargas de página mediante el uso de `FormData` y peticiones asíncronas, mejorando la fluidez del panel de gestión.
+    - Nueva funcionalidad para **Presentar Prácticas Institucionales al Concurso**, permitiendo a los gestores convertir una práctica de oficina en un proyecto concursable con un solo clic.
+- **Recomendaciones (Refinamiento y Seguridad)**:
+    - Sincronización de la visibilidad de campos (Unidad Orgánica, Responsable) basada en permisos granulados para evitar la edición no autorizada por parte de usuarios operativos.
+    - Integración de la lógica de guardado y actualización con el sistema de notificaciones global.
+- **Utilidades Globales de UI (Pulso-UI)**:
+    - **pulsoToast**: Implementación de un sistema de notificaciones toast ligero y estéticamente alineado con la identidad visual (soporte para success, error, warning e info).
+    - **pulsoConfirm**: Wrapper global sobre SweetAlert2 para estandarizar los diálogos de confirmación en todo el sistema, con fallback automático a diálogos nativos.
+- **Seguridad y Permisos**:
+    - Actualización de `RolesPermisosSeeder.php` para otorgar permisos de creación en buenas prácticas a roles operativos, permitiendo la presentación de propuestas al concurso.
+- **Estructura Técnica**:
+    - Controladores: Refactorización de `BuenasPracticasController.php` y `RecomendacionesController.php` para retornar respuestas JSON.
+    - Vistas: Actualización de `index.blade.php` en ambos módulos e integración de scripts globales en `scripts.blade.php`.
+    - Rutas: Nueva ruta POST para la presentación de prácticas al concurso.
+
+## [v2.1.3] - 2026-06-14
 ### Buscador Inteligente y Layout Dinámico (Protección de Interfaz)
 - **Buscador Global Sensible a Permisos**:
     - Implementación de `SearchController.php` para generar dinámicamente las sugerencias de búsqueda basadas en las capacidades reales del usuario logueado.

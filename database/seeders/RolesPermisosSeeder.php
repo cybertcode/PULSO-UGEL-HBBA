@@ -233,6 +233,8 @@ class RolesPermisosSeeder extends Seeder
             // Buenas prácticas — puede ver y presentar proyectos al concurso
             'buenas-practicas.ver', 'buenas-practicas.crear',
             'recomendaciones.ver',
+            // Reconocimientos — puede ver (si gana el concurso lo verá aquí)
+            'reconocimientos.ver',
             // Normativas — solo lectura
             'normativas.ver',
             // Encuestas — solo responde

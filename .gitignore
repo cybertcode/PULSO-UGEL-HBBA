@@ -10,7 +10,7 @@
 # .env
 .env
 .env.backup
-.env.production
+# .env.production se sube al repo para deploy en servidor
 .phpactor.json
 .phpunit.result.cache
 

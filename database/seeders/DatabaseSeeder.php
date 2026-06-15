@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             NuevosModulosSeeder::class,
             BuenasPracticasRecomendacionesSeeder::class,
             AlertasPruebaSeeder::class,
+            NormativasSeeder::class,
         ]);
     }
 }
