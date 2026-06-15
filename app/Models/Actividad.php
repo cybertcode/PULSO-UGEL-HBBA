@@ -15,50 +15,43 @@ class Actividad extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Roles que tienen visibilidad total — ven todo sin filtro de asignación
-    const ROLES_VISION_GLOBAL = ['Super Admin', 'Administrador', 'Coordinador SCI'];
-
     /**
-     * Scope de visibilidad por rol:
-     * - Super Admin / Administrador / Coordinador SCI → todo sin filtro
-     * - Responsable de Unidad → actividades de su unidad orgánica O asignadas a él
-     * - Operador → solo actividades asignadas a él
-     * - Visualizador → solo actividades asignadas a él (lectura)
+     * Scope de visibilidad basado en permisos (sin referencias a roles):
+     *  - actividades.ver-todas  → visión global, sin filtro
+     *  - actividades.ver-unidad → su unidad orgánica O actividades asignadas a él
+     *  - ninguno de los dos     → solo las actividades donde es responsable asignado
      */
     public function scopeVisiblesParaUsuario(Builder $query, ?\App\Models\User $user = null): Builder
     {
         $user ??= Auth::user();
 
         if (!$user) {
-            return $query->whereRaw('0=1'); // sin usuario: nada
+            return $query->whereRaw('0=1');
         }
 
-        // Roles con visión global: no aplica filtro
-        if ($user->hasAnyRole(self::ROLES_VISION_GLOBAL)) {
+        if ($user->can('actividades.ver-todas')) {
             return $query;
         }
 
-        // Responsable de Unidad: ve su unidad O sus asignaciones
-        if ($user->hasRole('Responsable de Unidad')) {
+        if ($user->can('actividades.ver-unidad') && !empty($user->unidad_organica_id)) {
             return $query->where(function (Builder $q) use ($user) {
                 $q->where('unidad_organica_id', $user->unidad_organica_id)
                   ->orWhereHas('responsables', fn(Builder $r) => $r->where('users.id', $user->id));
             });
         }
 
-        // Operador y Visualizador: solo sus asignaciones
         return $query->whereHas('responsables', fn(Builder $r) => $r->where('users.id', $user->id));
     }
 
     /**
-     * Verifica si el usuario puede mutar (editar/actualizar avance) esta actividad.
-     * Admins/Coordinadores pueden todo. Otros solo si son responsables asignados.
+     * Verifica si el usuario puede editar/actualizar esta actividad.
+     * Visión global → puede todo. Otros → solo si es responsable asignado.
      */
     public function puedeEditarUsuario(?\App\Models\User $user = null): bool
     {
         $user ??= Auth::user();
         if (!$user) return false;
-        if ($user->hasAnyRole(self::ROLES_VISION_GLOBAL)) return true;
+        if ($user->can('actividades.ver-todas')) return true;
         return $this->responsables()->where('users.id', $user->id)->exists();
     }
 

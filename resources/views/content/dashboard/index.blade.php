@@ -157,18 +157,20 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
   <div class="row g-3 g-md-4 mt-1">
     @php
     $hstats = [
-      ['val' => $stats['total'],       'lbl' => 'Total actividades', 'fill_w' => 100,  'fill_c' => 'rgba(255,255,255,.4)'],
-      ['val' => $stats['completadas'],  'lbl' => 'Completadas · '.$pct.'%', 'fill_w' => $pct, 'fill_c' => '#28c76f'],
-      ['val' => $stats['vencidas'],     'lbl' => 'Vencidas',         'fill_w' => $stats['total'] ? round($stats['vencidas']/$stats['total']*100) : 0, 'fill_c' => '#ea5455'],
-      ['val' => $stats['alertas'],      'lbl' => 'Alertas activas',  'fill_w' => min(100,$stats['alertas']*10), 'fill_c' => '#ff9f43'],
+      ['val' => $stats['total'],      'lbl' => 'Total actividades',    'fill_w' => 100,  'fill_c' => 'rgba(255,255,255,.4)', 'perm' => null],
+      ['val' => $stats['completadas'], 'lbl' => "Completadas · {$pct}%",'fill_w' => $pct, 'fill_c' => '#28c76f',             'perm' => null],
+      ['val' => $stats['vencidas'],   'lbl' => 'Vencidas',             'fill_w' => $stats['total'] ? round($stats['vencidas']/$stats['total']*100) : 0, 'fill_c' => '#ea5455', 'perm' => null],
+      ['val' => $stats['alertas'],    'lbl' => 'Alertas activas',      'fill_w' => min(100,$stats['alertas']*10), 'fill_c' => '#ff9f43', 'perm' => 'alertas.ver'],
     ];
     @endphp
     @foreach($hstats as $hs)
+    @if(!$hs['perm'] || auth()->user()->can($hs['perm']))
     <div class="col-6 col-md-3">
       <div class="dash-hs-val">{{ $hs['val'] }}</div>
       <div class="dash-hs-lbl">{{ $hs['lbl'] }}</div>
       <div class="dash-hs-bar"><div class="dash-hs-fill" style="width:{{ $hs['fill_w'] }}%;background:{{ $hs['fill_c'] }}"></div></div>
     </div>
+    @endif
     @endforeach
   </div>
 </div>
@@ -278,14 +280,15 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
 <div class="row g-3 mb-4">
   @php
   $kpis = [
-    ['grad'=>'kpi-g-blue',   'icon'=>'tabler-activity',          'val'=>$stats['total'],       'lbl'=>'Total actividades', 'route'=>'sci-control-interno'],
-    ['grad'=>'kpi-g-red',    'icon'=>'tabler-alarm-off',         'val'=>$stats['vencidas'],    'lbl'=>'Vencidas',          'route'=>'sci-control-interno'],
-    ['grad'=>'kpi-g-orange', 'icon'=>'tabler-bell-ringing',      'val'=>$stats['alertas'],     'lbl'=>'Alertas activas',   'route'=>'mon-alertas'],
-    ['grad'=>'kpi-g-cyan',   'icon'=>'tabler-building-community','val'=>$stats['unidades'],    'lbl'=>'Áreas participantes','route'=>'mon-ranking-unidades'],
-    ['grad'=>'kpi-g-purple', 'icon'=>'tabler-trophy',            'val'=>$bp_stats['ganadores'],'lbl'=>'Ganadores concurso','route'=>'buenas-practicas'],
+    ['grad'=>'kpi-g-blue',   'icon'=>'tabler-activity',          'val'=>$stats['total'],    'lbl'=>'Total actividades', 'route'=>'sci-control-interno', 'perm'=>null],
+    ['grad'=>'kpi-g-red',    'icon'=>'tabler-alarm-off',         'val'=>$stats['vencidas'], 'lbl'=>'Vencidas',          'route'=>'sci-control-interno', 'perm'=>null],
+    ['grad'=>'kpi-g-orange', 'icon'=>'tabler-bell-ringing',      'val'=>$stats['alertas'],  'lbl'=>'Alertas activas',   'route'=>'mon-alertas',         'perm'=>'alertas.ver'],
+    ['grad'=>'kpi-g-cyan',   'icon'=>'tabler-building-community','val'=>$stats['unidades'], 'lbl'=>'Áreas participantes','route'=>'mon-ranking-unidades','perm'=>'reportes.ver'],
+    ['grad'=>'kpi-g-purple', 'icon'=>'tabler-trophy',            'val'=>$bp_stats['ganadores'],'lbl'=>'Ganadores concurso','route'=>'buenas-practicas', 'perm'=>'buenas-practicas.ver'],
   ];
   @endphp
   @foreach($kpis as $kpi)
+  @if(!$kpi['perm'] || auth()->user()->can($kpi['perm']))
   <div class="col-6 col-xl">
     <a href="{{ route($kpi['route']) }}" class="text-decoration-none">
       <div class="card kpi-strip {{ $kpi['grad'] }} mb-0">
@@ -301,6 +304,7 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
       </div>
     </a>
   </div>
+  @endif
   @endforeach
 </div>
 
@@ -343,6 +347,7 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
   </div>
 
   {{-- Alertas activas --}}
+  @can('alertas.ver')
   <div class="col-12 col-xl-4">
     <div class="card sec-card h-100 mb-0">
       <div class="card-header d-flex align-items-center justify-content-between">
@@ -399,6 +404,7 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
       </div>
     </div>
   </div>
+  @endcan
 
 </div>
 
@@ -621,6 +627,7 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
   </div>
 
   {{-- Buenas Prácticas --}}
+  @can('buenas-practicas.ver')
   <div class="col-12 col-xl-5">
     <div class="card sec-card mb-0">
       <div class="card-header d-flex align-items-start justify-content-between">
@@ -684,6 +691,7 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
       </div>
     </div>
   </div>
+  @endcan
 
 </div>
 
@@ -729,6 +737,7 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
   </div>
 
   {{-- Ranking Unidades --}}
+  @can('reportes.ver')
   <div class="col-12 col-xl-8">
     <div class="card sec-card mb-0">
       <div class="card-header d-flex align-items-start justify-content-between">
@@ -778,6 +787,7 @@ $pct = $stats['total'] ? $stats['avance_global'] : 0;
       </div>
     </div>
   </div>
+  @endcan
 
 </div>
 

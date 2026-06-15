@@ -627,9 +627,10 @@ $configData = Helper::appClasses();
                     {{ $act->fecha_limite?->format('d/m/Y') ?? '—' }}
                   </small>
                 </td>
-                @can('integridad.editar')
+                @canany(['integridad.editar', 'integridad.eliminar'])
                 <td>
                   <div class="d-flex gap-1">
+                    @can('integridad.editar')
                     <button class="btn btn-icon btn-label-primary btn-editar-act" style="width:30px;height:30px;padding:0;border-radius:8px"
                       data-id="{{ $act->id }}"
                       data-nombre="{{ $act->nombre }}"
@@ -647,15 +648,18 @@ $configData = Helper::appClasses();
                       data-observaciones="{{ $act->observaciones ?? '' }}"
                       data-action="{{ route('integridad.update', $act) }}"
                       title="Editar"><i class="ti tabler-edit icon-14px"></i></button>
+                    @endcan
+                    @can('integridad.eliminar')
                     <form method="POST" action="{{ route('integridad.destroy', $act) }}" class="form-eliminar-act d-inline">
                       @csrf @method('DELETE')
                       <button type="submit" class="btn btn-icon btn-label-secondary" style="width:30px;height:30px;padding:0;border-radius:8px" title="Eliminar">
                         <i class="ti tabler-trash icon-14px"></i>
                       </button>
                     </form>
+                    @endcan
                   </div>
                 </td>
-                @endcan
+                @endcanany
               </tr>
               @empty
               <tr><td colspan="8">

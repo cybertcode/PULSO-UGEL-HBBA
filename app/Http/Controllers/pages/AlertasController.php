@@ -89,14 +89,27 @@ class AlertasController extends Controller
             && $user->can('alertas.crear')
             && !empty($user->unidad_organica_id);
 
-        // Solo quienes pueden eliminar pueden elegir destinatario
-        $usuarios = $esAdmin
-            ? User::orderBy('name')->get(['id', 'name', 'email'])
+        // Gestores totales (eliminar): ven todos los usuarios
+        // Responsable de Unidad: solo ve usuarios de su unidad
+        if ($esAdmin) {
+            $usuarios = User::where('estado', 'activo')->orderBy('name')->get(['id', 'name', 'email', 'unidad_organica_id']);
+        } elseif ($esResponsableUnidad) {
+            $usuarios = User::where('estado', 'activo')
+                ->where('unidad_organica_id', $user->unidad_organica_id)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'unidad_organica_id']);
+        } else {
+            $usuarios = collect();
+        }
+
+        // Unidades para select (solo gestores totales)
+        $unidades = $esAdmin
+            ? \App\Models\UnidadOrganica::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'sigla'])
             : collect();
 
         return view('content.alertas.index', compact(
             'stats', 'alertas', 'tab', 'modulo', 'prioridad', 'tipo',
-            'usuarios', 'esAdmin', 'esResponsableUnidad'
+            'usuarios', 'unidades', 'esAdmin', 'esResponsableUnidad'
         ));
     }
 
@@ -343,25 +356,42 @@ class AlertasController extends Controller
     }
 
     /**
-     * Retorna actividades de un módulo para poblar el select dinámico en el modal.
+     * Retorna actividades filtradas por módulo + destinatario para el modal de alertas.
+     * Acepta: modulo, usuario_id (individual), unidad_id (por unidad).
      */
     public function actividadesPorModulo(Request $request)
     {
-        $modulo = $request->input('modulo');
+        $modulo    = $request->input('modulo');
+        $usuarioId = $request->input('usuario_id');
+        $unidadId  = $request->input('unidad_id');
+
         if (!in_array($modulo, ['sci', 'integridad'])) {
             return response()->json([]);
         }
 
-        $actividades = Actividad::where('modulo', $modulo)
+        $query = Actividad::where('modulo', $modulo)
             ->where('anio', now()->year)
-            ->orderBy('codigo')
-            ->get(['id', 'codigo', 'nombre', 'estado', 'avance']);
+            ->orderBy('codigo');
+
+        if ($usuarioId) {
+            // Individual: solo actividades asignadas a ese usuario
+            $query->whereHas('responsables', fn($q) => $q->where('users.id', $usuarioId));
+        } elseif ($unidadId) {
+            // Por unidad: actividades de esa unidad
+            $query->where('unidad_organica_id', $unidadId);
+        }
+        // Sin filtro de destino (tipo=todos): devuelve todas del módulo
+
+        $actividades = $query->get(['id', 'codigo', 'nombre', 'estado', 'avance', 'fecha_limite']);
 
         return response()->json($actividades->map(fn($a) => [
-            'id'     => $a->id,
-            'label'  => "[{$a->codigo}] {$a->nombre}",
-            'estado' => $a->estado,
-            'avance' => $a->avance,
+            'id'          => $a->id,
+            'label'       => "[{$a->codigo}] {$a->nombre}",
+            'estado'      => $a->estado,
+            'avance'      => $a->avance,
+            'fecha_limite'=> $a->fecha_limite?->format('d/m/Y'),
+            'nombre'      => $a->nombre,
+            'codigo'      => $a->codigo,
         ]));
     }
 

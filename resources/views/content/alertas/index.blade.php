@@ -328,122 +328,171 @@ $configData = Helper::appClasses();
     <div class="modal-content border-0 shadow">
       <form method="POST" action="{{ route('mon-alertas.store') }}" id="form-nueva-alerta">
         @csrf
-        <div class="modal-header border-bottom-0 pb-0">
+        <div class="modal-header border-bottom-0 pb-2">
           <div class="d-flex align-items-center gap-2">
             <div class="avatar bg-label-warning rounded">
               <span class="avatar-initial rounded bg-label-warning text-warning"><i class="ti tabler-bell-plus"></i></span>
             </div>
             <div>
               <h5 class="modal-title mb-0">Nueva Alerta</h5>
-              <small class="text-muted">La alerta quedará registrada para el destinatario seleccionado</small>
+              <small class="text-muted">Completa los campos en orden para filtrar las actividades</small>
             </div>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body pt-3">
+
+        <div class="modal-body pt-2">
           <div class="row g-3">
-            {{-- Tipo de destinatario — solo gestores --}}
-            @if($esAdmin)
+
+            {{-- ── PASO 1: ¿A quién? ── --}}
+            @if($esAdmin || $esResponsableUnidad)
             <div class="col-12">
-              <label class="form-label fw-semibold">¿A quién va dirigida? <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold mb-1">
+                <span class="badge bg-label-primary me-1" style="font-size:.7rem">1</span>
+                ¿A quién va dirigida? <span class="text-danger">*</span>
+              </label>
               <div class="d-flex gap-2 flex-wrap" id="grupo-tipo-destino">
-                <div class="form-check form-check-inline">
+                <div class="form-check form-check-inline mb-0">
                   <input class="form-check-input" type="radio" name="tipo_destino" id="td-individual" value="individual" checked>
                   <label class="form-check-label" for="td-individual">
                     <i class="ti tabler-user me-1 text-primary"></i>Individual
                   </label>
                 </div>
-                <div class="form-check form-check-inline">
+                @if($esAdmin || $esResponsableUnidad)
+                <div class="form-check form-check-inline mb-0">
                   <input class="form-check-input" type="radio" name="tipo_destino" id="td-unidad" value="unidad">
                   <label class="form-check-label" for="td-unidad">
                     <i class="ti tabler-building me-1 text-warning"></i>Por unidad
                   </label>
                 </div>
-                <div class="form-check form-check-inline">
+                @endif
+                @if($esAdmin)
+                <div class="form-check form-check-inline mb-0">
                   <input class="form-check-input" type="radio" name="tipo_destino" id="td-todos" value="todos">
                   <label class="form-check-label" for="td-todos">
-                    <i class="ti tabler-users me-1 text-success"></i>Toda la institución
+                    <i class="ti tabler-users me-1 text-success"></i>Toda la dirección
                   </label>
                 </div>
+                @endif
               </div>
             </div>
-            {{-- Panel Individual --}}
+
+            {{-- Panel Individual: select de usuario --}}
             <div class="col-12" id="panel-individual">
-              <label class="form-label fw-semibold">Usuario destinatario <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold mb-1">Usuario destinatario <span class="text-danger">*</span></label>
               <select name="usuario_id" id="nueva-usuario-id" class="form-select select2-nueva-dest">
                 <option value="">— Busca por nombre o correo —</option>
                 @foreach($usuarios as $u)
                   <option value="{{ $u->id }}">{{ $u->name }} — {{ $u->email }}</option>
                 @endforeach
               </select>
-              <div class="form-text">El usuario que recibirá esta alerta en su bandeja.</div>
+              <div class="form-text"><i class="ti tabler-info-circle me-1"></i>Solo se mostrarán las actividades asignadas a este usuario.</div>
             </div>
+
             {{-- Panel Unidad --}}
             <div class="col-12 d-none" id="panel-unidad">
-              <label class="form-label fw-semibold">Unidad orgánica <span class="text-danger">*</span></label>
+              @if($esAdmin)
+              <label class="form-label fw-semibold mb-1">Unidad orgánica <span class="text-danger">*</span></label>
               <select name="unidad_organica_id" id="nueva-unidad-id" class="form-select select2-nueva-unidad">
                 <option value="">— Selecciona la unidad —</option>
-                @foreach(\App\Models\UnidadOrganica::orderBy('nombre')->get() as $uo)
-                  <option value="{{ $uo->id }}">{{ $uo->nombre }}</option>
+                @foreach($unidades as $uo)
+                  <option value="{{ $uo->id }}">{{ $uo->sigla }} — {{ $uo->nombre }}</option>
                 @endforeach
               </select>
-              <div class="form-text">La alerta se enviará a todos los usuarios de esa unidad con acceso al sistema.</div>
+              <div class="form-text"><i class="ti tabler-info-circle me-1"></i>Se mostrarán las actividades de esa unidad.</div>
+              @else
+              {{-- Responsable de Unidad: su unidad está fija --}}
+              <input type="hidden" name="unidad_organica_id" value="{{ auth()->user()->unidad_organica_id }}">
+              <div class="alert alert-warning py-2 mb-0">
+                <i class="ti tabler-building me-2"></i>
+                La alerta se enviará a todos los usuarios de <strong>tu unidad orgánica</strong>.
+              </div>
+              @endif
             </div>
+
             {{-- Panel Todos --}}
             <div class="col-12 d-none" id="panel-todos">
-              <div class="alert alert-success mb-0 py-2">
+              <div class="alert alert-success py-2 mb-0">
                 <i class="ti tabler-users me-2"></i>
-                Esta alerta se enviará a <strong>todos los usuarios</strong> de la institución que tengan acceso al módulo de alertas.
+                La alerta se enviará a <strong>todos los usuarios</strong> de la institución con acceso al módulo de alertas.
               </div>
             </div>
             @else
-            {{-- No-gestores: siempre individual para sí mismo --}}
+            {{-- Responsable sin permiso de eliminar: solo individual propio --}}
             <input type="hidden" name="tipo_destino" value="individual">
             @endif
-            <div class="col-12">
-              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
-              <input type="text" name="titulo" class="form-control" required placeholder="Resumen claro de la alerta">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Módulo <span class="text-danger">*</span></label>
+
+            {{-- ── PASO 2: Módulo ── --}}
+            <div class="col-md-6" id="bloque-modulo">
+              <label class="form-label fw-semibold mb-1">
+                <span class="badge bg-label-primary me-1" style="font-size:.7rem">2</span>
+                Módulo <span class="text-danger">*</span>
+              </label>
               <select name="modulo" id="nueva-modulo" class="form-select" required>
+                <option value="">— Selecciona el módulo —</option>
                 <option value="sci">Control Interno (SCI)</option>
                 <option value="integridad">Modelo de Integridad</option>
               </select>
             </div>
+
+            {{-- ── PASO 2b: Tipo ── --}}
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Tipo <span class="text-danger">*</span></label>
-              <select name="tipo" class="form-select" required>
-                <option value="sistema">Sistema</option>
-                <option value="vencimiento">Vencimiento</option>
-                <option value="vencimiento_proximo">Por vencer</option>
-                <option value="avance_bajo">Avance Bajo</option>
-                <option value="evidencia_falta">Evidencia Faltante</option>
+              <label class="form-label fw-semibold mb-1">
+                <span class="badge bg-label-primary me-1" style="font-size:.7rem">3</span>
+                Tipo <span class="text-danger">*</span>
+              </label>
+              <select name="tipo" id="nueva-tipo" class="form-select" required>
+                <option value="sistema">📢 Sistema</option>
+                <option value="vencimiento">⏰ Vencimiento</option>
+                <option value="vencimiento_proximo">⚡ Por vencer</option>
+                <option value="avance_bajo">📉 Avance bajo</option>
+                <option value="evidencia_falta">📎 Evidencia faltante</option>
               </select>
             </div>
+
+            {{-- ── PASO 3: Actividad (cascada) ── --}}
+            <div class="col-12" id="bloque-actividad">
+              <label class="form-label fw-semibold mb-1">
+                <span class="badge bg-label-primary me-1" style="font-size:.7rem">4</span>
+                Actividad vinculada <span class="text-muted fw-normal small">(opcional)</span>
+              </label>
+              <select name="actividad_id" id="nueva-actividad-id" class="form-select select2-nueva-actividad" disabled>
+                <option value="">— Selecciona destinatario y módulo primero —</option>
+              </select>
+              <div class="form-text" id="hint-actividad"><i class="ti tabler-arrow-up me-1"></i>Elige el destinatario y módulo para cargar sus actividades.</div>
+            </div>
+
+            {{-- ── Título (con auto-sugerencia) ── --}}
             <div class="col-12">
-              <label class="form-label fw-semibold">Actividad vinculada <span class="text-muted fw-normal small">(opcional)</span></label>
-              <select name="actividad_id" id="nueva-actividad-id" class="form-select select2-nueva-actividad">
-                <option value="">— Selecciona el módulo para cargar actividades —</option>
-              </select>
-              <div class="form-text">Vincula esta alerta a una actividad específica del módulo seleccionado.</div>
+              <label class="form-label fw-semibold mb-1">
+                <span class="badge bg-label-primary me-1" style="font-size:.7rem">5</span>
+                Título <span class="text-danger">*</span>
+                <span id="badge-autosugerido" class="badge bg-label-info ms-1 d-none" style="font-size:.65rem">Auto-sugerido</span>
+              </label>
+              <input type="text" name="titulo" id="nueva-titulo" class="form-control" required placeholder="Resumen claro de la alerta">
             </div>
+
+            {{-- Prioridad --}}
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Prioridad <span class="text-danger">*</span></label>
-              <select name="prioridad" class="form-select" required>
+              <label class="form-label fw-semibold mb-1">Prioridad <span class="text-danger">*</span></label>
+              <select name="prioridad" id="nueva-prioridad" class="form-select" required>
                 <option value="alta">🔴 Alta</option>
                 <option value="media" selected>🟡 Media</option>
                 <option value="baja">🔵 Baja</option>
               </select>
             </div>
+
+            {{-- ── Descripción (con auto-sugerencia) ── --}}
             <div class="col-12">
-              <label class="form-label fw-semibold">Descripción <span class="text-danger">*</span></label>
-              <textarea name="mensaje" class="form-control" rows="3" required
-                placeholder="Detalla el motivo de la alerta, qué área o actividad afecta..."></textarea>
+              <label class="form-label fw-semibold mb-1">Descripción <span class="text-danger">*</span></label>
+              <textarea name="mensaje" id="nueva-mensaje" class="form-control" rows="3" required
+                placeholder="Detalla el motivo de la alerta..."></textarea>
             </div>
+
           </div>
         </div>
-        <div class="modal-footer justify-content-between align-items-center flex-wrap gap-2">
+
+        <div class="modal-footer justify-content-between align-items-center flex-wrap gap-2 pt-2">
           <div class="form-check form-switch mb-0">
             <input class="form-check-input" type="checkbox" name="enviar_email" value="1" id="chkEmail">
             <label class="form-check-label fw-medium ms-1 text-info" for="chkEmail">
@@ -556,130 +605,281 @@ $configData = Helper::appClasses();
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  const ACT_URL = '{{ route('mon-alertas.actividades') }}';
+  // ══════════════════════════════════════════════════════════════
+  // MODAL NUEVA ALERTA — lógica completa
+  // ══════════════════════════════════════════════════════════════
+  const ACT_URL      = '{{ route('mon-alertas.actividades') }}';
+  const ES_ADMIN     = {{ $esAdmin ? 'true' : 'false' }};
+  const ES_RESP      = {{ $esResponsableUnidad ? 'true' : 'false' }};
+  const MI_UNIDAD_ID = {!! ($esResponsableUnidad && !$esAdmin && auth()->user()->unidad_organica_id) ? "'" . auth()->user()->unidad_organica_id . "'" : 'null' !!};
 
-  // ── Carga actividades por módulo y puebla un select2 ──────────
-  function cargarActividades(modulo, selectEl, valorActual) {
-    if (!modulo) return;
-    const $sel = window.$ ? $(selectEl) : null;
-    if ($sel && $sel.data('select2')) $sel.select2('destroy');
+  // Datos de usuarios por tipo para repoblar el select dinámicamente
+  const USUARIOS_TODOS  = @json($usuarios->map(fn($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email]));
 
-    selectEl.innerHTML = '<option value="">⏳ Cargando actividades...</option>';
-    selectEl.disabled = true;
+  const modalNuevaEl = document.getElementById('modalNuevaAlerta');
+  const modalEditEl  = document.getElementById('modalEditarAlerta');
 
-    fetch(ACT_URL + '?modulo=' + modulo, {
-      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+  // ── Helper select2 (solo cuando el modal está visible) ───────
+  function initS2(selector, placeholder, $modal, allowClear) {
+    const $el = $modal.find(selector);
+    if (!$el.length) return;
+    const val = $el.val(); // preservar valor actual
+    if ($el.data('select2')) $el.select2('destroy');
+    $el.select2({
+      placeholder   : placeholder,
+      allowClear    : allowClear !== false,
+      width         : '100%',
+      dropdownParent: $modal,
+    });
+    if (val) $el.val(val).trigger('change.select2'); // restaurar sin disparar eventos de negocio
+  }
+
+  // ── Sugerencias de título/mensaje ────────────────────────────
+  const SUGERENCIAS = {
+    vencimiento:         { t: 'Actividad vencida sin completar',    m: 'La actividad {cod} "{nom}" venció el {fec} y aún no fue completada. Se requiere atención inmediata.' },
+    vencimiento_proximo: { t: 'Actividad próxima a vencer',         m: 'La actividad {cod} "{nom}" vence el {fec}. Actualiza el avance y sube la evidencia correspondiente.' },
+    avance_bajo:         { t: 'Avance bajo en actividad asignada',  m: 'La actividad {cod} "{nom}" tiene un avance de {av}%. Se solicita acelerar el cumplimiento.' },
+    evidencia_falta:     { t: 'Evidencia pendiente de subir',       m: 'La actividad {cod} "{nom}" no tiene evidencia registrada. Sube el documento de respaldo.' },
+    sistema:             { t: 'Comunicado del sistema',             m: '' },
+  };
+
+  function aplicarSugerencia(opt, tipo) {
+    if (!opt || !opt.value || !tipo || tipo === 'sistema') return;
+    const s = SUGERENCIAS[tipo];
+    if (!s) return;
+    const r = str => str
+      .replace('{cod}', opt.dataset.codigo || '')
+      .replace('{nom}', opt.dataset.nombre || '')
+      .replace('{fec}', opt.dataset.fecha  || '—')
+      .replace('{av}',  opt.dataset.avance || 0);
+    const tEl = document.getElementById('nueva-titulo');
+    const mEl = document.getElementById('nueva-mensaje');
+    const bEl = document.getElementById('badge-autosugerido');
+    if (tEl && s.t) tEl.value = r(s.t);
+    if (mEl && s.m) mEl.value = r(s.m);
+    if (bEl) bEl.classList.remove('d-none');
+  }
+
+  // ── Cargar actividades vía AJAX y reiniciar select2 ──────────
+  function cargarActividades(params, selectEl, $modal, valorActual) {
+    if (!selectEl) return;
+    const $sel = $(selectEl);
+    if ($sel.data('select2')) $sel.select2('destroy');
+    selectEl.innerHTML = '<option value="">⏳ Cargando...</option>';
+    selectEl.disabled  = true;
+
+    fetch(ACT_URL + '?' + new URLSearchParams(params), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }
     })
     .then(r => r.json())
-    .then(actividades => {
-      selectEl.innerHTML = '<option value="">— Sin actividad vinculada —</option>';
-      actividades.forEach(a => {
-        const estadoIcon = { pendiente:'🕐', en_proceso:'🔄', completada:'✅', observado:'⚠️', vencida:'❌' }[a.estado] || '📋';
-        const opt = document.createElement('option');
-        opt.value = a.id;
-        opt.textContent = estadoIcon + ' ' + a.label + ' (' + a.avance + '%)';
-        if (String(a.id) === String(valorActual)) opt.selected = true;
-        selectEl.appendChild(opt);
-      });
-      selectEl.disabled = false;
+    .then(lista => {
+      const hint = document.getElementById('hint-actividad');
+      selectEl.innerHTML = '';
 
-      if ($sel && window.$.fn.select2) {
-        const parent = selectEl.closest('.modal');
-        $sel.select2({
-          placeholder: '— Busca actividad por código o nombre —',
-          allowClear: true,
-          width: '100%',
-          dropdownParent: parent ? $(parent) : null,
+      if (!lista.length) {
+        selectEl.innerHTML = '<option value="">— Sin actividades para este filtro —</option>';
+        if (hint) hint.innerHTML = '<i class="ti tabler-mood-empty me-1 text-warning"></i>No hay actividades asignadas con estos filtros.';
+      } else {
+        const empty = document.createElement('option');
+        empty.value = ''; empty.textContent = '— Sin actividad vinculada (opcional) —';
+        selectEl.appendChild(empty);
+        const ICON = { pendiente:'🕐', en_proceso:'🔄', completada:'✅', observado:'⚠️', vencida:'❌' };
+        lista.forEach(a => {
+          const o = document.createElement('option');
+          o.value = a.id;
+          o.dataset.nombre = a.nombre;
+          o.dataset.codigo = a.codigo;
+          o.dataset.avance = a.avance;
+          o.dataset.fecha  = a.fecha_limite || '';
+          o.textContent = (ICON[a.estado] || '📋') + ' [' + a.codigo + '] ' + a.nombre
+            + ' · ' + a.avance + '%' + (a.fecha_limite ? ' · Vence ' + a.fecha_limite : '');
+          if (String(a.id) === String(valorActual)) o.selected = true;
+          selectEl.appendChild(o);
         });
-        if (valorActual) $sel.val(String(valorActual)).trigger('change');
+        if (hint) hint.innerHTML = '<i class="ti tabler-check me-1 text-success"></i>' + lista.length + ' actividad(es) disponibles.';
       }
+
+      selectEl.disabled = false;
+      $sel.select2({
+        placeholder   : '— Busca por código o nombre —',
+        allowClear    : true,
+        width         : '100%',
+        dropdownParent: $modal || $('body'),
+      });
+      if (valorActual) $sel.val(String(valorActual)).trigger('change');
     })
     .catch(() => {
-      selectEl.innerHTML = '<option value="">— Error al cargar actividades —</option>';
-      selectEl.disabled = false;
+      selectEl.innerHTML = '<option value="">— Error al cargar —</option>';
+      selectEl.disabled  = false;
     });
   }
 
-  // ── Select2 destinatario ──────────────────────────────────────
-  if (window.$ && $.fn.select2) {
-    const s2opts = {
-      placeholder: '— Busca por nombre o correo —',
-      allowClear: true,
-      width: '100%',
-      dropdownParent: null,
-    };
+  // ── Repoblar select de usuarios según tipo de destino ────────
+  function repoblarUsuarios(tipo) {
+    const $sel = $('#nueva-usuario-id');
+    if (!$sel.length) return;
 
-    const modalNueva  = document.getElementById('modalNuevaAlerta');
-    const modalEditar2 = document.getElementById('modalEditarAlerta');
+    // Destruir select2 para manipular opciones
+    if ($sel.data('select2')) $sel.select2('destroy');
+    $sel[0].innerHTML = '';
 
-    if (modalNueva) {
-      const s2nueva = $(modalNueva).find('.select2-nueva-dest');
-      s2nueva.select2({ ...s2opts, dropdownParent: $(modalNueva) });
-    }
-    if (modalEditar2) {
-      const s2edit = $(modalEditar2).find('.select2-edit-dest');
-      s2edit.select2({ ...s2opts, dropdownParent: $(modalEditar2) });
-    }
+    const empty = document.createElement('option');
+    empty.value = ''; empty.textContent = '— Busca por nombre o correo —';
+    $sel[0].appendChild(empty);
+
+    USUARIOS_TODOS.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id;
+      o.textContent = u.name + ' — ' + u.email;
+      $sel[0].appendChild(o);
+    });
+
+    // Reiniciar select2
+    $sel.select2({
+      placeholder   : '— Busca por nombre o correo —',
+      allowClear    : true,
+      width         : '100%',
+      dropdownParent: modalNuevaEl ? $(modalNuevaEl) : $('body'),
+    });
   }
 
-  // ── Tipo de destino — switching de paneles ───────────────────
-  const panelIndividual = document.getElementById('panel-individual');
-  const panelUnidad     = document.getElementById('panel-unidad');
-  const panelTodos      = document.getElementById('panel-todos');
-  const grupoTipo       = document.getElementById('grupo-tipo-destino');
+  // ── Obtener tipo de destino activo ────────────────────────────
+  function getTipoDestino() {
+    const grupoTipo = document.getElementById('grupo-tipo-destino');
+    return grupoTipo
+      ? (grupoTipo.querySelector('input[name="tipo_destino"]:checked')?.value || 'individual')
+      : 'individual';
+  }
 
+  // ── Reset del select de actividad ────────────────────────────
+  function resetActividad(msg) {
+    const actSel = document.getElementById('nueva-actividad-id');
+    if (!actSel) return;
+    const $a = $(actSel);
+    if ($a.data('select2')) $a.select2('destroy');
+    actSel.innerHTML = '<option value="">' + (msg || '— Selecciona destinatario y módulo primero —') + '</option>';
+    actSel.disabled  = true;
+    const hint = document.getElementById('hint-actividad');
+    if (hint) hint.innerHTML = '<i class="ti tabler-arrow-up me-1"></i>Elige el destinatario y módulo para cargar sus actividades.';
+  }
+
+  // ── Intentar cargar actividades según estado actual del form ─
+  function intentarCargar() {
+    const tipo   = getTipoDestino();
+    const modulo = $('#nueva-modulo').val();
+    const actSel = document.getElementById('nueva-actividad-id');
+
+    if (tipo === 'todos') {
+      resetActividad('— No aplica para "Toda la dirección" —');
+      if (actSel) actSel.disabled = true;
+      return;
+    }
+
+    if (!modulo) { resetActividad(); return; }
+
+    const params = { modulo };
+
+    if (tipo === 'individual') {
+      const uid = $('#nueva-usuario-id').val();
+      if (!uid) { resetActividad('— Selecciona un usuario primero —'); return; }
+      params.usuario_id = uid;
+    } else if (tipo === 'unidad') {
+      if (ES_ADMIN) {
+        const unid = $('#nueva-unidad-id').val();
+        if (!unid) { resetActividad('— Selecciona una unidad primero —'); return; }
+        params.unidad_id = unid;
+      } else if (MI_UNIDAD_ID) {
+        params.unidad_id = MI_UNIDAD_ID;
+      } else { resetActividad(); return; }
+    }
+
+    cargarActividades(params, actSel, modalNuevaEl ? $(modalNuevaEl) : null, null);
+  }
+
+  // ── Cambio de tipo de destino ─────────────────────────────────
   function actualizarPanelDestino(valor) {
-    if (!panelIndividual) return;
-    panelIndividual.classList.toggle('d-none', valor !== 'individual');
-    panelUnidad?.classList.toggle('d-none', valor !== 'unidad');
-    panelTodos?.classList.toggle('d-none', valor !== 'todos');
-
-    // required dinámico
+    ['individual','unidad','todos'].forEach(t => {
+      const p = document.getElementById('panel-' + t);
+      if (p) p.classList.toggle('d-none', t !== valor);
+    });
     const selUser = document.getElementById('nueva-usuario-id');
     const selUnid = document.getElementById('nueva-unidad-id');
     if (selUser) selUser.required = valor === 'individual';
-    if (selUnid) selUnid.required = valor === 'unidad';
+    if (selUnid) selUnid.required = valor === 'unidad' && ES_ADMIN;
+
+    if (valor === 'individual') repoblarUsuarios(valor);
+    intentarCargar();
   }
 
-  if (grupoTipo) {
-    grupoTipo.querySelectorAll('input[name="tipo_destino"]').forEach(radio => {
-      radio.addEventListener('change', () => actualizarPanelDestino(radio.value));
-    });
-    // Estado inicial
-    const checked = grupoTipo.querySelector('input[name="tipo_destino"]:checked');
-    if (checked) actualizarPanelDestino(checked.value);
-  }
+  // ── Inicializar modal cuando se ABRE (shown) ─────────────────
+  if (modalNuevaEl) {
+    $(modalNuevaEl).on('shown.bs.modal', function () {
+      const $m = $(this);
 
-  // Select2 para unidad orgánica
-  if (window.$ && $.fn.select2) {
-    const modalNva = document.getElementById('modalNuevaAlerta');
-    if (modalNva) {
-      $(modalNva).find('.select2-nueva-unidad').select2({
-        placeholder: '— Busca la unidad —',
-        allowClear: true,
-        width: '100%',
-        dropdownParent: $(modalNva),
+      // 1. Primero poblar y activar select2 de todos los campos fijos
+      repoblarUsuarios('individual');
+      initS2('#nueva-modulo',    '— Selecciona el módulo —', $m, false);
+      initS2('#nueva-tipo',      '— Tipo de alerta —',       $m, false);
+      initS2('#nueva-prioridad', '— Prioridad —',            $m, false);
+      initS2('#nueva-unidad-id', '— Busca la unidad —',      $m);
+
+      // 2. Activar panel según tipo seleccionado (sin re-repoblar usuarios)
+      const tipoActual = document.querySelector('#grupo-tipo-destino input[name="tipo_destino"]:checked')?.value || 'individual';
+      ['individual','unidad','todos'].forEach(t => {
+        const p = document.getElementById('panel-' + t);
+        if (p) p.classList.toggle('d-none', t !== tipoActual);
       });
-    }
-  }
 
-  // ── Cambio de módulo en modal NUEVA → recarga actividades ─────
-  const nuevaModuloSel = document.getElementById('nueva-modulo');
-  const nuevaActSel    = document.getElementById('nueva-actividad-id');
-  if (nuevaModuloSel && nuevaActSel) {
-    nuevaModuloSel.addEventListener('change', function () {
-      cargarActividades(this.value, nuevaActSel, null);
+      // 3. Intentar cargar actividades si ya hay datos suficientes
+      intentarCargar();
     });
-    // Carga inicial con el valor por defecto (sci)
-    cargarActividades(nuevaModuloSel.value, nuevaActSel, null);
+
+    // Radios de tipo destino
+    document.getElementById('grupo-tipo-destino')?.querySelectorAll('input[name="tipo_destino"]').forEach(r => {
+      r.addEventListener('change', () => actualizarPanelDestino(r.value));
+    });
+
+    // Cambios que disparan recarga de actividades (jQuery para select2)
+    $(modalNuevaEl).on('change', '#nueva-usuario-id, #nueva-unidad-id, #nueva-modulo', intentarCargar);
+
+    // Auto-sugerencia: actividad o tipo cambian
+    $(modalNuevaEl).on('change', '#nueva-actividad-id, #nueva-tipo', function () {
+      const actSel  = document.getElementById('nueva-actividad-id');
+      const tipoVal = $('#nueva-tipo').val();
+      if (!actSel) return;
+      const opt = actSel.options[actSel.selectedIndex];
+      aplicarSugerencia(opt, tipoVal);
+    });
+
+    // Reset al cerrar
+    $(modalNuevaEl).on('hidden.bs.modal', function () {
+      document.getElementById('form-nueva-alerta')?.reset();
+      document.getElementById('badge-autosugerido')?.classList.add('d-none');
+      resetActividad();
+      // Limpiar select2 de usuario y unidad
+      const $u = $('#nueva-usuario-id');
+      if ($u.data('select2')) { $u.val(null).trigger('change'); }
+      const $un = $('#nueva-unidad-id');
+      if ($un.data('select2')) { $un.val(null).trigger('change'); }
+      // Volver a individual
+      const ind = document.getElementById('td-individual');
+      if (ind) { ind.checked = true; actualizarPanelDestino('individual'); }
+    });
   }
 
-  // ── Cambio de módulo en modal EDITAR → recarga actividades ────
-  const editModuloSel = document.getElementById('edit-modulo');
-  const editActSel    = document.getElementById('edit-actividad-id');
-  if (editModuloSel && editActSel) {
-    editModuloSel.addEventListener('change', function () {
-      cargarActividades(this.value, editActSel, null);
+  // ── Modal EDITAR — select2 + recarga actividades ──────────────
+  if (modalEditEl) {
+    $(modalEditEl).on('shown.bs.modal', function () {
+      const $m = $(this);
+      initS2('#edit-usuario-id', '— Busca por nombre o correo —', $m);
+      initS2('#edit-modulo',     '— Módulo —',                    $m, false);
+      initS2('#edit-tipo',       '— Tipo —',                      $m, false);
+      initS2('#edit-prioridad',  '— Prioridad —',                 $m, false);
+    });
+
+    $(modalEditEl).on('change', '#edit-modulo', function () {
+      const actSel = document.getElementById('edit-actividad-id');
+      if (actSel) cargarActividades({ modulo: $(this).val() }, actSel, $(modalEditEl), null);
     });
   }
 
@@ -722,21 +922,32 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!btn || !modalEditar || !formEditar) return;
     const d = btn.dataset;
     formEditar.action = d.url;
-    formEditar.querySelector('#edit-titulo').value   = d.titulo;
-    formEditar.querySelector('#edit-mensaje').value  = d.mensaje;
-    formEditar.querySelector('#edit-modulo').value   = d.modulo;
-    formEditar.querySelector('#edit-tipo').value     = d.tipo;
-    formEditar.querySelector('#edit-prioridad').value = d.prioridad;
-    const selUser = formEditar.querySelector('#edit-usuario-id');
-    if (selUser) {
-      selUser.value = d.usuarioId || '';
-      if (window.$ && $(selUser).data('select2')) $(selUser).trigger('change');
-    }
-    // Carga actividades del módulo y preselecciona la vinculada
-    if (editActSel) {
-      cargarActividades(d.modulo, editActSel, d.actividadId || null);
-    }
-    new bootstrap.Modal(modalEditar).show();
+    formEditar.querySelector('#edit-titulo').value    = d.titulo;
+    formEditar.querySelector('#edit-mensaje').value   = d.mensaje;
+
+    // Abrir el modal primero (shown.bs.modal inicializará select2)
+    const bsModal = new bootstrap.Modal(modalEditar);
+    bsModal.show();
+
+    // Poblar selects tras el shown (select2 ya inicializado)
+    $(modalEditar).one('shown.bs.modal', function () {
+      const $m = $(modalEditar);
+
+      // Módulo, tipo, prioridad
+      $m.find('#edit-modulo').val(d.modulo).trigger('change');
+      $m.find('#edit-tipo').val(d.tipo).trigger('change');
+      $m.find('#edit-prioridad').val(d.prioridad).trigger('change');
+
+      // Usuario destinatario
+      const $selUser = $m.find('#edit-usuario-id');
+      if ($selUser.length && d.usuarioId) $selUser.val(d.usuarioId).trigger('change');
+
+      // Actividades del módulo con preselección
+      const actSel = document.getElementById('edit-actividad-id');
+      if (actSel && d.modulo) {
+        cargarActividades({ modulo: d.modulo }, actSel, $m, d.actividadId || null);
+      }
+    });
   });
 
   // ── Submit EDITAR vía AJAX ────────────────────────────────────
@@ -792,8 +1003,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ── Submit NUEVA ALERTA — AJAX + loading + anti-doble-clic ──────
-  const formNueva   = document.getElementById('form-nueva-alerta');
-  const modalNuevaEl = document.getElementById('modalNuevaAlerta');
+  const formNueva = document.getElementById('form-nueva-alerta');
   if (formNueva) {
     formNueva.addEventListener('submit', function (e) {
       e.preventDefault();

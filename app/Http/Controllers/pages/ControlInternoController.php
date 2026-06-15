@@ -81,9 +81,19 @@ class ControlInternoController extends Controller
         $componentes  = $request->filled('eje_id')
                         ? SciComponente::where('eje_id', $request->eje_id)->where('activo', true)->orderBy('orden')->get()
                         : collect();
-        $unidades     = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
-        $responsables = User::where('estado', 'activo')->orderBy('name')->get();
         $anios        = Actividad::where('modulo', 'sci')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
+
+        // Filtros de unidad y responsable solo disponibles para quien tiene visión amplia
+        if ($user->can('actividades.ver-todas')) {
+            $unidades     = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
+            $responsables = User::where('estado', 'activo')->orderBy('name')->get();
+        } elseif ($user->can('actividades.ver-unidad')) {
+            $unidades     = UnidadOrganica::where('activo', true)->where('id', $user->unidad_organica_id)->get();
+            $responsables = User::where('estado', 'activo')->where('unidad_organica_id', $user->unidad_organica_id)->orderBy('name')->get();
+        } else {
+            $unidades     = collect();
+            $responsables = collect();
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -105,6 +115,8 @@ class ControlInternoController extends Controller
 
     public function store(Request $request)
     {
+        Gate::authorize('control-interno.crear');
+
         $validated = $request->validate([
             'nombre'              => 'required|string|max:255',
             'modulo'              => 'required|in:sci,integridad',

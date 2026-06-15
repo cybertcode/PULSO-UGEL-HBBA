@@ -17,6 +17,24 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    private function alertasVisibles(\App\Models\User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Alerta::query();
+
+        if ($user->can('alertas.eliminar')) {
+            return $query;
+        }
+
+        if ($user->can('alertas.crear') && !empty($user->unidad_organica_id)) {
+            return $query->where(function ($q) use ($user) {
+                $q->where('usuario_id', $user->id)
+                  ->orWhere('unidad_organica_id', $user->unidad_organica_id);
+            });
+        }
+
+        return $query->where('usuario_id', $user->id);
+    }
+
     public function index()
     {
         $anio   = now()->year;
@@ -68,7 +86,7 @@ class DashboardController extends Controller
             'vencidas_int'   => $vencidasInt,
             'unidades'       => $totalUnidades,
             'total_unidades' => $totalUnidades,
-            'alertas'        => Alerta::where('leida', false)->count(),
+            'alertas'        => $this->alertasVisibles($user)->where('leida', false)->count(),
         ];
 
         // ── Gráfico mensual SCI vs Integridad ─────────────────────────────────
@@ -90,17 +108,19 @@ class DashboardController extends Controller
             $por_mes_integ[] = $totI > 0 ? round(($comI / $totI) * 100) : 0;
         }
 
-        // ── Ranking de unidades ───────────────────────────────────────────────
-        $areas_ranking = UnidadOrganica::withCount([
-            'actividades',
-            'actividades as completadas_count' => fn($q) => $q->where('estado', 'completada'),
-        ])->where('activo', true)->get()
-          ->map(function ($u) use ($umbral_verde, $umbral_amarillo) {
-              $u->porcentaje = $u->actividades_count > 0
-                  ? round(($u->completadas_count / $u->actividades_count) * 100) : 0;
-              $u->color = SemaforoHelper::colorHex($u->porcentaje, $umbral_verde, $umbral_amarillo);
-              return $u;
-          })->sortByDesc('porcentaje')->values()->take(8);
+        // ── Ranking de unidades (solo si tiene permiso) ───────────────────────
+        $areas_ranking = $user->can('reportes.ver')
+            ? UnidadOrganica::withCount([
+                'actividades',
+                'actividades as completadas_count' => fn($q) => $q->where('estado', 'completada'),
+              ])->where('activo', true)->get()
+                ->map(function ($u) use ($umbral_verde, $umbral_amarillo) {
+                    $u->porcentaje = $u->actividades_count > 0
+                        ? round(($u->completadas_count / $u->actividades_count) * 100) : 0;
+                    $u->color = SemaforoHelper::colorHex($u->porcentaje, $umbral_verde, $umbral_amarillo);
+                    return $u;
+                })->sortByDesc('porcentaje')->values()->take(8)
+            : collect();
 
         // ── Ejes SCI con avance ───────────────────────────────────────────────
         $sciEjes = SciEje::where('activo', true)
@@ -136,17 +156,18 @@ class DashboardController extends Controller
                 return $etapa;
             });
 
-        // ── Alertas recientes (no leídas) ─────────────────────────────────────
-        $alertas_recientes = Alerta::with(['actividad', 'unidadOrganica'])
+        // ── Alertas recientes (no leídas, filtradas por visibilidad) ─────────
+        $alertas_recientes = $this->alertasVisibles($user)
+            ->with(['actividad', 'unidadOrganica'])
             ->where('leida', false)
             ->orderByRaw("FIELD(prioridad,'alta','media','baja')")
             ->limit(6)->get();
 
         $alertas_stats = [
-            'vencimiento'     => Alerta::where('leida', false)->where('tipo', 'vencimiento')->count(),
-            'avance_bajo'     => Alerta::where('leida', false)->where('tipo', 'avance_bajo')->count(),
-            'evidencia_falta' => Alerta::where('leida', false)->where('tipo', 'evidencia_falta')->count(),
-            'total'           => Alerta::where('leida', false)->count(),
+            'vencimiento'     => $this->alertasVisibles($user)->where('leida', false)->where('tipo', 'vencimiento')->count(),
+            'avance_bajo'     => $this->alertasVisibles($user)->where('leida', false)->where('tipo', 'avance_bajo')->count(),
+            'evidencia_falta' => $this->alertasVisibles($user)->where('leida', false)->where('tipo', 'evidencia_falta')->count(),
+            'total'           => $this->alertasVisibles($user)->where('leida', false)->count(),
         ];
 
         // ── Actividades próximas a vencer ─────────────────────────────────────
@@ -170,18 +191,23 @@ class DashboardController extends Controller
             ->orderByDesc('fecha_limite')
             ->limit(5)->get();
 
-        // ── Buenas Prácticas ──────────────────────────────────────────────────
-        $buenas_practicas = BuenaPractica::with(['unidadOrganica', 'responsable'])
-            ->whereNotIn('estado', ['suspendida', 'no_elegible'])
-            ->orderByDesc('updated_at')
-            ->limit(5)->get();
+        // ── Buenas Prácticas (solo si tiene permiso) ──────────────────────────
+        if ($user->can('buenas-practicas.ver')) {
+            $buenas_practicas = BuenaPractica::with(['unidadOrganica', 'responsable'])
+                ->whereNotIn('estado', ['suspendida', 'no_elegible'])
+                ->orderByDesc('updated_at')
+                ->limit(5)->get();
 
-        $bp_stats = [
-            'total'          => BuenaPractica::count(),
-            'en_concurso'    => BuenaPractica::whereIn('estado', ['elegible','ganador_ugel','participante_externo'])->count(),
-            'ganadores'      => BuenaPractica::whereIn('estado', ['ganador_ugel','ganador_externo'])->count(),
-            'implementadas'  => BuenaPractica::where('estado', 'en_implementacion')->count(),
-        ];
+            $bp_stats = [
+                'total'          => BuenaPractica::count(),
+                'en_concurso'    => BuenaPractica::whereIn('estado', ['elegible','ganador_ugel','participante_externo'])->count(),
+                'ganadores'      => BuenaPractica::whereIn('estado', ['ganador_ugel','ganador_externo'])->count(),
+                'implementadas'  => BuenaPractica::where('estado', 'en_implementacion')->count(),
+            ];
+        } else {
+            $buenas_practicas = collect();
+            $bp_stats = ['total' => 0, 'en_concurso' => 0, 'ganadores' => 0, 'implementadas' => 0];
+        }
 
         // ── Mis actividades pendientes ────────────────────────────────────────
         $mis_actividades_count = Actividad::whereHas('responsables', fn($q) => $q->where('users.id', $user->id))

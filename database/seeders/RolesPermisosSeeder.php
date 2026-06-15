@@ -48,6 +48,8 @@ class RolesPermisosSeeder extends Seeder
 
             // Actividades de Control Interno SCI
             'control-interno.ver', 'control-interno.crear', 'control-interno.editar', 'control-interno.eliminar',
+            // Visibilidad de actividades: ver-todas = visión global, ver-unidad = solo su unidad
+            'actividades.ver-todas', 'actividades.ver-unidad',
 
             // Modelo de Integridad
             'integridad.ver', 'integridad.crear', 'integridad.editar', 'integridad.eliminar',
@@ -119,7 +121,8 @@ class RolesPermisosSeeder extends Seeder
             'unidades.ver', 'unidades.crear', 'unidades.editar', 'unidades.eliminar',
             'slider.ver', 'slider.crear', 'slider.editar', 'slider.eliminar',
             'instituciones.ver', 'instituciones.crear', 'instituciones.editar', 'instituciones.eliminar',
-            // SCI e Integridad — completo
+            // SCI e Integridad — completo + visión global
+            'actividades.ver-todas',
             'componentes.ver', 'componentes.crear', 'componentes.editar', 'componentes.eliminar',
             'control-interno.ver', 'control-interno.crear', 'control-interno.editar', 'control-interno.eliminar',
             'integridad.ver', 'integridad.crear', 'integridad.editar', 'integridad.eliminar',
@@ -147,7 +150,8 @@ class RolesPermisosSeeder extends Seeder
         // ════════════════════════════════════════════════════════════════════
         $coordinador = Role::firstOrCreate(['name' => 'Coordinador SCI', 'guard_name' => 'web']);
         $coordinador->syncPermissions(array_merge($base, [
-            // Estructura SCI — gestión completa
+            // Estructura SCI — gestión completa + visión global
+            'actividades.ver-todas',
             'componentes.ver', 'componentes.crear', 'componentes.editar', 'componentes.eliminar',
             // SCI — puede eliminar
             'control-interno.ver', 'control-interno.crear', 'control-interno.editar', 'control-interno.eliminar',
@@ -184,6 +188,8 @@ class RolesPermisosSeeder extends Seeder
         // ════════════════════════════════════════════════════════════════════
         $responsable = Role::firstOrCreate(['name' => 'Responsable de Unidad', 'guard_name' => 'web']);
         $responsable->syncPermissions(array_merge($base, [
+            // Ve actividades de su unidad orgánica + las que le asignaron
+            'actividades.ver-unidad',
             // Estructura SCI — solo lectura
             'componentes.ver',
             // SCI — puede crear y editar (NO eliminar)
@@ -221,17 +227,9 @@ class RolesPermisosSeeder extends Seeder
         // ════════════════════════════════════════════════════════════════════
         $operador = Role::firstOrCreate(['name' => 'Operador', 'guard_name' => 'web']);
         $operador->syncPermissions(array_merge($base, [
-            // Estructura SCI — solo lectura
-            'componentes.ver',
-            // SCI — puede editar (actualizar avance) pero NO crear ni eliminar
-            'control-interno.ver', 'control-interno.editar',
-            // Integridad — puede editar (actualizar avance) pero NO crear ni eliminar
-            'integridad.ver', 'integridad.editar',
             // Evidencias — puede subir (NO validar, NO eliminar)
             'evidencias.ver', 'evidencias.crear',
             'semaforo.ver',
-            // Reportes — solo lectura básica
-            'reportes.ver',
             // Buenas prácticas y recomendaciones — solo lectura
             'buenas-practicas.ver',
             'recomendaciones.ver',
@@ -239,6 +237,8 @@ class RolesPermisosSeeder extends Seeder
             'normativas.ver',
             // Encuestas — solo responde
             'encuesta.ver', 'encuesta.responder',
+            // Alertas propias
+            'alertas.ver',
         ]));
 
         // ════════════════════════════════════════════════════════════════════
@@ -249,21 +249,20 @@ class RolesPermisosSeeder extends Seeder
         // ════════════════════════════════════════════════════════════════════
         $visualizador = Role::firstOrCreate(['name' => 'Visualizador', 'guard_name' => 'web']);
         $visualizador->syncPermissions(array_merge($base, [
-            'componentes.ver',
-            'control-interno.ver',
-            'integridad.ver',
             'evidencias.ver',
             'semaforo.ver',
-            // Cumplimiento y reportes — solo lectura (diferencia con Operador)
+            // Cumplimiento y reportes — solo lectura
             'cumplimiento.ver',
             'reportes.ver',
-            // Reconocimientos — solo lectura (diferencia con Operador)
+            // Reconocimientos — solo lectura
             'reconocimientos.ver',
             'buenas-practicas.ver',
             'recomendaciones.ver',
             'normativas.ver',
             // Encuestas — puede ver y responder, pero no ver resultados
             'encuesta.ver', 'encuesta.responder',
+            // Alertas propias
+            'alertas.ver',
         ]));
     }
 }

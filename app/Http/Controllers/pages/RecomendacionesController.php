@@ -16,9 +16,21 @@ class RecomendacionesController extends Controller
     // ── Página shell (solo carga el HTML, los datos vienen por AJAX) ──────────
     public function index()
     {
-        $unidades    = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
-        $usuarios    = User::orderBy('name')->get();
-        $actividades = Actividad::orderBy('nombre')->get();
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        if ($user->can('actividades.ver-todas')) {
+            $unidades    = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
+            $usuarios    = User::where('estado', 'activo')->orderBy('name')->get();
+            $actividades = Actividad::visiblesParaUsuario($user)->orderBy('nombre')->get();
+        } elseif ($user->can('actividades.ver-unidad')) {
+            $unidades    = UnidadOrganica::where('activo', true)->where('id', $user->unidad_organica_id)->get();
+            $usuarios    = User::where('estado', 'activo')->where('unidad_organica_id', $user->unidad_organica_id)->orderBy('name')->get();
+            $actividades = Actividad::visiblesParaUsuario($user)->orderBy('nombre')->get();
+        } else {
+            $unidades    = collect();
+            $usuarios    = User::where('id', $user->id)->get();
+            $actividades = Actividad::visiblesParaUsuario($user)->orderBy('nombre')->get();
+        }
 
         $tipos = [
             'observacion'   => 'Observación',
@@ -37,10 +49,23 @@ class RecomendacionesController extends Controller
     public function data(Request $request)
     {
         $modulo = $request->input('modulo', 'sci');
+        $user   = \Illuminate\Support\Facades\Auth::user();
 
         $query = Recomendacion::with(['unidadOrganica', 'responsable', 'actividad'])
             ->where('modulo', $modulo)
             ->orderByDesc('created_at');
+
+        // Visibility scoping: restrict to what the user can see
+        if (!$user->can('actividades.ver-todas')) {
+            if ($user->can('actividades.ver-unidad') && !empty($user->unidad_organica_id)) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('unidad_organica_id', $user->unidad_organica_id)
+                      ->orWhere('responsable_id', $user->id);
+                });
+            } else {
+                $query->where('responsable_id', $user->id);
+            }
+        }
 
         if ($request->filled('estado'))    $query->where('estado', $request->estado);
         if ($request->filled('tipo'))      $query->where('tipo', $request->tipo);

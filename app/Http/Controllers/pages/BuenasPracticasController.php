@@ -29,11 +29,20 @@ class BuenasPracticasController extends Controller
 
     public function index(Request $request)
     {
-        $esGestor = Gate::check('buenas-practicas.ver');
+        $esGestor = Gate::check('buenas-practicas.editar');
         $user     = Auth::user();
 
-        $unidades = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
-        $usuarios = User::orderBy('name')->get();
+        // Unidades y usuarios filtrados según visibilidad del usuario
+        if ($user->can('actividades.ver-todas')) {
+            $unidades = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
+            $usuarios = User::where('estado', 'activo')->orderBy('name')->get();
+        } elseif ($user->can('actividades.ver-unidad')) {
+            $unidades = UnidadOrganica::where('activo', true)->where('id', $user->unidad_organica_id)->get();
+            $usuarios = User::where('estado', 'activo')->where('unidad_organica_id', $user->unidad_organica_id)->orderBy('name')->get();
+        } else {
+            $unidades = collect();
+            $usuarios = User::where('id', $user->id)->get();
+        }
 
         // Stats generales
         $stats = [
@@ -61,7 +70,7 @@ class BuenasPracticasController extends Controller
     // AJAX: devuelve cards HTML paginadas
     public function data(Request $request)
     {
-        $esGestor = Gate::check('buenas-practicas.ver');
+        $esGestor = Gate::check('buenas-practicas.editar');
         $user     = Auth::user();
 
         $tab      = $request->get('tab', 'concurso');

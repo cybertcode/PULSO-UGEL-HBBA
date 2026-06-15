@@ -13,14 +13,27 @@ $userCargo      = $authUser?->cargo?->nombre ?? 'Usuario';
 $userUnidad     = $authUser?->unidadOrganica?->nombre ?? null;
 $userRol        = $authUser?->roles->first()?->name ?? null;
 
-// Alertas reales para el dropdown de notificaciones (solo si tiene permiso)
-$alertasDropdown = ($authUser && $authUser->can('alertas.ver'))
-    ? \App\Models\Alerta::where('leida', false)
-        ->with('actividad:id,nombre')
-        ->latest()
-        ->take(5)
-        ->get()
-    : collect();
+// Alertas del dropdown filtradas por visibilidad del usuario (basado en permisos)
+if ($authUser && $authUser->can('alertas.ver')) {
+    $alertasQuery = \App\Models\Alerta::where('leida', false)->with('actividad:id,nombre,codigo');
+
+    if ($authUser->can('alertas.eliminar')) {
+        // Gestores: ven todas
+    } elseif ($authUser->can('alertas.crear') && !empty($authUser->unidad_organica_id)) {
+        // Responsables de unidad: ven las de su unidad + las propias
+        $alertasQuery->where(function ($q) use ($authUser) {
+            $q->where('usuario_id', $authUser->id)
+              ->orWhere('unidad_organica_id', $authUser->unidad_organica_id);
+        });
+    } else {
+        // Solo lectura: únicamente las propias
+        $alertasQuery->where('usuario_id', $authUser->id);
+    }
+
+    $alertasDropdown = $alertasQuery->latest()->take(5)->get();
+} else {
+    $alertasDropdown = collect();
+}
 $totalAlertas = $alertasDropdown->count();
 @endphp
 
@@ -243,9 +256,14 @@ $totalAlertas = $alertasDropdown->count();
                 'media' => 'warning',
                 default => 'info',
               };
+              $destUrl = $alerta->actividad
+                ? route('mis-actividades') . '?buscar=' . urlencode($alerta->actividad->codigo ?? $alerta->actividad_id)
+                : route('mon-alertas');
             @endphp
-            <li class="list-group-item list-group-item-action dropdown-notifications-item">
-              <div class="d-flex">
+            <li class="list-group-item list-group-item-action dropdown-notifications-item"
+                style="cursor:pointer"
+                onclick="alertaNavegar({{ $alerta->id }}, '{{ addslashes($destUrl) }}', this)">
+              <div class="d-flex align-items-start">
                 <div class="flex-shrink-0 me-3">
                   <div class="avatar">
                     <span class="avatar-initial rounded-circle bg-label-{{ $aColor }}">
@@ -253,21 +271,15 @@ $totalAlertas = $alertasDropdown->count();
                     </span>
                   </div>
                 </div>
-                <div class="flex-grow-1">
+                <div class="flex-grow-1 overflow-hidden">
                   <h6 class="small mb-1 fw-semibold">{{ $alerta->titulo }}</h6>
                   @if($alerta->actividad)
-                  <small class="mb-1 d-block text-body text-truncate" style="max-width:200px">{{ $alerta->actividad->nombre }}</small>
+                  <small class="mb-1 d-block text-body text-truncate">{{ $alerta->actividad->nombre }}</small>
                   @endif
                   <small class="text-body-secondary">{{ $alerta->created_at->diffForHumans() }}</small>
                 </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <form method="POST" action="{{ route('mon-alertas.leer', $alerta) }}" style="display:inline">
-                    @csrf @method('PATCH')
-                    <button type="submit" class="dropdown-notifications-read btn p-0 border-0 bg-transparent"
-                      data-bs-toggle="tooltip" title="Marcar leída">
-                      <span class="badge badge-dot"></span>
-                    </button>
-                  </form>
+                <div class="flex-shrink-0 ms-2 align-self-center">
+                  <span class="badge badge-dot bg-{{ $aColor }}" title="Sin leer"></span>
                 </div>
               </div>
             </li>

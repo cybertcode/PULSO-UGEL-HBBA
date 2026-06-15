@@ -150,7 +150,7 @@ use Illuminate\Support\Str;
       </div>
     </div>
     <div class="col-6 col-xl-3">
-      @can('buenas-practicas.ver')
+      @can('buenas-practicas.editar')
       <div class="card kpi-card h-100" style="background:{{ $pendientesRevision > 0 ? 'linear-gradient(135deg,#f5515f,#9f041b)' : 'linear-gradient(135deg,#7c3aed,#4facfe)' }}">
         <div class="card-body d-flex align-items-center gap-3">
           <div class="kpi-icon" style="background:rgba(255,255,255,.2)">
@@ -201,7 +201,7 @@ use Illuminate\Support\Str;
       <button class="btn btn-sm btn-outline-secondary tab-vista" data-tab="mis">
         <i class="ti tabler-user me-1"></i>Mis proyectos
       </button>
-      @can('buenas-practicas.ver')
+      @can('buenas-practicas.editar')
       <button class="btn btn-sm btn-outline-info tab-vista" data-tab="presentados" id="btnTabPresentados">
         <i class="ti tabler-send me-1"></i>Presentados
         @if($pendientesRevision > 0)
