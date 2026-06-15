@@ -106,7 +106,7 @@ use Illuminate\Support\Str;
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProponer">
         <i class="ti tabler-send me-1"></i>Presentar mi proyecto
       </button>
-      @can('buenas-practicas.crear')
+      @can('buenas-practicas.editar')
       <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalNueva">
         <i class="ti tabler-plus me-1"></i>Registrar práctica
       </button>
@@ -176,33 +176,39 @@ use Illuminate\Support\Str;
     </div>
   </div>
 
-  {{-- Tabs módulo --}}
-  <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3">
-    <div class="d-flex gap-2 flex-wrap">
-      <button class="modulo-tab active" data-modulo="">
-        <i class="ti tabler-layout-grid me-1"></i>Todos los módulos
-      </button>
-      <button class="modulo-tab" data-modulo="sci">
-        <i class="ti tabler-shield-check me-1"></i>Control Interno (SCI)
-      </button>
-      <button class="modulo-tab" data-modulo="integridad">
-        <i class="ti tabler-award me-1"></i>Modelo de Integridad
-      </button>
+  {{-- Tabs módulo + vista --}}
+  <div class="d-flex flex-wrap gap-3 align-items-start justify-content-between mb-3">
+
+    {{-- Grupo izquierdo: filtro por módulo --}}
+    <div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="modulo-tab active" data-modulo="">
+          <i class="ti tabler-layout-grid me-1"></i>Todos los módulos
+        </button>
+        <button class="modulo-tab" data-modulo="sci">
+          <i class="ti tabler-shield-check me-1"></i>Control Interno (SCI)
+        </button>
+        <button class="modulo-tab" data-modulo="integridad">
+          <i class="ti tabler-award me-1"></i>Modelo de Integridad
+        </button>
+      </div>
+      <div class="text-muted mt-1" style="font-size:.72rem"><i class="ti tabler-filter me-1"></i>Filtrar por módulo institucional</div>
     </div>
 
-    {{-- Tabs vista --}}
-    <div class="d-flex gap-2 flex-wrap">
-      <button class="btn btn-sm btn-outline-warning tab-vista active" data-tab="concurso_ugel">
+    {{-- Grupo derecho: cambio de vista --}}
+    <div>
+      <div class="d-flex gap-2 flex-wrap justify-content-end">
+      <button class="btn btn-sm btn-outline-warning tab-vista" data-tab="concurso_ugel">
         <i class="ti tabler-tournament me-1"></i>Concurso UGEL
       </button>
       <button class="btn btn-sm btn-outline-secondary tab-vista" data-tab="concurso_externo">
         <i class="ti tabler-world me-1"></i>Externo
       </button>
-      <button class="btn btn-sm btn-outline-secondary tab-vista" data-tab="mis">
+      <button class="btn btn-sm btn-outline-secondary tab-vista @cannot('buenas-practicas.editar') active @endcannot" data-tab="mis">
         <i class="ti tabler-user me-1"></i>Mis proyectos
       </button>
       @can('buenas-practicas.editar')
-      <button class="btn btn-sm btn-outline-info tab-vista" data-tab="presentados" id="btnTabPresentados">
+      <button class="btn btn-sm btn-outline-info tab-vista active" data-tab="presentados" id="btnTabPresentados">
         <i class="ti tabler-send me-1"></i>Presentados
         @if($pendientesRevision > 0)
           <span class="badge bg-danger ms-1">{{ $pendientesRevision }}</span>
@@ -218,7 +224,10 @@ use Illuminate\Support\Str;
         <i class="ti tabler-list me-1"></i>Prácticas SCI
       </button>
       @endcan
+      </div>
+      <div class="text-muted mt-1 text-end" style="font-size:.72rem"><i class="ti tabler-eye me-1"></i>Vista por etapa del concurso</div>
     </div>
+
   </div>
 
   {{-- Filtros --}}
@@ -838,6 +847,74 @@ use Illuminate\Support\Str;
 @endcan
 
 {{-- ══════════════════════════════════════════════════════════════
+     MODAL: Presentar práctica institucional al concurso
+══════════════════════════════════════════════════════════════ --}}
+@can('buenas-practicas.editar')
+<div class="modal fade" id="modalPresentarPractica" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0" style="background:linear-gradient(135deg,#11998e,#38ef7d)">
+        <div>
+          <h5 class="modal-title text-white fw-bold">
+            <i class="ti tabler-send me-2"></i>Presentar al Concurso
+          </h5>
+          <p class="text-white mb-0 opacity-75" style="font-size:.8rem">Esta práctica se registrará como proyecto concursal</p>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-4">
+        {{-- Práctica seleccionada --}}
+        <div class="d-flex gap-3 p-3 rounded-3 mb-4" style="background:rgba(17,153,142,.07);border:1px solid rgba(17,153,142,.2)">
+          <div style="flex-shrink:0;width:36px;height:36px;border-radius:10px;background:rgba(17,153,142,.15);display:flex;align-items:center;justify-content:center">
+            <i class="ti tabler-file-check text-success"></i>
+          </div>
+          <div>
+            <div class="fw-bold" id="pp_titulo" style="font-size:.95rem"></div>
+            <div class="text-muted small mt-1" id="pp_modulo"></div>
+          </div>
+        </div>
+
+        {{-- Campos editables para el concurso --}}
+        <form id="formPresentarPractica" method="POST">
+          @csrf
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Título para el concurso <span class="text-danger">*</span></label>
+              <input type="text" name="titulo" id="pp_titulo_input" class="form-control" required
+                placeholder="Puedes ajustar el título para el concurso">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción del proyecto <span class="text-danger">*</span></label>
+              <textarea name="descripcion" id="pp_descripcion" class="form-control" rows="3" required
+                placeholder="Describe brevemente el objetivo e impacto..."></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">¿A qué módulo pertenece? <span class="text-danger">*</span></label>
+              <select name="modulo" id="pp_modulo_select" class="form-select" required>
+                <option value="sci">Sistema de Control Interno (SCI)</option>
+                <option value="integridad">Modelo de Integridad</option>
+              </select>
+            </div>
+          </div>
+        </form>
+
+        <div class="alert alert-info d-flex gap-2 mt-3 mb-0 py-2" style="font-size:.82rem">
+          <i class="ti tabler-info-circle flex-shrink-0 mt-1"></i>
+          <span>Se creará un nuevo proyecto de concurso con estado <strong>Presentado</strong>. La práctica original no se modifica.</span>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formPresentarPractica" class="btn btn-success px-4">
+          <i class="ti tabler-send me-1"></i>Presentar al concurso
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+@endcan
+
+{{-- ══════════════════════════════════════════════════════════════
      MODAL: Editar práctica institucional
 ══════════════════════════════════════════════════════════════ --}}
 @can('buenas-practicas.editar')
@@ -980,7 +1057,12 @@ use Illuminate\Support\Str;
 window.addEventListener('load', () => window.setTimeout(() => {
 
   // ── Estado reactivo ──────────────────────────────────────────
-  let activeTab    = 'concurso_ugel';
+  // Gestores ven primero los "Presentados", usuarios normales sus propios proyectos
+  @can('buenas-practicas.editar')
+  let activeTab = 'presentados';
+  @else
+  let activeTab = 'mis';
+  @endcan
   let activeModulo = '';
   let searchTimer  = null;
   const CSRF = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -1116,20 +1198,129 @@ window.addEventListener('load', () => window.setTimeout(() => {
     $('#puntajeLabel').text($(this).val());
   });
 
+  // ── Helper: enviar form modal vía AJAX y recargar cards ──────
+  function bindFormAjax(formId, modalId, successMsg, nextTab, validateFn) {
+    $(document).on('submit', formId, function(e) {
+      e.preventDefault();
+      if (validateFn && !validateFn()) return;
+      const $form = $(this);
+      const $modal = $(modalId);
+      const $btn = $('[form="' + $form.attr('id') + '"][type="submit"]');
+      const origHtml = $btn.html();
+
+      $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Guardando...');
+
+      $.ajax({ url: $form.attr('action'), type: 'POST', data: $form.serialize() })
+      .done(function() {
+        $modal.find('[data-bs-dismiss="modal"]').trigger('click');
+        if (nextTab) { activeTab = nextTab; $('.tab-vista').removeClass('active'); $('.tab-vista[data-tab="' + nextTab + '"]').addClass('active'); }
+        loadCards();
+        pulsoToast(successMsg, 'success');
+      })
+      .fail(function(xhr) {
+        let msg = 'Error al guardar. Intenta nuevamente.';
+        if (xhr.responseJSON?.errors) msg = Object.values(xhr.responseJSON.errors).flat().join(' · ');
+        else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+        pulsoToast(msg, 'error');
+      })
+      .always(function() { $btn.prop('disabled', false).html(origHtml); });
+    });
+  }
+
+  // ── PRESENTAR PRÁCTICA AL CONCURSO ──────────────────────────
+  $(document).on('click', '.btn-presentar-practica', function () {
+    const d = $(this).data();
+    $('#formPresentarPractica').attr('action', '/buenas-practicas/' + d.id + '/presentar-practica');
+    $('#pp_titulo').text(d.titulo);
+    $('#pp_modulo').text(d.modulo === 'sci' ? 'Sistema de Control Interno' : 'Modelo de Integridad');
+    $('#pp_titulo_input').val(d.titulo);
+    $('#pp_descripcion').val(d.descripcion);
+    $('#pp_modulo_select').val(d.modulo);
+    new bootstrap.Modal(document.getElementById('modalPresentarPractica')).show();
+  });
+
+  $(document).on('submit', '#formPresentarPractica', function(e) {
+    e.preventDefault();
+    const $form = $(this);
+    const $btn  = $('[form="formPresentarPractica"][type="submit"]');
+    const origHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Enviando...');
+
+    $.ajax({ url: $form.attr('action'), type: 'POST', data: $form.serialize() })
+    .done(function() {
+      $('#modalPresentarPractica').find('[data-bs-dismiss="modal"]').trigger('click');
+      // Ir al tab "presentados" para que el gestor lo vea
+      activeTab = 'presentados';
+      $('.tab-vista').removeClass('active');
+      $('.tab-vista[data-tab="presentados"]').addClass('active');
+      loadCards();
+      pulsoToast('Proyecto presentado al concurso. Aparece en el tab "Presentados".', 'success');
+    })
+    .fail(function(xhr) {
+      let msg = 'Error al presentar. Intenta nuevamente.';
+      if (xhr.responseJSON?.errors) msg = Object.values(xhr.responseJSON.errors).flat().join(' · ');
+      else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+      pulsoToast(msg, 'error');
+    })
+    .always(function() { $btn.prop('disabled', false).html(origHtml); });
+  });
+
+  // ── PROPONER PROYECTO (FormData para soportar archivo adjunto) ─
+  $(document).on('submit', '#formProponer', function(e) {
+    e.preventDefault();
+    const $form = $(this);
+    const $btn  = $('[form="formProponer"][type="submit"]');
+    const origHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Enviando...');
+
+    // Validar módulo seleccionado antes de enviar
+    const moduloVal = $form.find('input[name="modulo"]:checked').val();
+    if (!moduloVal) {
+      $btn.prop('disabled', false).html(origHtml);
+      pulsoToast('Selecciona el módulo al que pertenece tu proyecto.', 'warning');
+      return;
+    }
+
+    const fd = new FormData(this);
+    $.ajax({
+      url: $form.attr('action'), type: 'POST',
+      data: fd,
+      processData: false, contentType: false,
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+    })
+    .done(function() {
+      $('#modalProponer').find('[data-bs-dismiss="modal"]').trigger('click');
+      $form[0].reset();
+      $('.select2-proponer').val('').trigger('change');
+      // Cambiar al tab "mis proyectos" para que el usuario vea su proyecto recién creado
+      activeTab = 'mis';
+      $('.tab-vista').removeClass('active');
+      $('.tab-vista[data-tab="mis"]').addClass('active');
+      $('#wrapFiltEstado').hide();
+      loadCards();
+      pulsoToast('¡Proyecto presentado exitosamente! El Responsable SCI lo recepcionará.', 'success');
+    })
+    .fail(function(xhr) {
+      let msg = 'Error al enviar. Intenta nuevamente.';
+      if (xhr.responseJSON?.errors) msg = Object.values(xhr.responseJSON.errors).flat().join(' · ');
+      else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+      pulsoToast(msg, 'error');
+    })
+    .always(function() { $btn.prop('disabled', false).html(origHtml); });
+  });
+
   // ── RECEPCIONAR ──────────────────────────────────────────────
   $(document).on('click', '.btn-recepcionar', function () {
     const d = $(this).data();
     $('#formRecepcionar').attr('action', '/buenas-practicas/' + d.id + '/recepcionar');
     $('#recv_titulo').text(d.titulo);
     $('#recv_participante').text('Participante: ' + (d.participante || '—'));
-    // Fecha de hoy por defecto
-    const hoy = new Date().toISOString().split('T')[0];
-    $('#recv_fecha').val(hoy);
-    // Generar número de expediente sugerido
-    const year = new Date().getFullYear();
-    $('#recv_expediente').val('EXP-' + String(d.id).padStart(3,'0') + '-' + year);
+    $('#recv_fecha').val(new Date().toISOString().split('T')[0]);
+    $('#recv_expediente').val('EXP-' + String(d.id).padStart(3,'0') + '-' + new Date().getFullYear());
     new bootstrap.Modal(document.getElementById('modalRecepcionar')).show();
   });
+
+  bindFormAjax('#formRecepcionar', '#modalRecepcionar', 'Proyecto recepcionado correctamente.', 'recepcionados');
 
   // ── VER DETALLE (descripción completa) ───────────────────────
   $(document).on('click', '.btn-ver-detalle', function () {
@@ -1138,8 +1329,7 @@ window.addEventListener('load', () => window.setTimeout(() => {
       title: d.titulo,
       html: '<p class="text-start text-muted" style="font-size:.9rem">' + (d.descripcion || 'Sin descripción.') + '</p>'
             + '<p class="text-start mb-0"><strong>Participante:</strong> ' + (d.participante || '—') + '</p>',
-      icon: 'info',
-      confirmButtonText: 'Cerrar',
+      icon: 'info', confirmButtonText: 'Cerrar',
     });
   });
 
@@ -1149,42 +1339,37 @@ window.addEventListener('load', () => window.setTimeout(() => {
     $('#formElegible').attr('action', '/buenas-practicas/' + d.id + '/elegible');
     $('#eleg_titulo').text(d.titulo);
     $('#eleg_participante').text('Participante: ' + (d.participante || '—'));
-    $('#rangePuntaje').val(70);
-    $('#puntajeLabel').text('70');
+    $('#rangePuntaje').val(70); $('#puntajeLabel').text('70');
     new bootstrap.Modal(document.getElementById('modalElegible')).show();
   });
 
+  bindFormAjax('#formElegible', '#modalElegible', 'Proyecto declarado Elegible.', 'elegibles');
+
   // ── NO ELEGIBLE ──────────────────────────────────────────────
   $(document).on('click', '.btn-no-elegible', function () {
-    const id = $(this).data('id');
-    const titulo = $(this).data('titulo');
+    const id = $(this).data('id'), titulo = $(this).data('titulo');
     Swal.fire({
       title: 'Declarar No Elegible',
-      html: `<div class="text-start">
-        <p class="fw-semibold mb-3">"${titulo}"</p>
-        <label class="form-label fw-semibold">Observación de la comisión <span class="text-danger">*</span></label>
-        <textarea id="swal-obs" class="swal2-textarea w-100" rows="3"
-          placeholder="Explica por qué este proyecto no es elegible para el concurso..."></textarea>
-      </div>`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      confirmButtonText: '<i class="ti tabler-circle-x me-1"></i>Confirmar',
-      cancelButtonText: 'Cancelar',
+      html: `<div class="text-start"><p class="fw-semibold mb-3">"${titulo}"</p>
+        <label class="form-label fw-semibold">Observación <span class="text-danger">*</span></label>
+        <textarea id="swal-obs" class="swal2-textarea w-100" rows="3" placeholder="Explica el motivo..."></textarea></div>`,
+      icon: 'warning', showCancelButton: true,
+      confirmButtonColor: '#d33', confirmButtonText: 'Confirmar', cancelButtonText: 'Cancelar',
       preConfirm: () => {
         const obs = document.getElementById('swal-obs').value.trim();
         if (!obs) { Swal.showValidationMessage('La observación es obligatoria.'); return false; }
         return obs;
       }
     }).then(result => {
-      if (result.isConfirmed) {
-        const f = document.getElementById('formNoElegible');
-        f.action = '/buenas-practicas/' + id + '/no-elegible';
-        let obs = f.querySelector('[name="observacion_comision"]');
-        if (!obs) { obs = document.createElement('input'); obs.type='hidden'; obs.name='observacion_comision'; f.appendChild(obs); }
-        obs.value = result.value;
-        f.submit();
-      }
+      if (!result.isConfirmed) return;
+      $.ajax({
+        url: '/buenas-practicas/' + id + '/no-elegible',
+        type: 'POST',
+        data: { _token: CSRF, _method: 'PATCH', observacion_comision: result.value },
+      }).done(function() {
+        loadCards();
+        pulsoToast('Proyecto marcado como No Elegible.', 'warning');
+      }).fail(function() { pulsoToast('Error al guardar.', 'error'); });
     });
   });
 
@@ -1197,28 +1382,32 @@ window.addEventListener('load', () => window.setTimeout(() => {
     new bootstrap.Modal(document.getElementById('modalGanadorUgel')).show();
   });
 
+  bindFormAjax('#formGanadorUgel', '#modalGanadorUgel', '¡Ganador UGEL declarado!', 'concurso_ugel');
+
   // ── ENVIAR A CONCURSO EXTERNO (Nivel 2) ──────────────────────
   $(document).on('click', '.btn-enviar-externo', function () {
     const d = $(this).data();
     $('#formExterno').attr('action', '/buenas-practicas/' + d.id + '/externo');
     $('#ext_titulo').text(d.titulo);
     $('#ext_participante').text('Participante: ' + (d.participante || '—'));
-    // Reset selección nivel
     $('input[name="nivel_externo"]').prop('checked', false);
     $('label[for="nivelMinedu"], label[for="nivelDre"]').css({ borderColor: 'rgba(0,0,0,.1)', background: '' });
     new bootstrap.Modal(document.getElementById('modalExterno')).show();
   });
 
-  // Selector visual de nivel externo
+  bindFormAjax('#formExterno', '#modalExterno', 'Proyecto registrado en concurso externo.', 'concurso_ugel', function() {
+    if (!$('input[name="nivel_externo"]:checked').val()) {
+      pulsoToast('Selecciona el nivel del concurso externo.', 'warning'); return false;
+    }
+    return true;
+  });
+
   $(document).on('change', 'input[name="nivel_externo"]', function () {
     const val = $(this).val();
     $('input[name="nivel_externo"]').each(function () {
       const $lbl = $('label[for="' + $(this).attr('id') + '"]');
-      if ($(this).val() === val) {
-        $lbl.css({ borderColor: val === 'minedu' ? '#7c3aed' : '#4facfe', background: val === 'minedu' ? 'rgba(124,58,237,.06)' : 'rgba(79,172,254,.06)' });
-      } else {
-        $lbl.css({ borderColor: 'rgba(0,0,0,.1)', background: '' });
-      }
+      if ($(this).val() === val) $lbl.css({ borderColor: val === 'minedu' ? '#7c3aed' : '#4facfe', background: val === 'minedu' ? 'rgba(124,58,237,.06)' : 'rgba(79,172,254,.06)' });
+      else $lbl.css({ borderColor: 'rgba(0,0,0,.1)', background: '' });
     });
   });
 
@@ -1231,6 +1420,8 @@ window.addEventListener('load', () => window.setTimeout(() => {
     $('input[name="gano_externo"]').prop('checked', false);
     new bootstrap.Modal(document.getElementById('modalResultadoExterno')).show();
   });
+
+  bindFormAjax('#formResultadoExterno', '#modalResultadoExterno', 'Resultado del concurso externo registrado.', 'concurso_ugel');
 
   // ── EDITAR (prácticas institucionales) ──────────────────────
   $(document).on('click', '.btn-editar', function () {
@@ -1253,24 +1444,23 @@ window.addEventListener('load', () => window.setTimeout(() => {
     new bootstrap.Modal(document.getElementById('modalEditar')).show();
   });
 
+  bindFormAjax('#formEditar', '#modalEditar', 'Práctica actualizada correctamente.', null);
+
+  // ── REGISTRAR NUEVA PRÁCTICA ─────────────────────────────────
+  bindFormAjax('#formNueva', '#modalNueva', 'Práctica institucional registrada.', 'practicas');
+
   // ── ELIMINAR ─────────────────────────────────────────────────
   $(document).on('click', '.btn-eliminar', function () {
-    const id = $(this).data('id');
-    const titulo = $(this).data('titulo');
-    Swal.fire({
+    const id = $(this).data('id'), titulo = $(this).data('titulo');
+    pulsoConfirm({
       title: '¿Eliminar?',
       html: `<strong>${titulo}</strong><br><small class="text-muted">Esta acción no se puede deshacer.</small>`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-    }).then(result => {
-      if (result.isConfirmed) {
-        const f = document.getElementById('formEliminar');
-        f.action = '/buenas-practicas/' + id;
-        f.submit();
-      }
+      type: 'warning', confirmText: 'Sí, eliminar', cancelText: 'Cancelar',
+    }).then(ok => {
+      if (!ok) return;
+      $.ajax({ url: '/buenas-practicas/' + id, type: 'POST', data: { _token: CSRF, _method: 'DELETE' } })
+      .done(function() { loadCards(); pulsoToast('Eliminado correctamente.', 'warning'); })
+      .fail(function() { pulsoToast('Error al eliminar.', 'error'); });
     });
   });
 

@@ -3,8 +3,8 @@
 @section('title', 'Recomendaciones — PULSO UGEL')
 
 @section('vendor-style')
-<link rel="stylesheet" href="{{ asset('assets/vendor/libs/select2/select2.css') }}" />
-<link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.css') }}" />
+@vite(['resources/assets/vendor/libs/select2/select2.scss',
+       'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss'])
 @endsection
 
 @section('content')
@@ -232,14 +232,21 @@
           </div>
           <div class="col-md-4">
             <label class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+            @can('recomendaciones.editar')
             <select id="f_estado" class="form-select">
               <option value="pendiente" selected>Pendiente</option>
               <option value="en_proceso">En Proceso</option>
               <option value="atendida">Atendida</option>
               <option value="rechazada">Rechazada</option>
             </select>
+            @else
+            <select id="f_estado" class="form-select" disabled>
+              <option value="pendiente" selected>Pendiente</option>
+            </select>
+            <input type="hidden" id="f_estado_hidden" name="estado" value="pendiente">
+            @endcan
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6" id="wrap-unidad">
             <label class="form-label fw-semibold">Unidad Orgánica</label>
             <select id="f_unidad" class="form-select select2-form">
               <option value="">Sin asignar</option>
@@ -248,7 +255,7 @@
               @endforeach
             </select>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-6" id="wrap-responsable">
             <label class="form-label fw-semibold">Responsable</label>
             <select id="f_responsable" class="form-select select2-form">
               <option value="">Sin asignar</option>
@@ -314,8 +321,8 @@
 @endsection
 
 @section('vendor-script')
-<script src="{{ asset('assets/vendor/libs/select2/select2.js') }}"></script>
-<script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.js') }}"></script>
+@vite(['resources/assets/vendor/libs/select2/select2.js',
+       'resources/assets/vendor/libs/sweetalert2/sweetalert2.js'])
 @endsection
 
 @section('page-script')
@@ -352,9 +359,8 @@ function formatDate(y_m_d) {
   return `${d}/${m}/${y}`;
 }
 
-function showToast(msg, type = 'success') {
-  Swal.fire({ toast: true, position: 'top-end', icon: type,
-    title: msg, showConfirmButton: false, timer: 3000, timerProgressBar: true });
+function showToast(msg, type) {
+  pulsoToast(msg, type || 'success');
 }
 
 function showErrors(errors) {
@@ -522,8 +528,9 @@ function renderTabla(rows) {
 
 // ── Paginación ────────────────────────────────────────────────────────────────
 function renderPaginacion(p) {
-  qs('totalLabel').textContent = `${p.total} registros`;
-  if (p.last_page <= 1) { qs('paginacionWrap').innerHTML = ''; return; }
+  qs('totalLabel').textContent = p.total > 0 ? `${p.total} registros` : '';
+  qs('paginacionWrap').innerHTML = '';
+  if (p.last_page <= 1) return;
 
   let btns = '';
   for (let i = 1; i <= p.last_page; i++) {
@@ -577,6 +584,11 @@ function resetForm() {
 function abrirNueva() {
   editingId = null;
   resetForm();
+  // Ocultar unidad/responsable si el usuario no puede editarlos (sin ver-todas/ver-unidad)
+  if (!CAN_EDITAR) {
+    qs('wrap-unidad')   && (qs('wrap-unidad').style.display   = 'none');
+    qs('wrap-responsable') && (qs('wrap-responsable').style.display = 'none');
+  }
   qs('moduloFieldWrap').style.display = 'none';
   qs('f_modulo').value = modulo;
   const label = modulo === 'sci' ? 'Sistema de Control Interno' : 'Modelo de Integridad';
@@ -592,12 +604,17 @@ function abrirNueva() {
 function abrirEditar(r) {
   editingId = r.id;
   resetForm();
-  qs('moduloFieldWrap').style.display = 'block';
+  qs('moduloFieldWrap').style.display = CAN_EDITAR ? 'block' : 'none';
   qs('f_modulo').value      = r.modulo;
   qs('f_titulo').value      = r.titulo;
   qs('f_tipo').value        = r.tipo;
   qs('f_prioridad').value   = r.prioridad;
-  qs('f_estado').value      = r.estado;
+  // Sincronizar estado en select o hidden según permiso
+  if (qs('f_estado') && !qs('f_estado').disabled) {
+    qs('f_estado').value = r.estado;
+  } else if (qs('f_estado_hidden')) {
+    qs('f_estado_hidden').value = r.estado;
+  }
   qs('f_origen').value      = r.origen || '';
   qs('f_emision').value     = r.fecha_emision || '';
   qs('f_limite').value      = r.fecha_limite || '';
@@ -623,13 +640,18 @@ function guardar() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando...';
 
+  // Si el select de estado está disabled, tomar el hidden
+  const estadoVal = qs('f_estado')?.disabled
+    ? (qs('f_estado_hidden')?.value || 'pendiente')
+    : fv('f_estado');
+
   const body = new URLSearchParams({
     _token:             CSRF,
     titulo:             fv('f_titulo'),
     tipo:               fv('f_tipo'),
     modulo:             fv('f_modulo'),
     prioridad:          fv('f_prioridad'),
-    estado:             fv('f_estado'),
+    estado:             estadoVal,
     origen:             fv('f_origen'),
     fecha_emision:      fv('f_emision'),
     fecha_limite:       fv('f_limite'),
@@ -664,13 +686,12 @@ function guardar() {
 
 // ── Marcar atendida ───────────────────────────────────────────────────────────
 function marcarAtendida(id, titulo) {
-  Swal.fire({
+  pulsoConfirm({
     title: 'Marcar como atendida',
     html: `¿Confirmar que "<strong>${titulo}</strong>" ha sido atendida?`,
-    icon: 'question', showCancelButton: true,
-    confirmButtonColor: '#28a745', confirmButtonText: 'Sí, atendida', cancelButtonText: 'Cancelar',
-  }).then(res => {
-    if (!res.isConfirmed) return;
+    type: 'question', confirmText: 'Sí, atendida', cancelText: 'Cancelar',
+  }).then(ok => {
+    if (!ok) return;
     fetch(`/recomendaciones/${id}/atender`, {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -683,13 +704,12 @@ function marcarAtendida(id, titulo) {
 
 // ── Eliminar ──────────────────────────────────────────────────────────────────
 function eliminar(id, titulo) {
-  Swal.fire({
+  pulsoConfirm({
     title: '¿Eliminar recomendación?',
     html: `<strong>${titulo}</strong><br><small class="text-muted">Esta acción no se puede deshacer.</small>`,
-    icon: 'warning', showCancelButton: true,
-    confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar',
-  }).then(res => {
-    if (!res.isConfirmed) return;
+    type: 'warning', confirmText: 'Sí, eliminar', cancelText: 'Cancelar',
+  }).then(ok => {
+    if (!ok) return;
     fetch(`/recomendaciones/${id}`, {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -725,8 +745,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Botón nueva
-  qs('btnNueva').addEventListener('click', abrirNueva);
+  // Botón nueva (solo si el usuario tiene permiso crear)
+  qs('btnNueva')?.addEventListener('click', abrirNueva);
 
   // Filtrar con botón
   qs('btnFiltrar').addEventListener('click', () => loadData(1));
@@ -773,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Guardar formulario
-  qs('btnGuardar').addEventListener('click', guardar);
+  qs('btnGuardar')?.addEventListener('click', guardar);
 
   // Carga inicial
   loadData();

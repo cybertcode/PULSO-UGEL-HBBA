@@ -235,6 +235,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::put('/buenas-practicas/{buenaPractica}',          [BuenasPracticasController::class, 'update'])->name('buenas-practicas.update')->middleware('can:buenas-practicas.editar');
     Route::delete('/buenas-practicas/{buenaPractica}',       [BuenasPracticasController::class, 'destroy'])->name('buenas-practicas.destroy')->middleware('can:buenas-practicas.eliminar');
     Route::patch('/buenas-practicas/{buenaPractica}/avance', [BuenasPracticasController::class, 'updateAvance'])->name('buenas-practicas.avance')->middleware('can:buenas-practicas.editar');
+    Route::post('/buenas-practicas/{buenaPractica}/presentar-practica', [BuenasPracticasController::class, 'presentarPractica'])->name('buenas-practicas.presentar-practica')->middleware('can:buenas-practicas.editar');
     // Flujo concurso — Nivel 1 UGEL Huacaybamba
     Route::patch('/buenas-practicas/{buenaPractica}/recepcionar',       [BuenasPracticasController::class, 'recepcionar'])->name('buenas-practicas.recepcionar')->middleware('can:buenas-practicas.editar');
     Route::patch('/buenas-practicas/{buenaPractica}/elegible',          [BuenasPracticasController::class, 'declararElegible'])->name('buenas-practicas.elegible')->middleware('can:buenas-practicas.editar');

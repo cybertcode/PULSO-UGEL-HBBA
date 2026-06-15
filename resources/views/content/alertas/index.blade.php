@@ -1251,19 +1251,11 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(r => { toast(r.message || 'Alerta eliminada'); doPoll(true); })
             .catch(err => { toast(err?.message || 'Error al eliminar', 'error'); if (btnDel) btnDel.disabled = false; });
         };
-        if (window.Swal) {
-          Swal.fire({
-            title: '¿Eliminar alerta?',
-            html: 'Se eliminará permanentemente: <strong>' + titulo + '</strong>',
-            icon: 'warning', showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#ea5455',
-            customClass: { confirmButton: 'btn btn-danger me-2', cancelButton: 'btn btn-label-secondary' },
-            buttonsStyling: false,
-          }).then(r => { if (r.isConfirmed) confirmar(); });
-        } else {
-          if (confirm('¿Eliminar "' + titulo + '"?')) confirmar();
-        }
+        pulsoConfirm({
+          title: '¿Eliminar alerta?',
+          html: 'Se eliminará permanentemente: <strong>' + titulo + '</strong>',
+          type: 'warning', confirmText: 'Sí, eliminar', cancelText: 'Cancelar',
+        }).then(ok => { if (ok) confirmar(); });
       });
     });
 

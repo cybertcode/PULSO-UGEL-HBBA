@@ -230,8 +230,8 @@ class RolesPermisosSeeder extends Seeder
             // Evidencias — puede subir (NO validar, NO eliminar)
             'evidencias.ver', 'evidencias.crear',
             'semaforo.ver',
-            // Buenas prácticas y recomendaciones — solo lectura
-            'buenas-practicas.ver',
+            // Buenas prácticas — puede ver y presentar proyectos al concurso
+            'buenas-practicas.ver', 'buenas-practicas.crear',
             'recomendaciones.ver',
             // Normativas — solo lectura
             'normativas.ver',
