@@ -708,7 +708,7 @@ document.addEventListener('DOMContentLoaded', function () {
     gridEl.style.opacity = '0.45';
     gridEl.style.pointerEvents = 'none';
 
-    fetch(BASE_URL + '?' + params.toString(), {
+    return fetch(BASE_URL + '?' + params.toString(), {
       signal: fetchAborter.signal,
       headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
     })
@@ -988,7 +988,13 @@ document.addEventListener('DOMContentLoaded', function () {
           showCancelButton: true,
           cancelButtonText: 'Entendido',
         }).then(res => {
-          cargarActividades(getParams());
+          const actId = data.actividad_id;
+          cargarActividades(getParams()).then(() => {
+            if (res.isConfirmed && actId) {
+              const btnEv = document.querySelector(`.btn-ev-nueva[data-actividad-id="${actId}"]`);
+              if (btnEv) btnEv.click();
+            }
+          });
         });
       } else {
         Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'No se pudo guardar.' });

@@ -161,6 +161,7 @@ class MisActividadesController extends Controller
                     'avance'       => $avance,
                     'estado'       => 'en_proceso',
                     'estado_label' => 'En Proceso',
+                    'actividad_id' => $actividad->id,
                     'advertencia'  => 'El avance se guardó en 100%, pero la actividad no puede marcarse como completada hasta que tengas al menos una evidencia validada.',
                 ]);
             }
