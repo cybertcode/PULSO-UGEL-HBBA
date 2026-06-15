@@ -348,6 +348,7 @@ $kpisConfig = [
             <tr>
               <th style="min-width:200px">Título / N° SGD</th>
               <th style="min-width:160px">Actividad</th>
+              <th style="width:110px">Avance</th>
               <th style="min-width:120px">Componente</th>
               <th style="min-width:130px">Registrado por</th>
               <th style="min-width:160px">Enlace</th>
@@ -387,6 +388,23 @@ $kpisConfig = [
                 <span class="{{ $isInt ? 'chip-integridad' : 'chip-sci' }}">{{ $isInt ? 'INT' : 'SCI' }}</span>
                 <div style="font-size:12px;max-width:160px;margin-top:3px" title="{{ $ev->actividad->nombre ?? '' }}">{{ Str::limit($ev->actividad->nombre ?? '—', 38) }}</div>
                 @if($ev->actividad?->codigo)<small class="text-muted" style="font-size:10px">{{ $ev->actividad->codigo }}</small>@endif
+              </td>
+              <td>
+                @if($ev->actividad)
+                @php
+                  $actAvance = $ev->actividad->avance ?? 0;
+                  $actEc     = $ev->actividad->estado_color ?? 'secondary';
+                @endphp
+                <div class="d-flex align-items-center gap-1" style="min-width:80px">
+                  <div style="flex:1;height:6px;background:#e9ecef;border-radius:3px;overflow:hidden">
+                    <div style="width:{{ $actAvance }}%;height:100%;background:var(--bs-{{ $actEc }});border-radius:3px;transition:width .3s"></div>
+                  </div>
+                  <span style="font-size:11px;font-weight:700;color:var(--bs-{{ $actEc }});white-space:nowrap">{{ $actAvance }}%</span>
+                </div>
+                <div style="font-size:10px;color:var(--bs-{{ $actEc }});font-weight:600;margin-top:2px">{{ $ev->actividad->estado_label ?? '' }}</div>
+                @else
+                <span class="text-muted" style="font-size:11px">—</span>
+                @endif
               </td>
               <td>
                 <div style="font-size:12px;max-width:160px">{{ $evComp?->nombre ? Str::limit($evComp->nombre, 35) : '—' }}</div>

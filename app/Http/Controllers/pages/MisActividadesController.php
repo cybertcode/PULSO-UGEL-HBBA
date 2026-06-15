@@ -141,8 +141,10 @@ class MisActividadesController extends Controller
             'observaciones' => 'nullable|string|max:500',
         ]);
 
-        $avance = (int) $request->avance;
-        $data   = ['avance' => $avance];
+        $avance      = (int) $request->avance;
+        $avanceAntes = $actividad->avance;
+        $estadoAntes = $actividad->estado;
+        $data        = ['avance' => $avance];
 
         if ($avance == 100 && $actividad->estado !== 'completada') {
             // Solo puede completarse si tiene al menos una evidencia validada
@@ -156,6 +158,16 @@ class MisActividadesController extends Controller
                 // Llega a 100% pero sin evidencia validada → queda en_proceso
                 $data['estado'] = 'en_proceso';
                 $actividad->update($data);
+
+                ActividadHistorial::create([
+                    'actividad_id'   => $actividad->id,
+                    'usuario_id'     => $user->id,
+                    'campo'          => 'avance',
+                    'valor_anterior' => (string) $avanceAntes . '%',
+                    'valor_nuevo'    => '100%',
+                    'descripcion'    => 'Avance actualizado a 100% (pendiente de evidencia validada para completar)',
+                ]);
+
                 return response()->json([
                     'success'      => false,
                     'avance'       => $avance,
@@ -174,6 +186,25 @@ class MisActividadesController extends Controller
         }
 
         $actividad->update($data);
+
+        // Registrar en historial para visibilidad del responsable SCI
+        if ($avance !== $avanceAntes) {
+            $desc = 'Avance actualizado de ' . $avanceAntes . '% a ' . $avance . '%';
+            if ($actividad->estado !== $estadoAntes) {
+                $desc .= ' · Estado: ' . $estadoAntes . ' → ' . $actividad->estado;
+            }
+            if ($request->filled('observaciones')) {
+                $desc .= ' — ' . $request->observaciones;
+            }
+            ActividadHistorial::create([
+                'actividad_id'   => $actividad->id,
+                'usuario_id'     => $user->id,
+                'campo'          => 'avance',
+                'valor_anterior' => (string) $avanceAntes . '%',
+                'valor_nuevo'    => (string) $avance . '%',
+                'descripcion'    => $desc,
+            ]);
+        }
 
         return response()->json([
             'success'      => true,
