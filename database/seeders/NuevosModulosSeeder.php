@@ -2,14 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\SciEje;
-use App\Models\SciComponente;
 use App\Models\SciPregunta;
 use App\Models\UnidadOrganica;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class NuevosModulosSeeder extends Seeder
 {
@@ -17,13 +15,11 @@ class NuevosModulosSeeder extends Seeder
     {
         $now = Carbon::now();
 
-        // Sembrar estructura SCI y actividades de prueba
         $this->seedActividadesSci($now);
 
-        // Delegar datos de integridad al seeder especializado
         $this->call(IntegridadDatosPruebaSeeder::class);
 
-        $this->command->info('✓ NuevosModulosSeeder: actividades SCI e integridad generadas.');
+        $this->command->info('✓ NuevosModulosSeeder: actividades SCI e Integridad generadas.');
     }
 
     private function seedActividadesSci(Carbon $now): void
@@ -33,22 +29,21 @@ class NuevosModulosSeeder extends Seeder
         $creador   = $sciUser ?? $adminUser;
 
         if (!$creador) {
-            $this->command->warn('No se encontró usuario SCI ni admin para seedear actividades SCI.');
+            $this->command->warn('No se encontró usuario SCI ni admin para actividades SCI.');
             return;
         }
 
-        $unidades = UnidadOrganica::all();
-        if ($unidades->isEmpty()) return;
+        $unidades  = UnidadOrganica::all();
+        $preguntas = SciPregunta::with('componente.eje')->where('activo', true)->get();
 
-        $preguntas = SciPregunta::with('componente.eje')->get();
-        if ($preguntas->isEmpty()) {
-            $this->command->warn('No hay preguntas SCI. Asegúrate que RolesPermisosSeeder o la estructura SCI esté poblada.');
+        if ($unidades->isEmpty() || $preguntas->isEmpty()) {
+            $this->command->warn('Faltan unidades o preguntas SCI. Verifica EstructuraSciIntegridadSeeder.');
             return;
         }
 
         $anio = 2026;
 
-        // Eliminar actividades SCI de prueba existentes para evitar duplicados
+        // Limpiar actividades SCI previas de este año para evitar duplicados
         $existentes = DB::table('actividades')
             ->where('modulo', 'sci')
             ->where('anio', $anio)
@@ -57,21 +52,26 @@ class NuevosModulosSeeder extends Seeder
         DB::table('actividad_responsables')->whereIn('actividad_id', $existentes)->delete();
         DB::table('actividades')->whereIn('id', $existentes)->delete();
 
-        $contador = 1;
-        foreach ($preguntas->take(18) as $pregunta) {
-            $unidad      = $unidades->get(($contador - 1) % $unidades->count());
-            $responsable = User::where('unidad_organica_id', $unidad->id)
-                               ->where('estado', 'activo')
-                               ->first() ?? $creador;
+        // Distribución de estados realista para un sistema en funcionamiento
+        $estadosDistribucion = [
+            'completada', 'completada', 'completada', 'completada',   // 4 completadas
+            'en_proceso', 'en_proceso', 'en_proceso', 'en_proceso', 'en_proceso', // 5 en proceso
+            'pendiente', 'pendiente', 'pendiente',                    // 3 pendientes
+            'vencida', 'vencida',                                     // 2 vencidas
+            'observado', 'observado',                                 // 2 observadas
+            'pendiente', 'pendiente',                                 // 2 más pendientes
+        ];
 
-            $estado = match(true) {
-                $contador <= 4  => 'completada',
-                $contador <= 9  => 'en_proceso',
-                $contador <= 12 => 'pendiente',
-                $contador <= 14 => 'vencida',
-                $contador <= 16 => 'observado',
-                default         => 'pendiente',
-            };
+        $contador = 1;
+        foreach ($preguntas as $pregunta) {
+            $unidad = $unidades->get(($contador - 1) % $unidades->count());
+
+            $responsable = DB::table('users')
+                ->where('unidad_organica_id', $unidad->id)
+                ->where('estado', 'activo')
+                ->first() ?? (object)['id' => $creador->id];
+
+            $estado = $estadosDistribucion[$contador - 1] ?? 'pendiente';
 
             $avance = match($estado) {
                 'completada' => 100,
@@ -81,36 +81,36 @@ class NuevosModulosSeeder extends Seeder
                 default      => 0,
             };
 
-            $fechaInicio = $now->copy()->subDays(rand(30, 90))->toDateString();
+            $prioridad   = $contador <= 6 ? 'alta' : ($contador <= 12 ? 'media' : 'baja');
+            $diasInicio  = rand(30, 90);
+            $fechaInicio = $now->copy()->subDays($diasInicio)->toDateString();
             $fechaLimite = $estado === 'vencida'
                 ? $now->copy()->subDays(rand(1, 20))->toDateString()
                 : $now->copy()->addDays(rand(10, 60))->toDateString();
 
-            $codigo = 'SCI-' . $anio . '-' . str_pad($contador, 3, '0', STR_PAD_LEFT);
-
             $id = DB::table('actividades')->insertGetId([
-                'modulo'          => 'sci',
-                'sci_pregunta_id' => $pregunta->id,
+                'modulo'             => 'sci',
+                'sci_pregunta_id'    => $pregunta->id,
                 'unidad_organica_id' => $unidad->id,
-                'codigo'          => $codigo,
-                'nombre'          => $pregunta->nombre,
-                'anio'            => $anio,
-                'fecha_inicio'    => $fechaInicio,
-                'fecha_limite'    => $fechaLimite,
+                'codigo'             => 'SCI-' . $anio . '-' . str_pad($contador, 3, '0', STR_PAD_LEFT),
+                'nombre'             => $pregunta->nombre,
+                'descripcion'        => 'Actividad de Control Interno vinculada al ' . ($pregunta->componente->eje->nombre ?? 'eje SCI') . '.',
+                'anio'               => $anio,
+                'numero_sgd'         => 'SGD-' . $anio . '-' . str_pad($contador + 100, 4, '0', STR_PAD_LEFT),
+                'fecha_inicio'       => $fechaInicio,
+                'fecha_limite'       => $fechaLimite,
                 'fecha_cumplimiento' => $estado === 'completada'
                     ? $now->copy()->subDays(rand(1, 15))->toDateString()
                     : null,
-                'estado'          => $estado,
-                'avance'          => $avance,
-                'prioridad'       => $contador <= 6 ? 'alta' : ($contador <= 12 ? 'media' : 'baja'),
-                'creado_por'      => $creador->id,
-                'descripcion'     => null,
-                'observaciones'   => $estado === 'observado'
-                    ? 'Requiere corrección de evidencias antes del cierre.'
+                'estado'             => $estado,
+                'avance'             => $avance,
+                'prioridad'          => $prioridad,
+                'observaciones'      => $estado === 'observado'
+                    ? 'Requiere corrección de evidencias antes del cierre del período.'
                     : null,
-                'numero_sgd'      => 'SGD-' . $anio . '-' . str_pad($contador + 100, 4, '0', STR_PAD_LEFT),
-                'created_at'      => $now,
-                'updated_at'      => $now,
+                'creado_por'         => $creador->id,
+                'created_at'         => $now,
+                'updated_at'         => $now,
             ]);
 
             DB::table('actividad_responsables')->insert([
@@ -121,9 +121,29 @@ class NuevosModulosSeeder extends Seeder
                 'updated_at'   => $now,
             ]);
 
+            // Agregar colaborador en actividades en_proceso y observado
+            if (in_array($estado, ['en_proceso', 'observado'])) {
+                $colaborador = DB::table('users')
+                    ->where('estado', 'activo')
+                    ->where('id', '!=', $responsable->id)
+                    ->inRandomOrder()
+                    ->first();
+
+                if ($colaborador) {
+                    DB::table('actividad_responsables')->insertOrIgnore([
+                        'actividad_id' => $id,
+                        'user_id'      => $colaborador->id,
+                        'tipo'         => 'colaborador',
+                        'created_at'   => $now,
+                        'updated_at'   => $now,
+                    ]);
+                }
+            }
+
             $contador++;
         }
 
-        $this->command->info("✓ {$contador} actividades SCI insertadas.");
+        $total = $contador - 1;
+        $this->command->info("✓ {$total} actividades SCI insertadas (anio {$anio}).");
     }
 }

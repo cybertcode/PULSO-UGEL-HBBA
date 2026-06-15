@@ -6,15 +6,21 @@ use App\Models\Cargo;
 use App\Models\User;
 use App\Models\UnidadOrganica;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UsuariosSeeder extends Seeder
 {
     /**
      * Usuarios representativos de la UGEL Huacaybamba — Huánuco, Perú.
-     * Clave 'rol' corresponde exactamente a los nombres en RolesPermisosSeeder.
+     * Contraseña institucional: Ugel@2024 (configurable con SEED_USERS_PASSWORD en .env)
+     * Contraseña dev (Super Admin): Admin123
+     *
+     * Roles disponibles (en orden de privilegio descendente):
+     *   Super Admin > Administrador > Coordinador SCI > Responsable de Unidad > Operador > Visualizador
      */
     private array $usuariosFijos = [
-        // ── Dirección ─────────────────────────────────────────────────────────
+
+        // ── Dirección General ────────────────────────────────────────────────
         [
             'name'   => 'Mg. Julio Luis Lozano Yllatopa',
             'email'  => 'director@ugelhuacaybamba.edu.pe',
@@ -22,9 +28,11 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Director(a) de UGEL',
             'unidad' => 'DIR',
             'rol'    => 'Administrador',
-            'estado' => 'activo',
+            // Acceso: gestión total institucional, usuarios, configuración, todos los módulos.
+            // NO puede gestionar roles del sistema (solo Super Admin).
         ],
-        // ── Coordinación SCI ──────────────────────────────────────────────────
+
+        // ── Coordinación de Control Interno (SCI) ────────────────────────────
         [
             'name'   => 'Carlos Alberto Flores Mendoza',
             'email'  => 'sci@ugelhuacaybamba.edu.pe',
@@ -32,9 +40,11 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Coordinador(a) de Control Interno',
             'unidad' => 'AGI',
             'rol'    => 'Coordinador SCI',
-            'estado' => 'activo',
+            // Acceso: gestión completa SCI e Integridad en toda la institución.
+            // NO gestiona usuarios ni configuración del sistema.
         ],
-        // ── Gestión Administrativa ────────────────────────────────────────────
+
+        // ── Jefes de Área (Responsables de Unidad) ──────────────────────────
         [
             'name'   => 'Rosa Isabel Vargas Tarazona',
             'email'  => 'administracion@ugelhuacaybamba.edu.pe',
@@ -42,9 +52,8 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Jefe(a) de Oficina de Administración',
             'unidad' => 'OAD',
             'rol'    => 'Responsable de Unidad',
-            'estado' => 'activo',
+            // Acceso: crea y edita actividades de su unidad. No elimina.
         ],
-        // ── Área de Gestión Pedagógica ────────────────────────────────────────
         [
             'name'   => 'Jorge Luis Ramírez Castillo',
             'email'  => 'pedagogia@ugelhuacaybamba.edu.pe',
@@ -52,9 +61,7 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Jefe(a) de Área de Gestión Pedagógica',
             'unidad' => 'AGP',
             'rol'    => 'Responsable de Unidad',
-            'estado' => 'activo',
         ],
-        // ── Contabilidad ──────────────────────────────────────────────────────
         [
             'name'   => 'Ana Lucía Torres Espinoza',
             'email'  => 'contabilidad@ugelhuacaybamba.edu.pe',
@@ -62,9 +69,9 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Responsable de Contabilidad',
             'unidad' => 'CONT',
             'rol'    => 'Responsable de Unidad',
-            'estado' => 'activo',
         ],
-        // ── Logística ─────────────────────────────────────────────────────────
+
+        // ── Operadores (actualizan avances y suben evidencias) ────────────────
         [
             'name'   => 'Pedro Antonio Huanca Mamani',
             'email'  => 'logistica@ugelhuacaybamba.edu.pe',
@@ -72,9 +79,9 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Responsable de Logística',
             'unidad' => 'LOG',
             'rol'    => 'Operador',
-            'estado' => 'activo',
+            // Acceso: edita avances en actividades asignadas, sube evidencias.
+            // NO crea actividades ni gestiona alertas.
         ],
-        // ── Recursos Humanos ──────────────────────────────────────────────────
         [
             'name'   => 'Lucía Fernández Ríos',
             'email'  => 'rrhh@ugelhuacaybamba.edu.pe',
@@ -82,9 +89,7 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Responsable de Recursos Humanos',
             'unidad' => 'RR_HH',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
-        // ── Tesorería ─────────────────────────────────────────────────────────
         [
             'name'   => 'Juan Carlos Soto Benites',
             'email'  => 'tesoreria@ugelhuacaybamba.edu.pe',
@@ -92,9 +97,7 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Responsable de Tesorería',
             'unidad' => 'TESOR',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
-        // ── Infraestructura ───────────────────────────────────────────────────
         [
             'name'   => 'Sandra Milagros León Coronado',
             'email'  => 'infraestructura@ugelhuacaybamba.edu.pe',
@@ -102,19 +105,7 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Responsable de Infraestructura',
             'unidad' => 'INF',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
-        // ── Asesoría Jurídica ─────────────────────────────────────────────────
-        [
-            'name'   => 'Roberto Enrique Chávez Palacios',
-            'email'  => 'asesoria@ugelhuacaybamba.edu.pe',
-            'dni'    => '41289076',
-            'cargo'  => 'Asesor(a) Jurídico(a)',
-            'unidad' => 'ASESOR',
-            'rol'    => 'Visualizador',
-            'estado' => 'activo',
-        ],
-        // ── Especialistas ─────────────────────────────────────────────────────
         [
             'name'   => 'Patricia Soledad Mejía Sánchez',
             'email'  => 'especialista.agi@ugelhuacaybamba.edu.pe',
@@ -122,7 +113,6 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Especialista en Gestión Institucional',
             'unidad' => 'AGI',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
         [
             'name'   => 'Marco Antonio Príncipe López',
@@ -131,7 +121,6 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Especialista en Gestión Pedagógica',
             'unidad' => 'AGP',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
         [
             'name'   => 'Sofía Alejandra Vega Castillo',
@@ -140,7 +129,6 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Especialista en Infraestructura',
             'unidad' => 'INF',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
         [
             'name'   => 'Luis Alberto Quispe Mamani',
@@ -149,28 +137,7 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Contador Público',
             'unidad' => 'CONT',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
-        // ── Visualizadores institucionales ────────────────────────────────────
-        [
-            'name'   => 'Karina Beatriz Huanca Quispe',
-            'email'  => 'monitor@ugelhuacaybamba.edu.pe',
-            'dni'    => '46321987',
-            'cargo'  => 'Monitora de Integridad',
-            'unidad' => 'AGI',
-            'rol'    => 'Visualizador',
-            'estado' => 'activo',
-        ],
-        [
-            'name'   => 'Fernando José Ramos Delgado',
-            'email'  => 'secretaria@ugelhuacaybamba.edu.pe',
-            'dni'    => '45789231',
-            'cargo'  => 'Secretario(a) de Dirección',
-            'unidad' => 'DIR',
-            'rol'    => 'Visualizador',
-            'estado' => 'activo',
-        ],
-        // ── Especialistas pedagógicos adicionales (zona rural) ────────────────
         [
             'name'   => 'Yolanda Esperanza Condori Huanca',
             'email'  => 'especialista.inicial@ugelhuacaybamba.edu.pe',
@@ -178,7 +145,6 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Especialista en Educación Inicial',
             'unidad' => 'AGP',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
         [
             'name'   => 'Raúl Ernesto Meza Tucto',
@@ -187,7 +153,6 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Especialista en Educación Primaria',
             'unidad' => 'AGP',
             'rol'    => 'Operador',
-            'estado' => 'activo',
         ],
         [
             'name'   => 'Mirtha Jacqueline Soto Villanueva',
@@ -196,29 +161,58 @@ class UsuariosSeeder extends Seeder
             'cargo'  => 'Especialista en Educación Secundaria',
             'unidad' => 'AGP',
             'rol'    => 'Operador',
-            'estado' => 'activo',
+        ],
+
+        // ── Visualizadores (solo lectura total) ──────────────────────────────
+        [
+            'name'   => 'Roberto Enrique Chávez Palacios',
+            'email'  => 'asesoria@ugelhuacaybamba.edu.pe',
+            'dni'    => '41289076',
+            'cargo'  => 'Asesor(a) Jurídico(a)',
+            'unidad' => 'ASESOR',
+            'rol'    => 'Visualizador',
+            // Acceso: solo lectura total. Puede ver cumplimiento y reconocimientos
+            // (a diferencia del Operador que no ve cumplimiento).
+        ],
+        [
+            'name'   => 'Karina Beatriz Huanca Quispe',
+            'email'  => 'monitor@ugelhuacaybamba.edu.pe',
+            'dni'    => '46321987',
+            'cargo'  => 'Monitora de Integridad',
+            'unidad' => 'AGI',
+            'rol'    => 'Visualizador',
+        ],
+        [
+            'name'   => 'Fernando José Ramos Delgado',
+            'email'  => 'secretaria@ugelhuacaybamba.edu.pe',
+            'dni'    => '45789231',
+            'cargo'  => 'Secretario(a) de Dirección',
+            'unidad' => 'DIR',
+            'rol'    => 'Visualizador',
         ],
     ];
 
     public function run(): void
     {
         $cargoMap = Cargo::pluck('id', 'nombre');
+        $password = env('SEED_USERS_PASSWORD', 'Ugel@2024');
 
-        // ── Super Admin de desarrollo ──────────────────────────────────────────
+        // ── 1. Super Admin de desarrollo ──────────────────────────────────────
         $devAdmin = User::updateOrCreate(
             ['email' => 'admin@admin.com'],
             [
-                'name'              => 'Administrador',
-                'password'          => \Illuminate\Support\Facades\Hash::make('Admin123'),
+                'name'              => 'Administrador Dev',
+                'password'          => Hash::make('Admin123'),
                 'email_verified_at' => now(),
                 'dni'               => '00000000',
                 'cargo_id'          => null,
+                'unidad_organica_id'=> null,
                 'estado'            => 'activo',
             ]
         );
         $devAdmin->syncRoles(['Super Admin']);
 
-        // ── Usuarios fijos institucionales ─────────────────────────────────────
+        // ── 2. Usuarios institucionales fijos ─────────────────────────────────
         foreach ($this->usuariosFijos as $datos) {
             $unidad  = UnidadOrganica::where('codigo', $datos['unidad'])->first();
             $cargoId = $cargoMap->get($datos['cargo']);
@@ -227,42 +221,43 @@ class UsuariosSeeder extends Seeder
                 ['email' => $datos['email']],
                 [
                     'name'               => $datos['name'],
-                    'password'           => \Illuminate\Support\Facades\Hash::make(env('SEED_USERS_PASSWORD', 'Ugel@2024')),
+                    'password'           => Hash::make($password),
                     'email_verified_at'  => now(),
                     'dni'                => $datos['dni'],
                     'cargo_id'           => $cargoId,
                     'unidad_organica_id' => $unidad?->id,
-                    'estado'             => $datos['estado'],
+                    'estado'             => 'activo',
                 ]
             );
-
             $user->syncRoles([$datos['rol']]);
         }
 
-        // ── Usuarios faker adicionales ─────────────────────────────────────────
-        $rolesAdicionales = [
+        // ── 3. Usuarios faker adicionales para poblar métricas ────────────────
+        $extras = [
             'Operador'              => 8,
-            'Visualizador'          => 6,
-            'Responsable de Unidad' => 2,
+            'Visualizador'          => 5,
+            'Responsable de Unidad' => 3,
             'Coordinador SCI'       => 1,
         ];
 
-        foreach ($rolesAdicionales as $rol => $cantidad) {
+        foreach ($extras as $rol => $cantidad) {
             User::factory($cantidad)->activo()->create()->each(
-                fn($user) => $user->syncRoles([$rol])
+                fn($u) => $u->syncRoles([$rol])
             );
         }
 
-        // ── 2 usuarios pendientes de verificación ─────────────────────────────
+        // ── 4. Casos especiales para probar flujos de autenticación ───────────
+        // 2 usuarios sin verificar email
         User::factory(2)->unverified()->create()->each(
-            fn($user) => $user->syncRoles(['Visualizador'])
+            fn($u) => $u->syncRoles(['Visualizador'])
         );
 
-        // ── 1 usuario inactivo ─────────────────────────────────────────────────
-        $suspendido = User::factory()->create([
-            'estado' => 'inactivo',
-            'email_verified_at' => now(),
-        ]);
-        $suspendido->syncRoles(['Operador']);
+        // 1 usuario inactivo (login bloqueado)
+        User::factory()->create(['estado' => 'inactivo', 'email_verified_at' => now()])
+            ->syncRoles(['Operador']);
+
+        // 1 usuario pendiente de activación
+        User::factory()->create(['estado' => 'pendiente', 'email_verified_at' => now()])
+            ->syncRoles(['Operador']);
     }
 }
