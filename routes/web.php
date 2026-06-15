@@ -101,7 +101,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/evidencias', [EvidenciasController::class, 'index'])->name('sci-evidencias');
     });
     Route::post('/evidencias',                        [EvidenciasController::class, 'store'])->name('sci-evidencias.store')->middleware('can:evidencias.crear');
-    Route::put('/evidencias/{evidencia}',             [EvidenciasController::class, 'update'])->name('sci-evidencias.update')->middleware('can:evidencias.editar');
+    Route::put('/evidencias/{evidencia}',             [EvidenciasController::class, 'update'])->name('sci-evidencias.update')->middleware('can:evidencias.crear');
     Route::patch('/evidencias/{evidencia}/validar',   [EvidenciasController::class, 'validar'])->name('sci-evidencias.validar')->middleware('can:evidencias.validar');
     Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.eliminar');
 

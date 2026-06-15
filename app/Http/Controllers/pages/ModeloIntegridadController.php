@@ -114,9 +114,11 @@ class ModeloIntegridadController extends Controller
             ];
         });
 
-        $en_avance = $componentes->where('color', 'success')->count();
-        $en_riesgo = $componentes->where('color', 'warning')->count();
-        $criticos  = $componentes->where('color', 'danger')->count();
+        $en_avance         = $componentes->where('color', 'success')->count();
+        $en_riesgo         = $componentes->where('color', 'warning')->count();
+        $criticos          = $componentes->where('color', 'danger')->count();
+        $observadas_count  = $todasActividades->where('estado', 'observado')->count();
+        $ev_rechazadas_count = $todasActividades->filter(fn($a) => $a->evidencias->where('estado', 'rechazado')->count() > 0)->count();
 
         // ── Evidencias recientes ──────────────────────────────────────────────
         $idsIntegridad = $todasActividades->pluck('id');
@@ -150,7 +152,7 @@ class ModeloIntegridadController extends Controller
 
         // ── Próximas acciones ─────────────────────────────────────────────────
         $proximas_acciones = $todasActividades
-            ->whereIn('estado', ['pendiente', 'en_proceso'])
+            ->whereIn('estado', ['pendiente', 'en_proceso', 'observado'])
             ->filter(fn($a) => $a->fecha_limite !== null)
             ->sortBy('fecha_limite')->take(8)
             ->map(function ($act) {
@@ -171,6 +173,7 @@ class ModeloIntegridadController extends Controller
         return view('content.modelo-integridad.index', compact(
             'avance_global', 'umbral_verde', 'umbral_amarillo',
             'componentes', 'en_avance', 'en_riesgo', 'criticos',
+            'observadas_count', 'ev_rechazadas_count',
             'evidencias_recientes', 'alertas_activas', 'proximas_acciones',
             'actividades', 'etapas', 'unidades', 'usuarios', 'anio', 'anios_opt'
         ));
@@ -275,8 +278,13 @@ class ModeloIntegridadController extends Controller
             'tipos.*'                => 'in:principal,colaborador,supervisor',
         ]);
 
-        if ($validated['estado'] === 'completada' && !$actividad->fecha_cumplimiento) {
-            $validated['fecha_cumplimiento'] = now();
+        if ($validated['estado'] === 'completada') {
+            if (!$actividad->evidencias()->where('estado', 'validado')->exists()) {
+                return back()->withErrors(['estado' => 'No se puede marcar como completada sin al menos una evidencia validada.'])->withInput();
+            }
+            if (!$actividad->fecha_cumplimiento) {
+                $validated['fecha_cumplimiento'] = now();
+            }
             $validated['avance'] = 100;
         }
 
@@ -308,20 +316,31 @@ class ModeloIntegridadController extends Controller
 
         $request->validate(['avance' => 'required|integer|min:0|max:100']);
 
-        $avance = $request->avance;
-        $estado = match(true) {
-            $avance >= 100 => 'completada',
-            $avance > 0    => 'en_proceso',
-            default        => $actividad->estado,
-        };
+        $avance = (int) $request->avance;
+
+        if ($avance >= 100) {
+            $tieneEvidenciaValidada = $actividad->evidencias()->where('estado', 'validado')->exists();
+            $estado = $tieneEvidenciaValidada ? 'completada' : 'en_proceso';
+        } elseif ($avance > 0 && in_array($actividad->estado, ['pendiente', 'observado'])) {
+            $estado = 'en_proceso';
+        } else {
+            $estado = $actividad->estado;
+        }
 
         $actividad->update([
             'avance'             => $avance,
             'estado'             => $estado,
-            'fecha_cumplimiento' => $avance >= 100 ? now() : $actividad->fecha_cumplimiento,
+            'fecha_cumplimiento' => $estado === 'completada' ? now() : $actividad->fecha_cumplimiento,
         ]);
 
-        return response()->json(['ok' => true, 'avance' => $avance, 'estado' => $estado]);
+        return response()->json([
+            'ok'          => true,
+            'avance'      => $avance,
+            'estado'      => $estado,
+            'advertencia' => ($avance >= 100 && $estado !== 'completada')
+                ? 'Avance guardado al 100%, pero se requiere al menos una evidencia validada para completar la actividad.'
+                : null,
+        ]);
     }
 
     public function historial(Actividad $actividad)

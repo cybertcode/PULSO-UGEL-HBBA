@@ -212,6 +212,53 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
     </div>
   </div>
 
+  <div class="col-6 col-sm-4 col-md">
+    <a href="{{ route('mis-actividades', ['estado' => 'observado']) }}" class="text-decoration-none">
+      <div class="card kpi-card h-100" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%)">
+        <div class="card-body p-3 text-white">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div>
+              <div class="kpi-label text-white-50">Observadas</div>
+              <div class="kpi-value" id="kpi-observadas">{{ $stats['observadas'] }}</div>
+            </div>
+            <div class="kpi-icon" style="background:rgba(255,255,255,.15)">
+              <i class="ti tabler-file-x"></i>
+            </div>
+          </div>
+          <div class="kpi-sub text-white-75">
+            @if($stats['ev_rechazadas'] > 0)
+              <i class="ti tabler-alert-circle me-1"></i>{{ $stats['ev_rechazadas'] }} con evidencia rechazada
+            @else
+              Evidencias rechazadas pendientes
+            @endif
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+{{-- ── Banner evidencias rechazadas ───────────────────────────── --}}
+<div id="banner-rechazadas" class="mb-4{{ $stats['ev_rechazadas'] > 0 ? '' : ' d-none' }}">
+  <div class="d-flex align-items-center gap-3 px-4 py-3" style="background:linear-gradient(135deg,rgba(234,84,85,.12),rgba(234,84,85,.06));border:1px solid rgba(234,84,85,.35);border-radius:14px">
+    <div style="width:44px;height:44px;border-radius:12px;background:rgba(234,84,85,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <i class="ti tabler-file-x text-danger" style="font-size:1.4rem"></i>
+    </div>
+    <div class="flex-grow-1">
+      <div class="fw-bold text-danger msg-rechazadas" style="font-size:.92rem">
+        <i class="ti tabler-alert-circle me-1"></i>
+        Tienes {{ $stats['ev_rechazadas'] }} actividad(es) con evidencia rechazada — requieren corrección
+      </div>
+      <div class="text-muted" style="font-size:.78rem">
+        El coordinador rechazó tus evidencias. Revisa el motivo, corrígelas y reenvíalas para aprobación.
+      </div>
+    </div>
+    <a href="{{ route('sci-evidencias', ['estado' => 'rechazado']) }}"
+       class="btn btn-danger btn-sm flex-shrink-0">
+      <i class="ti tabler-refresh-alert me-1"></i>Corregir evidencias
+    </a>
+  </div>
 </div>
 
 {{-- ── Próximas a vencer ────────────────────────────────────── --}}
@@ -500,6 +547,99 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
   </div>
 </div>
 
+{{-- ── Modal: Subir evidencia nueva ───────────────────────────────────── --}}
+<div class="modal fade" id="modalEvidenciaNueva" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <form method="POST" id="formEvidenciaNueva">
+        @csrf
+        <input type="hidden" name="actividad_id" id="evNuevaActividadId">
+        <div class="modal-header" style="background:linear-gradient(135deg,var(--bs-primary),color-mix(in srgb,var(--bs-primary) 70%,var(--bs-info)));border-radius:16px 16px 0 0">
+          <div>
+            <h6 class="modal-title fw-bold mb-0" style="color:#fff"><i class="ti tabler-upload me-2"></i>Subir Evidencia</h6>
+            <p class="mb-0 mt-1" id="evNuevaNombre" style="font-size:.78rem;color:rgba(255,255,255,.75);max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></p>
+          </div>
+          <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+              <input type="text" name="titulo" class="form-control" placeholder="Nombre o título del documento" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">N° SGD / Expediente</label>
+              <input type="text" name="numero_sgd" class="form-control" placeholder="Ej: SGD-2026-001">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Enlace <span class="text-muted small">(opcional)</span></label>
+              <input type="url" name="url_documento" class="form-control" placeholder="https://drive.google.com/…">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción</label>
+              <textarea name="descripcion" class="form-control" rows="2" placeholder="Observaciones adicionales…"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 py-3">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnEvNuevaSubmit">
+            <i class="ti tabler-device-floppy me-1"></i>Registrar evidencia
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{-- ── Modal: Corregir evidencia rechazada ────────────────────────────── --}}
+<div class="modal fade" id="modalEvidenciaCorregir" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <form method="POST" id="formEvidenciaCorregir">
+        @csrf @method('PUT')
+        <div class="modal-header" style="background:linear-gradient(135deg,#ff9f43,#ffbe76);border-radius:16px 16px 0 0">
+          <div>
+            <h6 class="modal-title fw-bold mb-0" style="color:#fff"><i class="ti tabler-refresh-alert me-2"></i>Corregir y reenviar evidencia</h6>
+            <p class="mb-0 mt-1" id="evCorregirNombre" style="font-size:.78rem;color:rgba(255,255,255,.75);max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></p>
+          </div>
+          <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="evCorregirMotivoBanner" class="alert alert-danger border-danger py-2 mb-3" style="font-size:13px;display:none">
+            <i class="ti tabler-alert-circle me-1"></i><strong>Motivo del rechazo:</strong>
+            <span id="evCorregirMotivoTexto"></span>
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+              <input type="text" name="titulo" id="evCorregirTitulo" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">N° SGD / Expediente</label>
+              <input type="text" name="numero_sgd" id="evCorregirSgd" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Enlace</label>
+              <input type="url" name="url_documento" id="evCorregirUrl" class="form-control" placeholder="https://…">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción</label>
+              <textarea name="descripcion" id="evCorregirDesc" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 py-3">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-warning text-white" id="btnEvCorregirSubmit">
+            <i class="ti tabler-send me-1"></i>Reenviar para revisión
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 @section('page-script')
@@ -536,9 +676,22 @@ document.addEventListener('DOMContentLoaded', function () {
     set('kpi-en_proceso',  stats.en_proceso);
     set('kpi-vencidas',    stats.vencidas);
     set('kpi-sin_ev',      stats.sin_ev);
+    set('kpi-observadas',  stats.observadas ?? 0);
     set('kpi-pct',         stats.porcentaje + '%');
     const bar = document.getElementById('kpi-bar');
     if (bar) bar.style.width = stats.porcentaje + '%';
+
+    // Actualizar el banner de rechazadas
+    const banner = document.getElementById('banner-rechazadas');
+    if (banner) {
+      if ((stats.ev_rechazadas ?? 0) > 0) {
+        banner.classList.remove('d-none');
+        const msg = banner.querySelector('.msg-rechazadas');
+        if (msg) msg.textContent = `Tienes ${stats.ev_rechazadas} actividad(es) con evidencia rechazada — requieren corrección`;
+      } else {
+        banner.classList.add('d-none');
+      }
+    }
   }
 
   // ── Actualizar URL sin recargar ──────────────────────────
@@ -708,6 +861,36 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
+    // Subir evidencia nueva
+    document.querySelectorAll('.btn-ev-nueva').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.getElementById('evNuevaActividadId').value = this.dataset.actividadId;
+        document.getElementById('evNuevaNombre').textContent = this.dataset.nombre;
+        formEvNueva.action = this.dataset.action;
+        formEvNueva.reset();
+        document.getElementById('evNuevaActividadId').value = this.dataset.actividadId;
+        modalEvNueva.show();
+      });
+    });
+
+    // Corregir evidencia rechazada
+    document.querySelectorAll('.btn-ev-corregir').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.getElementById('evCorregirTitulo').value  = this.dataset.titulo      || '';
+        document.getElementById('evCorregirSgd').value     = this.dataset.sgd         || '';
+        document.getElementById('evCorregirUrl').value     = this.dataset.urlDoc      || '';
+        document.getElementById('evCorregirDesc').value    = this.dataset.descripcion || '';
+        formEvCorregir.action = this.dataset.action;
+        const motivo = this.dataset.motivo || '';
+        const banner = document.getElementById('evCorregirMotivoBanner');
+        document.getElementById('evCorregirMotivoTexto').textContent = motivo;
+        banner.style.display = motivo ? '' : 'none';
+        document.getElementById('evCorregirNombre').textContent =
+          this.closest('.act-card')?.querySelector('h6')?.textContent || '';
+        modalEvCorregir.show();
+      });
+    });
+
     // Historial
     document.querySelectorAll('.btn-ver-historial').forEach(btn => {
       btn.addEventListener('click', function () {
@@ -723,26 +906,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<div class="text-center py-5"><i class="ti tabler-history-off text-muted d-block mb-2" style="font-size:2rem"></i><p class="text-muted mb-0">Sin historial registrado aún.</p></div>';
               return;
             }
-            const iconMap = { estado:'tabler-circle-dot', avance:'tabler-percentage', observaciones:'tabler-note', nombre:'tabler-pencil', prioridad:'tabler-flag', fecha_limite:'tabler-calendar', responsables:'tabler-users' };
+            const iconMap = { estado:'tabler-circle-dot', avance:'tabler-percentage', observaciones:'tabler-note', nombre:'tabler-pencil', prioridad:'tabler-flag', fecha_limite:'tabler-calendar', responsables:'tabler-users', evidencia:'tabler-file-description' };
+            const evColorMap = { validado:'success', rechazado:'danger', pendiente:'warning', null:'secondary' };
             let html = '<div class="p-3">';
             data.forEach((h, i) => {
+              const esEvidencia = h.campo === 'evidencia';
               const icon = iconMap[h.campo] || 'tabler-edit';
+              const evColor = esEvidencia ? (evColorMap[h.valor_nuevo] ?? 'secondary') : null;
+              const bgColor = esEvidencia ? `rgba(var(--bs-${evColor}-rgb),.1)` : 'rgba(115,103,240,.08)';
+              const iconColor = esEvidencia ? `text-${evColor}` : 'text-primary';
+              const badgeHtml = esEvidencia
+                ? `<span class="badge bg-label-${evColor} me-1" style="font-size:.7rem"><i class="ti tabler-file me-1"></i>Evidencia</span>`
+                : `<span class="badge bg-label-secondary me-1" style="font-size:.7rem">${h.campo}</span>`;
+              const valorNuevoHtml = esEvidencia
+                ? `<span class="badge bg-label-${evColor}" style="font-size:.72rem">${h.valor_nuevo ?? '—'}</span>`
+                : `<span class="fw-semibold">${h.valor_nuevo ?? '—'}</span>`;
               html += `<div class="d-flex gap-3 mb-3">
-                <div class="flex-shrink-0 d-flex align-items-center justify-content-center" style="width:36px;height:36px;border-radius:10px;background:rgba(115,103,240,.08)">
-                  <i class="ti ${icon} text-primary" style="font-size:.9rem"></i>
+                <div class="flex-shrink-0 d-flex align-items-center justify-content-center" style="width:36px;height:36px;border-radius:10px;background:${bgColor}">
+                  <i class="ti ${icon} ${iconColor}" style="font-size:.9rem"></i>
                 </div>
                 <div class="flex-grow-1">
                   <div class="d-flex justify-content-between align-items-start flex-wrap gap-1">
                     <div>
-                      <span class="badge bg-label-secondary me-1" style="font-size:.7rem">${h.campo}</span>
-                      <span class="text-muted" style="font-size:.75rem">${h.descripcion||''}</span>
+                      ${badgeHtml}
+                      ${h.descripcion ? `<span class="text-muted" style="font-size:.75rem">${h.descripcion}</span>` : ''}
                     </div>
                     <small class="text-muted" style="font-size:.7rem"><i class="ti tabler-clock me-1"></i>${h.fecha}</small>
                   </div>
                   <div class="mt-1 d-flex align-items-center gap-2 flex-wrap" style="font-size:.8rem">
-                    <span class="text-muted text-decoration-line-through">${h.valor_anterior??'—'}</span>
-                    <i class="ti tabler-arrow-right text-muted" style="font-size:.7rem"></i>
-                    <span class="fw-semibold">${h.valor_nuevo??'—'}</span>
+                    ${h.valor_anterior ? `<span class="text-muted text-decoration-line-through">${h.valor_anterior}</span><i class="ti tabler-arrow-right text-muted" style="font-size:.7rem"></i>` : ''}
+                    ${valorNuevoHtml}
                   </div>
                   <div class="mt-1 text-muted" style="font-size:.72rem"><i class="ti tabler-user me-1"></i>${h.usuario}</div>
                 </div>
@@ -785,6 +978,18 @@ document.addEventListener('DOMContentLoaded', function () {
           showConfirmButton: false,
           timerProgressBar: true,
         }).then(() => cargarActividades(getParams()));
+      } else if (data.advertencia) {
+        modalAvance.hide();
+        Swal.fire({
+          icon: 'warning',
+          title: 'Avance guardado al 100%',
+          text: data.advertencia,
+          confirmButtonText: 'Subir evidencia',
+          showCancelButton: true,
+          cancelButtonText: 'Entendido',
+        }).then(res => {
+          cargarActividades(getParams());
+        });
       } else {
         Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'No se pudo guardar.' });
       }
@@ -793,6 +998,72 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.disabled = false;
       btn.innerHTML = '<i class="ti tabler-check me-1"></i>Guardar avance';
       Swal.fire({ icon: 'error', title: 'Error de conexión', text: 'No se pudo conectar con el servidor.' });
+    });
+  });
+
+  // ── Modales evidencia ────────────────────────────────────
+  const modalEvNueva    = new bootstrap.Modal(document.getElementById('modalEvidenciaNueva'));
+  const modalEvCorregir = new bootstrap.Modal(document.getElementById('modalEvidenciaCorregir'));
+  const formEvNueva     = document.getElementById('formEvidenciaNueva');
+  const formEvCorregir  = document.getElementById('formEvidenciaCorregir');
+
+  // Submit: nueva evidencia vía fetch para mantener en la misma página
+  formEvNueva.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnEvNuevaSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando...';
+    fetch(this.action, {
+      method: 'POST',
+      body: new FormData(this),
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    .then(r => {
+      if (r.ok || r.redirected) {
+        modalEvNueva.hide();
+        Swal.fire({ icon:'success', title:'Evidencia registrada', text:'Pendiente de validación por el coordinador.', timer:2500, showConfirmButton:false });
+        setTimeout(() => cargarActividades(getParams()), 2600);
+      } else {
+        return r.text().then(t => { throw new Error(t); });
+      }
+    })
+    .catch(() => {
+      Swal.fire({ icon:'error', title:'Error', text:'No se pudo registrar la evidencia. Verifica los datos.' });
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti tabler-device-floppy me-1"></i>Registrar evidencia';
+    });
+  });
+
+  // Submit: corregir evidencia rechazada
+  formEvCorregir.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnEvCorregirSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando...';
+    const fd = new FormData(this);
+    fd.append('_method', 'PUT');
+    fetch(this.action, {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    .then(r => {
+      if (r.ok || r.redirected) {
+        modalEvCorregir.hide();
+        Swal.fire({ icon:'success', title:'Evidencia reenviada', text:'Tu corrección fue enviada y está pendiente de revisión.', timer:2500, showConfirmButton:false });
+        setTimeout(() => cargarActividades(getParams()), 2600);
+      } else {
+        return r.text().then(t => { throw new Error(t); });
+      }
+    })
+    .catch(() => {
+      Swal.fire({ icon:'error', title:'Error', text:'No se pudo reenviar la evidencia. Intenta de nuevo.' });
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti tabler-send me-1"></i>Reenviar para revisión';
     });
   });
 

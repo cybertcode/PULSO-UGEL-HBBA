@@ -1,6 +1,6 @@
 @php $configData = Helper::appClasses(); @endphp
 @extends('layouts/layoutMaster')
-@section('title', 'Sin Evidencia — PULSO UGEL')
+@section('title', 'Sin Evidencia / Observadas — PULSO UGEL')
 
 @section('vendor-style')
 @vite(['resources/assets/vendor/libs/select2/select2.scss'])
@@ -92,11 +92,11 @@
       <ol class="breadcrumb mb-0" style="font-size:.78rem">
         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti tabler-home" style="font-size:.9rem"></i></a></li>
         <li class="breadcrumb-item"><a href="{{ route('cumplimiento.panel') }}">Panel</a></li>
-        <li class="breadcrumb-item active">Sin Evidencia</li>
+        <li class="breadcrumb-item active">Sin Evidencia / Observadas</li>
       </ol>
     </nav>
-    <h1 class="seg-title">Actividades sin Evidencia</h1>
-    <p class="seg-sub">Actividades con avance registrado pero sin documentos de respaldo · más recientes primero</p>
+    <h1 class="seg-title">Actividades sin Evidencia válida</h1>
+    <p class="seg-sub">Actividades sin evidencia, con evidencia rechazada o en estado observado · más recientes primero</p>
   </div>
   <div class="d-flex align-items-center gap-2 flex-wrap">
     {{-- Tabs módulo --}}
@@ -323,10 +323,17 @@
             </td>
             <td><small class="text-muted">{{ $act->created_at->format('d/m/Y') }}</small></td>
             <td class="text-center">
-              <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id, 'nueva' => 1]) }}"
-                 class="btn btn-sm btn-primary" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
-                <i class="ti tabler-upload me-1"></i>Subir
-              </a>
+              @if($act->estado === 'observado')
+                <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id, 'modulo' => $act->modulo, 'estado' => 'rechazado']) }}"
+                   class="btn btn-sm btn-danger" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
+                  <i class="ti tabler-refresh-alert me-1"></i>Corregir
+                </a>
+              @else
+                <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id, 'nueva' => 1]) }}"
+                   class="btn btn-sm btn-primary" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
+                  <i class="ti tabler-upload me-1"></i>Subir
+                </a>
+              @endif
             </td>
           </tr>
           @empty
@@ -525,10 +532,16 @@ window.addEventListener('load', function () {
         <td>${fechaHtml}</td>
         <td><small class="text-muted">${esc(act.created_at ?? '—')}</small></td>
         <td class="text-center">
-          <a href="${RUTA_EV}?actividad_id=${act.id}&nueva=1"
-             class="btn btn-sm btn-primary" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
-            <i class="ti tabler-upload me-1"></i>Subir
-          </a>
+          ${act.estado === 'observado'
+            ? `<a href="${RUTA_EV}?actividad_id=${act.id}&modulo=${act.modulo}&estado=rechazado"
+                 class="btn btn-sm btn-danger" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
+                <i class="ti tabler-refresh-alert me-1"></i>Corregir
+               </a>`
+            : `<a href="${RUTA_EV}?actividad_id=${act.id}&nueva=1"
+                 class="btn btn-sm btn-primary" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
+                <i class="ti tabler-upload me-1"></i>Subir
+               </a>`
+          }
         </td>
       </tr>`;
     }).join('');

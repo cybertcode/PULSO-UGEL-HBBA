@@ -43,13 +43,35 @@ $authId = auth()->id();
   border-bottom:2px solid rgba(var(--bs-secondary-rgb),.1); white-space:nowrap; padding:12px 14px;
 }
 .ev-table tbody td { padding:10px 14px; vertical-align:middle; }
-.ev-table tbody tr { transition:background .12s; }
+.ev-table tbody tr { transition:background .12s; border-left:3px solid transparent; }
 .ev-table tbody tr:hover { background:rgba(var(--bs-primary-rgb),.03); }
-.estado-pill { font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; }
+
+/* Colores por estado de fila */
+.ev-table tbody tr.ev-row-validado   { border-left-color:#28c76f; background:rgba(40,199,111,.03); }
+.ev-table tbody tr.ev-row-rechazado  { border-left-color:#ea5455; background:rgba(234,84,85,.05); }
+.ev-table tbody tr.ev-row-pendiente  { border-left-color:#ff9f43; background:rgba(255,159,67,.03); }
+.ev-table tbody tr.ev-row-validado:hover  { background:rgba(40,199,111,.07); }
+.ev-table tbody tr.ev-row-rechazado:hover { background:rgba(234,84,85,.09); }
+.ev-table tbody tr.ev-row-pendiente:hover { background:rgba(255,159,67,.07); }
+
+/* Mío vs ajeno */
+.ev-table tbody tr.ev-mio { font-weight:500; }
+
+.estado-pill { font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px; }
 .mod-badge   { font-size:10px; font-weight:600; padding:3px 8px; border-radius:10px; }
 .url-chip    { font-size:11px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block; vertical-align:middle; }
 .ev-actions  { display:flex; gap:4px; flex-wrap:nowrap; }
 .ev-actions .btn { width:30px; height:30px; padding:0; border-radius:8px; }
+
+/* Chip módulo */
+.chip-sci       { background:#e7f1ff; color:#3b82f6; font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; }
+.chip-integridad{ background:#fff4e0; color:#ff9f43; font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; }
+
+/* Motivo rechazo inline */
+.motivo-chip { display:inline-flex; align-items:center; gap:3px; background:rgba(234,84,85,.1); color:#ea5455; font-size:10px; font-weight:600; padding:2px 7px; border-radius:6px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:help; }
+
+/* Badge "Mío" */
+.mio-chip { font-size:9px; font-weight:700; padding:1px 5px; border-radius:5px; background:#e7f1ff; color:#3b82f6; vertical-align:middle; margin-left:4px; }
 
 /* ── Loading ─────────────────────────────────────────── */
 .ev-wrapper { position:relative; min-height:120px; transition:opacity .2s; }
@@ -207,7 +229,10 @@ $kpisConfig = [
         <select id="filtroActividad" class="form-select select2-filtro">
           <option value="">Todas las actividades</option>
           @foreach($actividades as $a)
-          <option value="{{ $a->id }}">{{ $a->codigo }} — {{ Str::limit($a->nombre, 45) }}</option>
+          <option value="{{ $a->id }}" data-modulo="{{ $a->modulo }}"
+            {{ request('actividad_id') == $a->id ? 'selected' : '' }}>
+            {{ $a->codigo }} — {{ Str::limit($a->nombre, 45) }}
+          </option>
           @endforeach
         </select>
       </div>
@@ -243,6 +268,53 @@ $kpisConfig = [
   </div>
 </div>
 
+{{-- ── Leyenda de colores ──────────────────────────────────────────────── --}}
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap px-1">
+  <span class="text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.04em">Leyenda:</span>
+  <span class="d-flex align-items-center gap-1" style="font-size:12px">
+    <span style="width:10px;height:10px;border-radius:3px;background:#28c76f;flex-shrink:0"></span>
+    <span class="text-success fw-semibold">Validada</span> <span class="text-muted">— aprobada por el coordinador</span>
+  </span>
+  <span class="d-flex align-items-center gap-1" style="font-size:12px">
+    <span style="width:10px;height:10px;border-radius:3px;background:#ff9f43;flex-shrink:0"></span>
+    <span class="text-warning fw-semibold">Pendiente</span> <span class="text-muted">— en espera de revisión</span>
+  </span>
+  <span class="d-flex align-items-center gap-1" style="font-size:12px">
+    <span style="width:10px;height:10px;border-radius:3px;background:#ea5455;flex-shrink:0"></span>
+    <span class="text-danger fw-semibold">Rechazada</span> <span class="text-muted">— requiere corrección</span>
+  </span>
+  <span class="d-flex align-items-center gap-1 ms-2" style="font-size:12px">
+    <span class="mio-chip">Mío</span> <span class="text-muted">— subida por ti</span>
+  </span>
+</div>
+
+{{-- ── Alerta: actividades en observado sin evidencia activa ──────────── --}}
+@can('evidencias.crear')
+@foreach(['sci','integridad'] as $mod)
+@if($actividadesObservadas[$mod]->count() > 0)
+<div class="banner-observadas {{ $mod === $modulo ? '' : 'd-none' }} alert alert-warning border-warning d-flex align-items-start gap-3 mb-4 p-3"
+     data-mod="{{ $mod }}" style="border-radius:12px;border-left:4px solid #ff9f43">
+  <i class="ti tabler-alert-triangle text-warning fs-4 flex-shrink-0 mt-1"></i>
+  <div class="flex-grow-1">
+    <div class="fw-bold mb-2" style="font-size:14px">
+      {{ $actividadesObservadas[$mod]->count() }} actividad(es) en estado Observado — necesitan nueva evidencia
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      @foreach($actividadesObservadas[$mod] as $aObs)
+      <a href="{{ route('sci-evidencias', ['modulo' => $mod, 'actividad_id' => $aObs->id, 'nueva' => '1']) }}"
+         class="btn btn-sm btn-warning d-inline-flex align-items-center gap-1" style="font-size:12px">
+        <i class="ti tabler-upload" style="font-size:13px"></i>
+        <span>{{ $aObs->codigo }}</span>
+      </a>
+      @endforeach
+    </div>
+    <div class="text-muted mt-1" style="font-size:11px">Haz clic en el código para subir la evidencia de esa actividad.</div>
+  </div>
+</div>
+@endif
+@endforeach
+@endcan
+
 {{-- ── Tabla ────────────────────────────────────────────────────────────── --}}
 <div class="card" style="border-radius:12px">
   <div class="card-header d-flex align-items-center justify-content-between py-3 px-4" style="border-bottom:1px solid rgba(var(--bs-secondary-rgb),.1)">
@@ -250,7 +322,18 @@ $kpisConfig = [
       <i class="ti tabler-clipboard-list me-2 text-primary"></i>
       Evidencias Registradas
     </span>
-    <span class="badge bg-label-secondary rounded-pill" id="contador-ev">{{ $evidencias->total() }} registros</span>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-label-success rounded-pill" id="cnt-validadas" style="font-size:11px">
+        <i class="ti tabler-file-check me-1"></i>{{ $stats[$modulo]['validadas'] }} válidas
+      </span>
+      <span class="badge bg-label-warning rounded-pill" id="cnt-pendientes" style="font-size:11px">
+        <i class="ti tabler-file-time me-1"></i>{{ $stats[$modulo]['pendientes'] }} pendientes
+      </span>
+      <span class="badge bg-label-danger rounded-pill" id="cnt-rechazadas" style="font-size:11px">
+        <i class="ti tabler-file-x me-1"></i>{{ $stats[$modulo]['rechazadas'] }} rechazadas
+      </span>
+      <span class="badge bg-label-secondary rounded-pill ms-1" id="contador-ev">{{ $evidencias->total() }} total</span>
+    </div>
   </div>
 
   <div class="card-body p-0">
@@ -276,20 +359,33 @@ $kpisConfig = [
           <tbody id="tabla-body">
             @forelse($evidencias as $ev)
             @php
-              $ec      = match($ev->estado) { 'validado'=>'success','rechazado'=>'danger',default=>'warning' };
-              $evComp  = $ev->actividad?->modulo === 'integridad'
+              $ec     = match($ev->estado) { 'validado'=>'success','rechazado'=>'danger',default=>'warning' };
+              $evIcon = match($ev->estado) { 'validado'=>'tabler-file-check','rechazado'=>'tabler-file-x',default=>'tabler-file-time' };
+              $evComp = $ev->actividad?->modulo === 'integridad'
                 ? $ev->actividad?->integridadPregunta?->componente
                 : $ev->actividad?->sciPregunta?->componente;
-              $esMio   = $ev->subido_por === $authId;
+              $esMio       = $ev->subido_por === $authId;
+              $soyResponsable = $ev->actividad?->responsables?->contains('id', $authId) ?? false;
+              $isInt  = $ev->actividad?->modulo === 'integridad';
             @endphp
-            <tr>
+            <tr class="ev-row-{{ $ev->estado }}{{ $esMio ? ' ev-mio' : '' }}">
               <td>
-                <div class="fw-medium" style="font-size:13px">{{ $ev->titulo }}</div>
-                @if($ev->numero_sgd)<small class="text-muted"><i class="ti tabler-file-description icon-10px me-1"></i>{{ $ev->numero_sgd }}</small>@endif
-                @if($ev->descripcion)<div class="text-muted" style="font-size:11px;max-width:220px" title="{{ $ev->descripcion }}">{{ Str::limit($ev->descripcion, 50) }}</div>@endif
+                <div class="d-flex align-items-start gap-2">
+                  <div style="width:28px;height:28px;border-radius:8px;background:rgba(var(--bs-{{ $ec }}-rgb),.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
+                    <i class="ti {{ $evIcon }} text-{{ $ec }}" style="font-size:.85rem"></i>
+                  </div>
+                  <div>
+                    <div class="fw-semibold" style="font-size:13px">{{ $ev->titulo }}
+                      @if($esMio)<span class="mio-chip">Mío</span>@endif
+                    </div>
+                    @if($ev->numero_sgd)<small class="text-muted"><i class="ti tabler-file-description" style="font-size:10px"></i> {{ $ev->numero_sgd }}</small>@endif
+                    @if($ev->descripcion)<div class="text-muted" style="font-size:11px;max-width:220px" title="{{ $ev->descripcion }}">{{ Str::limit($ev->descripcion, 50) }}</div>@endif
+                  </div>
+                </div>
               </td>
               <td>
-                <div style="font-size:12px;max-width:180px" title="{{ $ev->actividad->nombre ?? '' }}">{{ Str::limit($ev->actividad->nombre ?? '—', 40) }}</div>
+                <span class="{{ $isInt ? 'chip-integridad' : 'chip-sci' }}">{{ $isInt ? 'INT' : 'SCI' }}</span>
+                <div style="font-size:12px;max-width:160px;margin-top:3px" title="{{ $ev->actividad->nombre ?? '' }}">{{ Str::limit($ev->actividad->nombre ?? '—', 38) }}</div>
                 @if($ev->actividad?->codigo)<small class="text-muted" style="font-size:10px">{{ $ev->actividad->codigo }}</small>@endif
               </td>
               <td>
@@ -298,13 +394,16 @@ $kpisConfig = [
               <td>
                 <div style="font-size:12px">{{ $ev->subidoPor?->name ?? '—' }}</div>
                 @if($ev->validadoPor && $ev->estado !== 'pendiente')
-                <small class="text-muted" style="font-size:10px">{{ $ev->estado === 'validado' ? '✓' : '✗' }} {{ $ev->validadoPor->name }}</small>
+                <small class="text-{{ $ec }}" style="font-size:10px;font-weight:600">
+                  <i class="ti {{ $ev->estado === 'validado' ? 'tabler-check' : 'tabler-x' }}" style="font-size:10px"></i>
+                  {{ $ev->validadoPor->name }}
+                </small>
                 @endif
               </td>
               <td>
                 @if($ev->url_documento)
                 <a href="{{ $ev->url_documento }}" target="_blank" class="btn btn-sm btn-label-info d-inline-flex align-items-center gap-1" style="font-size:11px;max-width:160px">
-                  <i class="ti tabler-external-link icon-12px flex-shrink-0"></i>
+                  <i class="ti tabler-external-link" style="font-size:12px;flex-shrink:0"></i>
                   <span class="url-chip">{{ parse_url($ev->url_documento, PHP_URL_HOST) ?: $ev->url_documento }}</span>
                 </a>
                 @else
@@ -312,16 +411,22 @@ $kpisConfig = [
                 @endif
               </td>
               <td>
-                <span class="estado-pill badge bg-label-{{ $ec }}">{{ ucfirst($ev->estado) }}</span>
+                <span class="estado-pill bg-label-{{ $ec }} text-{{ $ec }}">
+                  <i class="ti {{ $evIcon }}" style="font-size:.75rem"></i>
+                  {{ ucfirst($ev->estado) }}
+                </span>
                 @if($ev->estado === 'rechazado' && $ev->motivo_rechazo)
-                <div class="text-danger mt-1" style="font-size:10px" title="{{ $ev->motivo_rechazo }}">{{ Str::limit($ev->motivo_rechazo, 30) }}</div>
+                <div class="motivo-chip mt-1" title="{{ $ev->motivo_rechazo }}">
+                  <i class="ti tabler-alert-circle" style="font-size:10px;flex-shrink:0"></i>
+                  {{ Str::limit($ev->motivo_rechazo, 35) }}
+                </div>
                 @endif
               </td>
               <td><small class="text-muted">{{ $ev->created_at->format('d/m/Y') }}</small></td>
               <td>
                 <div class="ev-actions">
                   @if($ev->url_documento)
-                  <a href="{{ $ev->url_documento }}" target="_blank" class="btn btn-icon btn-label-secondary" title="Abrir"><i class="ti tabler-external-link icon-14px"></i></a>
+                  <a href="{{ $ev->url_documento }}" target="_blank" class="btn btn-icon btn-label-secondary" title="Abrir enlace"><i class="ti tabler-external-link icon-14px"></i></a>
                   @endif
                   @can('evidencias.editar')
                   @if($ev->estado === 'pendiente' && $esMio)
@@ -329,15 +434,29 @@ $kpisConfig = [
                     data-id="{{ $ev->id }}" data-titulo="{{ $ev->titulo }}"
                     data-sgd="{{ $ev->numero_sgd ?? '' }}" data-url="{{ $ev->url_documento ?? '' }}"
                     data-descripcion="{{ $ev->descripcion ?? '' }}"
-                    data-action="{{ route('sci-evidencias.update', $ev) }}" title="Editar">
+                    data-action="{{ route('sci-evidencias.update', $ev) }}" title="Editar evidencia">
                     <i class="ti tabler-edit icon-14px"></i>
+                  </button>
+                  @endif
+                  @endcan
+                  {{-- Corregir rechazada: cualquier responsable puede hacerlo, no requiere evidencias.editar --}}
+                  @can('evidencias.crear')
+                  @if($ev->estado === 'rechazado' && ($esMio || $soyResponsable))
+                  <button class="btn btn-icon btn-warning btn-corregir-ev"
+                    style="background:rgba(255,159,67,.15);border-color:rgba(255,159,67,.4)"
+                    data-id="{{ $ev->id }}" data-titulo="{{ $ev->titulo }}"
+                    data-sgd="{{ $ev->numero_sgd ?? '' }}" data-url="{{ $ev->url_documento ?? '' }}"
+                    data-descripcion="{{ $ev->descripcion ?? '' }}"
+                    data-motivo="{{ $ev->motivo_rechazo ?? '' }}"
+                    data-action="{{ route('sci-evidencias.update', $ev) }}" title="Corregir y reenviar">
+                    <i class="ti tabler-refresh-alert icon-14px text-warning"></i>
                   </button>
                   @endif
                   @endcan
                   @can('evidencias.validar')
                   @if($ev->estado === 'pendiente')
-                  <button class="btn btn-icon btn-label-success btn-validar" data-url="{{ route('sci-evidencias.validar', $ev) }}" title="Validar"><i class="ti tabler-check icon-14px"></i></button>
-                  <button class="btn btn-icon btn-label-danger btn-rechazar"  data-url="{{ route('sci-evidencias.validar', $ev) }}" title="Rechazar"><i class="ti tabler-x icon-14px"></i></button>
+                  <button class="btn btn-icon btn-label-success btn-validar" data-url="{{ route('sci-evidencias.validar', $ev) }}" title="Aprobar evidencia"><i class="ti tabler-check icon-14px"></i></button>
+                  <button class="btn btn-icon btn-label-danger btn-rechazar"  data-url="{{ route('sci-evidencias.validar', $ev) }}" title="Rechazar evidencia"><i class="ti tabler-x icon-14px"></i></button>
                   @endif
                   @endcan
                   @can('evidencias.eliminar')
@@ -439,8 +558,8 @@ $kpisConfig = [
 </div>
 @endcan
 
-{{-- Modal Editar Evidencia --}}
-@can('evidencias.editar')
+{{-- Modal Editar/Corregir Evidencia: disponible para editar (validador) y para crear (responsable que corrige rechazada) --}}
+@canany(['evidencias.editar', 'evidencias.crear'])
 <div class="modal fade" id="modalEditarEvidencia" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
@@ -488,7 +607,7 @@ $kpisConfig = [
   </div>
 </div>
 
-@endcan
+@endcanany
 
 {{-- Forms ocultos validar/rechazar --}}
 @can('evidencias.validar')
@@ -497,6 +616,36 @@ $kpisConfig = [
 @endcan
 
 @endsection
+
+@php
+// Preparar datos de actividades para el JS del modal (evitar closures dentro de @json en <script>)
+$actividadesJs = [
+    'sci'        => $actividades->where('modulo', 'sci')->values()->map(function ($a) {
+        return [
+            'id'           => $a->id,
+            'codigo'       => $a->codigo,
+            'nombre'       => $a->nombre,
+            'estado'       => $a->estado,
+            'modulo'       => 'sci',
+            'ev_pendiente' => $a->evidencias->where('estado', 'pendiente')->count() > 0,
+            'ev_rechazada' => $a->evidencias->where('estado', 'rechazado')->count() > 0,
+            'completada'   => $a->estado === 'completada',
+        ];
+    })->values(),
+    'integridad' => $actividades->where('modulo', 'integridad')->values()->map(function ($a) {
+        return [
+            'id'           => $a->id,
+            'codigo'       => $a->codigo,
+            'nombre'       => $a->nombre,
+            'estado'       => $a->estado,
+            'modulo'       => 'integridad',
+            'ev_pendiente' => $a->evidencias->where('estado', 'pendiente')->count() > 0,
+            'ev_rechazada' => $a->evidencias->where('estado', 'rechazado')->count() > 0,
+            'completada'   => $a->estado === 'completada',
+        ];
+    })->values(),
+];
+@endphp
 
 @section('page-script')
 <script>
@@ -535,6 +684,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const badgeInt = document.getElementById('badge-total-int');
     if (badgeSci) badgeSci.textContent = STATS_INIT.sci.total;
     if (badgeInt) badgeInt.textContent = STATS_INIT.integridad.total;
+
+    // Header counters
+    const cv = document.getElementById('cnt-validadas');
+    const cp = document.getElementById('cnt-pendientes');
+    const cr = document.getElementById('cnt-rechazadas');
+    if (cv) cv.innerHTML = `<i class="ti tabler-file-check me-1"></i>${s.validadas ?? 0} válidas`;
+    if (cp) cp.innerHTML = `<i class="ti tabler-file-time me-1"></i>${s.pendientes ?? 0} pendientes`;
+    if (cr) cr.innerHTML = `<i class="ti tabler-file-x me-1"></i>${s.rechazadas ?? 0} rechazadas`;
   }
 
   // ── Estado badge class ────────────────────────────────────────────────────
@@ -550,19 +707,22 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="fw-semibold mb-1">No hay evidencias registradas</div>
         <div class="text-body-secondary" style="font-size:13px">Prueba cambiando los filtros.</div>
       </div></td></tr>`;
-      contador.textContent = '0 registros';
+      contador.textContent = '0 total';
       return;
     }
 
-    contador.textContent = items.length + ' registros';
+    contador.textContent = items.length + ' total';
 
     tablaBody.innerHTML = items.map(ev => {
       const ec     = estadoClass(ev.estado);
+      const evIcon = ev.estado === 'validado' ? 'tabler-file-check' : ev.estado === 'rechazado' ? 'tabler-file-x' : 'tabler-file-time';
       const esMio  = ev.es_propio;
       const pend   = ev.estado === 'pendiente';
+      const isInt  = ev.modulo === 'integridad';
+      const rowCls = `ev-row-${ev.estado}${esMio ? ' ev-mio' : ''}`;
 
       const enlaceBtn = ev.url_documento
-        ? `<a href="${esc(ev.url_documento)}" target="_blank" class="btn btn-icon btn-label-secondary" title="Abrir">
+        ? `<a href="${esc(ev.url_documento)}" target="_blank" class="btn btn-icon btn-label-secondary" title="Abrir enlace">
             <i class="ti tabler-external-link icon-14px"></i></a>` : '';
 
       const editBtn = (CAN_EDITAR && pend && esMio)
@@ -570,13 +730,23 @@ document.addEventListener('DOMContentLoaded', function () {
               data-id="${ev.id}" data-titulo="${esc(ev.titulo)}"
               data-sgd="${esc(ev.numero_sgd??'')}" data-url="${esc(ev.url_documento??'')}"
               data-descripcion="${esc(ev.descripcion??'')}"
-              data-action="${esc(ev.url_editar)}" title="Editar">
+              data-action="${esc(ev.url_editar)}" title="Editar evidencia">
               <i class="ti tabler-edit icon-14px"></i></button>` : '';
 
+      const corregirBtn = (CAN_CREAR && ev.estado === 'rechazado' && (esMio || ev.es_responsable))
+        ? `<button class="btn btn-icon btn-warning btn-corregir-ev"
+              style="background:rgba(255,159,67,.15);border-color:rgba(255,159,67,.4)"
+              data-id="${ev.id}" data-titulo="${esc(ev.titulo)}"
+              data-sgd="${esc(ev.numero_sgd??'')}" data-url="${esc(ev.url_documento??'')}"
+              data-descripcion="${esc(ev.descripcion??'')}"
+              data-motivo="${esc(ev.motivo_rechazo??'')}"
+              data-action="${esc(ev.url_editar)}" title="Corregir y reenviar">
+              <i class="ti tabler-refresh-alert icon-14px text-warning"></i></button>` : '';
+
       const validarBtns = (CAN_VALIDAR && pend)
-        ? `<button class="btn btn-icon btn-label-success btn-validar" data-url="${esc(ev.url_validar)}" title="Validar">
+        ? `<button class="btn btn-icon btn-label-success btn-validar" data-url="${esc(ev.url_validar)}" title="Aprobar evidencia">
              <i class="ti tabler-check icon-14px"></i></button>
-           <button class="btn btn-icon btn-label-danger btn-rechazar" data-url="${esc(ev.url_validar)}" title="Rechazar">
+           <button class="btn btn-icon btn-label-danger btn-rechazar" data-url="${esc(ev.url_validar)}" title="Rechazar evidencia">
              <i class="ti tabler-x icon-14px"></i></button>` : '';
 
       const eliminarForm = CAN_ELIMINAR
@@ -586,20 +756,34 @@ document.addEventListener('DOMContentLoaded', function () {
             <button type="submit" class="btn btn-icon btn-label-secondary" title="Eliminar">
               <i class="ti tabler-trash icon-14px"></i></button></form>` : '';
 
-      const motiRech = (ev.estado === 'rechazado' && ev.motivo_rechazo)
-        ? `<div class="text-danger mt-1" style="font-size:10px" title="${esc(ev.motivo_rechazo)}">${esc(ev.motivo_rechazo)}</div>` : '';
+      const motiRech = (ev.estado === 'rechazado' && ev.motivo_corto)
+        ? `<div class="motivo-chip mt-1" title="${esc(ev.motivo_rechazo??'')}"><i class="ti tabler-alert-circle" style="font-size:10px;flex-shrink:0"></i> ${esc(ev.motivo_corto)}</div>` : '';
 
       const validadoPorHtml = ev.validado_por && ev.estado !== 'pendiente'
-        ? `<small class="text-muted" style="font-size:10px">${ev.estado === 'validado' ? '✓' : '✗'} ${esc(ev.validado_por)}</small>` : '';
+        ? `<small class="text-${ec}" style="font-size:10px;font-weight:600"><i class="ti ${ev.estado === 'validado' ? 'tabler-check' : 'tabler-x'}" style="font-size:10px"></i> ${esc(ev.validado_por)}</small>` : '';
 
-      return `<tr>
+      const modChip = isInt
+        ? `<span class="chip-integridad">INT</span>`
+        : `<span class="chip-sci">SCI</span>`;
+
+      const mioChip = esMio ? `<span class="mio-chip">Mío</span>` : '';
+
+      return `<tr class="${rowCls}">
         <td>
-          <div class="fw-medium" style="font-size:13px">${esc(ev.titulo)}</div>
-          ${ev.numero_sgd ? `<small class="text-muted"><i class="ti tabler-file-description icon-10px me-1"></i>${esc(ev.numero_sgd)}</small>` : ''}
-          ${ev.descripcion ? `<div class="text-muted" style="font-size:11px;max-width:220px">${esc(ev.descripcion)}</div>` : ''}
+          <div class="d-flex align-items-start gap-2">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(var(--bs-${ec}-rgb),.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
+              <i class="ti ${evIcon} text-${ec}" style="font-size:.85rem"></i>
+            </div>
+            <div>
+              <div class="fw-semibold" style="font-size:13px">${esc(ev.titulo)} ${mioChip}</div>
+              ${ev.numero_sgd ? `<small class="text-muted"><i class="ti tabler-file-description" style="font-size:10px"></i> ${esc(ev.numero_sgd)}</small>` : ''}
+              ${ev.descripcion ? `<div class="text-muted" style="font-size:11px;max-width:220px">${esc(ev.descripcion)}</div>` : ''}
+            </div>
+          </div>
         </td>
         <td>
-          <div style="font-size:12px;max-width:180px">${esc(ev.actividad)}</div>
+          ${modChip}
+          <div style="font-size:12px;max-width:160px;margin-top:3px">${esc(ev.actividad)}</div>
           ${ev.codigo ? `<small class="text-muted" style="font-size:10px">${esc(ev.codigo)}</small>` : ''}
         </td>
         <td><div style="font-size:12px;max-width:160px">${esc(ev.componente ?? '—')}</div></td>
@@ -610,16 +794,19 @@ document.addEventListener('DOMContentLoaded', function () {
         <td>
           ${ev.url_documento
             ? `<a href="${esc(ev.url_documento)}" target="_blank" class="btn btn-sm btn-label-info d-inline-flex align-items-center gap-1" style="font-size:11px;max-width:160px">
-                <i class="ti tabler-external-link icon-12px flex-shrink-0"></i>
+                <i class="ti tabler-external-link" style="font-size:12px;flex-shrink:0"></i>
                 <span class="url-chip">${esc(ev.url_host ?? ev.url_documento)}</span></a>`
             : `<span class="text-muted fst-italic" style="font-size:11px">Sin enlace</span>`}
         </td>
         <td>
-          <span class="estado-pill badge bg-label-${ec}">${esc(ev.estado.charAt(0).toUpperCase() + ev.estado.slice(1))}</span>
+          <span class="estado-pill bg-label-${ec} text-${ec}">
+            <i class="ti ${evIcon}" style="font-size:.75rem"></i>
+            ${esc(ev.estado.charAt(0).toUpperCase() + ev.estado.slice(1))}
+          </span>
           ${motiRech}
         </td>
         <td><small class="text-muted">${esc(ev.fecha)}</small></td>
-        <td><div class="ev-actions">${enlaceBtn}${editBtn}${validarBtns}${eliminarForm}</div></td>
+        <td><div class="ev-actions">${enlaceBtn}${editBtn}${corregirBtn}${validarBtns}${eliminarForm}</div></td>
       </tr>`;
     }).join('');
 
@@ -681,8 +868,22 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('filtroEje').value   = '';
       document.getElementById('filtroEtapa').value = '';
 
-      // Actualizar modal nueva: actividades + header color
-      actualizarModalNueva();
+      // Ocultar actividades del otro módulo en el filtro
+      const filtroAct = document.getElementById('filtroActividad');
+      if (filtroAct) {
+        filtroAct.querySelectorAll('option[data-modulo]').forEach(opt => {
+          opt.hidden = opt.dataset.modulo !== moduloActivo;
+        });
+        $(filtroAct).val(null).trigger('change');
+      }
+
+      // Toggle banners de observadas por módulo
+      document.querySelectorAll('.banner-observadas').forEach(b => {
+        b.classList.toggle('d-none', b.dataset.mod !== moduloActivo);
+      });
+
+      // Actualizar modal nueva si el usuario tiene permiso crear
+      if (typeof actualizarModalNueva === 'function') actualizarModalNueva();
 
       fetchDatos();
     });
@@ -720,69 +921,186 @@ document.addEventListener('DOMContentLoaded', function () {
     $(el).on('select2:select select2:unselect', fetchDatos);
   });
 
-  // ── Modal Nueva: actualizar actividades por módulo ────────────────────────
-  const actividadesPorModulo = {
-    sci:        @json($actividades->where('modulo','sci')->values()),
-    integridad: @json($actividades->where('modulo','integridad')->values()),
-  };
+  // ── Modal Nueva: actividades por módulo con estado de evidencias ─────────
+  const actividadesPorModulo = @json($actividadesJs);
 
-  function actualizarModalNueva() {
-    const sel = document.getElementById('nueva_actividad_id');
-    document.getElementById('nueva_modulo_activo').value = moduloActivo;
-    sel.innerHTML = '<option value="">— Seleccionar actividad —</option>';
-    (actividadesPorModulo[moduloActivo] || []).forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.id;
-      opt.textContent = (a.codigo ?? '') + ' — ' + (a.nombre ?? '').substring(0, 60);
-      sel.appendChild(opt);
-    });
-    $(sel).trigger('change');
+  // Mapa id→actividad para acceso rápido al verificar bloqueos
+  const actMap = {};
+  ['sci','integridad'].forEach(m => (actividadesPorModulo[m]||[]).forEach(a => { actMap[a.id] = a; }));
 
-    const header = document.getElementById('modalNuevaHeader');
-    const label  = document.getElementById('nueva-modulo-label');
-    if (moduloActivo === 'integridad') {
-      header.className = 'modal-header modal-header-integridad';
-      header.querySelector('.btn-close').classList.replace('btn-close-white', 'btn-close-white');
-      label.textContent = 'Integridad';
-    } else {
-      header.className = 'modal-header modal-header-accent';
-      label.textContent = 'SCI';
-    }
-  }
-
-  // ── Select2 modal nueva ───────────────────────────────────────────────────
   const modalNuevo = document.getElementById('modalNuevaEvidencia');
-  $(document.getElementById('nueva_actividad_id')).select2({ dropdownParent: $(modalNuevo), width:'100%' });
 
-  document.getElementById('btnNuevaEvidencia').addEventListener('click', () => {
-    actualizarModalNueva();
-    new bootstrap.Modal(modalNuevo).show();
-  });
+  if (modalNuevo) {
 
-  modalNuevo.addEventListener('shown.bs.modal', () => fixModalHeight(modalNuevo));
+    function initSelect2Nueva() {
+      const $sel = $(document.getElementById('nueva_actividad_id'));
+      if ($sel.data('select2')) $sel.select2('destroy');
+      $sel.select2({ dropdownParent: $(modalNuevo), width: '100%' });
+    }
 
-  @if(isset($actividadPresel) && $actividadPresel)
-  actualizarModalNueva();
-  const _preModal = new bootstrap.Modal(modalNuevo);
-  _preModal.show();
-  @endif
+    // Banner de bloqueo dentro del modal
+    const bloqueoNuevaBanner = (() => {
+      const div = document.createElement('div');
+      div.id = 'bloqueo-nueva-banner';
+      div.style.display = 'none';
+      div.className = 'alert alert-warning border-warning mx-0 mt-3 mb-0 py-2';
+      div.style.fontSize = '13px';
+      modalNuevo.querySelector('.modal-body')?.prepend(div);
+      return div;
+    })();
+
+    function verificarBloqueoActividad(actId) {
+      const submitBtn = modalNuevo.querySelector('#formNueva button[type="submit"]');
+      if (!actId) {
+        bloqueoNuevaBanner.style.display = 'none';
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+      }
+      const a = actMap[actId];
+      if (!a) { bloqueoNuevaBanner.style.display = 'none'; if (submitBtn) submitBtn.disabled = false; return; }
+
+      if (a.completada) {
+        bloqueoNuevaBanner.innerHTML = '<i class="ti tabler-circle-check me-2 text-success"></i><strong>Actividad completada.</strong> Ya fue validada — no se pueden subir más evidencias.';
+        bloqueoNuevaBanner.className = 'alert alert-success border-success mx-0 mt-3 mb-0 py-2';
+        bloqueoNuevaBanner.style.fontSize = '13px';
+        bloqueoNuevaBanner.style.display = '';
+        if (submitBtn) submitBtn.disabled = true;
+      } else if (a.ev_pendiente) {
+        bloqueoNuevaBanner.innerHTML = '<i class="ti tabler-file-time me-2 text-warning"></i><strong>Evidencia en revisión.</strong> Ya enviaste una evidencia para esta actividad. Espera la validación del coordinador antes de enviar otra.';
+        bloqueoNuevaBanner.className = 'alert alert-warning border-warning mx-0 mt-3 mb-0 py-2';
+        bloqueoNuevaBanner.style.fontSize = '13px';
+        bloqueoNuevaBanner.style.display = '';
+        if (submitBtn) submitBtn.disabled = true;
+      } else if (a.ev_rechazada) {
+        bloqueoNuevaBanner.innerHTML = '<i class="ti tabler-file-x me-2 text-danger"></i><strong>Evidencia rechazada.</strong> Tienes una evidencia rechazada. Búscala en la tabla y usa <em>"Corregir y reenviar"</em> en lugar de crear una nueva.';
+        bloqueoNuevaBanner.className = 'alert alert-danger border-danger mx-0 mt-3 mb-0 py-2';
+        bloqueoNuevaBanner.style.fontSize = '13px';
+        bloqueoNuevaBanner.style.display = '';
+        if (submitBtn) submitBtn.disabled = true;
+      } else {
+        bloqueoNuevaBanner.style.display = 'none';
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+
+    function actualizarModalNueva(preselId) {
+      const sel = document.getElementById('nueva_actividad_id');
+      document.getElementById('nueva_modulo_activo').value = moduloActivo;
+      sel.innerHTML = '<option value="">— Seleccionar actividad —</option>';
+      (actividadesPorModulo[moduloActivo] || []).forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        let label = (a.codigo ?? '') + ' — ' + (a.nombre ?? '').substring(0, 55);
+        if (a.completada)        label += ' ✓ [Completada]';
+        else if (a.ev_pendiente) label += ' ⏳ [En revisión]';
+        else if (a.ev_rechazada) label += ' ✗ [Rechazada]';
+        opt.textContent = label;
+        sel.appendChild(opt);
+      });
+      initSelect2Nueva();
+
+      $(sel).off('change.bloqueo').on('change.bloqueo', function () {
+        verificarBloqueoActividad(this.value ? parseInt(this.value) : null);
+      });
+
+      bloqueoNuevaBanner.style.display = 'none';
+      const submitBtn = modalNuevo.querySelector('#formNueva button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = false;
+
+      if (preselId) {
+        $(sel).val(String(preselId)).trigger('change');
+        verificarBloqueoActividad(parseInt(preselId));
+      }
+
+      const header = document.getElementById('modalNuevaHeader');
+      const lbl    = document.getElementById('nueva-modulo-label');
+      if (moduloActivo === 'integridad') {
+        header.className = 'modal-header modal-header-integridad';
+        lbl.textContent  = 'Integridad';
+      } else {
+        header.className = 'modal-header modal-header-accent';
+        lbl.textContent  = 'SCI';
+      }
+    }
+
+    initSelect2Nueva();
+
+    document.getElementById('btnNuevaEvidencia')?.addEventListener('click', () => {
+      actualizarModalNueva();
+      new bootstrap.Modal(modalNuevo).show();
+    });
+
+    modalNuevo.addEventListener('shown.bs.modal', () => fixModalHeight(modalNuevo));
+
+    @if(isset($actividadPresel) && $actividadPresel)
+    (function () {
+      const preselId  = {{ (int) $actividadPresel }};
+      const preselAct = actMap[preselId];
+      if (preselAct && preselAct.modulo && preselAct.modulo !== moduloActivo) {
+        moduloActivo = preselAct.modulo;
+        document.querySelectorAll('.mod-tab').forEach(b => {
+          b.classList.toggle('active', b.dataset.mod === moduloActivo);
+        });
+      }
+      actualizarModalNueva(preselId);
+      new bootstrap.Modal(modalNuevo).show();
+    })();
+    @endif
+
+  } // end if (modalNuevo)
 
   // ── Modal Editar ──────────────────────────────────────────────────────────
-  const modalEditar  = document.getElementById('modalEditarEvidencia');
-  const formEditar   = document.getElementById('formEditarEvidencia');
+  const modalEditar = document.getElementById('modalEditarEvidencia');
+  let abrirModalEditar = () => {}; // no-op por defecto si no existe el modal
 
-  modalEditar.addEventListener('shown.bs.modal', () => fixModalHeight(modalEditar));
+  if (modalEditar) {
+    const formEditar       = document.getElementById('formEditarEvidencia');
+    const editarHeader     = modalEditar.querySelector('.modal-header');
+    const editarTitle      = modalEditar.querySelector('.modal-title');
+
+    const editarMotivoWrap = (() => {
+      const div = document.createElement('div');
+      div.id = 'editar-motivo-banner';
+      div.style.display = 'none';
+      div.className = 'alert alert-danger border-danger mx-3 mt-3 mb-0 py-2';
+      div.style.fontSize = '13px';
+      div.innerHTML = '<i class="ti tabler-alert-circle me-1"></i><strong>Motivo del rechazo:</strong> <span id="editar-motivo-texto"></span>';
+      modalEditar.querySelector('.modal-body').prepend(div);
+      return div;
+    })();
+
+    abrirModalEditar = function(btn, modoCorregir) {
+      document.getElementById('edit_ev_titulo').value      = btn.dataset.titulo      ?? '';
+      document.getElementById('edit_ev_sgd').value         = btn.dataset.sgd         ?? '';
+      document.getElementById('edit_ev_url').value         = btn.dataset.url         ?? '';
+      document.getElementById('edit_ev_descripcion').value = btn.dataset.descripcion ?? '';
+      formEditar.action = btn.dataset.action;
+
+      if (modoCorregir) {
+        editarHeader.className = 'modal-header modal-header-integridad';
+        editarTitle.innerHTML  = '<i class="ti tabler-refresh-alert me-2"></i>Corregir y reenviar evidencia';
+        const motivo = btn.dataset.motivo ?? '';
+        document.getElementById('editar-motivo-texto').textContent = motivo;
+        editarMotivoWrap.style.display = motivo ? '' : 'none';
+      } else {
+        editarHeader.className = 'modal-header modal-header-accent';
+        editarTitle.innerHTML  = '<i class="ti tabler-edit me-2"></i>Editar Evidencia';
+        editarMotivoWrap.style.display = 'none';
+      }
+
+      new bootstrap.Modal(modalEditar).show();
+    };
+
+    modalEditar.addEventListener('shown.bs.modal', () => fixModalHeight(modalEditar));
+  }
 
   function bindRowActions() {
     document.querySelectorAll('.btn-editar-ev').forEach(btn => {
-      btn.addEventListener('click', function () {
-        document.getElementById('edit_ev_titulo').value      = this.dataset.titulo      ?? '';
-        document.getElementById('edit_ev_sgd').value         = this.dataset.sgd         ?? '';
-        document.getElementById('edit_ev_url').value         = this.dataset.url         ?? '';
-        document.getElementById('edit_ev_descripcion').value = this.dataset.descripcion ?? '';
-        formEditar.action = this.dataset.action;
-        new bootstrap.Modal(modalEditar).show();
-      });
+      btn.addEventListener('click', function () { abrirModalEditar(this, false); });
+    });
+
+    document.querySelectorAll('.btn-corregir-ev').forEach(btn => {
+      btn.addEventListener('click', function () { abrirModalEditar(this, true); });
     });
 
     // Validar
@@ -866,6 +1184,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('col-eje-sci').classList.add('d-none');
     document.getElementById('col-etapa-int').classList.remove('d-none');
   }
+
+  // ── Filtro actividad: ocultar opciones del otro módulo al cargar ──────────
+  document.getElementById('filtroActividad')?.querySelectorAll('option[data-modulo]').forEach(opt => {
+    opt.hidden = opt.dataset.modulo !== moduloActivo;
+  });
 
 });
 </script>

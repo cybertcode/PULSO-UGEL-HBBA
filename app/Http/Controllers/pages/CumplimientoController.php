@@ -273,8 +273,12 @@ class CumplimientoController extends Controller
                 'responsables',
             ])
             ->visiblesParaUsuario($user)
-            ->whereNotIn('estado', ['pendiente'])
-            ->whereDoesntHave('evidencias')
+            ->whereNotIn('estado', ['pendiente', 'completada'])
+            ->where(fn($q) => $q
+                ->whereDoesntHave('evidencias')
+                ->orWhereHas('evidencias', fn($e) => $e->where('estado', 'rechazado'))
+                ->orWhere('estado', 'observado')
+            )
             ->whereYear('created_at', $anio)
             ->when($unidadId,      fn($q) => $q->where('unidad_organica_id', $unidadId))
             ->when($modulo,        fn($q) => $q->where('modulo', $modulo))
@@ -285,14 +289,19 @@ class CumplimientoController extends Controller
 
         // Stats con el mismo scope de visibilidad
         $baseStats = Actividad::visiblesParaUsuario($user)
-            ->whereNotIn('estado', ['pendiente'])
-            ->whereDoesntHave('evidencias')
+            ->whereNotIn('estado', ['pendiente', 'completada'])
+            ->where(fn($q) => $q
+                ->whereDoesntHave('evidencias')
+                ->orWhereHas('evidencias', fn($e) => $e->where('estado', 'rechazado'))
+                ->orWhere('estado', 'observado')
+            )
             ->whereYear('created_at', $anio);
 
         $stats = [
             'total'      => (clone $baseStats)->count(),
             'vencidas'   => (clone $baseStats)->where('estado', 'vencida')->count(),
             'en_proceso' => (clone $baseStats)->whereIn('estado', ['en_proceso', 'observado'])->count(),
+            'observadas' => (clone $baseStats)->where('estado', 'observado')->count(),
             'alta_prio'  => (clone $baseStats)->where('prioridad', 'alta')->count(),
             'sci'        => (clone $baseStats)->where('modulo', 'sci')->count(),
             'integridad' => (clone $baseStats)->where('modulo', 'integridad')->count(),

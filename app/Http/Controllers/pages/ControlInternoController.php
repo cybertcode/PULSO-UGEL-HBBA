@@ -24,13 +24,14 @@ class ControlInternoController extends Controller
 
         $baseStats = Actividad::where('modulo', 'sci')->visiblesParaUsuario($user);
         $stats = [
-            'total'       => (clone $baseStats)->count(),
-            'completadas' => (clone $baseStats)->where('estado', 'completada')->count(),
-            'en_proceso'  => (clone $baseStats)->where('estado', 'en_proceso')->count(),
-            'observados'  => (clone $baseStats)->where('estado', 'observado')->count(),
-            'vencidas'    => (clone $baseStats)
-                              ->whereNotIn('estado', ['completada', 'observado'])
-                              ->whereDate('fecha_limite', '<', now())->count(),
+            'total'          => (clone $baseStats)->count(),
+            'completadas'    => (clone $baseStats)->where('estado', 'completada')->count(),
+            'en_proceso'     => (clone $baseStats)->where('estado', 'en_proceso')->count(),
+            'observados'     => (clone $baseStats)->where('estado', 'observado')->count(),
+            'ev_rechazadas'  => (clone $baseStats)->whereHas('evidencias', fn($q) => $q->where('estado', 'rechazado'))->count(),
+            'vencidas'       => (clone $baseStats)
+                                  ->whereNotIn('estado', ['completada', 'observado'])
+                                  ->whereDate('fecha_limite', '<', now())->count(),
         ];
 
         $query = Actividad::with([
@@ -181,8 +182,13 @@ class ControlInternoController extends Controller
             'tipos.*'             => 'in:principal,colaborador,supervisor',
         ]);
 
-        if ($validated['estado'] === 'completada' && !$actividad->fecha_cumplimiento) {
-            $validated['fecha_cumplimiento'] = now();
+        if ($validated['estado'] === 'completada') {
+            if (!$actividad->evidencias()->where('estado', 'validado')->exists()) {
+                return back()->withErrors(['estado' => 'No se puede marcar como completada sin al menos una evidencia validada.'])->withInput();
+            }
+            if (!$actividad->fecha_cumplimiento) {
+                $validated['fecha_cumplimiento'] = now();
+            }
             $validated['avance'] = 100;
         }
 
@@ -214,20 +220,31 @@ class ControlInternoController extends Controller
 
         $request->validate(['avance' => 'required|integer|min:0|max:100']);
 
-        $avance = $request->avance;
-        $estado = match(true) {
-            $avance >= 100 => 'completada',
-            $avance > 0    => 'en_proceso',
-            default        => $actividad->estado,
-        };
+        $avance = (int) $request->avance;
+
+        if ($avance >= 100) {
+            $tieneEvidenciaValidada = $actividad->evidencias()->where('estado', 'validado')->exists();
+            $estado = $tieneEvidenciaValidada ? 'completada' : 'en_proceso';
+        } elseif ($avance > 0 && in_array($actividad->estado, ['pendiente', 'observado'])) {
+            $estado = 'en_proceso';
+        } else {
+            $estado = $actividad->estado;
+        }
 
         $actividad->update([
             'avance'             => $avance,
             'estado'             => $estado,
-            'fecha_cumplimiento' => $avance >= 100 ? now() : $actividad->fecha_cumplimiento,
+            'fecha_cumplimiento' => $estado === 'completada' ? now() : $actividad->fecha_cumplimiento,
         ]);
 
-        return response()->json(['ok' => true, 'avance' => $avance, 'estado' => $estado]);
+        return response()->json([
+            'ok'          => true,
+            'avance'      => $avance,
+            'estado'      => $estado,
+            'advertencia' => ($avance >= 100 && $estado !== 'completada')
+                ? 'Avance guardado al 100%, pero se requiere al menos una evidencia validada para completar la actividad.'
+                : null,
+        ]);
     }
 
     public function historial(Actividad $actividad)

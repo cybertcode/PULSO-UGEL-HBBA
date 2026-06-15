@@ -274,6 +274,21 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
 </div>
 @endif
 
+{{-- ── Banner evidencias rechazadas ────────────────────────────────────────── --}}
+@if(($stats['ev_rechazadas'] ?? 0) > 0)
+<div class="alert alert-danger d-flex align-items-center gap-3 py-2 px-3 mb-3" role="alert"
+     style="border-radius:10px;border-left:4px solid #dc3545">
+  <i class="ti tabler-file-x" style="font-size:1.4rem;flex-shrink:0"></i>
+  <div class="flex-grow-1">
+    <strong>{{ $stats['ev_rechazadas'] }} actividad(es)</strong> tienen evidencias rechazadas que requieren corrección.
+  </div>
+  <a href="{{ route('sci-evidencias', ['modulo' => 'sci', 'estado' => 'rechazado']) }}"
+     class="btn btn-danger btn-sm ms-auto text-nowrap">
+    <i class="ti tabler-refresh-alert me-1"></i>Corregir evidencias
+  </a>
+</div>
+@endif
+
 {{-- ── Filtros ───────────────────────────────────────────────────────────── --}}
 <div class="card filter-card mb-4">
   <div class="card-body py-3">
