@@ -332,7 +332,8 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
           </select>
         </div>
 
-        {{-- Unidad --}}
+        {{-- Unidad: solo visible si el usuario puede ver más de una --}}
+        @if($unidades->count() > 1)
         <div class="col-md-2">
           <label class="form-label form-label-sm mb-1">Unidad</label>
           <select name="unidad_id" id="filtroUnidad" class="form-select select2-filtro">
@@ -344,8 +345,10 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
             @endforeach
           </select>
         </div>
+        @endif
 
-        {{-- Responsable --}}
+        {{-- Responsable: solo visible si puede ver a otros usuarios --}}
+        @if($responsables->count() > 1)
         <div class="col-md-2">
           <label class="form-label form-label-sm mb-1">Responsable</label>
           <select name="responsable_id" id="filtroResponsable" class="form-select select2-filtro">
@@ -357,6 +360,7 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
             @endforeach
           </select>
         </div>
+        @endif
 
         {{-- Estado --}}
         <div class="col-md-1">

@@ -274,7 +274,9 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
   <div class="card-body p-0">
     @foreach($proximas as $prox)
     @php $dias = (int) round(now()->diffInDays($prox->fecha_limite, false)); @endphp
-    <div class="proximas-item d-flex align-items-center gap-3 px-4 py-3 {{ !$loop->last ? 'border-bottom' : '' }}">
+    <div class="proximas-item d-flex align-items-center gap-3 px-4 py-3 {{ !$loop->last ? 'border-bottom' : '' }}"
+      role="button" title="Ver actividad" style="cursor:pointer"
+      onclick="irAActividad({{ $prox->id }})">
       <div class="d-flex align-items-center justify-content-center flex-shrink-0"
         style="width:44px;height:44px;border-radius:10px;background:{{ $dias <= 3 ? 'rgba(234,84,85,.12)' : 'rgba(255,159,67,.12)' }}">
         <span class="fw-bold" style="font-size:.78rem;color:{{ $dias <= 3 ? '#ea5455' : '#ff9f43' }}">{{ $dias }}d</span>
@@ -287,11 +289,12 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
           · <i class="ti tabler-calendar me-1"></i>Vence {{ $prox->fecha_limite->format('d/m/Y') }}
         </div>
       </div>
-      <div class="flex-shrink-0">
+      <div class="flex-shrink-0 d-flex align-items-center gap-2">
         <span class="dias-chip {{ $dias <= 3 ? 'bg-label-danger text-danger' : 'bg-label-warning text-warning' }}">
           <i class="ti tabler-clock-hour-4" style="font-size:.75rem"></i>
           {{ $dias <= 3 ? 'Urgente' : 'Próxima' }}
         </span>
+        <i class="ti tabler-chevron-right text-muted" style="font-size:.85rem"></i>
       </div>
     </div>
     @endforeach
@@ -1077,5 +1080,25 @@ document.addEventListener('DOMContentLoaded', function () {
   bindCardEvents();
 
 });
+
+// ── Próximas a vencer: ir a la card correspondiente ──────
+function irAActividad(id) {
+  const card = document.querySelector(`.act-card[data-act-id="${id}"]`);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.style.transition = 'box-shadow .2s, outline .2s';
+    card.style.outline = '2px solid #ff9f43';
+    card.style.boxShadow = '0 0 0 4px rgba(255,159,67,.25)';
+    setTimeout(() => {
+      card.style.outline = '';
+      card.style.boxShadow = '';
+    }, 2000);
+  } else {
+    // La actividad no está en la página actual → filtrar por ella
+    const params = new URLSearchParams(window.location.search);
+    params.set('buscar', id);
+    window.location.href = '{{ route('mis-actividades') }}?' + params.toString();
+  }
+}
 </script>
 @endsection

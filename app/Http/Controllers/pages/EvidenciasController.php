@@ -125,10 +125,10 @@ class EvidenciasController extends Controller
             $query->where('actividad_id', $request->actividad_id);
         }
         if ($request->filled('eje_id') && $modulo === 'sci') {
-            $query->whereHas('actividad.sciPregunta.componente', fn($q) => $q->where('sci_eje_id', $request->eje_id));
+            $query->whereHas('actividad.sciPregunta.componente', fn($q) => $q->where('eje_id', $request->eje_id));
         }
         if ($request->filled('etapa_id') && $modulo === 'integridad') {
-            $query->whereHas('actividad.integridadPregunta.componente', fn($q) => $q->where('integridad_etapa_id', $request->etapa_id));
+            $query->whereHas('actividad.integridadPregunta.componente', fn($q) => $q->where('etapa_id', $request->etapa_id));
         }
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);

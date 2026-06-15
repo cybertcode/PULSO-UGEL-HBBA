@@ -40,7 +40,7 @@
   $canEdit = !in_array($act->estado, ['completada', 'vencida']) || $evRechazadas > 0;
 @endphp
 <div class="col-md-6 col-xl-4">
-  <div class="card act-card is-{{ $act->estado }} h-100">
+  <div class="card act-card is-{{ $act->estado }} h-100" data-act-id="{{ $act->id }}">
     <div class="act-header">
       <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
         <span class="estado-pill bg-label-{{ $ec }} text-{{ $ec }}">

@@ -136,6 +136,8 @@
         title="Editar">
         <i class="ti tabler-edit icon-14px"></i>
       </button>
+      @endcan
+      @can('control-interno.eliminar')
       <button type="button" class="btn btn-icon btn-label-danger btn-eliminar"
         data-id="{{ $a->id }}"
         data-url="{{ route('sci-control-interno.destroy', $a) }}"

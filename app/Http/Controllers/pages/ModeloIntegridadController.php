@@ -163,9 +163,19 @@ class ModeloIntegridadController extends Controller
 
         // ── Para formulario nueva actividad ───────────────────────────────────
         $etapas    = IntegridadEtapa::where('activo', true)->orderBy('anio','desc')->orderBy('orden')->get();
-        $unidades  = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
-        $usuarios  = User::where('estado', 'activo')->orderBy('name')->get();
         $anios_opt = Actividad::where('modulo','integridad')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
+
+        // Unidades y usuarios filtrados por visibilidad del usuario
+        if ($user->can('actividades.ver-todas')) {
+            $unidades = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
+            $usuarios = User::where('estado', 'activo')->orderBy('name')->get();
+        } elseif ($user->can('actividades.ver-unidad')) {
+            $unidades = UnidadOrganica::where('activo', true)->where('id', $user->unidad_organica_id)->get();
+            $usuarios = User::where('estado', 'activo')->where('unidad_organica_id', $user->unidad_organica_id)->orderBy('name')->get();
+        } else {
+            $unidades = collect();
+            $usuarios = User::where('id', $user->id)->get();
+        }
 
         // Paginado para la tabla (re-ejecuta la query con paginación)
         $actividades = $actQuery->orderByDesc('fecha_limite')->paginate(15)->withQueryString();
@@ -204,6 +214,8 @@ class ModeloIntegridadController extends Controller
     // ── Crear actividad ───────────────────────────────────────────────────────
     public function store(Request $request)
     {
+        Gate::authorize('integridad.crear');
+
         $validated = $request->validate([
             'nombre'                 => 'required|string|max:255',
             'anio'                   => 'required|integer|min:2020|max:2099',
