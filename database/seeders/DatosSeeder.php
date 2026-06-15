@@ -20,133 +20,138 @@ class DatosSeeder extends Seeder
         $usuarios = User::where('estado', 'activo')->get();
 
         if ($unidades->isEmpty() || $usuarios->isEmpty()) {
-            $this->command->warn('Faltan datos base. Verifica que UnidadesOrganicasSeeder y UsuariosSeeder hayan corrido primero.');
+            $this->command->warn('Faltan datos base. Verifica UnidadesOrganicasSeeder y UsuariosSeeder.');
             return;
         }
 
-        // ─── 1. Actividades: variedad de escenarios reales por unidad ─────────
+        $dirId = UnidadOrganica::where('codigo', 'DIR')->value('id');
+
+        // ── 1. Actividades por unidad con escenarios variados ─────────────────
         foreach ($unidades as $unidad) {
-            $responsableUnidad = $usuarios->where('unidad_organica_id', $unidad->id)->first()
-                              ?? $usuarios->random();
+            $principal = $usuarios->where('unidad_organica_id', $unidad->id)->first()
+                      ?? $usuarios->random();
 
-            // Colaboradores disponibles de otras unidades
-            $colaboradores = $usuarios->whereNotIn('id', [$responsableUnidad->id])->take(5)->values();
+            $colaboradores = $usuarios
+                ->where('unidad_organica_id', '!=', $unidad->id)
+                ->where('estado', 'activo')
+                ->take(4)
+                ->values();
 
-            // A) 4 actividades normales — 1 responsable principal
-            $normales = Actividad::factory(4)->create([
+            $director = $usuarios->where('unidad_organica_id', $dirId)->first();
+
+            // A) 4 actividades con 1 responsable principal
+            Actividad::factory(4)->create([
                 'unidad_organica_id' => $unidad->id,
-                'creado_por'         => $responsableUnidad->id,
-            ]);
-            foreach ($normales as $act) {
-                $act->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
-            }
+                'creado_por'         => $principal->id,
+            ])->each(fn($a) => $a->responsables()->attach($principal->id, ['tipo' => 'principal']));
 
-            // B) 2 actividades con múltiples responsables (principal + colaborador)
-            $multiResp = Actividad::factory(2)->create([
+            // B) 2 actividades con principal + colaborador de otra unidad
+            Actividad::factory(2)->create([
                 'unidad_organica_id' => $unidad->id,
-                'creado_por'         => $responsableUnidad->id,
-            ]);
-            foreach ($multiResp as $act) {
-                $act->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
+                'creado_por'         => $principal->id,
+            ])->each(function ($a) use ($principal, $colaboradores) {
+                $a->responsables()->attach($principal->id, ['tipo' => 'principal']);
                 if ($colaboradores->isNotEmpty()) {
-                    $act->responsables()->attach(
-                        $colaboradores->random()->id,
-                        ['tipo' => 'colaborador']
-                    );
+                    $a->responsables()->attach($colaboradores->random()->id, ['tipo' => 'colaborador']);
                 }
-            }
+            });
 
-            // C) 1 actividad institucional — asignada a todos los responsables de unidad
+            // C) 1 actividad institucional con supervisor de la Dirección
             $institucional = Actividad::factory()->create([
                 'unidad_organica_id' => $unidad->id,
-                'creado_por'         => $responsableUnidad->id,
+                'creado_por'         => $principal->id,
                 'prioridad'          => 'alta',
+                'nombre'             => 'Actividad institucional — seguimiento Dirección',
             ]);
-            $responsablesUnidades = $usuarios->whereIn(
-                'unidad_organica_id',
-                $unidades->pluck('id')->toArray()
-            )->take(3)->values();
-            foreach ($responsablesUnidades as $resp) {
-                $tipo = $resp->id === $responsableUnidad->id ? 'principal' : 'supervisor';
-                $institucional->responsables()->syncWithoutDetaching([$resp->id => ['tipo' => $tipo]]);
+            $institucional->responsables()->attach($principal->id, ['tipo' => 'principal']);
+            if ($director && $director->id !== $principal->id) {
+                $institucional->responsables()->syncWithoutDetaching([
+                    $director->id => ['tipo' => 'supervisor'],
+                ]);
             }
 
-            // D) 1 actividad completada — con historial de avance
+            // D) 1 actividad completada con historial completo de avance
             $completada = Actividad::factory()->completada()->create([
                 'unidad_organica_id' => $unidad->id,
-                'creado_por'         => $responsableUnidad->id,
+                'creado_por'         => $principal->id,
             ]);
-            $completada->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
-            $this->generarHistorialAvance($completada, $responsableUnidad->id);
+            $completada->responsables()->attach($principal->id, ['tipo' => 'principal']);
+            $this->historialAvance($completada, $principal->id);
 
-            // E) 1 actividad vencida
+            // E) 1 actividad vencida (fecha límite pasada, avance bajo)
             $vencida = Actividad::factory()->vencida()->create([
                 'unidad_organica_id' => $unidad->id,
-                'creado_por'         => $responsableUnidad->id,
+                'creado_por'         => $principal->id,
             ]);
-            $vencida->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
+            $vencida->responsables()->attach($principal->id, ['tipo' => 'principal']);
 
-            // F) 1 actividad en proceso — con supervisor de la dirección
+            // F) 1 actividad en proceso con supervisor de Dirección
             $enProceso = Actividad::factory()->enProceso()->create([
                 'unidad_organica_id' => $unidad->id,
-                'creado_por'         => $responsableUnidad->id,
+                'creado_por'         => $principal->id,
             ]);
-            $enProceso->responsables()->attach($responsableUnidad->id, ['tipo' => 'principal']);
-            $director = $usuarios->where('unidad_organica_id',
-                UnidadOrganica::where('codigo', 'DIR')->value('id')
-            )->first();
-            if ($director && $director->id !== $responsableUnidad->id) {
+            $enProceso->responsables()->attach($principal->id, ['tipo' => 'principal']);
+            if ($director && $director->id !== $principal->id) {
                 $enProceso->responsables()->syncWithoutDetaching([
                     $director->id => ['tipo' => 'supervisor'],
                 ]);
             }
+
+            // G) 1 actividad observada (requiere corrección)
+            $observada = Actividad::factory()->create([
+                'unidad_organica_id' => $unidad->id,
+                'creado_por'         => $principal->id,
+                'estado'             => 'observado',
+                'avance'             => rand(20, 60),
+                'observaciones'      => 'Falta evidencia documental. El responsable debe subsanar antes del cierre.',
+            ]);
+            $observada->responsables()->attach($principal->id, ['tipo' => 'principal']);
+            if ($colaboradores->isNotEmpty()) {
+                $observada->responsables()->syncWithoutDetaching([
+                    $colaboradores->first()->id => ['tipo' => 'colaborador'],
+                ]);
+            }
         }
 
-        // ─── 2. Evidencias ────────────────────────────────────────────────────
+        // ── 2. Evidencias para actividades con avance ─────────────────────────
         Actividad::whereIn('estado', ['completada', 'en_proceso', 'observado'])
             ->get()
-            ->each(function (Actividad $actividad) use ($usuarios) {
-                $subidoPor = $actividad->responsables->first()?->id
+            ->each(function (Actividad $act) use ($usuarios) {
+                $subidoPor = $act->responsables()->first()?->id
                           ?? $usuarios->random()->id;
-
-                Evidencia::factory(rand(1, 4))->create([
-                    'actividad_id' => $actividad->id,
+                Evidencia::factory(rand(1, 3))->create([
+                    'actividad_id' => $act->id,
                     'subido_por'   => $subidoPor,
                 ]);
             });
 
-        // ─── 3. Alertas ───────────────────────────────────────────────────────
-        // Una alerta por tipo por actividad (respeta el unique constraint de alertas pendientes)
-        $tipos = ['vencimiento', 'avance_bajo', 'evidencia_falta', 'sistema'];
-        $usuariosConUnidad = $usuarios->whereNotNull('unidad_organica_id')->values();
+        // ── 3. Alertas variadas (respeta unique constraint) ───────────────────
+        $tipos           = ['vencimiento', 'avance_bajo', 'evidencia_falta', 'sistema'];
+        $usuariosActivos = $usuarios->whereNotNull('unidad_organica_id')->values();
 
-        $usuariosConUnidad->take(15)->each(function (User $usuario) use ($unidades, $tipos) {
+        $usuariosActivos->take(18)->each(function (User $usuario) use ($tipos) {
             $actividad = Actividad::where('unidad_organica_id', $usuario->unidad_organica_id)
                 ->inRandomOrder()->first()
                 ?? Actividad::inRandomOrder()->first();
 
             if (!$actividad) return;
 
-            // Solo 1 alerta por tipo para esta actividad
-            $tipoElegido = collect($tipos)->random();
             Alerta::firstOrCreate(
-                [
-                    'actividad_id' => $actividad->id,
-                    'tipo'         => $tipoElegido,
-                    'leida'        => false,
-                ],
+                ['actividad_id' => $actividad->id, 'tipo' => collect($tipos)->random(), 'leida' => false],
                 [
                     'usuario_id'         => $usuario->id,
-                    'unidad_organica_id' => $usuario->unidad_organica_id ?? $unidades->random()->id,
-                    'titulo'             => "Alerta de {$tipoElegido}: {$actividad->nombre}",
-                    'mensaje'            => "Se requiere atención en la actividad.",
+                    'unidad_organica_id' => $usuario->unidad_organica_id,
+                    'titulo'             => "Alerta automática: {$actividad->nombre}",
+                    'mensaje'            => 'Requiere atención. Revisa el estado de esta actividad.',
                     'prioridad'          => collect(['alta', 'media', 'baja'])->random(),
                 ]
             );
         });
 
-        // ─── 4. Reconocimientos: 6 meses de histórico ────────────────────────
+        // ── 4. Reconocimientos históricos (10 meses) ──────────────────────────
         $periodos = [
+            ['anio' => 2025, 'mes' => 8],
+            ['anio' => 2025, 'mes' => 9],
             ['anio' => 2025, 'mes' => 10],
             ['anio' => 2025, 'mes' => 11],
             ['anio' => 2025, 'mes' => 12],
@@ -158,60 +163,45 @@ class DatosSeeder extends Seeder
         ];
 
         foreach ($periodos as $periodo) {
-            $rankingUnidades = $unidades->map(function (UnidadOrganica $unidad) use ($periodo) {
-                $total       = Actividad::where('unidad_organica_id', $unidad->id)->count();
-                $completadas = Actividad::where('unidad_organica_id', $unidad->id)
-                    ->where('estado', 'completada')->count();
-                // Simular variación por período con un offset aleatorio fijo por unidad+mes
-                $bonus   = ($unidad->id * 7 + $periodo['mes'] * 3) % 20;
-                $puntaje = $total > 0
+            $ranking = $unidades->map(function (UnidadOrganica $u) use ($periodo) {
+                $total       = Actividad::where('unidad_organica_id', $u->id)->count();
+                $completadas = Actividad::where('unidad_organica_id', $u->id)->where('estado', 'completada')->count();
+                $bonus       = ($u->id * 7 + $periodo['mes'] * 3) % 20;
+                $puntaje     = $total > 0
                     ? min(100, round(($completadas / $total) * 100) + $bonus)
                     : rand(30, 85);
-
-                return [
-                    'unidad'      => $unidad,
-                    'puntaje'     => $puntaje,
-                    'completadas' => $completadas,
-                    'total'       => $total,
-                ];
+                return ['unidad' => $u, 'puntaje' => $puntaje, 'completadas' => $completadas, 'total' => $total];
             })->sortByDesc('puntaje')->values();
 
-            foreach ($rankingUnidades as $pos => $item) {
-                $medalla = match(true) {
-                    $pos === 0 => 'oro',
-                    $pos === 1 => 'plata',
-                    $pos === 2 => 'bronce',
-                    default    => null,
-                };
-
+            foreach ($ranking as $pos => $item) {
                 Reconocimiento::updateOrCreate(
+                    ['unidad_organica_id' => $item['unidad']->id, 'anio' => $periodo['anio'], 'mes' => $periodo['mes']],
                     [
-                        'unidad_organica_id' => $item['unidad']->id,
-                        'anio'               => $periodo['anio'],
-                        'mes'                => $periodo['mes'],
-                    ],
-                    [
-                        'posicion'                => $pos + 1,
-                        'puntaje'                 => $item['puntaje'],
-                        'avance_global'           => $item['puntaje'],
-                        'actividades_total'        => $item['total'],
-                        'actividades_completadas'  => $item['completadas'],
-                        'medalla'                 => $medalla,
+                        'posicion'               => $pos + 1,
+                        'puntaje'                => $item['puntaje'],
+                        'avance_global'          => $item['puntaje'],
+                        'actividades_total'      => $item['total'],
+                        'actividades_completadas'=> $item['completadas'],
+                        'medalla'                => match(true) {
+                            $pos === 0 => 'oro',
+                            $pos === 1 => 'plata',
+                            $pos === 2 => 'bronce',
+                            default    => null,
+                        },
                     ]
                 );
             }
         }
 
-        $this->command->info('✓ Datos generados: actividades con responsables múltiples, evidencias, alertas y reconocimientos (8 meses).');
+        $this->command->info('✓ DatosSeeder: actividades (7 tipos por unidad), evidencias, alertas y 10 meses de reconocimientos generados.');
     }
 
-    // ── Helper: historial de avance progresivo para actividades completadas ──
-
-    private function generarHistorialAvance(Actividad $actividad, int $usuarioId): void
+    // ── Historial de avance progresivo 0→25→50→75→100 ────────────────────────
+    private function historialAvance(Actividad $actividad, int $usuarioId): void
     {
         $hitos    = [25, 50, 75, 100];
         $anterior = 0;
-        $base     = Carbon::now()->subDays(rand(45, 120));
+        $base     = Carbon::now()->subDays(rand(60, 120));
 
         foreach ($hitos as $i => $avance) {
             ActividadHistorial::create([
@@ -221,8 +211,8 @@ class DatosSeeder extends Seeder
                 'valor_anterior' => (string) $anterior,
                 'valor_nuevo'    => (string) $avance,
                 'descripcion'    => "Avance actualizado al {$avance}%.",
-                'created_at'     => $base->copy()->addDays($i * 10),
-                'updated_at'     => $base->copy()->addDays($i * 10),
+                'created_at'     => $base->copy()->addDays($i * 12),
+                'updated_at'     => $base->copy()->addDays($i * 12),
             ]);
             $anterior = $avance;
         }
@@ -234,8 +224,8 @@ class DatosSeeder extends Seeder
             'valor_anterior' => 'en_proceso',
             'valor_nuevo'    => 'completada',
             'descripcion'    => 'Actividad completada. Todas las evidencias validadas y aprobadas.',
-            'created_at'     => $base->copy()->addDays(40),
-            'updated_at'     => $base->copy()->addDays(40),
+            'created_at'     => $base->copy()->addDays(48),
+            'updated_at'     => $base->copy()->addDays(48),
         ]);
     }
 }
