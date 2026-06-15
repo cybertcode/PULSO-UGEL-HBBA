@@ -45,17 +45,9 @@ class RecomendacionesController extends Controller
         ));
     }
 
-    // ── Endpoint JSON: lista + stats + paginación ────────────────────────────
-    public function data(Request $request)
+    // ── Scope de visibilidad reutilizable ────────────────────────────────────
+    private function applyScope($query, $user)
     {
-        $modulo = $request->input('modulo', 'sci');
-        $user   = \Illuminate\Support\Facades\Auth::user();
-
-        $query = Recomendacion::with(['unidadOrganica', 'responsable', 'actividad'])
-            ->where('modulo', $modulo)
-            ->orderByDesc('created_at');
-
-        // Visibility scoping: restrict to what the user can see
         if (!$user->can('actividades.ver-todas')) {
             if ($user->can('actividades.ver-unidad') && !empty($user->unidad_organica_id)) {
                 $query->where(function ($q) use ($user) {
@@ -66,6 +58,21 @@ class RecomendacionesController extends Controller
                 $query->where('responsable_id', $user->id);
             }
         }
+        return $query;
+    }
+
+    // ── Endpoint JSON: lista + stats + paginación ────────────────────────────
+    public function data(Request $request)
+    {
+        $modulo = $request->input('modulo', 'sci');
+        $user   = \Illuminate\Support\Facades\Auth::user();
+
+        $query = Recomendacion::with(['unidadOrganica', 'responsable', 'actividad'])
+            ->where('modulo', $modulo);
+
+        $this->applyScope($query, $user);
+
+        $query->orderByDesc('created_at');
 
         if ($request->filled('estado'))    $query->where('estado', $request->estado);
         if ($request->filled('tipo'))      $query->where('tipo', $request->tipo);
@@ -83,8 +90,10 @@ class RecomendacionesController extends Controller
 
         $paginated = $query->paginate(15)->withQueryString();
 
-        // Stats del módulo activo
+        // Stats respetando el mismo scope de visibilidad
         $base = Recomendacion::where('modulo', $modulo);
+        $this->applyScope($base, $user);
+
         $stats = [
             'total'      => (clone $base)->count(),
             'pendientes' => (clone $base)->whereIn('estado', ['pendiente', 'en_proceso'])->count(),
@@ -98,9 +107,12 @@ class RecomendacionesController extends Controller
                                 ->whereBetween('fecha_limite', [now(), now()->addDays(7)])->count(),
         ];
 
+        // tabStats también filtrados por scope
+        $tabSci = $this->applyScope(Recomendacion::where('modulo', 'sci')->whereIn('estado', ['pendiente', 'en_proceso']), $user);
+        $tabInt = $this->applyScope(Recomendacion::where('modulo', 'integridad')->whereIn('estado', ['pendiente', 'en_proceso']), $user);
         $tabStats = [
-            'sci'        => Recomendacion::where('modulo', 'sci')->whereIn('estado', ['pendiente', 'en_proceso'])->count(),
-            'integridad' => Recomendacion::where('modulo', 'integridad')->whereIn('estado', ['pendiente', 'en_proceso'])->count(),
+            'sci'        => $tabSci->count(),
+            'integridad' => $tabInt->count(),
         ];
 
         // Serializar filas

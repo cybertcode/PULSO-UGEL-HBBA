@@ -32,15 +32,15 @@ class BuenasPracticasController extends Controller
         $esGestor = Gate::check('buenas-practicas.editar');
         $user     = Auth::user();
 
-        // Unidades y usuarios filtrados según visibilidad del usuario
+        // Unidades: siempre todas (para clasificar proyectos al proponer/registrar)
+        $unidades = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
+
+        // Usuarios: filtrados según visibilidad (para selects de responsable en gestor)
         if ($user->can('actividades.ver-todas')) {
-            $unidades = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
             $usuarios = User::where('estado', 'activo')->orderBy('name')->get();
         } elseif ($user->can('actividades.ver-unidad')) {
-            $unidades = UnidadOrganica::where('activo', true)->where('id', $user->unidad_organica_id)->get();
             $usuarios = User::where('estado', 'activo')->where('unidad_organica_id', $user->unidad_organica_id)->orderBy('name')->get();
         } else {
-            $unidades = collect();
             $usuarios = User::where('id', $user->id)->get();
         }
 
@@ -171,6 +171,7 @@ class BuenasPracticasController extends Controller
         ]);
 
         if ($validator->fails()) {
+            if ($request->ajax() || $request->wantsJson()) return response()->json(['errors' => $validator->errors()], 422);
             return back()->withErrors($validator)->withInput()->with('error', 'Corrija los errores del formulario.');
         }
 
@@ -196,6 +197,7 @@ class BuenasPracticasController extends Controller
             'creado_por'         => Auth::id(),
         ]);
 
+        if ($request->ajax() || $request->wantsJson()) return response()->json(['success' => true], 201);
         return back()->with('success', '¡Proyecto presentado exitosamente! El Responsable SCI lo recepcionará y notificará el resultado.');
     }
 
@@ -217,6 +219,7 @@ class BuenasPracticasController extends Controller
             'observaciones'     => $request->observaciones,
         ]);
 
+        if ($request->ajax()) return response()->json(['success' => true]);
         return back()->with('success', 'Proyecto recepcionado. Se notificará al usuario que fue recibido.');
     }
 
@@ -239,6 +242,7 @@ class BuenasPracticasController extends Controller
             'feedback_sci'        => $request->observacion_comision,
         ]);
 
+        if ($request->ajax()) return response()->json(['success' => true]);
         return back()->with('success', 'Proyecto declarado ELEGIBLE. Participará en el concurso interno UGEL Huacaybamba.');
     }
 
@@ -257,6 +261,7 @@ class BuenasPracticasController extends Controller
             'feedback_sci'         => $request->observacion_comision,
         ]);
 
+        if ($request->ajax()) return response()->json(['success' => true]);
         return back()->with('success', 'Proyecto marcado como No Elegible. El participante recibirá el feedback.');
     }
 
@@ -276,6 +281,7 @@ class BuenasPracticasController extends Controller
                 ?? '¡Felicitaciones! Tu proyecto ganó el concurso interno y representará a la UGEL Huacaybamba.',
         ]);
 
+        if ($request->ajax()) return response()->json(['success' => true]);
         return back()->with('success', '¡Ganador UGEL declarado! Este proyecto representará a la UGEL Huacaybamba en el concurso externo.');
     }
 
@@ -299,6 +305,7 @@ class BuenasPracticasController extends Controller
                 ?? 'Tu proyecto fue registrado para participar en el concurso externo (' . strtoupper($request->nivel_externo) . ').',
         ]);
 
+        if ($request->ajax()) return response()->json(['success' => true]);
         return back()->with('success', 'Proyecto registrado en el concurso externo ' . strtoupper($request->nivel_externo) . '.');
     }
 
@@ -324,7 +331,38 @@ class BuenasPracticasController extends Controller
             ? '¡Felicitaciones! El proyecto ganó en el concurso externo ' . strtoupper($buenaPractica->nivel_externo ?? '') . '.'
             : 'Resultado del concurso externo registrado.';
 
+        if ($request->ajax()) return response()->json(['success' => true]);
         return back()->with('success', $msg);
+    }
+
+    // Gestor presenta una práctica institucional al concurso (crea proyecto de concurso)
+    public function presentarPractica(Request $request, BuenaPractica $buenaPractica)
+    {
+        Gate::authorize('buenas-practicas.editar');
+
+        $request->validate([
+            'titulo'      => 'required|string|max:255',
+            'descripcion' => 'required|string',
+            'modulo'      => 'required|in:sci,integridad',
+        ]);
+
+        $nuevo = BuenaPractica::create([
+            'titulo'             => $request->titulo,
+            'descripcion'        => $request->descripcion,
+            'categoria'          => $buenaPractica->categoria,
+            'modulo'             => $request->modulo,
+            'unidad_organica_id' => $buenaPractica->unidad_organica_id,
+            'responsable_id'     => $buenaPractica->responsable_id,
+            'estado'             => 'presentado',
+            'avance'             => 0,
+            'propuesto_por'      => Auth::id(),
+            'creado_por'         => Auth::id(),
+            'evidencias'         => $buenaPractica->evidencias,
+            'numero_sgd'         => $buenaPractica->numero_sgd,
+        ]);
+
+        if ($request->ajax()) return response()->json(['success' => true, 'id' => $nuevo->id], 201);
+        return back()->with('success', 'Proyecto presentado al concurso correctamente.');
     }
 
     // SCI registra práctica institucional directamente (no es concurso)
@@ -350,6 +388,7 @@ class BuenasPracticasController extends Controller
         ]);
 
         if ($validator->fails()) {
+            if ($request->ajax()) return response()->json(['errors' => $validator->errors()], 422);
             return back()->withErrors($validator)->withInput()->with('error', 'Corrija los errores del formulario.');
         }
 
@@ -359,6 +398,7 @@ class BuenasPracticasController extends Controller
             'numero_sgd', 'impacto', 'evidencias', 'observaciones',
         ]));
 
+        if ($request->ajax()) return response()->json(['success' => true], 201);
         return back()->with('success', 'Buena práctica institucional registrada correctamente.');
     }
 
@@ -384,6 +424,7 @@ class BuenasPracticasController extends Controller
         ]);
 
         if ($validator->fails()) {
+            if ($request->ajax()) return response()->json(['errors' => $validator->errors()], 422);
             return back()->withErrors($validator)->withInput()->with('error', 'Corrija los errores del formulario.');
         }
 
@@ -393,13 +434,15 @@ class BuenasPracticasController extends Controller
             'numero_sgd', 'impacto', 'evidencias', 'observaciones',
         ]));
 
+        if ($request->ajax()) return response()->json(['success' => true]);
         return back()->with('success', 'Proyecto actualizado correctamente.');
     }
 
-    public function destroy(BuenaPractica $buenaPractica)
+    public function destroy(Request $request, BuenaPractica $buenaPractica)
     {
         Gate::authorize('buenas-practicas.eliminar');
         $buenaPractica->delete();
+        if ($request->ajax()) return response()->json(['success' => true]);
         return back()->with('success', 'Proyecto eliminado.');
     }
 

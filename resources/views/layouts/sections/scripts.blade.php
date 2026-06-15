@@ -59,3 +59,71 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
+
+<!-- pulsoToast: toast global reutilizable en todos los módulos -->
+<script>
+/**
+ * pulsoToast(msg, type, title, delay)
+ * type: 'success' | 'error' | 'warning' | 'info'
+ * Crea un toast Bootstrap en el .toast-container del layout.
+ */
+window.pulsoToast = function(msg, type, title, delay) {
+  type  = type  || 'success';
+  delay = delay || (type === 'error' ? 7000 : type === 'warning' ? 6000 : 4000);
+
+  var cfg = {
+    success: { color: '#28a745', icon: 'tabler-circle-check',  def: 'Operación exitosa' },
+    error:   { color: '#dc3545', icon: 'tabler-circle-x',      def: 'Error'              },
+    warning: { color: '#fd7e14', icon: 'tabler-alert-triangle', def: 'Advertencia'       },
+    info:    { color: '#0d6efd', icon: 'tabler-info-circle',    def: 'Información'       },
+  };
+  var c = cfg[type] || cfg.success;
+  title = title || c.def;
+
+  var el = document.createElement('div');
+  el.className = 'toast border-0 shadow';
+  el.setAttribute('role', 'alert');
+  el.style.cssText = 'background:#fff;border-left:4px solid ' + c.color + ' !important;border-radius:8px;min-width:280px';
+  el.innerHTML =
+    '<div class="toast-header border-0 pb-0" style="background:transparent">' +
+      '<span class="me-2" style="color:' + c.color + '"><i class="ti ' + c.icon + '" style="font-size:18px"></i></span>' +
+      '<strong class="me-auto" style="color:' + c.color + '">' + title + '</strong>' +
+      '<button type="button" class="btn-close" data-bs-dismiss="toast"></button>' +
+    '</div>' +
+    '<div class="toast-body pt-1" style="color:#333">' + msg + '</div>';
+
+  var container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.cssText = 'z-index:9999;min-width:320px;max-width:420px';
+    document.body.appendChild(container);
+  }
+  container.appendChild(el);
+  el.addEventListener('hidden.bs.toast', function() { el.remove(); });
+  new bootstrap.Toast(el, { autohide: true, delay: delay }).show();
+};
+
+/**
+ * pulsoConfirm(opts) → Promise<boolean>
+ * opts: { title, html, confirmText, cancelText, type }
+ * Usa SweetAlert2 si disponible, si no un confirm() nativo.
+ */
+window.pulsoConfirm = function(opts) {
+  opts = opts || {};
+  if (typeof Swal !== 'undefined') {
+    return Swal.fire({
+      title:             opts.title       || '¿Confirmar acción?',
+      html:              opts.html        || '',
+      icon:              opts.type        || 'warning',
+      showCancelButton:  true,
+      confirmButtonColor: opts.type === 'danger' || !opts.type ? '#d33' : undefined,
+      confirmButtonText: opts.confirmText || 'Confirmar',
+      cancelButtonText:  opts.cancelText  || 'Cancelar',
+    }).then(function(r) { return r.isConfirmed; });
+  }
+  // Fallback sin Swal
+  var msg = (opts.title || '') + (opts.html ? '\n' + opts.html.replace(/<[^>]+>/g,'') : '');
+  return Promise.resolve(window.confirm(msg));
+};
+</script>

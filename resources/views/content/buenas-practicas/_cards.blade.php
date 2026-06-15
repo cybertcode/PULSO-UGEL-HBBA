@@ -612,7 +612,17 @@
       </div>
     </div>
     @canany(['buenas-practicas.editar','buenas-practicas.eliminar'])
-    <div class="bp-actions">
+    <div class="bp-actions flex-wrap">
+      @can('buenas-practicas.editar')
+      <button class="btn btn-sm btn-outline-success w-100 btn-presentar-practica mb-1"
+        data-id="{{ $p->id }}"
+        data-titulo="{{ $p->titulo }}"
+        data-descripcion="{{ Str::limit($p->descripcion, 200) }}"
+        data-modulo="{{ $p->modulo }}"
+        data-categoria="{{ $p->categoria }}">
+        <i class="ti tabler-send me-1"></i>Presentar al concurso
+      </button>
+      @endcan
       @can('buenas-practicas.editar')
       <button class="btn btn-sm btn-outline-primary flex-grow-1 btn-editar"
         data-id="{{ $p->id }}"
