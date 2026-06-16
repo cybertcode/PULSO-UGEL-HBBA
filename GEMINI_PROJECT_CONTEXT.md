@@ -1,6 +1,15 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.1.4] - 2026-06-15 (Sesión Actual)
+## [v2.1.5] - 2026-06-15 (Sesión Actual)
+### Infraestructura, Despliegue y Refactorización
+- **Optimización para Hosting Compartido (InMotionHosting)**:
+    - Actualización de `DEPLOY_PRODUCCION.md` para forzar el uso de PHP 8.3 mediante rutas absolutas (`/opt/cpanel/ea-php83/root/usr/bin/php`), garantizando la compatibilidad del proyecto en el servidor de producción.
+    - Rediseño del script `deploy.sh` con variables para los binarios de PHP y Composer, simplificando el mantenimiento y mejorando la robustez del flujo de despliegue.
+    - Adición de guías visuales en la documentación para la configuración de PHP 8.3 desde el MultiPHP Manager de cPanel.
+- **Mejores Prácticas de Desarrollo**:
+    - Refactorización de `UserFactory.php` migrando del helper global `fake()` a `$this->faker`, siguiendo los estándares actuales de Laravel para una mejor integración con herramientas de análisis estático.
+
+## [v2.1.4] - 2026-06-15
 ### Refactorización AJAX y Utilidades Globales de Notificación
 - **Buenas Prácticas (Flujo Asíncrono)**:
     - Implementación de un flujo AJAX completo para la gestión de estados del concurso (Recepcionar, Declarar Elegible, No Elegible, Ganador UGEL y Resultados Externos).
