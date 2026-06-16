@@ -24,14 +24,14 @@ class UserFactory extends Factory
         $cargoId  = Cargo::where('activo', true)->inRandomOrder()->value('id');
 
         return [
-            'name'                      => fake()->name(),
-            'email'                     => fake()->unique()->safeEmail(),
+            'name'                      => $this->faker->name(),
+            'email'                     => $this->faker->unique()->safeEmail(),
             'email_verified_at'         => now(),
             'password'                  => static::$password ??= Hash::make('password'),
-            'dni'                       => fake()->numerify('########'),
+            'dni'                       => $this->faker->numerify('########'),
             'cargo_id'                  => $cargoId,
             'unidad_organica_id'        => $unidadId,
-            'estado'                    => fake()->randomElement(['activo', 'activo', 'activo', 'inactivo']),
+            'estado'                    => $this->faker->randomElement(['activo', 'activo', 'activo', 'inactivo']),
             'two_factor_secret'         => null,
             'two_factor_recovery_codes' => null,
             'remember_token'            => Str::random(10),

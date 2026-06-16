@@ -46,37 +46,43 @@ cp .env.production .env
 
 ### 2.3 Instalar dependencias PHP
 
+> **InMotionHosting usa PHP 8.1 por defecto.** El proyecto requiere PHP 8.3.  
+> El servidor tiene PHP 8.3 disponible en `/opt/cpanel/ea-php83/` — usar siempre rutas completas para no afectar otros proyectos del hosting.
+
 ```bash
-composer install --no-dev --optimize-autoloader --no-interaction
+/opt/cpanel/ea-php83/root/usr/bin/php /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader --no-interaction
 ```
+
+También configurar PHP 8.3 en cPanel para el subdominio:  
+**cPanel → MultiPHP Manager → pulso.ugelhuacaybamba.edu.pe → PHP 8.3**
 
 ### 2.4 Generar APP_KEY (si es primera instalación)
 
 ```bash
 # Solo si APP_KEY está vacío en .env, sino saltar este paso
-php artisan key:generate
+/opt/cpanel/ea-php83/root/usr/bin/php artisan key:generate
 ```
 
 ### 2.5 Ejecutar migraciones y seeders
 
 ```bash
-php artisan migrate --force
-php artisan db:seed --force
+/opt/cpanel/ea-php83/root/usr/bin/php artisan migrate --force
+/opt/cpanel/ea-php83/root/usr/bin/php artisan db:seed --force
 ```
 
 ### 2.6 Crear enlace simbólico de storage
 
 ```bash
-php artisan storage:link
+/opt/cpanel/ea-php83/root/usr/bin/php artisan storage:link
 ```
 
 ### 2.7 Optimizar para producción
 
 ```bash
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan event:cache
+/opt/cpanel/ea-php83/root/usr/bin/php artisan config:cache
+/opt/cpanel/ea-php83/root/usr/bin/php artisan route:cache
+/opt/cpanel/ea-php83/root/usr/bin/php artisan view:cache
+/opt/cpanel/ea-php83/root/usr/bin/php artisan event:cache
 ```
 
 ### 2.8 Permisos de directorios
@@ -109,14 +115,14 @@ bash deploy.sh
 
 O manualmente:
 ```bash
-php artisan down
+/opt/cpanel/ea-php83/root/usr/bin/php artisan down
 git pull origin main
-composer install --no-dev --optimize-autoloader
-php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan up
+/opt/cpanel/ea-php83/root/usr/bin/php /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader
+/opt/cpanel/ea-php83/root/usr/bin/php artisan migrate --force
+/opt/cpanel/ea-php83/root/usr/bin/php artisan config:cache
+/opt/cpanel/ea-php83/root/usr/bin/php artisan route:cache
+/opt/cpanel/ea-php83/root/usr/bin/php artisan view:cache
+/opt/cpanel/ea-php83/root/usr/bin/php artisan up
 ```
 
 ---
