@@ -10,6 +10,7 @@ class ProduccionSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            ConfiguracionInstitucionalSeeder::class,
             RolesPermisosSeeder::class,
         ]);
 
