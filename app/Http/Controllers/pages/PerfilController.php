@@ -22,13 +22,21 @@ class PerfilController extends Controller
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
+        $rules = [
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'max:255', "unique:users,email,{$user->id}"],
             'dni'      => ['nullable', 'string', 'digits:8'],
             'cargo_id' => ['nullable', 'exists:cargos,id'],
             'foto'     => ['nullable', 'image', 'mimes:' . ImageService::ALLOWED_MIMES, 'max:' . ImageService::MAX_SIZE_KB],
-        ]);
+        ];
+
+        if ($user->can('usuarios.editar')) {
+            $rules['unidad_organica_id'] = ['nullable', 'exists:unidades_organicas,id'];
+            $rules['rol']                = ['nullable', 'exists:roles,name'];
+            $rules['estado']             = ['nullable', 'in:activo,inactivo,pendiente'];
+        }
+
+        $validated = $request->validate($rules);
 
         if ($request->hasFile('foto')) {
             $images->delete($user->profile_photo_path);
@@ -41,12 +49,23 @@ class PerfilController extends Controller
             $user->forceFill(['profile_photo_path' => null])->save();
         }
 
-        $user->forceFill([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'dni'      => $validated['dni'] ?? $user->dni,
-            'cargo_id' => $validated['cargo_id'] ?? $user->cargo_id,
-        ])->save();
+        $fill = [
+            'name'  => $validated['name'],
+            'email' => $validated['email'],
+            'dni'   => $validated['dni'] ?? $user->dni,
+        ];
+
+        if ($user->can('usuarios.editar')) {
+            $fill['cargo_id']          = $validated['cargo_id'] ?? $user->cargo_id;
+            $fill['unidad_organica_id'] = $validated['unidad_organica_id'] ?? $user->unidad_organica_id;
+            $fill['estado']            = $validated['estado'] ?? $user->estado;
+
+            if (!empty($validated['rol'])) {
+                $user->syncRoles([$validated['rol']]);
+            }
+        }
+
+        $user->forceFill($fill)->save();
 
         return back()->with('success', 'Perfil actualizado correctamente.');
     }

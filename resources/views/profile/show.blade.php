@@ -49,12 +49,13 @@
     </div>
   </div>
   <div class="card-body">
+    @can('perfil.editar')
     <form method="POST" action="{{ route('profile.update-info') }}" enctype="multipart/form-data">
       @csrf
+    @endcan
 
       {{-- Foto de perfil --}}
       <div class="d-flex align-items-start align-items-sm-center gap-6 mb-6">
-        {{-- Avatar actual --}}
         <div id="avatarPreviewWrap">
           @if($fotoUrl)
             <img id="avatarPreview" src="{{ $fotoUrl }}" alt="foto" class="d-block rounded-circle"
@@ -70,9 +71,9 @@
         </div>
 
         <div>
+          @can('perfil.editar')
           <label for="fotoInput" class="btn btn-primary me-3 mb-2 cursor-pointer">
-            <i class="icon-base ti tabler-upload me-1"></i>
-            <span>Subir foto</span>
+            <i class="icon-base ti tabler-upload me-1"></i>Subir foto
             <input type="file" id="fotoInput" name="foto" class="d-none" accept="image/png,image/jpeg">
           </label>
           @if($authUser->profile_photo_path)
@@ -82,74 +83,111 @@
           @endif
           <div class="text-muted small mt-1">Formatos: JPG, PNG. Máx. 2MB</div>
           @error('foto') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+          @endcan
         </div>
       </div>
 
       {{-- Datos del perfil --}}
       <div class="row gy-4 gx-6">
         <div class="col-md-6">
-          <label class="form-label fw-medium" for="name">Nombre completo <span class="text-danger">*</span></label>
-          <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror"
-                 value="{{ old('name', $authUser->name) }}" required placeholder="Nombres y apellidos completos">
+          <label class="form-label fw-medium" for="name">Nombre completo @can('perfil.editar')<span class="text-danger">*</span>@endcan</label>
+          <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror @cannot('perfil.editar') bg-body-secondary @endcannot"
+                 value="{{ old('name', $authUser->name) }}" placeholder="Nombres y apellidos completos"
+                 @cannot('perfil.editar') disabled @endcannot>
           @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-medium" for="email">Correo electrónico <span class="text-danger">*</span></label>
-          <input type="email" id="email" name="email" class="form-control @error('email') is-invalid @enderror"
-                 value="{{ old('email', $authUser->email) }}" required placeholder="correo@ugel.gob.pe">
+          <label class="form-label fw-medium" for="email">Correo electrónico @can('perfil.editar')<span class="text-danger">*</span>@endcan</label>
+          <input type="email" id="email" name="email" class="form-control @error('email') is-invalid @enderror @cannot('perfil.editar') bg-body-secondary @endcannot"
+                 value="{{ old('email', $authUser->email) }}" placeholder="correo@ugel.gob.pe"
+                 @cannot('perfil.editar') disabled @endcannot>
           @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
         <div class="col-md-4">
           <label class="form-label fw-medium" for="dni">DNI</label>
-          <input type="text" id="dni" name="dni" class="form-control @error('dni') is-invalid @enderror"
-                 value="{{ old('dni', $authUser->dni) }}" maxlength="8" placeholder="12345678">
+          <input type="text" id="dni" name="dni" class="form-control @error('dni') is-invalid @enderror @cannot('perfil.editar') bg-body-secondary @endcannot"
+                 value="{{ old('dni', $authUser->dni) }}" maxlength="8" placeholder="12345678"
+                 @cannot('perfil.editar') disabled @endcannot>
           @error('dni') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
         <div class="col-md-8">
           <label class="form-label fw-medium" for="cargo_id">Cargo</label>
+          @can('usuarios.editar')
           <select id="cargo_id" name="cargo_id" class="form-select @error('cargo_id') is-invalid @enderror">
             <option value="">— Sin cargo —</option>
             @foreach($cargos as $c)
-              <option value="{{ $c->id }}" {{ old('cargo_id', $authUser->cargo_id) == $c->id ? 'selected' : '' }}>
-                {{ $c->nombre }}
-              </option>
+              <option value="{{ $c->id }}" {{ old('cargo_id', $authUser->cargo_id) == $c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
             @endforeach
           </select>
           @error('cargo_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+          @else
+          <input type="text" class="form-control bg-body-secondary" disabled
+                 value="{{ $authUser->cargo?->nombre ?? 'Sin cargo' }}">
+          <div class="form-text">Asignado por el administrador del sistema.</div>
+          @endcan
         </div>
         <div class="col-md-6">
           <label class="form-label fw-medium">Unidad Orgánica</label>
+          @can('usuarios.editar')
+          <select name="unidad_organica_id" class="form-select">
+            <option value="">— Sin asignar —</option>
+            @foreach(\App\Models\UnidadOrganica::where('activo', true)->orderBy('nombre')->get() as $u)
+              <option value="{{ $u->id }}" {{ $authUser->unidad_organica_id == $u->id ? 'selected' : '' }}>{{ $u->nombre }}</option>
+            @endforeach
+          </select>
+          @else
           <input type="text" class="form-control bg-body-secondary" disabled
                  value="{{ $authUser->unidadOrganica?->nombre ?? 'Sin asignar' }}">
           <div class="form-text">Asignada por el administrador del sistema.</div>
+          @endcan
         </div>
-
         <div class="col-md-3">
           <label class="form-label fw-medium">Rol</label>
+          @can('usuarios.editar')
+          <select name="rol" class="form-select">
+            <option value="">— Sin rol —</option>
+            @foreach(\Spatie\Permission\Models\Role::orderBy('name')->get() as $r)
+              <option value="{{ $r->name }}" {{ $authUser->roles->first()?->name === $r->name ? 'selected' : '' }}>{{ $r->name }}</option>
+            @endforeach
+          </select>
+          @else
           <input type="text" class="form-control bg-body-secondary" disabled
                  value="{{ $authUser->roles->first()?->name ?? 'Sin rol asignado' }}">
           <div class="form-text">Asignado por el administrador.</div>
+          @endcan
         </div>
-
         <div class="col-md-3">
           <label class="form-label fw-medium">Estado de cuenta</label>
           @php
             $estadoLabel = ['activo' => 'Activo', 'inactivo' => 'Inactivo', 'pendiente' => 'Pendiente'][$authUser->estado] ?? ucfirst($authUser->estado ?? '—');
             $estadoColor = ['activo' => 'success', 'inactivo' => 'secondary', 'pendiente' => 'warning'][$authUser->estado] ?? 'secondary';
           @endphp
+          @can('usuarios.editar')
+          <select name="estado" class="form-select">
+            <option value="activo"    {{ $authUser->estado === 'activo'    ? 'selected' : '' }}>Activo</option>
+            <option value="inactivo"  {{ $authUser->estado === 'inactivo'  ? 'selected' : '' }}>Inactivo</option>
+            <option value="pendiente" {{ $authUser->estado === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+          </select>
+          @else
           <div class="form-control bg-body-secondary d-flex align-items-center" style="cursor:default;">
             <span class="badge bg-label-{{ $estadoColor }}">{{ $estadoLabel }}</span>
           </div>
           <div class="form-text">Gestionado por el administrador.</div>
+          @endcan
         </div>
       </div>
 
+      @can('perfil.editar')
       <div class="mt-5 pt-2 border-top">
         <button type="submit" class="btn btn-primary">
           <i class="icon-base ti tabler-device-floppy me-1"></i>Guardar cambios
         </button>
       </div>
+      @endcan
+
+    @can('perfil.editar')
     </form>
+    @endcan
   </div>
 </div>
 @endif
@@ -162,6 +200,7 @@
     <small class="text-muted">Asegúrate de usar una contraseña segura de al menos 8 caracteres</small>
   </div>
   <div class="card-body">
+    @can('perfil.editar')
     <form method="POST" action="{{ route('profile.update-password') }}">
       @csrf
       <div class="row gy-4 gx-6">
@@ -207,6 +246,11 @@
         </button>
       </div>
     </form>
+    @else
+    <div class="alert alert-warning mb-0">
+      <i class="ti tabler-lock me-2"></i>No tienes permisos para cambiar la contraseña. Contacta al administrador.
+    </div>
+    @endcan
   </div>
 </div>
 @endif
