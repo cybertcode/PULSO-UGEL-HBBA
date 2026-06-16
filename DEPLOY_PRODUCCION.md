@@ -141,6 +141,56 @@ git pull origin main
 
 ---
 
+## SEO — Indexación en Google (completado)
+
+**Estado:** ✅ Propiedad verificada, sitemap enviado, indexación solicitada.
+
+### Qué se cambió en el código
+
+| Archivo | Cambio |
+|---|---|
+| [layouts/commonMaster.blade.php](resources/views/layouts/commonMaster.blade.php) | `<meta name="robots">` y `<meta name="description">` ahora son configurables por página vía `@yield('meta-robots', 'noindex, nofollow')` / `@yield('meta-description', $instDesc)`. Por defecto todo el sistema sigue en `noindex, nofollow` (protegido). |
+| [content/landing/index.blade.php](resources/views/content/landing/index.blade.php) | Declara `@section('meta-robots', 'index, follow')`, título con "UGEL Huacaybamba" y `meta-description` con keywords "PULSO UGEL Huacaybamba". Es la única página pública indexable. |
+| [public/robots.txt](public/robots.txt) | Permite `/` (landing) y bloquea el resto de rutas internas; declara el sitemap. |
+| [public/sitemap.xml](public/sitemap.xml) | Nuevo, lista solo `https://pulso.ugelhuacaybamba.edu.pe/`. |
+
+> Solo la landing pública (`/`) es indexable. El dashboard, login y módulos internos del sistema permanecen con `noindex, nofollow` por seguridad — no tiene sentido ni conviene que Google indexe pantallas de login o datos internos.
+
+### Pasos realizados en Google Search Console
+
+1. **Propiedad creada** a nivel de dominio raíz: `ugelhuacaybamba.edu.pe` (cubre automáticamente el subdominio `pulso.ugelhuacaybamba.edu.pe` y cualquier otro subdominio futuro — no hace falta verificar cada subdominio por separado).
+2. **Verificación por TXT en DNS** (cPanel → Zone Editor → dominio `ugelhuacaybamba.edu.pe` → registro TXT en `@`):
+   ```
+   google-site-verification=lp17MKdeJeO5a7CKlENqCLDK1B6P4L9sll0gnZEOynU
+   ```
+   El TTL del nuevo TXT debe coincidir con el de los TXT existentes (ej. el SPF de correo) o cPanel rechaza el guardado con error de "mismatched TTL values".
+3. **Sitemap enviado** desde Search Console → Sitemaps. La ruta relativa `sitemap.xml` puede fallar con "Dirección no válida" si Search Console no resuelve bien el subdominio activo; usar la **URL completa** funciona de forma confiable:
+   ```
+   https://pulso.ugelhuacaybamba.edu.pe/sitemap.xml
+   ```
+4. **Indexación manual solicitada**: Inspeccionar URL → pegar `https://pulso.ugelhuacaybamba.edu.pe/` → "Solicitar indexación".
+
+### Cada subdominio puede tener su propio sitemap
+
+No hay conflicto entre el `sitemap.xml` de `pulso.ugelhuacaybamba.edu.pe` y el de cualquier otro subdominio o el dominio principal — cada uno vive en su propia carpeta `public/` y solo debe listar URLs de su propio subdominio.
+
+### Incidencia: `curl` devuelve 406 pero el sitio funciona bien
+
+Al probar `curl -I https://pulso.ugelhuacaybamba.edu.pe/sitemap.xml` sin user-agent, el servidor responde **406 Not Acceptable** porque Mod Security del hosting bloquea peticiones sin user-agent. Esto **no afecta a Google** (Googlebot siempre envía su propio user-agent) ni a navegadores reales. Para probar correctamente desde la terminal:
+```bash
+curl -sI -A "Mozilla/5.0" https://pulso.ugelhuacaybamba.edu.pe/sitemap.xml
+```
+
+### Verificar progreso de indexación
+
+En Search Console → **Páginas** (sección "Cobertura"), revisar cuándo la landing pasa de "Detectada" a "Indexada". También se puede buscar en Google:
+```
+site:pulso.ugelhuacaybamba.edu.pe
+```
+La indexación inicial puede tardar de horas a varios días incluso con solicitud manual.
+
+---
+
 ## Credenciales de acceso al sistema
 
 - **Admin:** admin@admin.com / Admin123
