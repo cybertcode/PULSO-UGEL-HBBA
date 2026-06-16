@@ -14,31 +14,30 @@ class EncuestaRespuestaController extends Controller
 {
     public function show(Encuesta $encuesta)
     {
-        abort_if($encuesta->estado !== 'publicada', 403, 'Esta encuesta no está disponible.');
-
-        if ($encuesta->fecha_fin && $encuesta->fecha_fin->isPast()) {
-            return back()->with('error', 'El plazo para responder esta encuesta ha vencido.');
-        }
+        abort_if(!in_array($encuesta->estado, ['publicada', 'cerrada']), 403, 'Esta encuesta no está disponible.');
 
         $respuesta = EncuestaRespuesta::where('encuesta_id', $encuesta->id)
             ->where('usuario_id', Auth::id())
+            ->with('detalles.opcion')
             ->first();
 
         abort_if(!$respuesta, 403, 'No estás asignado a esta encuesta.');
 
-        if ($respuesta->completada) {
-            return redirect()->route('encuestas.index')
-                ->with('info', 'Ya has respondido esta encuesta.');
+        $soloLectura = $respuesta->completada || $encuesta->estado === 'cerrada';
+
+        // Si aún puede responder, verificar plazo
+        if (!$soloLectura && $encuesta->fecha_fin && $encuesta->fecha_fin->isPast()) {
+            $soloLectura = true;
         }
 
-        // Marcar como iniciada si es la primera vez
-        if (!$respuesta->iniciada_at) {
+        // Marcar como iniciada si es la primera vez que abre el formulario
+        if (!$respuesta->iniciada_at && !$soloLectura) {
             $respuesta->update(['iniciada_at' => now()]);
         }
 
         $encuesta->load(['preguntas.opciones']);
 
-        return view('content.encuestas.show-responder', compact('encuesta', 'respuesta'));
+        return view('content.encuestas.show-responder', compact('encuesta', 'respuesta', 'soloLectura'));
     }
 
     public function store(Request $request, Encuesta $encuesta)

@@ -245,14 +245,14 @@ class MenuServiceProvider extends ServiceProvider
                 $encSub[] = (object)[
                     'url'  => '/encuestas',
                     'name' => 'Todas las encuestas',
-                    'slug' => 'encuestas-index',
+                    'slug' => 'encuestas.index',
                     'i18n' => 'Listado y gestión',
                 ];
                 if (Gate::check('encuesta.crear')) {
                     $encSub[] = (object)[
                         'url'  => '/encuestas/crear',
                         'name' => 'Nueva Encuesta',
-                        'slug' => 'encuestas-crear',
+                        'slug' => 'encuestas.crear',
                         'i18n' => 'Crear encuesta',
                     ];
                 }
@@ -260,7 +260,7 @@ class MenuServiceProvider extends ServiceProvider
                 $menu[] = (object)[
                     'name'    => 'Encuestas',
                     'icon'    => 'menu-icon icon-base ti tabler-forms',
-                    'slug'    => ['encuestas-index', 'encuestas-crear'],
+                    'slug'    => ['encuestas'],
                     'i18n'    => 'Formularios y estadísticas',
                     'submenu' => $encSub,
                 ];

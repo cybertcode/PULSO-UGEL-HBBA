@@ -45,14 +45,27 @@
   {{-- KPI Cards --}}
   <div class="row g-3 mb-4">
     @php
+      @endphp
+    @can('encuesta.publicar')
+    @php
       $kpis = [
-        ['val' => $stats['total'],         'label' => 'Total',           'icon' => 'tabler-clipboard-list',      'color' => 'primary'],
-        ['val' => $stats['borrador'],       'label' => 'Borrador',        'icon' => 'tabler-pencil',              'color' => 'secondary'],
-        ['val' => $stats['publicadas'],     'label' => 'Publicadas',      'icon' => 'tabler-send',                'color' => 'success'],
-        ['val' => $stats['cerradas'],       'label' => 'Cerradas',        'icon' => 'tabler-lock',                'color' => 'warning'],
-        ['val' => $stats['mis_pendientes'], 'label' => 'Mis pendientes',  'icon' => 'tabler-clock-exclamation',   'color' => 'danger'],
+        ['val' => $stats['total'],         'label' => 'Total',           'icon' => 'tabler-clipboard-list',    'color' => 'primary'],
+        ['val' => $stats['borrador'],       'label' => 'Borrador',        'icon' => 'tabler-pencil',            'color' => 'secondary'],
+        ['val' => $stats['publicadas'],     'label' => 'Publicadas',      'icon' => 'tabler-send',              'color' => 'success'],
+        ['val' => $stats['cerradas'],       'label' => 'Cerradas',        'icon' => 'tabler-lock',              'color' => 'warning'],
+        ['val' => $stats['mis_pendientes'], 'label' => 'Mis pendientes',  'icon' => 'tabler-clock-exclamation', 'color' => 'danger'],
       ];
     @endphp
+    @else
+    @php
+      $kpis = [
+        ['val' => $stats['total'],          'label' => 'Mis encuestas',  'icon' => 'tabler-clipboard-list',    'color' => 'primary'],
+        ['val' => $stats['publicadas'],      'label' => 'Pendientes',     'icon' => 'tabler-send',              'color' => 'success'],
+        ['val' => $stats['cerradas'],        'label' => 'Cerradas',       'icon' => 'tabler-lock',              'color' => 'warning'],
+        ['val' => $stats['mis_pendientes'],  'label' => 'Por responder',  'icon' => 'tabler-clock-exclamation', 'color' => 'danger'],
+      ];
+    @endphp
+    @endcan
     @foreach($kpis as $kpi)
     <div class="col-6 col-sm-4 col-xl">
       <div class="card kpi-enc shadow-sm h-100">
@@ -81,10 +94,14 @@
       </div>
       <select id="filtroEstado" class="form-select form-select-sm" style="max-width:145px">
         <option value="">Todos los estados</option>
+        @can('encuesta.publicar')
         <option value="borrador">Borrador</option>
+        @endcan
         <option value="publicada">Publicada</option>
         <option value="cerrada">Cerrada</option>
+        @can('encuesta.publicar')
         <option value="archivada">Archivada</option>
+        @endcan
       </select>
       <select id="filtroModulo" class="form-select form-select-sm" style="max-width:155px">
         <option value="">Todos los módulos</option>
@@ -264,16 +281,20 @@ function renderTabla(rows) {
     let btns = '<div class="d-flex gap-1 justify-content-center">';
     let hayBotones = false;
 
-    @can('encuesta.ver')
+    @can('encuesta.resultados')
     if (e.estado === 'publicada' || e.estado === 'cerrada') {
-      btns += `<a href="${BASE}/${e.id}/resultados" class="btn btn-sm btn-icon btn-label-info" title="Ver resultados"><i class="ti tabler-chart-bar"></i></a>`;
+      btns += `<a href="${BASE}/${e.id}/resultados" class="btn btn-sm btn-icon btn-label-info" title="Ver estadísticas"><i class="ti tabler-chart-bar"></i></a>`;
       hayBotones = true;
     }
     @endcan
 
     @can('encuesta.responder')
-    if (e.estado === 'publicada') {
+    if (e.estado === 'publicada' && !e.yo_complete) {
       btns += `<a href="${BASE}/${e.id}/responder" class="btn btn-sm btn-icon btn-label-primary" title="Responder encuesta"><i class="ti tabler-pencil-check"></i></a>`;
+      hayBotones = true;
+    }
+    if ((e.estado === 'publicada' && e.yo_complete) || e.estado === 'cerrada') {
+      btns += `<a href="${BASE}/${e.id}/responder" class="btn btn-sm btn-icon btn-label-secondary" title="Ver mis respuestas"><i class="ti tabler-eye"></i></a>`;
       hayBotones = true;
     }
     @endcan
