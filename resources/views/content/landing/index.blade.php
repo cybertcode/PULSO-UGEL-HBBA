@@ -4,7 +4,9 @@
     $customizerHidden = 'customizer-hide'; // Ocultar customizer en el landing
 @endphp
 @extends('layouts/layoutLanding')
-@section('title', 'PULSO UGEL — Sistema de Control Interno')
+@section('title', 'PULSO UGEL — Sistema de Control Interno | UGEL Huacaybamba')
+@section('meta-robots', 'index, follow')
+@section('meta-description', 'PULSO UGEL Huacaybamba — Sistema digital de Control Interno (SCI) de la UGEL Huacaybamba. Gestión, seguimiento y evaluación institucional alineada con la Contraloría General de la República del Perú.')
 @section('vendor-style')
     @vite(['resources/assets/vendor/libs/swiper/swiper.scss'])
 @endsection

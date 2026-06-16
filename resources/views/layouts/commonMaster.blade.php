@@ -61,18 +61,18 @@
 
   <title>@yield('title', $instNombre) | {{ $instSigla }}</title>
 
-  <meta name="description" content="{{ $instDesc }}" />
-  <meta name="keywords" content="{{ $instNombre }}, Control Interno, SCI, PACI, {{ $instSigla }}, Contraloría, UGEL" />
+  <meta name="description" content="@yield('meta-description', $instDesc)" />
+  <meta name="keywords" content="PULSO UGEL, PULSO UGEL Huacaybamba, {{ $instNombre }}, Control Interno, SCI, PACI, {{ $instSigla }}, Contraloría, UGEL" />
 
   <meta property="og:title" content="@yield('title', $instNombre) | {{ $instSigla }}" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="{{ $siteUrl }}" />
   <meta property="og:image" content="{{ $ogImage }}" />
-  <meta property="og:description" content="{{ $instDesc }}" />
+  <meta property="og:description" content="@yield('meta-description', $instDesc)" />
   <meta property="og:site_name" content="{{ $instNombre }}" />
   <meta property="og:locale" content="es_PE" />
 
-  <meta name="robots" content="noindex, nofollow" />
+  <meta name="robots" content="@yield('meta-robots', 'noindex, nofollow')" />
   <meta name="x-sys-ref" content="SW5nLiBNS2V2eW4gSEggfCBkZXZlbG9wdGVjaDIzQGdtYWlsLmNvbSB8IGZhY2Vib29rLmNvbS9ta2V2eW4uaGhpbGFyaW8=" />
   <meta name="x-build-id" content="UFVMUk8tVUdFTC12MSAyMDI1LTA2IHwgSW5nLiBNS2V2eW4gSEg=" />
   <!-- laravel CRUD token -->
