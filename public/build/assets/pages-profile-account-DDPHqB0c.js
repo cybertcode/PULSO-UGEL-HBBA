@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",function(){const t=document.getElementById("uploadedAvatar");if(t){const e=document.querySelector(".account-file-input"),c=document.querySelector(".account-image-reset"),n=t.src;e&&(e.onchange=()=>{e.files[0]&&(t.src=window.URL.createObjectURL(e.files[0]))}),c&&(c.onclick=()=>{e&&(e.value=""),t.src=n})}});

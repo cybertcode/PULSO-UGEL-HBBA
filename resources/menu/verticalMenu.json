@@ -99,8 +99,22 @@
       "slug": "rep-reconocimientos",
       "i18n": "Premiación y destacados"
     },
+    {
+      "url": "/normativas",
+      "name": "Normativas",
+      "icon": "menu-icon icon-base ti tabler-file-text",
+      "slug": "normativas",
+      "i18n": "Marco normativo y directivas"
+    },
 
     { "menuHeader": "Seguimiento y Alertas" },
+    {
+      "url": "/encuestas",
+      "name": "Encuestas",
+      "icon": "menu-icon icon-base ti tabler-forms",
+      "slug": "encuestas",
+      "i18n": "Encuestas institucionales"
+    },
     {
       "url": "/alertas",
       "name": "Alertas",

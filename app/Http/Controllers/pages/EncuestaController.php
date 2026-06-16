@@ -21,25 +21,56 @@ class EncuestaController extends Controller
 {
     public function index()
     {
-        $stats = [
-            'total'      => Encuesta::count(),
-            'borrador'   => Encuesta::where('estado', 'borrador')->count(),
-            'publicadas' => Encuesta::where('estado', 'publicada')->count(),
-            'cerradas'   => Encuesta::where('estado', 'cerrada')->count(),
-            'mis_pendientes' => EncuestaRespuesta::where('usuario_id', Auth::id())
-                ->where('completada', false)
-                ->whereHas('encuesta', fn($q) => $q->where('estado', 'publicada'))
-                ->count(),
-        ];
+        $user     = Auth::user();
+        $esGestor = $user->can('encuesta.publicar') || $user->can('encuesta.crear');
+
+        if ($esGestor) {
+            $stats = [
+                'total'          => Encuesta::count(),
+                'borrador'       => Encuesta::where('estado', 'borrador')->count(),
+                'publicadas'     => Encuesta::where('estado', 'publicada')->count(),
+                'cerradas'       => Encuesta::where('estado', 'cerrada')->count(),
+                'mis_pendientes' => EncuestaRespuesta::where('usuario_id', $user->id)
+                    ->where('completada', false)
+                    ->whereHas('encuesta', fn($q) => $q->where('estado', 'publicada'))
+                    ->count(),
+            ];
+        } else {
+            // Operador/Visualizador: stats solo sobre sus encuestas asignadas
+            $misEncuestasIds = EncuestaRespuesta::where('usuario_id', $user->id)
+                ->pluck('encuesta_id');
+
+            $stats = [
+                'total'          => $misEncuestasIds->count(),
+                'borrador'       => 0,
+                'publicadas'     => Encuesta::whereIn('id', $misEncuestasIds)->where('estado', 'publicada')->count(),
+                'cerradas'       => Encuesta::whereIn('id', $misEncuestasIds)->where('estado', 'cerrada')->count(),
+                'mis_pendientes' => EncuestaRespuesta::where('usuario_id', $user->id)
+                    ->where('completada', false)
+                    ->whereHas('encuesta', fn($q) => $q->where('estado', 'publicada'))
+                    ->count(),
+            ];
+        }
 
         return view('content.encuestas.index', compact('stats'));
     }
 
     public function data(Request $request)
     {
+        $user     = Auth::user();
+        $esGestor = $user->can('encuesta.publicar') || $user->can('encuesta.crear');
+
         $query = Encuesta::with('creador')
             ->withCount('respuestas')
-            ->withCount(['respuestas as completadas_count' => fn($q) => $q->where('completada', true)]);
+            ->withCount(['respuestas as completadas_count' => fn($q) => $q->where('completada', true)])
+            ->withCount(['respuestas as yo_complete' => fn($q) => $q->where('usuario_id', $user->id)->where('completada', true)]);
+
+        // Usuarios sin capacidad de gestión (Operador, Visualizador) solo ven
+        // las encuestas publicadas/cerradas donde fueron asignados como destinatarios.
+        if (!$esGestor) {
+            $query->whereIn('estado', ['publicada', 'cerrada'])
+                  ->whereHas('respuestas', fn($q) => $q->where('usuario_id', $user->id));
+        }
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);

@@ -73,7 +73,7 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
     'adm-integridad-estructura'   => 'integridad.ver',
     'adm-configuracion'           => 'configuracion.ver',
     'slider-landing'              => 'slider.ver',
-    'encuestas.index'             => 'encuesta.ver',
+    'encuestas'                   => 'encuesta.ver',
     'normativas'                  => 'normativas.ver',
     'ayuda'                       => 'ayuda.ver',
   ];
@@ -121,7 +121,7 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
     } elseif (isset($menu->submenu)) {
       if (gettype($menu->slug) === 'array') {
         foreach ($menu->slug as $slug) {
-          if ($currentRouteName === $slug || str_starts_with($currentRouteName, $slug . '.')) {
+          if (str_contains($currentRouteName, $slug) and strpos($currentRouteName, $slug) === 0) {
             $activeClass = 'active open';
           }
         }
@@ -129,6 +129,12 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
         if (str_contains($currentRouteName, $menu->slug) and strpos($currentRouteName, $menu->slug) === 0) {
           $activeClass = 'active open';
         }
+      }
+    } else {
+      // Ítems sin submenu: activo también en subrutas del mismo módulo (crear, editar, etc.)
+      $slug = is_array($menu->slug) ? ($menu->slug[0] ?? '') : (string)($menu->slug ?? '');
+      if (str_contains($currentRouteName, $slug) and strpos($currentRouteName, $slug) === 0) {
+        $activeClass = 'active';
       }
     }
     @endphp

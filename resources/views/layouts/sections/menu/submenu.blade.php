@@ -27,7 +27,7 @@ $menuPermisosLocal = [
   'adm-integridad-estructura'   => 'integridad.ver',
   'adm-configuracion'           => 'configuracion.ver',
   'slider-landing'              => 'slider.ver',
-  'encuestas.index'             => 'encuesta.ver',
+  'encuestas'                   => 'encuesta.ver',
   'normativas'                  => 'normativas.ver',
   'ayuda'                       => 'ayuda.ver',
 ];

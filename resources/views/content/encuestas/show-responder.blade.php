@@ -1,6 +1,6 @@
 @php $configData = Helper::appClasses(); @endphp
 @extends('layouts/layoutMaster')
-@section('title', 'Responder: ' . $encuesta->titulo)
+@section('title', ($soloLectura ? 'Mis respuestas: ' : 'Responder: ') . $encuesta->titulo)
 
 @section('page-style')
 <style>
@@ -140,20 +140,107 @@ input[type=checkbox]:checked ~ .opcion-label .opcion-icon {
             </div>
           </div>
 
-          {{-- Barra de progreso --}}
-          <div class="mt-3 mb-1">
-            <div class="d-flex justify-content-between small text-muted mb-1">
-              <span>Progreso</span>
-              <span id="txtProgreso">0 / {{ $encuesta->preguntas->count() }}</span>
+          {{-- Barra de progreso (solo al responder) / badge completado (solo lectura) --}}
+          @if($soloLectura)
+            <div class="mt-3 mb-1">
+              <span class="badge bg-label-success fs-6 px-3 py-2">
+                <i class="ti tabler-circle-check me-1"></i>
+                {{ $encuesta->estado === 'cerrada' && !$respuesta->completada ? 'Encuesta cerrada — no respondiste' : 'Respondida el ' . $respuesta->completada_at?->format('d/m/Y') }}
+              </span>
             </div>
-            <div class="progress-responder">
-              <div class="bar" id="barraProgreso" style="width:0%"></div>
+          @else
+            <div class="mt-3 mb-1">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Progreso</span>
+                <span id="txtProgreso">0 / {{ $encuesta->preguntas->count() }}</span>
+              </div>
+              <div class="progress-responder">
+                <div class="bar" id="barraProgreso" style="width:0%"></div>
+              </div>
             </div>
-          </div>
+          @endif
         </div>
       </div>
 
-      {{-- ── Errores ── --}}
+      @if($soloLectura)
+      {{-- ══════════════════════════════════════════════
+           MODO SOLO LECTURA — Ver mis respuestas
+      ══════════════════════════════════════════════ --}}
+      @php
+        // Indexar detalles por pregunta_id para acceso rápido
+        $detallesPorPregunta = $respuesta->detalles->groupBy('pregunta_id');
+      @endphp
+
+      @foreach($encuesta->preguntas as $i => $pregunta)
+      @php
+        $detalles = $detallesPorPregunta->get($pregunta->id, collect());
+        $respondida = $detalles->isNotEmpty();
+      @endphp
+      <div class="pq-resp-card {{ $respondida ? 'respondida' : '' }}">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <span class="pq-num-resp">{{ $i + 1 }}</span>
+          <div class="flex-grow-1">
+            <p class="fw-semibold mb-0 fs-6">{{ $pregunta->texto }}</p>
+          </div>
+        </div>
+
+        @if(!$respondida)
+          <p class="text-muted small fst-italic mb-0"><i class="ti tabler-minus me-1"></i>Sin respuesta</p>
+        @elseif(in_array($pregunta->tipo, ['opcion_multiple', 'desplegable']))
+          <div class="opcion-label" style="cursor:default;border-color:#696cff;background:#f0efff;display:inline-flex">
+            <span class="opcion-icon" style="background:#696cff;border-color:#696cff;color:#fff"><i class="ti tabler-check"></i></span>
+            {{ $detalles->first()->opcion?->texto ?? '—' }}
+          </div>
+        @elseif($pregunta->tipo === 'seleccion_multiple')
+          @foreach($detalles as $det)
+            <div class="opcion-label mb-1" style="cursor:default;border-color:#696cff;background:#f0efff;display:inline-flex">
+              <span class="opcion-icon" style="background:#696cff;border-color:#696cff;color:#fff;border-radius:5px"><i class="ti tabler-check"></i></span>
+              {{ $det->opcion?->texto ?? '—' }}
+            </div>
+          @endforeach
+        @elseif($pregunta->tipo === 'escala')
+          @php $val = (int)($detalles->first()->texto_respuesta ?? 0); @endphp
+          <div class="escala-group mb-1">
+            @for($v = 1; $v <= 5; $v++)
+              <div class="escala-btn {{ $v === $val ? 'active' : '' }}" style="cursor:default">{{ $v }}</div>
+            @endfor
+          </div>
+          <div class="escala-labels"><span>😞 Muy malo</span><span>😕 Malo</span><span>😐 Regular</span><span>🙂 Bueno</span><span>😄 Muy bueno</span></div>
+        @elseif($pregunta->tipo === 'si_no')
+          @php $val = $detalles->first()->texto_respuesta ?? ''; @endphp
+          <div class="binario-group">
+            <div class="binario-btn si {{ $val === 'si' ? 'active-si' : '' }}" style="cursor:default"><i class="ti tabler-check fs-5"></i> Sí</div>
+            <div class="binario-btn no {{ $val === 'no' ? 'active-no' : '' }}" style="cursor:default"><i class="ti tabler-x fs-5"></i> No</div>
+          </div>
+        @elseif($pregunta->tipo === 'verdadero_falso')
+          @php $val = $detalles->first()->texto_respuesta ?? ''; @endphp
+          <div class="binario-group">
+            <div class="binario-btn vt {{ $val === 'verdadero' ? 'active-vt' : '' }}" style="cursor:default"><i class="ti tabler-circle-check fs-5"></i> Verdadero</div>
+            <div class="binario-btn vf {{ $val === 'falso' ? 'active-vf' : '' }}" style="cursor:default"><i class="ti tabler-circle-x fs-5"></i> Falso</div>
+          </div>
+        @elseif($pregunta->tipo === 'texto_libre')
+          <div class="p-3 rounded-3 border" style="background:#f8f7fa;font-size:.9rem;line-height:1.6">
+            {{ $detalles->first()->texto_respuesta ?? '—' }}
+          </div>
+        @endif
+      </div>
+      @endforeach
+
+      <div class="footer-responder">
+        <a href="{{ route('encuestas.index') }}" class="btn btn-outline-secondary">
+          <i class="ti tabler-arrow-left me-1"></i> Volver
+        </a>
+        <span class="text-muted small">
+          <i class="ti tabler-lock me-1"></i>Solo lectura
+        </span>
+      </div>
+
+      @else
+      {{-- ══════════════════════════════════════════════
+           MODO RESPONDER — Formulario activo
+      ══════════════════════════════════════════════ --}}
+
+      {{-- Errores --}}
       @if($errors->any())
         <div class="alert alert-danger alert-dismissible mb-4" role="alert">
           <i class="ti tabler-alert-circle me-1"></i>
@@ -162,10 +249,8 @@ input[type=checkbox]:checked ~ .opcion-label .opcion-icon {
         </div>
       @endif
 
-      {{-- ── Formulario ── --}}
       <form method="POST" action="{{ route('encuestas.responder.store', $encuesta) }}" id="formResponder">
         @csrf
-
         @php $total = $encuesta->preguntas->count(); @endphp
 
         @foreach($encuesta->preguntas as $i => $pregunta)
@@ -177,77 +262,57 @@ input[type=checkbox]:checked ~ .opcion-label .opcion-icon {
           <div class="d-flex align-items-start gap-3 mb-3">
             <span class="pq-num-resp" id="num-{{ $pregunta->id }}">{{ $i + 1 }}</span>
             <div class="flex-grow-1">
-              <p class="fw-semibold mb-0 fs-6{{ $pregunta->requerida ? ' required-star' : '' }}">
-                {{ $pregunta->texto }}
-              </p>
+              <p class="fw-semibold mb-0 fs-6{{ $pregunta->requerida ? ' required-star' : '' }}">{{ $pregunta->texto }}</p>
               @if($tieneError)
                 <span class="text-danger small"><i class="ti tabler-alert-circle me-1"></i>Esta respuesta es requerida</span>
               @endif
             </div>
           </div>
 
-          {{-- ── OPCIÓN MÚLTIPLE (radio) ── --}}
           @if($pregunta->tipo === 'opcion_multiple')
             @foreach($pregunta->opciones as $opcion)
               <div class="opcion-wrap">
                 <input type="radio" name="{{ $campo }}" id="op-{{ $pregunta->id }}-{{ $opcion->id }}"
-                  value="{{ $opcion->id }}"
-                  {{ old($campo) == $opcion->id ? 'checked' : '' }}
+                  value="{{ $opcion->id }}" {{ old($campo) == $opcion->id ? 'checked' : '' }}
                   onchange="marcarRespondida({{ $pregunta->id }})">
                 <label class="opcion-label" for="op-{{ $pregunta->id }}-{{ $opcion->id }}">
-                  <span class="opcion-icon"><i class="ti tabler-check"></i></span>
-                  {{ $opcion->texto }}
+                  <span class="opcion-icon"><i class="ti tabler-check"></i></span>{{ $opcion->texto }}
                 </label>
               </div>
             @endforeach
 
-          {{-- ── SELECCIÓN MÚLTIPLE (checkbox) ── --}}
           @elseif($pregunta->tipo === 'seleccion_multiple')
             @foreach($pregunta->opciones as $opcion)
               <div class="opcion-wrap">
                 <input type="checkbox" name="{{ $campo }}[]" id="op-{{ $pregunta->id }}-{{ $opcion->id }}"
-                  value="{{ $opcion->id }}"
-                  {{ in_array($opcion->id, (array)old($campo, [])) ? 'checked' : '' }}
+                  value="{{ $opcion->id }}" {{ in_array($opcion->id, (array)old($campo, [])) ? 'checked' : '' }}
                   onchange="marcarRespondida({{ $pregunta->id }})">
                 <label class="opcion-label check-style" for="op-{{ $pregunta->id }}-{{ $opcion->id }}">
-                  <span class="opcion-icon"><i class="ti tabler-check"></i></span>
-                  {{ $opcion->texto }}
+                  <span class="opcion-icon"><i class="ti tabler-check"></i></span>{{ $opcion->texto }}
                 </label>
               </div>
             @endforeach
 
-          {{-- ── LISTA DESPLEGABLE ── --}}
           @elseif($pregunta->tipo === 'desplegable')
-            <select name="{{ $campo }}" class="form-select select-resp"
-              onchange="marcarRespondida({{ $pregunta->id }})">
+            <select name="{{ $campo }}" class="form-select select-resp" onchange="marcarRespondida({{ $pregunta->id }})">
               <option value="">— Selecciona una opción —</option>
               @foreach($pregunta->opciones as $opcion)
-                <option value="{{ $opcion->id }}"
-                  {{ old($campo) == $opcion->id ? 'selected' : '' }}>
-                  {{ $opcion->texto }}
-                </option>
+                <option value="{{ $opcion->id }}" {{ old($campo) == $opcion->id ? 'selected' : '' }}>{{ $opcion->texto }}</option>
               @endforeach
             </select>
 
-          {{-- ── ESCALA 1-5 ── --}}
           @elseif($pregunta->tipo === 'escala')
-            <input type="hidden" name="{{ $campo }}" id="escala-val-{{ $pregunta->id }}"
-              value="{{ old($campo) }}">
+            <input type="hidden" name="{{ $campo }}" id="escala-val-{{ $pregunta->id }}" value="{{ old($campo) }}">
             <div class="escala-group mb-1">
               @for($v = 1; $v <= 5; $v++)
-                <button type="button"
-                  class="escala-btn {{ old($campo) == $v ? 'active' : '' }}"
+                <button type="button" class="escala-btn {{ old($campo) == $v ? 'active' : '' }}"
                   onclick="seleccionarEscala({{ $pregunta->id }}, {{ $v }}, this)">{{ $v }}</button>
               @endfor
             </div>
-            <div class="escala-labels">
-              <span>😞 Muy malo</span><span>😕 Malo</span><span>😐 Regular</span><span>🙂 Bueno</span><span>😄 Muy bueno</span>
-            </div>
+            <div class="escala-labels"><span>😞 Muy malo</span><span>😕 Malo</span><span>😐 Regular</span><span>🙂 Bueno</span><span>😄 Muy bueno</span></div>
 
-          {{-- ── SÍ / NO ── --}}
           @elseif($pregunta->tipo === 'si_no')
-            <input type="hidden" name="{{ $campo }}" id="sn-val-{{ $pregunta->id }}"
-              value="{{ old($campo) }}">
+            <input type="hidden" name="{{ $campo }}" id="sn-val-{{ $pregunta->id }}" value="{{ old($campo) }}">
             <div class="binario-group">
               <button type="button" class="binario-btn si {{ old($campo) === 'si' ? 'active-si' : '' }}"
                 onclick="seleccionarBinario({{ $pregunta->id }}, 'si', this, 'si_no')">
@@ -259,10 +324,8 @@ input[type=checkbox]:checked ~ .opcion-label .opcion-icon {
               </button>
             </div>
 
-          {{-- ── VERDADERO / FALSO ── --}}
           @elseif($pregunta->tipo === 'verdadero_falso')
-            <input type="hidden" name="{{ $campo }}" id="sn-val-{{ $pregunta->id }}"
-              value="{{ old($campo) }}">
+            <input type="hidden" name="{{ $campo }}" id="sn-val-{{ $pregunta->id }}" value="{{ old($campo) }}">
             <div class="binario-group">
               <button type="button" class="binario-btn vt {{ old($campo) === 'verdadero' ? 'active-vt' : '' }}"
                 onclick="seleccionarBinario({{ $pregunta->id }}, 'verdadero', this, 'verdadero_falso')">
@@ -274,7 +337,6 @@ input[type=checkbox]:checked ~ .opcion-label .opcion-icon {
               </button>
             </div>
 
-          {{-- ── TEXTO LIBRE ── --}}
           @elseif($pregunta->tipo === 'texto_libre')
             <textarea name="{{ $campo }}" class="form-control" rows="4"
               placeholder="Escribe tu respuesta aquí..."
@@ -284,7 +346,6 @@ input[type=checkbox]:checked ~ .opcion-label .opcion-icon {
         </div>
         @endforeach
 
-        {{-- ── Footer sticky ── --}}
         <div class="footer-responder">
           <a href="{{ route('encuestas.index') }}" class="btn btn-outline-secondary">
             <i class="ti tabler-arrow-left me-1"></i> Cancelar
@@ -298,8 +359,8 @@ input[type=checkbox]:checked ~ .opcion-label .opcion-icon {
             </button>
           </div>
         </div>
-
       </form>
+      @endif
     </div>
   </div>
 </div>

@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             BuenasPracticasRecomendacionesSeeder::class,
             AlertasPruebaSeeder::class,
             NormativasSeeder::class,
+            EncuestasSeeder::class,
         ]);
     }
 }
