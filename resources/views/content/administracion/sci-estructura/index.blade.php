@@ -16,7 +16,7 @@
 @media (max-width: 1199px) { .sci-layout { grid-template-columns: 1fr; } }
 
 /* ── Columna ── */
-.sci-col { display: flex; flex-direction: column; gap: 0; }
+.sci-col { display: flex; flex-direction: column; gap: 0; min-width: 0; overflow: hidden; }
 .sci-col-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: .75rem 1rem; border-radius: .5rem .5rem 0 0;
@@ -25,14 +25,14 @@
 .sci-col-header.ejes    { background: var(--bs-primary); color: #fff; }
 .sci-col-header.comps   { background: var(--bs-info);    color: #fff; }
 .sci-col-header.pregs   { background: var(--bs-success);  color: #fff; }
-.sci-col-body { border: 1px solid var(--bs-border-color); border-top: none; border-radius: 0 0 .5rem .5rem; background: var(--bs-body-bg); overflow: hidden; }
+.sci-col-body { border: 1px solid var(--bs-border-color); border-top: none; border-radius: 0 0 .5rem .5rem; background: var(--bs-body-bg); overflow-y: auto; overflow-x: hidden; max-height: 520px; }
 
 /* ── Items ── */
 .sci-item {
-  display: flex; align-items: center; gap: .5rem;
+  display: flex; align-items: flex-start; gap: .5rem;
   padding: .625rem .875rem; border-bottom: 1px solid var(--bs-border-color);
   cursor: pointer; transition: background .15s, box-shadow .15s; position: relative;
-  font-size: .875rem;
+  font-size: .875rem; min-width: 0;
 }
 .sci-item:last-child { border-bottom: none; }
 .sci-item:hover { background: var(--bs-tertiary-bg); }
@@ -47,18 +47,21 @@
   background: rgba(var(--bs-info-rgb), .12);
   box-shadow: inset 4px 0 0 var(--bs-info);
 }
-/* badge cambia a color sólido cuando está activo */
 .sci-item.active .sci-item-badge { filter: brightness(1.1); box-shadow: 0 0 0 2px rgba(255,255,255,.6), 0 0 0 4px var(--bs-primary); }
 .sci-item.active.comp-item .sci-item-badge { box-shadow: 0 0 0 2px rgba(255,255,255,.6), 0 0 0 4px var(--bs-info); }
 
 .sci-item-badge {
   flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: .68rem; font-weight: 700; transition: box-shadow .15s;
+  font-size: .68rem; font-weight: 700; transition: box-shadow .15s; margin-top: 2px;
 }
 .sci-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sci-item-actions { display: flex; gap: .25rem; flex-shrink: 0; }
-.sci-item-meta { font-size: .7rem; color: var(--bs-secondary-color); white-space: nowrap; }
+.sci-item-meta { font-size: .7rem; color: var(--bs-secondary-color); white-space: nowrap; flex-shrink: 0; }
+
+/* ── Item pregunta (nombre multilínea + link) ── */
+.preg-nombre-text { white-space: normal; word-break: break-word; overflow-wrap: anywhere; font-size: .8125rem; line-height: 1.3; display: block; }
+.link-ficha-text { font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; max-width: 100%; }
 
 /* ── Inline badge inactive ── */
 .badge-inactivo { font-size: .6rem; padding: .15em .4em; }
@@ -75,9 +78,6 @@
 
 /* ── Contadores en header ── */
 .sci-count-badge { font-size: .7rem; background: rgba(255,255,255,.25); border-radius: 50rem; padding: .1em .5em; }
-
-/* ── Link ficha ── */
-.link-ficha-text { font-size: .78rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 
 /* ── Leyenda de flujo ── */
 .sci-leyenda { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .78rem; color: var(--bs-secondary-color); }
@@ -473,13 +473,13 @@ $sciJson = $ejes->map(function($eje) {
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label fw-semibold">Enunciado de la pregunta <span class="text-danger">*</span></label>
-              <textarea name="nombre" class="form-control" rows="4" required autofocus placeholder="Escribe el enunciado de la pregunta SCI..."></textarea>
+              <textarea name="nombre" class="form-control" rows="4" required maxlength="1000" autofocus placeholder="Escribe el enunciado de la pregunta SCI..."></textarea>
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Link de ficha <span class="text-muted fw-normal small">(URL opcional)</span></label>
               <div class="input-group">
                 <span class="input-group-text"><i class="ti tabler-link"></i></span>
-                <input type="url" name="link_ficha" class="form-control" placeholder="https://drive.google.com/...">
+                <input type="url" name="link_ficha" class="form-control" placeholder="https://drive.google.com/..." maxlength="1000">
               </div>
             </div>
             <div class="col-12">
@@ -512,13 +512,13 @@ $sciJson = $ejes->map(function($eje) {
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label fw-semibold">Enunciado <span class="text-danger">*</span></label>
-              <textarea name="nombre" id="edit_preg_nombre" class="form-control" rows="4" required></textarea>
+              <textarea name="nombre" id="edit_preg_nombre" class="form-control" rows="4" required maxlength="1000"></textarea>
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Link de ficha</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="ti tabler-link"></i></span>
-                <input type="url" name="link_ficha" id="edit_preg_link" class="form-control" placeholder="https://...">
+                <input type="url" name="link_ficha" id="edit_preg_link" class="form-control" placeholder="https://..." maxlength="1000">
               </div>
             </div>
             <div class="col-12">
@@ -663,8 +663,8 @@ $sciJson = $ejes->map(function($eje) {
            data-preg-nombre="${escHtml(p.nombre)}" data-preg-link="${escHtml(p.link_ficha||'')}"
            data-preg-activo="${p.activo?1:0}">
         <span class="sci-item-badge bg-success text-white">${idx+1}</span>
-        <div class="sci-item-name d-flex flex-column gap-0" style="min-width:0">
-          <span style="font-size:.8125rem;white-space:normal;line-height:1.3">${escHtml(p.nombre)}${!p.activo?'<span class="badge bg-label-danger badge-inactivo ms-1">Off</span>':''}</span>
+        <div class="sci-item-name d-flex flex-column gap-0" style="min-width:0;overflow:hidden">
+          <span class="preg-nombre-text">${escHtml(p.nombre)}${!p.activo?'<span class="badge bg-label-danger badge-inactivo ms-1">Off</span>':''}</span>
           ${p.link_ficha ? `<a href="${escHtml(p.link_ficha)}" target="_blank" class="link-ficha-text text-info mt-1" title="${escHtml(p.link_ficha)}"><i class="ti tabler-link me-1" style="font-size:.75rem"></i>${escHtml(p.link_ficha)}</a>` : '<span class="text-muted" style="font-size:.7rem"><i class="ti tabler-link-off me-1"></i>Sin ficha</span>'}
         </div>
         @canany(['componentes.editar','componentes.eliminar'])
@@ -775,16 +775,17 @@ $sciJson = $ejes->map(function($eje) {
   /* ────────────────────────────────────────────────
      TOAST (mismo patrón que otros módulos)
   ──────────────────────────────────────────────── */
-  function toast(icon, title, timer) {
-    const iconColors = { success:'#28c76f', error:'#ea5455', warning:'#ff9f43', info:'#00cfe8' };
-    Swal.fire({
-      toast: true, position: 'top-end', icon, title,
-      showConfirmButton: false, timer: timer || 2800, timerProgressBar: true,
-      customClass: { popup: 'pulso-toast' }, iconColor: iconColors[icon] || iconColors.info,
-    });
+  function toast(type, msg) {
+    if (typeof pulsoToast === 'function') { pulsoToast(msg, type); return; }
+    if (typeof Swal !== 'undefined') {
+      const cols = { success:'#28c76f', error:'#ea5455', warning:'#ff9f43', info:'#00cfe8' };
+      Swal.fire({ toast:true, position:'top-end', icon:type, title:msg,
+        showConfirmButton:false, timer:2800, timerProgressBar:true,
+        customClass:{popup:'pulso-toast'}, iconColor:cols[type]||cols.info });
+    }
   }
-  @if(session('success')) toast('success', @json(session('success')), 3000); @endif
-  @if(session('error'))   toast('error',   @json(session('error')),   4500); @endif
+  @if(session('success')) toast('success', @json(session('success'))); @endif
+  @if(session('error'))   toast('error',   @json(session('error')));   @endif
 
   /* ────────────────────────────────────────────────
      ELIMINAR (SweetAlert2)

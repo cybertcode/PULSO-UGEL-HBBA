@@ -120,8 +120,8 @@ class SciEstructuraController extends Controller
     {
         $data = $request->validate([
             'componente_id' => 'required|exists:sci_componentes,id',
-            'nombre'        => 'required|string|max:500',
-            'link_ficha'    => 'nullable|url|max:500',
+            'nombre'        => 'required|string|min:1|max:1000',
+            'link_ficha'    => 'nullable|url|max:1000',
             'activo'        => 'boolean',
         ]);
         $data['activo'] = $request->boolean('activo', true);
@@ -134,8 +134,8 @@ class SciEstructuraController extends Controller
     public function updatePregunta(Request $request, SciPregunta $pregunta)
     {
         $data = $request->validate([
-            'nombre'     => 'required|string|max:500',
-            'link_ficha' => 'nullable|url|max:500',
+            'nombre'     => 'required|string|min:1|max:1000',
+            'link_ficha' => 'nullable|url|max:1000',
             'activo'     => 'boolean',
         ]);
         $data['activo'] = $request->boolean('activo', $pregunta->activo);
