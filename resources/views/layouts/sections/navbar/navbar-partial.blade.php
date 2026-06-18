@@ -9,9 +9,12 @@ $userFoto       = $authUser?->profile_photo_path
                     ? Storage::url($authUser->profile_photo_path)
                     : null;
 $userInitials   = $authUser ? strtoupper(substr($authUser->name, 0, 1) . (strpos($authUser->name,' ')!==false ? substr($authUser->name, strpos($authUser->name,' ')+1, 1) : '')) : 'U';
-$userCargo      = $authUser?->cargo?->nombre ?? 'Usuario';
+$userCargo      = $authUser?->cargos->isNotEmpty()
+                    ? $authUser->cargos->pluck('nombre')->implode(' / ')
+                    : 'Usuario';
 $userUnidad     = $authUser?->unidadOrganica?->nombre ?? null;
-$userRol        = $authUser?->roles->first()?->name ?? null;
+$userRoles      = $authUser?->roles->pluck('name') ?? collect();
+$userRol        = $userRoles->isNotEmpty() ? $userRoles->implode(' / ') : null;
 
 // Alertas del dropdown filtradas por visibilidad del usuario (basado en permisos)
 if ($authUser && $authUser->can('alertas.ver')) {

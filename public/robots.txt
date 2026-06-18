@@ -1,6 +1,46 @@
 User-agent: *
+# Rutas públicas permitidas
 Allow: /$
-Allow: /login
-Disallow: /
+Allow: /publicaciones$
+Allow: /login$
+Allow: /noticias/
+Allow: /assets/
+Allow: /icons/
+Allow: /manifest.json
+
+# Bloquear todo lo demás (rutas autenticadas, APIs, admin)
+Disallow: /dashboard
+Disallow: /control-interno
+Disallow: /modelo-integridad
+Disallow: /evidencias
+Disallow: /semaforo
+Disallow: /alertas
+Disallow: /ranking-unidades
+Disallow: /avance-unidades
+Disallow: /cumplimiento
+Disallow: /mis-actividades
+Disallow: /reportes
+Disallow: /reconocimientos
+Disallow: /buenas-practicas
+Disallow: /recomendaciones
+Disallow: /normativas
+Disallow: /encuestas
+Disallow: /usuarios
+Disallow: /roles
+Disallow: /permisos
+Disallow: /cargos
+Disallow: /unidades-organicas
+Disallow: /administracion/
+Disallow: /configuracion
+Disallow: /ayuda
+Disallow: /user/
+Disallow: /api/
+Disallow: /slider-landing
+Disallow: /instituciones-vinculadas
+Disallow: /search/
+Disallow: /diag
+Disallow: /lang/
+Disallow: /pages/
+Disallow: /notifications/
 
 Sitemap: https://pulso.ugelhuacaybamba.edu.pe/sitemap.xml

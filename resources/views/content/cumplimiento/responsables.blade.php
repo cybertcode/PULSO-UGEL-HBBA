@@ -249,7 +249,7 @@
                 </div>
                 <div>
                   <div class="fw-medium" style="font-size:.88rem">{{ $u->name }}</div>
-                  <small class="text-muted">{{ $u->cargo?->nombre ?? 'Sin cargo' }}</small>
+                  <small class="text-muted">{{ $u->cargos->first()?->nombre ?? 'Sin cargo' }}</small>
                 </div>
               </div>
             </td>

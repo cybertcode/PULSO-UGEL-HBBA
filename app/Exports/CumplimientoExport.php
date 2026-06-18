@@ -48,7 +48,7 @@ class CumplimientoResponsablesSheet implements FromCollection, WithHeadings, Wit
     {
         $responsables = User::where('estado', 'activo')
             ->whereHas('actividadesResponsable')
-            ->with('unidadOrganica')
+            ->with(['unidadOrganica', 'cargos'])
             ->when($this->unidadId, fn($q) => $q->where('unidad_organica_id', $this->unidadId))
             ->get()
             ->map(function (User $user) {
@@ -67,7 +67,7 @@ class CumplimientoResponsablesSheet implements FromCollection, WithHeadings, Wit
 
                 return [
                     $user->name,
-                    $user->cargo ?? '—',
+                    $user->cargos->first()?->nombre ?? '—',
                     $user->unidadOrganica?->sigla ?? '—',
                     $total,
                     $completadas,

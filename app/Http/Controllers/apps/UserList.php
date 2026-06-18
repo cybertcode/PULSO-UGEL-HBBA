@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\apps;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cargo;
 use App\Models\UnidadOrganica;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -40,7 +39,7 @@ class UserList extends Controller
             'Visualizador'          => 'secondary',
         ];
 
-        $query = User::with(['roles', 'unidadOrganica', 'cargo'])->select('users.*');
+        $query = User::with(['roles', 'unidadOrganica', 'cargos'])->select('users.*');
 
         if ($request->filled('rol')) {
             $query->whereHas('roles', fn($q) => $q->where('name', $request->rol));
@@ -81,22 +80,24 @@ class UserList extends Controller
             $initials  = collect(explode(' ', $u->name))
                 ->filter()->take(2)->map(fn($w) => strtoupper($w[0]))->implode('');
             $primerColor = $colorMap[$roles[0] ?? ''] ?? 'secondary';
+            $cargosArr   = $u->cargos->map(fn($c) => ['id' => $c->id, 'nombre' => $c->nombre])->values()->toArray();
+            $cargoNombres = implode(', ', array_column($cargosArr, 'nombre')) ?: '—';
 
             return [
-                'id'        => $u->id,
-                'name'      => $u->name,
-                'email'     => $u->email,
-                'dni'       => $u->dni ?? '—',
-                'cargo'     => $u->cargo?->nombre ?? '—',
-                'cargo_id'  => $u->cargo_id ?? '',
-                'unidad'    => $u->unidadOrganica?->sigla ?? '—',
-                'unidad_id' => $u->unidad_organica_id ?? '',
-                'roles'     => $roles,
-                'rol'       => $rolNombre,
-                'rolColor'  => $primerColor,
-                'estado'    => $u->estado ?? 'pendiente',
-                'initials'  => $initials ?: strtoupper(substr($u->name, 0, 1)),
-                'created_ts'=> $u->created_at?->timestamp ?? 0,
+                'id'          => $u->id,
+                'name'        => $u->name,
+                'email'       => $u->email,
+                'dni'         => $u->dni ?? '—',
+                'cargo'       => $cargoNombres,
+                'cargos'      => $cargosArr,
+                'unidad'      => $u->unidadOrganica?->sigla ?? '—',
+                'unidad_id'   => $u->unidad_organica_id ?? '',
+                'roles'       => $roles,
+                'rol'         => $rolNombre,
+                'rolColor'    => $primerColor,
+                'estado'      => $u->estado ?? 'pendiente',
+                'initials'    => $initials ?: strtoupper(substr($u->name, 0, 1)),
+                'created_ts'  => $u->created_at?->timestamp ?? 0,
             ];
         });
 
@@ -115,7 +116,8 @@ class UserList extends Controller
             'email'              => 'required|email|unique:users,email',
             'password'           => ['required', Password::min(8)->mixedCase()->numbers()],
             'dni'                => 'nullable|digits:8|unique:users,dni',
-            'cargo_id'           => 'nullable|exists:cargos,id',
+            'cargos'             => 'nullable|array',
+            'cargos.*'           => 'exists:cargos,id',
             'unidad_organica_id' => 'nullable|exists:unidades_organicas,id',
             'estado'             => 'required|in:activo,inactivo,pendiente',
             'roles'              => 'required|array|min:1',
@@ -127,12 +129,12 @@ class UserList extends Controller
             'email'              => $data['email'],
             'password'           => Hash::make($data['password']),
             'dni'                => $data['dni'] ?? null,
-            'cargo_id'           => $data['cargo_id'] ?? null,
             'unidad_organica_id' => $data['unidad_organica_id'] ?? null,
             'estado'             => $data['estado'],
             'email_verified_at'  => now(),
         ]);
 
+        $user->cargos()->sync($data['cargos'] ?? []);
         $user->syncRoles($data['roles']);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
@@ -150,7 +152,8 @@ class UserList extends Controller
             'email'              => 'required|email|unique:users,email,' . $usuario->id,
             'password'           => ['nullable', Password::min(8)->mixedCase()->numbers()],
             'dni'                => 'nullable|digits:8|unique:users,dni,' . $usuario->id,
-            'cargo_id'           => 'nullable|exists:cargos,id',
+            'cargos'             => 'nullable|array',
+            'cargos.*'           => 'exists:cargos,id',
             'unidad_organica_id' => 'nullable|exists:unidades_organicas,id',
             'estado'             => 'required|in:activo,inactivo,pendiente',
             'roles'              => 'required|array|min:1',
@@ -161,7 +164,6 @@ class UserList extends Controller
             'name'               => $data['name'],
             'email'              => $data['email'],
             'dni'                => $data['dni'] ?? null,
-            'cargo_id'           => $data['cargo_id'] ?? null,
             'unidad_organica_id' => $data['unidad_organica_id'] ?? null,
             'estado'             => $data['estado'],
         ]);
@@ -170,6 +172,7 @@ class UserList extends Controller
             $usuario->update(['password' => Hash::make($data['password'])]);
         }
 
+        $usuario->cargos()->sync($data['cargos'] ?? []);
         $usuario->syncRoles($data['roles']);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
@@ -210,6 +213,19 @@ class UserList extends Controller
             'success' => true,
             'message' => "Contraseña de {$usuario->name} actualizada correctamente.",
         ]);
+    }
+
+    public function porUnidad(Request $request)
+    {
+        $query = User::where('estado', 'activo')->orderBy('name');
+
+        if ($request->filled('unidad_id')) {
+            $query->where('unidad_organica_id', $request->unidad_id);
+        }
+
+        return response()->json(
+            $query->get(['id', 'name'])->map(fn($u) => ['id' => $u->id, 'name' => $u->name])
+        );
     }
 
     public function toggleEstado(User $usuario)

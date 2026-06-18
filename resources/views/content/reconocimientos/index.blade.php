@@ -557,7 +557,7 @@ body.modal-open .layout-wrapper { overflow: visible !important; }
                 data-nombre="{{ $usr->name }}"
                 data-correo="{{ $usr->email }}"
                 data-dni="{{ $usr->dni ?? '' }}"
-                data-cargo="{{ $usr->cargo?->nombre ?? '' }}"
+                data-cargo="{{ $usr->cargos->first()?->nombre ?? '' }}"
                 data-unidad="{{ $usr->unidad_organica_id ?? '' }}"
                 data-foto="{{ $usr->profile_photo_url }}">
                 {{ $usr->name }} · {{ $usr->email }}
@@ -738,7 +738,7 @@ body.modal-open .layout-wrapper { overflow: visible !important; }
                     data-nombre="{{ $usr->name }}"
                     data-correo="{{ $usr->email }}"
                     data-dni="{{ $usr->dni ?? '' }}"
-                    data-cargo="{{ $usr->cargo?->nombre ?? '' }}"
+                    data-cargo="{{ $usr->cargos->first()?->nombre ?? '' }}"
                     data-unidad="{{ $usr->unidad_organica_id ?? '' }}"
                     data-foto="{{ $usr->profile_photo_url }}">
                     {{ $usr->name }} · {{ $usr->email }}

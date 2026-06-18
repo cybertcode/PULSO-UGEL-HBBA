@@ -647,6 +647,7 @@ $configData = Helper::appClasses();
                       data-descripcion="{{ $act->descripcion ?? '' }}"
                       data-observaciones="{{ $act->observaciones ?? '' }}"
                       data-action="{{ route('integridad.update', $act) }}"
+                      data-responsables="{{ json_encode($act->responsables->map(fn($r) => ['id'=>$r->id,'name'=>$r->name,'tipo'=>$r->pivot->tipo])->values()) }}"
                       title="Editar"><i class="ti tabler-edit icon-14px"></i></button>
                     @endcan
                     @can('integridad.eliminar')
@@ -813,9 +814,12 @@ $configData = Helper::appClasses();
                 </div>
               </div>
             </div>
-            <div class="col-12">
+            <div class="col-12 d-flex gap-2">
               <button type="button" id="btn-add-resp-nueva" class="btn btn-sm btn-label-secondary">
                 <i class="ti tabler-plus me-1"></i>Agregar responsable
+              </button>
+              <button type="button" id="btn-add-all-resp-nueva" class="btn btn-sm btn-label-warning" title="Agregar todos los usuarios visibles">
+                <i class="ti tabler-users-plus me-1"></i>Todos
               </button>
             </div>
 
@@ -941,6 +945,19 @@ $configData = Helper::appClasses();
             <div class="col-12">
               <label class="form-label fw-semibold">Observaciones</label>
               <textarea name="observaciones" id="edit_observaciones" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="col-12 mt-2"><h6 class="fw-bold text-muted mb-0"><i class="ti tabler-users me-1"></i>Responsables</h6><hr class="mt-1 mb-0"></div>
+
+            <div class="col-12" id="editar-responsables-container"></div>
+
+            <div class="col-12 d-flex gap-2">
+              <button type="button" id="btn-add-resp-editar" class="btn btn-sm btn-label-secondary">
+                <i class="ti tabler-plus me-1"></i>Agregar responsable
+              </button>
+              <button type="button" id="btn-add-all-resp-editar" class="btn btn-sm btn-label-warning" title="Agregar todos los usuarios visibles">
+                <i class="ti tabler-users-plus me-1"></i>Todos
+              </button>
             </div>
 
           </div>
@@ -1172,21 +1189,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
       document.getElementById('formEditarActInt').action = d.action;
 
-      // Cargar cascada: etapa → componente → pregunta
+      // Cargar cascada: etapa → componente → pregunta (fetch directo, sin simular eventos)
+      resetSelect(editComponente, '— Selecciona etapa primero —');
+      resetSelect(editPregunta, '— Selecciona componente —');
       if (d.etapa) {
-        editEtapa.value = d.etapa;
-        editEtapa.dispatchEvent(new Event('change'));
-        // Esperar carga componentes
-        await new Promise(r => setTimeout(r, 300));
+        $(editEtapa).val(d.etapa).trigger('change.select2');
+        // Cargar componentes directamente
+        const compData = await fetchOpciones(URL_COMPONENTES, { etapa_id: d.etapa });
+        editComponente.innerHTML = '<option value="">— Seleccionar componente —</option>';
+        compData.forEach(c => editComponente.innerHTML += `<option value="${c.id}">${c.orden}. ${c.nombre}</option>`);
+        editComponente.disabled = false;
+        reinitSelect2Cascade(editComponente, 'modalEditarActInt');
         if (d.componente) {
-          editComponente.value = d.componente;
-          editComponente.dispatchEvent(new Event('change'));
-          await new Promise(r => setTimeout(r, 300));
+          $(editComponente).val(d.componente).trigger('change.select2');
+          // Cargar preguntas directamente
+          const pregData = await fetchOpciones(URL_PREGUNTAS, { componente_id: d.componente });
+          editPregunta.innerHTML = '<option value="">— Seleccionar pregunta —</option>';
+          pregData.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = `${p.orden}. ${p.nombre}`;
+            if (p.link_ficha) opt.dataset.ficha = p.link_ficha;
+            editPregunta.appendChild(opt);
+          });
+          editPregunta.disabled = false;
+          reinitSelect2Cascade(editPregunta, 'modalEditarActInt');
           if (d.pregunta) {
-            editPregunta.value = d.pregunta;
-            editPregunta.dispatchEvent(new Event('change'));
+            $(editPregunta).val(d.pregunta).trigger('change.select2');
+            // Mostrar ficha si aplica
+            const selOpt = editPregunta.querySelector(`option[value="${d.pregunta}"]`);
+            if (selOpt?.dataset.ficha && editFichaUrl && editFichaDiv) {
+              editFichaUrl.href = selOpt.dataset.ficha;
+              editFichaDiv.style.display = '';
+            }
           }
         }
+      }
+
+      // Poblar responsables
+      clearRespEditar();
+      const responsablesData = JSON.parse(d.responsables || '[]');
+      if (responsablesData.length > 0) {
+        responsablesData.forEach(r => addRespRowEditar(editRespContainer, r.tipo, r.id));
+      } else {
+        addRespRowEditar(editRespContainer, 'principal', null);
       }
 
       new bootstrap.Modal(document.getElementById('modalEditarActInt')).show();
@@ -1216,8 +1262,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Agregar responsables en modal nueva ────────────────────────────────
   const respContainer = document.getElementById('nueva-responsables-container');
-  // Plantilla limpia (sin Select2 inicializado) para clonar
   let respIdx = 0;
+
+  // ── Usuarios disponibles (filtrados por unidad) ───────────────────────────
+  let _usuariosCache = @json(($usuarios ?? collect())->map(fn($u) => ['id' => $u->id, 'name' => $u->name])->values());
+
+  async function cargarUsuariosPorUnidad(unidadId) {
+    const url = unidadId ? `/api/usuarios-por-unidad?unidad_id=${unidadId}` : '/api/usuarios-por-unidad';
+    try {
+      const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      _usuariosCache = await res.json();
+    } catch (e) { console.error('Error cargando usuarios:', e); }
+    // Repoblar todos los selects de responsable ya existentes en el modal NUEVA
+    document.querySelectorAll('#nueva-responsables-container .select2-resp-nueva').forEach(sel => {
+      const prev = $(sel).val();
+      // Destruir Select2 solo si ya fue inicializado
+      if ($(sel).hasClass('select2-hidden-accessible')) {
+        $(sel).select2('destroy');
+      }
+      sel.innerHTML = '<option value="">— Seleccionar responsable —</option>';
+      _usuariosCache.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id; opt.textContent = u.name;
+        if (String(u.id) === String(prev)) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      $(sel).select2({ dropdownParent: $('#modalNuevaActInt'), width: '100%', placeholder: '— Seleccionar responsable —' });
+    });
+  }
+
+  // Listener: cambio de unidad en modal NUEVA → filtrar responsables (jQuery para capturar Select2)
+  $('#modalNuevaActInt [name="unidad_organica_id"]').on('change', function () {
+    cargarUsuariosPorUnidad(this.value);
+  });
+
+  function buildOptions() {
+    return '<option value="">— Seleccionar responsable —</option>' +
+      _usuariosCache.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+  }
 
   function addResponsableRow(container, modalId) {
     respIdx++;
@@ -1226,10 +1308,7 @@ document.addEventListener('DOMContentLoaded', function () {
     row.innerHTML = `
       <div class="col-md-8">
         <select name="responsables[]" class="form-select select2-resp-nueva" style="width:100%">
-          <option value="">— Seleccionar responsable —</option>
-          @foreach($usuarios as $u)
-          <option value="{{ $u->id }}">{{ $u->name }}</option>
-          @endforeach
+          ${buildOptions()}
         </select>
       </div>
       <div class="col-md-3">
@@ -1255,6 +1334,24 @@ document.addEventListener('DOMContentLoaded', function () {
     addResponsableRow(respContainer, 'modalNuevaActInt');
   });
 
+  document.getElementById('btn-add-all-resp-nueva')?.addEventListener('click', () => {
+    // Obtener IDs ya agregados para no duplicar
+    const yaAgregados = new Set(
+      Array.from(document.querySelectorAll('#nueva-responsables-container .select2-resp-nueva'))
+        .map(s => s.value).filter(Boolean)
+    );
+    _usuariosCache.forEach(u => {
+      if (!yaAgregados.has(String(u.id))) {
+        addResponsableRow(respContainer, 'modalNuevaActInt');
+        // Seleccionar el usuario en la última fila agregada
+        const sels = document.querySelectorAll('#nueva-responsables-container .select2-resp-nueva');
+        const lastSel = sels[sels.length - 1];
+        $(lastSel).val(u.id).trigger('change');
+        yaAgregados.add(String(u.id));
+      }
+    });
+  });
+
   function bindRmResp() {
     document.querySelectorAll('.btn-rm-resp').forEach(btn => {
       btn.onclick = function () {
@@ -1268,6 +1365,106 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
   bindRmResp();
+
+  // ── Responsables modal EDITAR ──────────────────────────────────────────
+  const editRespContainer = document.getElementById('editar-responsables-container');
+  let _usuariosCacheEditar = @json(($usuarios ?? collect())->map(fn($u) => ['id' => $u->id, 'name' => $u->name])->values());
+
+  function buildOptionsEditar() {
+    return '<option value="">— Seleccionar responsable —</option>' +
+      _usuariosCacheEditar.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+  }
+
+  function addRespRowEditar(container, tipo, userId) {
+    const tmpId = 'resp_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const row = document.createElement('div');
+    row.className = 'row g-2 mb-2 responsable-row-editar';
+    row.innerHTML = `
+      <div class="col-md-8">
+        <select name="responsables[]" class="form-select select2-resp-editar" style="width:100%" data-tmp="${tmpId}">
+          ${buildOptionsEditar()}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="tipos[${userId || tmpId}]" class="form-select form-select-sm select-tipo-editar" data-tmp="${tmpId}">
+          <option value="principal" ${(tipo==='principal'||!tipo)?'selected':''}>Principal</option>
+          <option value="colaborador" ${tipo==='colaborador'?'selected':''}>Colaborador</option>
+          <option value="supervisor" ${tipo==='supervisor'?'selected':''}>Supervisor</option>
+        </select>
+      </div>
+      <div class="col-md-1 d-flex align-items-center">
+        <button type="button" class="btn btn-icon btn-sm btn-label-danger btn-rm-resp-editar" title="Quitar">
+          <i class="ti tabler-trash" style="font-size:13px"></i>
+        </button>
+      </div>`;
+    container.appendChild(row);
+    const $sel = $(row).find('.select2-resp-editar');
+    $sel.select2({ dropdownParent: $('#modalEditarActInt'), width: '100%', placeholder: '— Seleccionar responsable —' });
+    // Actualizar name del tipo cuando cambia el responsable seleccionado
+    $sel.on('change', function () {
+      const uid = this.value;
+      const tipoSel = row.querySelector('.select-tipo-editar');
+      if (tipoSel && uid) tipoSel.name = `tipos[${uid}]`;
+    });
+    if (userId) $sel.val(userId).trigger('change');
+    bindRmRespEditar();
+  }
+
+  function bindRmRespEditar() {
+    document.querySelectorAll('.btn-rm-resp-editar').forEach(btn => {
+      btn.onclick = function () {
+        const rows = editRespContainer.querySelectorAll('.responsable-row-editar');
+        if (rows.length > 1) {
+          $(this.closest('.responsable-row-editar')).find('.select2-resp-editar').select2('destroy');
+          this.closest('.responsable-row-editar').remove();
+        }
+      };
+    });
+  }
+
+  function clearRespEditar() {
+    editRespContainer.querySelectorAll('.responsable-row-editar').forEach(r => {
+      $(r).find('.select2-resp-editar').select2('destroy');
+      r.remove();
+    });
+  }
+
+  async function cargarUsuariosPorUnidadEditar(unidadId) {
+    const url = unidadId ? `/api/usuarios-por-unidad?unidad_id=${unidadId}` : '/api/usuarios-por-unidad';
+    try {
+      const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      _usuariosCacheEditar = await res.json();
+    } catch (e) { console.error('Error cargando usuarios:', e); }
+    // Repoblar selects existentes
+    editRespContainer.querySelectorAll('.select2-resp-editar').forEach(sel => {
+      const prev = $(sel).val();
+      if ($(sel).hasClass('select2-hidden-accessible')) $(sel).select2('destroy');
+      sel.innerHTML = buildOptionsEditar();
+      $(sel).select2({ dropdownParent: $('#modalEditarActInt'), width: '100%', placeholder: '— Seleccionar responsable —' });
+      if (prev) $(sel).val(prev).trigger('change');
+    });
+  }
+
+  $('#edit_unidad').on('change', function () {
+    cargarUsuariosPorUnidadEditar(this.value);
+  });
+
+  document.getElementById('btn-add-resp-editar')?.addEventListener('click', () => {
+    addRespRowEditar(editRespContainer, 'principal', null);
+  });
+
+  document.getElementById('btn-add-all-resp-editar')?.addEventListener('click', () => {
+    const yaAgregados = new Set(
+      Array.from(editRespContainer.querySelectorAll('.select2-resp-editar'))
+        .map(s => s.value).filter(Boolean)
+    );
+    _usuariosCacheEditar.forEach(u => {
+      if (!yaAgregados.has(String(u.id))) {
+        addRespRowEditar(editRespContainer, 'principal', u.id);
+        yaAgregados.add(String(u.id));
+      }
+    });
+  });
 
   // ── Paginación tabla Evidencias Recientes ──────────────────────────────
   (function () {

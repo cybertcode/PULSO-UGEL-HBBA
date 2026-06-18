@@ -207,9 +207,8 @@
           <input type="text" class="form-control" id="add-user-dni" name="dni" placeholder="12345678" maxlength="8">
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-user-cargo">Cargo</label>
-          <select id="add-user-cargo" name="cargo_id" class="select2-cargo form-select">
-            <option value="">Sin cargo</option>
+          <label class="form-label" for="add-user-cargo">Cargo(s)</label>
+          <select id="add-user-cargo" name="cargos[]" class="select2-cargo form-select" multiple="multiple">
           </select>
         </div>
         <div class="mb-6">
@@ -272,9 +271,8 @@
           <input type="text" class="form-control" id="edit-user-dni" name="dni" maxlength="8">
         </div>
         <div class="mb-6">
-          <label class="form-label" for="edit-user-cargo">Cargo</label>
-          <select id="edit-user-cargo" name="cargo_id" class="select2-cargo form-select">
-            <option value="">Sin cargo</option>
+          <label class="form-label" for="edit-user-cargo">Cargo(s)</label>
+          <select id="edit-user-cargo" name="cargos[]" class="select2-cargo form-select" multiple="multiple">
           </select>
         </div>
         <div class="mb-6">
@@ -426,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function () {
       { data: 'name' },
       { data: 'rol' },
       { data: 'unidad' },
-      { data: 'cargo' },
+      { data: 'cargo', orderable: false },
       { data: 'estado' },
       { data: 'created_ts', visible: false, searchable: false },
       { data: null, orderable: false, searchable: false },
@@ -502,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function () {
             btns += `<button class="btn btn-icon btn-sm btn-text-secondary rounded-2 btn-edit-user"
               data-id="${row.id}" data-name="${row.name}" data-email="${row.email}"
               data-dni="${row.dni !== '—' ? row.dni : ''}"
-              data-cargo-id="${row.cargo_id}" data-cargo-nombre="${row.cargo}"
+              data-cargos="${encodeURIComponent(JSON.stringify(row.cargos))}"
               data-unidad-id="${row.unidad_id}" data-roles="${encodeURIComponent(JSON.stringify(row.roles))}" data-estado="${row.estado}"
               data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditUser"
               title="Editar"><i class="ti tabler-edit" style="font-size:1rem"></i></button>`;
@@ -799,14 +797,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }, 100);
 
-  // ── Select2: inicializar cargos (valores = ID numérico) ──
+  // ── Select2: inicializar cargos múltiples (valores = ID numérico) ──
   function initCargosSelect2(selector, offcanvasEl) {
     if (!window.$ || !$.fn.select2) return;
-    if ($(selector).hasClass('select2-hidden-accessible')) return;
-    $(selector).select2({
+    const $el = $(selector);
+    if ($el.data('select2')) $el.select2('destroy');
+    $el.select2({
       dropdownParent: $(offcanvasEl),
-      placeholder: 'Buscar cargo...',
+      placeholder: 'Buscar cargo(s)...',
       allowClear: true,
+      width: '100%',
+      closeOnSelect: false,
       ajax: {
         url: cargosUrl + '?select=1',
         dataType: 'json',
@@ -850,10 +851,9 @@ document.addEventListener('DOMContentLoaded', function () {
     initCargosSelect2('#edit-user-cargo', this);
     initRolesSelect2('#edit-user-roles', this);
 
-    const unidadId  = this.dataset.pendingUnidad;
-    const cargoId   = this.dataset.pendingCargoId;
-    const cargoNom  = this.dataset.pendingCargoNombre;
-    const roles     = JSON.parse(decodeURIComponent(this.dataset.pendingRoles || '[]'));
+    const unidadId = this.dataset.pendingUnidad;
+    const cargos   = JSON.parse(decodeURIComponent(this.dataset.pendingCargos || '[]'));
+    const roles    = JSON.parse(decodeURIComponent(this.dataset.pendingRoles  || '[]'));
 
     if (unidadId) { $('#edit-user-unidad').val(unidadId).trigger('change'); }
 
@@ -862,15 +862,15 @@ document.addEventListener('DOMContentLoaded', function () {
       $('#edit-user-roles').val(roles).trigger('change');
     }
 
-    // Preseleccionar cargo actual por ID — crear opción si no existe aún
-    if (cargoId && cargoId !== '') {
+    // Preseleccionar cargos actuales por ID (AJAX select2 — crear opciones si no existen)
+    if (cargos.length) {
       const sel = $('#edit-user-cargo');
-      if (!sel.find(`option[value="${cargoId}"]`).length) {
-        sel.append(new Option(cargoNom, cargoId, true, true));
-      } else {
-        sel.val(cargoId);
-      }
-      sel.trigger('change');
+      cargos.forEach(c => {
+        if (!sel.find(`option[value="${c.id}"]`).length) {
+          sel.append(new Option(c.nombre, c.id, true, true));
+        }
+      });
+      sel.val(cargos.map(c => c.id)).trigger('change');
     }
   });
 
@@ -889,10 +889,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('edit-user-estado').value   = btn.dataset.estado;
 
     // Guardar para aplicar en shown.bs.offcanvas (Select2 necesita el elemento visible)
-    offcanvas.dataset.pendingUnidad       = btn.dataset.unidadId      || '';
-    offcanvas.dataset.pendingCargoId      = btn.dataset.cargoId       || '';
-    offcanvas.dataset.pendingCargoNombre  = btn.dataset.cargoNombre   || '';
-    offcanvas.dataset.pendingRoles        = btn.dataset.roles         || '[]';
+    offcanvas.dataset.pendingUnidad  = btn.dataset.unidadId || '';
+    offcanvas.dataset.pendingCargos  = btn.dataset.cargos   || '[]';
+    offcanvas.dataset.pendingRoles   = btn.dataset.roles    || '[]';
 
     // Valor nativo de unidad (fallback sin Select2)
     const unidadSel = document.getElementById('edit-user-unidad');

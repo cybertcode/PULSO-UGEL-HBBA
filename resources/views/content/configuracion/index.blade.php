@@ -299,7 +299,7 @@ use Illuminate\Support\Facades\Storage;
                   <div id="previewDirectorFoto" class="flex-shrink-0"></div>
                   <div>
                     <div class="fw-semibold" id="previewDirectorNombre">{{ $config->directorUser?->name }}</div>
-                    <div class="small text-muted" id="previewDirectorCargo">{{ $config->directorUser?->cargo?->nombre }}</div>
+                    <div class="small text-muted" id="previewDirectorCargo">{{ $config->directorUser?->cargos->first()?->nombre }}</div>
                     <div class="small text-muted" id="previewDirectorUnidad">{{ $config->directorUser?->unidadOrganica?->nombre }}</div>
                     <div class="small" id="previewDirectorEmail">{{ $config->directorUser?->email }}</div>
                   </div>
@@ -333,7 +333,7 @@ use Illuminate\Support\Facades\Storage;
                   <div id="previewCoordinadorFoto" class="flex-shrink-0"></div>
                   <div>
                     <div class="fw-semibold" id="previewCoordinadorNombre">{{ $config->coordinadorSciUser?->name }}</div>
-                    <div class="small text-muted" id="previewCoordinadorCargo">{{ $config->coordinadorSciUser?->cargo?->nombre }}</div>
+                    <div class="small text-muted" id="previewCoordinadorCargo">{{ $config->coordinadorSciUser?->cargos->first()?->nombre }}</div>
                     <div class="small text-muted" id="previewCoordinadorUnidad">{{ $config->coordinadorSciUser?->unidadOrganica?->nombre }}</div>
                     <div class="small" id="previewCoordinadorEmail">{{ $config->coordinadorSciUser?->email }}</div>
                   </div>

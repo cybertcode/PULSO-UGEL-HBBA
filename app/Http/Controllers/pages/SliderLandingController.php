@@ -15,7 +15,7 @@ class SliderLandingController extends Controller
         $slides    = SliderLanding::orderBy('orden')->orderBy('id')->get();
         $user      = Auth::user();
         $autorName = $user?->name ?? '';
-        $autorCargo = $user?->cargo?->nombre ?? $user?->cargo?->nombre_cargo ?? null;
+        $autorCargo = $user?->cargos->first()?->nombre ?? null;
         return view('content.slider-landing.index', compact('slides', 'autorName', 'autorCargo'));
     }
 

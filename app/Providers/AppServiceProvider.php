@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Alerta;
 use App\Models\ConfiguracionInstitucional;
+use Illuminate\Support\Facades\Auth;
 use App\Observers\AlertaObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\App;
@@ -42,6 +43,12 @@ class AppServiceProvider extends ServiceProvider
                 $configInstitucional = null;
             }
             $view->with('configInstitucional', $configInstitucional);
+
+            // Pre-cargar relaciones del usuario autenticado para navbar/sidebar
+            $user = Auth::user();
+            if ($user && !$user->relationLoaded('cargos')) {
+                $user->load('cargos', 'roles', 'unidadOrganica');
+            }
         });
 
         // Paginación con Bootstrap 5

@@ -64,7 +64,7 @@ class ReconocimientosController extends Controller
         ];
 
         $unidades   = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
-        $usuarios   = User::with(['cargo', 'unidadOrganica'])->orderBy('name')->get();
+        $usuarios   = User::with(['cargos', 'unidadOrganica'])->orderBy('name')->get();
         $anios      = range(now()->year, now()->year - 3);
         $meses      = $this->mesesNombres;
         $categorias = $this->categoriasList;
@@ -127,12 +127,12 @@ class ReconocimientosController extends Controller
 
     public function datosUsuario(User $usuario)
     {
-        $usuario->load(['cargo', 'unidadOrganica']);
+        $usuario->load(['cargos', 'unidadOrganica']);
         return response()->json([
             'nombre'             => $usuario->name,
             'email'              => $usuario->email,
             'dni'                => $usuario->dni ?? '',
-            'cargo'              => $usuario->cargo?->nombre ?? '',
+            'cargo'              => $usuario->cargos->first()?->nombre ?? '',
             'unidad_organica_id' => $usuario->unidad_organica_id,
             'unidad_nombre'      => $usuario->unidadOrganica?->nombre ?? '',
             'foto_url'           => $usuario->profile_photo_url,

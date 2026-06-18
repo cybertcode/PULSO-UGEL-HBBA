@@ -13,7 +13,7 @@ class ConfiguracionController extends Controller
 {
     public function index()
     {
-        $config = ConfiguracionInstitucional::firstOrCreate([], [
+        $config = ConfiguracionInstitucional::with(['directorUser.cargos', 'coordinadorSciUser.cargos'])->firstOrCreate([], [
             'nombre_institucion' => 'Mi Institución',
             'sigla'              => 'MI-INST',
             'departamento'       => 'Lima',
@@ -26,7 +26,7 @@ class ConfiguracionController extends Controller
             'umbral_amarillo'    => 50,
         ]);
 
-        $usuarios = User::with(['cargo', 'unidadOrganica'])
+        $usuarios = User::with(['cargos', 'unidadOrganica'])
             ->where('estado', true)
             ->orderBy('name')
             ->get()
@@ -34,7 +34,7 @@ class ConfiguracionController extends Controller
                 'id'           => $u->id,
                 'name'         => $u->name,
                 'email'        => $u->email,
-                'cargo'        => $u->cargo?->nombre,
+                'cargo'        => $u->cargos->first()?->nombre,
                 'unidad'       => $u->unidadOrganica?->nombre,
                 'foto_url'     => $u->profile_photo_path
                                     ? Storage::url($u->profile_photo_path)

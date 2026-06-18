@@ -72,13 +72,14 @@
   <meta property="og:site_name" content="{{ $instNombre }}" />
   <meta property="og:locale" content="es_PE" />
 
+  <meta name="author" content="Ing. Marvyn Kevyn Huanca Hilario" />
   <meta name="robots" content="@yield('meta-robots', 'noindex, nofollow')" />
   <meta name="x-sys-ref" content="SW5nLiBNS2V2eW4gSEggfCBkZXZlbG9wdGVjaDIzQGdtYWlsLmNvbSB8IGZhY2Vib29rLmNvbS9ta2V2eW4uaGhpbGFyaW8=" />
   <meta name="x-build-id" content="UFVMUk8tVUdFTC12MSAyMDI1LTA2IHwgSW5nLiBNS2V2eW4gSEg=" />
   <!-- laravel CRUD token -->
   <meta name="csrf-token" content="{{ csrf_token() }}" />
   <!-- Canonical SEO -->
-  <link rel="canonical" href="{{ $siteUrl }}" />
+  <link rel="canonical" href="@yield('canonical', url()->current())" />
 
   <!-- Favicon dinámico desde configuración institucional -->
   @if (!empty($configInstitucional?->favicon_ruta))

@@ -38,7 +38,6 @@ class User extends Authenticatable
         'email',
         'password',
         'dni',
-        'cargo_id',
         'unidad_organica_id',
         'estado',
     ];
@@ -67,9 +66,9 @@ class User extends Authenticatable
         return $this->belongsTo(UnidadOrganica::class, 'unidad_organica_id');
     }
 
-    public function cargo(): BelongsTo
+    public function cargos(): BelongsToMany
     {
-        return $this->belongsTo(Cargo::class, 'cargo_id');
+        return $this->belongsToMany(Cargo::class, 'cargo_user')->withTimestamps();
     }
 
     public function sendPasswordResetNotification($token): void

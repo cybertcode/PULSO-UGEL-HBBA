@@ -99,7 +99,7 @@ input[type="range"].avance-range { accent-color: var(--bs-primary); height: 6px;
       <h4 class="mb-0 fw-bold">Mis Actividades</h4>
       <p class="mb-0 text-muted small">
         <i class="ti tabler-user me-1"></i>{{ $user->name }}
-        @if($user->cargo) · <i class="ti tabler-briefcase me-1"></i>{{ $user->cargo->nombre }}@endif
+        @if($user->cargos->isNotEmpty()) · <i class="ti tabler-briefcase me-1"></i>{{ $user->cargos->pluck('nombre')->implode(', ') }}@endif
         @if($user->unidadOrganica?->sigla) · <i class="ti tabler-building me-1"></i>{{ $user->unidadOrganica->sigla }}@endif
       </p>
     </div>
