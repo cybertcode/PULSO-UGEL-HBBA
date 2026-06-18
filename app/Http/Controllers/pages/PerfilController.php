@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\pages;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cargo;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,8 +13,9 @@ class PerfilController extends Controller
 {
     public function show()
     {
-        $cargos = Cargo::where('activo', true)->orderBy('nombre')->get();
-        return view('profile.show', ['user' => Auth::user(), 'cargos' => $cargos]);
+        $user = Auth::user();
+        $user->load('cargos', 'roles', 'unidadOrganica');
+        return view('profile.show', ['user' => $user]);
     }
 
     public function updateInfo(Request $request, ImageService $images)
@@ -23,16 +23,18 @@ class PerfilController extends Controller
         $user = Auth::user();
 
         $rules = [
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'max:255', "unique:users,email,{$user->id}"],
-            'dni'      => ['nullable', 'string', 'digits:8'],
-            'cargo_id' => ['nullable', 'exists:cargos,id'],
-            'foto'     => ['nullable', 'image', 'mimes:' . ImageService::ALLOWED_MIMES, 'max:' . ImageService::MAX_SIZE_KB],
+            'name'      => ['required', 'string', 'max:255'],
+            'email'     => ['required', 'email', 'max:255', "unique:users,email,{$user->id}"],
+            'dni'       => ['nullable', 'string', 'digits:8', "unique:users,dni,{$user->id}"],
+            'cargos'    => ['nullable', 'array'],
+            'cargos.*'  => ['exists:cargos,id'],
+            'foto'      => ['nullable', 'image', 'mimes:' . ImageService::ALLOWED_MIMES, 'max:' . ImageService::MAX_SIZE_KB],
         ];
 
         if ($user->can('usuarios.editar')) {
             $rules['unidad_organica_id'] = ['nullable', 'exists:unidades_organicas,id'];
-            $rules['rol']                = ['nullable', 'exists:roles,name'];
+            $rules['roles']              = ['nullable', 'array'];
+            $rules['roles.*']            = ['exists:roles,name'];
             $rules['estado']             = ['nullable', 'in:activo,inactivo,pendiente'];
         }
 
@@ -56,16 +58,18 @@ class PerfilController extends Controller
         ];
 
         if ($user->can('usuarios.editar')) {
-            $fill['cargo_id']          = $validated['cargo_id'] ?? $user->cargo_id;
             $fill['unidad_organica_id'] = $validated['unidad_organica_id'] ?? $user->unidad_organica_id;
-            $fill['estado']            = $validated['estado'] ?? $user->estado;
+            $fill['estado']             = $validated['estado'] ?? $user->estado;
 
-            if (!empty($validated['rol'])) {
-                $user->syncRoles([$validated['rol']]);
+            if (!empty($validated['roles'])) {
+                $user->syncRoles($validated['roles']);
             }
         }
 
         $user->forceFill($fill)->save();
+
+        // Sincronizar cargos (disponible para todos los que pueden editar su perfil)
+        $user->cargos()->sync($validated['cargos'] ?? []);
 
         return back()->with('success', 'Perfil actualizado correctamente.');
     }

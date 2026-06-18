@@ -83,7 +83,7 @@ class CumplimientoController extends Controller
         if (Gate::allows('cumplimiento.exportar')) {
             $incumplidores = User::where('estado', 'activo')
                 ->whereHas('actividadesResponsable')
-                ->with(['unidadOrganica', 'cargo'])
+                ->with(['unidadOrganica', 'cargos'])
                 ->get()
                 ->map(function (User $u) use ($anio, $modulo, $base) {
                     $q = Actividad::whereHas('responsables', fn($r) => $r->where('users.id', $u->id))
@@ -165,7 +165,7 @@ class CumplimientoController extends Controller
                 'responsables'  => $paginados->map(fn($u) => [
                     'id'            => $u->id,
                     'name'          => $u->name,
-                    'cargo'         => $u->cargo?->nombre ?? 'Sin cargo',
+                    'cargo'         => $u->cargos->first()?->nombre ?? 'Sin cargo',
                     'unidad'        => $u->unidadOrganica?->sigla ?? '—',
                     'inicial'       => strtoupper(substr($u->name, 0, 1)),
                     'total'         => $u->stat_total,
@@ -197,7 +197,7 @@ class CumplimientoController extends Controller
     {
         $users = User::where('estado', 'activo')
             ->whereHas('actividadesResponsable')
-            ->with(['unidadOrganica', 'cargo'])
+            ->with(['unidadOrganica', 'cargos'])
             ->when($unidadId, fn($q) => $q->where('unidad_organica_id', $unidadId))
             ->get()
             ->map(function (User $user) use ($anio, $modulo, $ejeId) {

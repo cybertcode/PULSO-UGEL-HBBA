@@ -1170,6 +1170,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Fix de scroll manejado globalmente en main.js (shown.bs.modal)
 
+  // ── Filtrar responsables por unidad orgánica ─────────────────────────────
+  async function cargarUsuariosPorUnidad(unidadId, selectEl) {
+    const url = unidadId ? `/api/usuarios-por-unidad?unidad_id=${unidadId}` : '/api/usuarios-por-unidad';
+    try {
+      const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      const usuarios = await res.json();
+      const prev = selectEl.value;
+      selectEl.innerHTML = '<option value="">— Agregar responsable —</option>';
+      usuarios.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id; opt.dataset.name = u.name; opt.textContent = u.name;
+        if (String(u.id) === String(prev)) opt.selected = true;
+        selectEl.appendChild(opt);
+      });
+    } catch (e) { console.error('Error cargando usuarios:', e); }
+  }
+
+  // Modal NUEVA: al cambiar unidad → filtrar responsables (jQuery para capturar Select2)
+  $('#modalNuevaActividad [name="unidad_organica_id"]').on('change', function () {
+    cargarUsuariosPorUnidad(this.value, document.getElementById('respSelectNuevo'));
+    respNuevo.clear();
+  });
+
+  // Modal EDITAR: al cambiar unidad → filtrar responsables (jQuery para capturar Select2)
+  $('#edit_unidad').on('change', function () {
+    cargarUsuariosPorUnidad(this.value, document.getElementById('respSelectEditar'));
+    respEditar.clear();
+  });
+
   // ── Cascada modal NUEVO ───────────────────────────────────────────────────
   $('#nuevo_eje').on('change', function () {
     const ejeId = this.value, compEl = document.getElementById('nuevo_componente'), pregEl = document.getElementById('nuevo_pregunta');

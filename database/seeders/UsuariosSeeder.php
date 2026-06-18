@@ -205,7 +205,6 @@ class UsuariosSeeder extends Seeder
                 'password'          => Hash::make('Admin123'),
                 'email_verified_at' => now(),
                 'dni'               => '00000000',
-                'cargo_id'          => null,
                 'unidad_organica_id'=> null,
                 'estado'            => 'activo',
             ]
@@ -224,11 +223,13 @@ class UsuariosSeeder extends Seeder
                     'password'           => Hash::make($password),
                     'email_verified_at'  => now(),
                     'dni'                => $datos['dni'],
-                    'cargo_id'           => $cargoId,
                     'unidad_organica_id' => $unidad?->id,
                     'estado'             => 'activo',
                 ]
             );
+            if ($cargoId) {
+                $user->cargos()->syncWithoutDetaching([$cargoId]);
+            }
             $user->syncRoles([$datos['rol']]);
         }
 

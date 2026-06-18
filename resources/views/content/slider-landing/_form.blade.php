@@ -1,7 +1,7 @@
 @php
   $uid        = $slide?->id ?? 'new';
   $autoAutor  = $autorName ?? auth()->user()?->name ?? '';
-  $autoCargo  = $autorCargo ?? auth()->user()?->cargo?->nombre ?? null;
+  $autoCargo  = $autorCargo ?? auth()->user()?->cargos->first()?->nombre ?? null;
   // Extraer color hex del degradado guardado para mostrarlo en el color picker
   $hexActual = '#1340A0';
   if (!empty($slide?->color_gradiente)) {

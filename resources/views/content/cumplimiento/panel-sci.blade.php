@@ -268,7 +268,7 @@
           </div>
           <div class="flex-grow-1 min-width-0">
             <div class="fw-medium text-truncate" style="font-size:.88rem">{{ $u->name }}</div>
-            <small class="text-muted">{{ $u->inc_unidad }} · {{ $u->cargo?->nombre ?? 'Sin cargo' }}</small>
+            <small class="text-muted">{{ $u->inc_unidad }} · {{ $u->cargos->first()?->nombre ?? 'Sin cargo' }}</small>
           </div>
           <div class="d-flex gap-2 ms-3 text-nowrap">
             @if($u->inc_vencidas > 0)

@@ -4,7 +4,9 @@
 @endphp
 
 @extends('layouts/layoutLanding')
-@section('title', 'Publicaciones — PULSO UGEL')
+@section('title', 'Publicaciones — PULSO UGEL Huacaybamba')
+@section('meta-robots', 'index, follow')
+@section('meta-description', 'Publicaciones y noticias oficiales de la UGEL Huacaybamba sobre Control Interno, gestión institucional y Sistema de Control Interno (SCI).')
 
 @section('page-style')
   @vite(['resources/assets/css/landing-institucional.css'])

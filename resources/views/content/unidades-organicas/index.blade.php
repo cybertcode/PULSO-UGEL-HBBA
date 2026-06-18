@@ -127,8 +127,8 @@
                 </div>
                 <div>
                   <div class="fw-semibold lh-sm">{{ $u->responsable->name }}</div>
-                  @if($u->responsable->cargo)
-                    <small class="text-muted">{{ $u->responsable->cargo->nombre }}</small>
+                  @if($u->responsable->cargos->isNotEmpty())
+                    <small class="text-muted">{{ $u->responsable->cargos->first()->nombre }}</small>
                   @endif
                 </div>
               </div>
@@ -237,7 +237,7 @@
               <select name="responsable_id" class="form-select select2-nueva">
                 <option value="">Sin asignar</option>
                 @foreach($usuarios as $usr)
-                  <option value="{{ $usr->id }}">{{ $usr->name }}{{ $usr->cargo ? ' — '.$usr->cargo->nombre : '' }}</option>
+                  <option value="{{ $usr->id }}">{{ $usr->name }}{{ $usr->cargos->isNotEmpty() ? ' — '.$usr->cargos->first()->nombre : '' }}</option>
                 @endforeach
               </select>
             </div>
@@ -296,7 +296,7 @@
               <select name="responsable_id" id="editResponsable" class="form-select select2-editar">
                 <option value="">Sin asignar</option>
                 @foreach($usuarios as $usr)
-                  <option value="{{ $usr->id }}">{{ $usr->name }}{{ $usr->cargo ? ' — '.$usr->cargo->nombre : '' }}</option>
+                  <option value="{{ $usr->id }}">{{ $usr->name }}{{ $usr->cargos->isNotEmpty() ? ' — '.$usr->cargos->first()->nombre : '' }}</option>
                 @endforeach
               </select>
             </div>

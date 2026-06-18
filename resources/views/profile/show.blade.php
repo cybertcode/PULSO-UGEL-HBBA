@@ -111,18 +111,18 @@
           @error('dni') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
         <div class="col-md-8">
-          <label class="form-label fw-medium" for="cargo_id">Cargo</label>
-          @can('usuarios.editar')
-          <select id="cargo_id" name="cargo_id" class="form-select @error('cargo_id') is-invalid @enderror">
-            <option value="">— Sin cargo —</option>
-            @foreach($cargos as $c)
-              <option value="{{ $c->id }}" {{ old('cargo_id', $authUser->cargo_id) == $c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
+          <label class="form-label fw-medium" for="perfil-cargos">Cargo(s)</label>
+          @can('perfil.editar')
+          @php $cargosActuales = $authUser->cargos->map(fn($c) => ['id' => $c->id, 'nombre' => $c->nombre])->values(); @endphp
+          <select id="perfil-cargos" name="cargos[]" class="form-select @error('cargos') is-invalid @enderror" multiple="multiple">
+            @foreach($cargosActuales as $c)
+              <option value="{{ $c['id'] }}" selected>{{ $c['nombre'] }}</option>
             @endforeach
           </select>
-          @error('cargo_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+          @error('cargos') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
           @else
           <input type="text" class="form-control bg-body-secondary" disabled
-                 value="{{ $authUser->cargo?->nombre ?? 'Sin cargo' }}">
+                 value="{{ $authUser->cargos->pluck('nombre')->implode(', ') ?: 'Sin cargo' }}">
           <div class="form-text">Asignado por el administrador del sistema.</div>
           @endcan
         </div>
@@ -142,17 +142,17 @@
           @endcan
         </div>
         <div class="col-md-3">
-          <label class="form-label fw-medium">Rol</label>
+          <label class="form-label fw-medium">Rol(es)</label>
           @can('usuarios.editar')
-          <select name="rol" class="form-select">
-            <option value="">— Sin rol —</option>
+          @php $rolesActuales = $authUser->roles->pluck('name')->toArray(); @endphp
+          <select name="roles[]" id="perfil-roles" class="form-select" multiple="multiple">
             @foreach(\Spatie\Permission\Models\Role::orderBy('name')->get() as $r)
-              <option value="{{ $r->name }}" {{ $authUser->roles->first()?->name === $r->name ? 'selected' : '' }}>{{ $r->name }}</option>
+              <option value="{{ $r->name }}" {{ in_array($r->name, $rolesActuales) ? 'selected' : '' }}>{{ $r->name }}</option>
             @endforeach
           </select>
           @else
           <input type="text" class="form-control bg-body-secondary" disabled
-                 value="{{ $authUser->roles->first()?->name ?? 'Sin rol asignado' }}">
+                 value="{{ $authUser->roles->pluck('name')->implode(', ') ?: 'Sin rol asignado' }}">
           <div class="form-text">Asignado por el administrador.</div>
           @endcan
         </div>
@@ -267,30 +267,38 @@
 
 @section('page-script')
 <script>
-// Select2 con tags para cargo
-$(function() {
-  $('#cargo').select2({
-    placeholder: 'Buscar o escribir cargo...',
-    allowClear: true,
-    tags: true,
-    ajax: {
-      url: '{{ route("cargos.index") }}',
-      dataType: 'json',
-      delay: 200,
-      processResults: data => ({ results: data.map(c => ({ id: c.nombre, text: c.nombre })) }),
-      cache: true,
-    },
-    createTag: params => {
-      const term = $.trim(params.term);
-      if (!term) return null;
-      return { id: term, text: term, newTag: true };
-    },
-    templateResult: data => {
-      if (data.newTag) return $(`<span><i class="ti tabler-plus me-1 text-primary"></i>${data.text} <em class="text-muted">(nuevo)</em></span>`);
-      return data.text;
-    },
+function initPerfilSelect2() {
+  var $ = window.$;
+  if (!$ || !$.fn.select2) { setTimeout(initPerfilSelect2, 100); return; }
+
+  // Roles múltiples
+  $('#perfil-roles').select2({
+    placeholder: 'Seleccionar rol(es)...',
+    allowClear: false,
+    width: '100%',
+    closeOnSelect: false,
   });
-});
+
+  // Cargo(s) múltiple con AJAX
+  if ($('#perfil-cargos').length) {
+    $('#perfil-cargos').select2({
+      placeholder: 'Buscar cargo(s)...',
+      allowClear: true,
+      width: '100%',
+      closeOnSelect: false,
+      ajax: {
+        url: '{{ route("cargos.index") }}?select=1',
+        dataType: 'json',
+        delay: 200,
+        data: function(params) { return { q: params.term }; },
+        processResults: function(data) { return { results: data.map(function(c) { return { id: c.id, text: c.nombre }; }) }; },
+        cache: true,
+      },
+      minimumInputLength: 0,
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded', initPerfilSelect2);
 
 // Preview foto antes de subir
 document.getElementById('fotoInput')?.addEventListener('change', function(e) {

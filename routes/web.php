@@ -199,6 +199,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/api/sci/componentes', [SciEstructuraController::class, 'apiComponentes'])->name('api.sci.componentes');
         Route::get('/api/sci/preguntas',   [SciEstructuraController::class, 'apiPreguntas'])->name('api.sci.preguntas');
     });
+    // API: usuarios por unidad orgánica (para filtrar responsables en modales)
+    Route::get('/api/usuarios-por-unidad', [UserList::class, 'porUnidad'])->name('api.usuarios-por-unidad');
 
     // --- Administración: Estructura Integridad (Etapas → Componentes → Preguntas) ---
     Route::get('/administracion/integridad', [IntegridadEstructuraController::class, 'index'])->name('adm-integridad-estructura')->middleware('can:integridad.ver');

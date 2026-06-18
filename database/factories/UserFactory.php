@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Cargo;
 use App\Models\User;
 use App\Models\UnidadOrganica;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,7 +20,6 @@ class UserFactory extends Factory
     public function definition(): array
     {
         $unidadId = UnidadOrganica::inRandomOrder()->value('id');
-        $cargoId  = Cargo::where('activo', true)->inRandomOrder()->value('id');
 
         return [
             'name'                      => $this->faker->name(),
@@ -29,7 +27,6 @@ class UserFactory extends Factory
             'email_verified_at'         => now(),
             'password'                  => static::$password ??= Hash::make('password'),
             'dni'                       => $this->faker->numerify('########'),
-            'cargo_id'                  => $cargoId,
             'unidad_organica_id'        => $unidadId,
             'estado'                    => $this->faker->randomElement(['activo', 'activo', 'activo', 'inactivo']),
             'two_factor_secret'         => null,

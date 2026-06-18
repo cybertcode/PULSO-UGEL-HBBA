@@ -99,7 +99,7 @@ class RankingUnidadesController extends Controller
         $config = ConfiguracionInstitucional::cached();
         [$umbral_verde, $umbral_amarillo] = SemaforoHelper::umbrales($config);
 
-        $usuarios = User::with(['cargo', 'unidadOrganica'])
+        $usuarios = User::with(['cargos', 'unidadOrganica'])
             ->where('estado', 'activo')
             ->whereHas('actividadesResponsable', function ($q) use ($modulo) {
                 $this->filtrarModulo($q, $modulo);
@@ -160,7 +160,7 @@ class RankingUnidadesController extends Controller
                 'id'               => $u->id,
                 'name'             => $u->name,
                 'inicial'          => strtoupper(substr($u->name, 0, 1)),
-                'cargo'            => $u->cargo?->nombre,
+                'cargo'            => $u->cargos->first()?->nombre,
                 'unidad'           => $u->unidadOrganica?->sigla,
                 'porcentaje'       => $u->porcentaje,
                 'color'            => $u->color,

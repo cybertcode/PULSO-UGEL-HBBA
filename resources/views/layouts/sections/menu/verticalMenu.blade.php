@@ -11,9 +11,12 @@ $userInitials = $authUser ? strtoupper(
     substr($authUser->name, 0, 1) .
     (strpos($authUser->name,' ') !== false ? substr($authUser->name, strpos($authUser->name,' ')+1, 1) : '')
 ) : 'U';
-$userCargo    = $authUser?->cargo?->nombre ?? 'Usuario';
+$userCargo    = $authUser?->cargos->isNotEmpty()
+                  ? $authUser->cargos->pluck('nombre')->implode(' / ')
+                  : 'Usuario';
 $userUnidad   = $authUser?->unidadOrganica?->nombre ?? null;
-$userRol      = $authUser?->roles->first()?->name ?? null;
+$userRoles    = $authUser?->roles->pluck('name') ?? collect();
+$userRol      = $userRoles->isNotEmpty() ? $userRoles->implode(' / ') : null;
 @endphp
 
 <aside id="layout-menu" class="layout-menu menu-vertical menu" @foreach ($configData['menuAttributes'] as $attribute=>
@@ -187,6 +190,11 @@ $userRol      = $authUser?->roles->first()?->name ?? null;
       <div class="flex-grow-1 overflow-hidden menu-user-text">
         <div class="fw-semibold text-heading text-truncate" style="font-size:13px">{{ $authUser->name }}</div>
         <div class="text-truncate" style="font-size:11px;color:var(--bs-secondary-color)">{{ $userCargo }}</div>
+        @if($userRol)
+        <div class="text-truncate" style="font-size:10px;color:var(--bs-secondary-color);opacity:.75">
+          <i class="ti tabler-shield" style="font-size:10px"></i> {{ $userRol }}
+        </div>
+        @endif
         @if($userUnidad)
         <div class="text-truncate" style="font-size:10px;color:var(--bs-secondary-color);opacity:.75">
           <i class="ti tabler-building" style="font-size:10px"></i> {{ $userUnidad }}

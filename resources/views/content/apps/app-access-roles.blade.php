@@ -132,11 +132,12 @@ $configData = Helper::appClasses();
         <tbody>
           @foreach($usuarios as $u)
           @php
-            $rolNombre = $u->roles->first()->name ?? '—';
-            $rc = $colorMap[$rolNombre] ?? 'secondary';
-            $estadoVal = $u->estado ?? 'pendiente';
-            $ec = match($estadoVal) { 'activo' => 'success', 'inactivo' => 'danger', default => 'warning' };
-            $esTuCuenta = $u->id === auth()->id();
+            $rolesUsuario = $u->roles->pluck('name')->toArray();
+            $primerRol    = $rolesUsuario[0] ?? '—';
+            $rc           = $colorMap[$primerRol] ?? 'secondary';
+            $estadoVal    = $u->estado ?? 'pendiente';
+            $ec           = match($estadoVal) { 'activo' => 'success', 'inactivo' => 'danger', default => 'warning' };
+            $esTuCuenta   = $u->id === auth()->id();
           @endphp
           <tr>
             <td></td>
@@ -154,7 +155,14 @@ $configData = Helper::appClasses();
               </div>
             </td>
             <td>{{ $u->email }}</td>
-            <td><span class="badge bg-label-{{ $rc }}">{{ $rolNombre }}</span></td>
+            <td>
+              @forelse($rolesUsuario as $rn)
+                @php $rc2 = $colorMap[$rn] ?? 'secondary'; @endphp
+                <span class="badge bg-label-{{ $rc2 }} me-1">{{ $rn }}</span>
+              @empty
+                <span class="text-muted small">Sin rol</span>
+              @endforelse
+            </td>
             <td><span class="badge bg-label-{{ $ec }}">{{ ucfirst($estadoVal) }}</span></td>
             <td>
               @can('usuarios.editar')
@@ -164,27 +172,29 @@ $configData = Helper::appClasses();
                 </span>
               @else
               <div class="d-flex align-items-center gap-1">
-                {{-- Dropdown cambiar rol --}}
+                {{-- Dropdown toggle roles --}}
                 <div class="dropdown">
                   <button type="button"
                     class="btn btn-sm btn-icon btn-label-primary"
                     data-bs-toggle="dropdown"
                     data-bs-placement="top"
-                    title="Cambiar rol"
+                    title="Gestionar roles"
                     aria-expanded="false">
                     <i class="ti tabler-shield-cog icon-sm"></i>
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end">
-                    <li><h6 class="dropdown-header small">Asignar rol</h6></li>
+                    <li><h6 class="dropdown-header small">Agregar / Quitar rol</h6></li>
                     @foreach($roles as $rol)
+                    @php $tieneEsteRol = in_array($rol->name, $rolesUsuario); @endphp
                     <li>
                       <button type="button"
-                        class="dropdown-item btn-cambiar-rol d-flex align-items-center gap-2 {{ $rol->name === $rolNombre ? 'active' : '' }}"
+                        class="dropdown-item btn-toggle-rol d-flex align-items-center gap-2 {{ $tieneEsteRol ? 'active' : '' }}"
                         data-usuario-id="{{ $u->id }}"
                         data-usuario-nombre="{{ $u->name }}"
                         data-rol="{{ $rol->name }}"
-                        data-rol-actual="{{ $rolNombre }}">
-                        @if($rol->name === $rolNombre)
+                        data-tiene="{{ $tieneEsteRol ? '1' : '0' }}"
+                        data-total-roles="{{ count($rolesUsuario) }}">
+                        @if($tieneEsteRol)
                           <i class="ti tabler-check icon-xs text-success"></i>
                         @else
                           <i class="ti tabler-circle icon-xs text-muted"></i>
@@ -483,27 +493,35 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // ── Cambiar rol desde tabla ──────────────────────────────────────────────
+  // ── Toggle rol desde tabla ──────────────────────────────────────────────
   document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.btn-cambiar-rol');
+    const btn = e.target.closest('.btn-toggle-rol');
     if (!btn) return;
 
     const usuarioId     = btn.dataset.usuarioId;
     const usuarioNombre = btn.dataset.usuarioNombre;
-    const rolNuevo      = btn.dataset.rol;
-    const rolActual     = btn.dataset.rolActual;
+    const rolNombre     = btn.dataset.rol;
+    const tiene         = btn.dataset.tiene === '1';
+    const totalRoles    = parseInt(btn.dataset.totalRoles || '1');
+    const accion        = tiene ? 'quitar' : 'agregar';
 
-    if (rolNuevo === rolActual) return; // ya tiene ese rol
+    if (tiene && totalRoles <= 1) {
+      Swal.fire('No permitido', 'El usuario debe tener al menos un rol asignado.', 'warning');
+      return;
+    }
+
+    const textoAccion = tiene
+      ? `Quitar el rol <strong>${rolNombre}</strong> a <strong>${usuarioNombre}</strong>`
+      : `Asignar el rol <strong>${rolNombre}</strong> a <strong>${usuarioNombre}</strong>`;
 
     Swal.fire({
-      title: '¿Cambiar rol?',
-      html:  `<p class="mb-1">Usuario: <strong>${usuarioNombre}</strong></p>
-              <p class="mb-0">Nuevo rol: <strong>${rolNuevo}</strong></p>`,
+      title: tiene ? '¿Quitar rol?' : '¿Asignar rol?',
+      html:  textoAccion,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#7367f0',
+      confirmButtonColor: tiene ? '#ea5455' : '#7367f0',
       cancelButtonColor:  '#6e7881',
-      confirmButtonText:  'Sí, cambiar',
+      confirmButtonText:  tiene ? 'Sí, quitar' : 'Sí, asignar',
       cancelButtonText:   'Cancelar'
     }).then(result => {
       if (!result.isConfirmed) return;
@@ -515,13 +533,13 @@ document.addEventListener('DOMContentLoaded', function () {
           'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
           'Accept':        'application/json',
         },
-        body: JSON.stringify({ rol: rolNuevo }),
+        body: JSON.stringify({ rol: rolNombre, accion }),
       })
       .then(r => r.json())
       .then(data => {
         if (data.success) {
-          sessionStorage.setItem('flash_title', 'Rol actualizado');
-          sessionStorage.setItem('flash_success', `${usuarioNombre} → ${rolNuevo}`);
+          sessionStorage.setItem('flash_title', 'Roles actualizados');
+          sessionStorage.setItem('flash_success', data.message);
           location.reload();
         } else {
           Swal.fire('Error', data.message, 'error');
