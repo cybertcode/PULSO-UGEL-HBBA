@@ -34,6 +34,7 @@ class UserList extends Controller
         $colorMap = [
             'Super Admin'           => 'danger',
             'Administrador'         => 'primary',
+            'Coordinador SCI'       => 'warning',
             'Responsable de Unidad' => 'success',
             'Operador'              => 'info',
             'Visualizador'          => 'secondary',
@@ -75,9 +76,11 @@ class UserList extends Controller
         $filtered = $total;
 
         $usuarios = $query->offset($start)->limit($length)->get()->map(function ($u) use ($colorMap) {
-            $rolNombre = $u->roles->first()->name ?? '—';
+            $roles     = $u->roles->pluck('name')->toArray();
+            $rolNombre = implode(', ', $roles) ?: '—';
             $initials  = collect(explode(' ', $u->name))
                 ->filter()->take(2)->map(fn($w) => strtoupper($w[0]))->implode('');
+            $primerColor = $colorMap[$roles[0] ?? ''] ?? 'secondary';
 
             return [
                 'id'        => $u->id,
@@ -88,7 +91,9 @@ class UserList extends Controller
                 'cargo_id'  => $u->cargo_id ?? '',
                 'unidad'    => $u->unidadOrganica?->sigla ?? '—',
                 'unidad_id' => $u->unidad_organica_id ?? '',
+                'roles'     => $roles,
                 'rol'       => $rolNombre,
+                'rolColor'  => $primerColor,
                 'estado'    => $u->estado ?? 'pendiente',
                 'initials'  => $initials ?: strtoupper(substr($u->name, 0, 1)),
                 'created_ts'=> $u->created_at?->timestamp ?? 0,
@@ -109,11 +114,12 @@ class UserList extends Controller
             'name'               => 'required|string|max:255',
             'email'              => 'required|email|unique:users,email',
             'password'           => ['required', Password::min(8)->mixedCase()->numbers()],
-            'dni'                => 'nullable|digits:8',
+            'dni'                => 'nullable|digits:8|unique:users,dni',
             'cargo_id'           => 'nullable|exists:cargos,id',
             'unidad_organica_id' => 'nullable|exists:unidades_organicas,id',
             'estado'             => 'required|in:activo,inactivo,pendiente',
-            'rol'                => 'required|exists:roles,name',
+            'roles'              => 'required|array|min:1',
+            'roles.*'            => 'exists:roles,name',
         ]);
 
         $user = User::create([
@@ -127,7 +133,7 @@ class UserList extends Controller
             'email_verified_at'  => now(),
         ]);
 
-        $user->assignRole($data['rol']);
+        $user->syncRoles($data['roles']);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         if ($request->ajax()) {
@@ -143,11 +149,12 @@ class UserList extends Controller
             'name'               => 'required|string|max:255',
             'email'              => 'required|email|unique:users,email,' . $usuario->id,
             'password'           => ['nullable', Password::min(8)->mixedCase()->numbers()],
-            'dni'                => 'nullable|digits:8',
+            'dni'                => 'nullable|digits:8|unique:users,dni,' . $usuario->id,
             'cargo_id'           => 'nullable|exists:cargos,id',
             'unidad_organica_id' => 'nullable|exists:unidades_organicas,id',
             'estado'             => 'required|in:activo,inactivo,pendiente',
-            'rol'                => 'required|exists:roles,name',
+            'roles'              => 'required|array|min:1',
+            'roles.*'            => 'exists:roles,name',
         ]);
 
         $usuario->update([
@@ -163,7 +170,7 @@ class UserList extends Controller
             $usuario->update(['password' => Hash::make($data['password'])]);
         }
 
-        $usuario->syncRoles([$data['rol']]);
+        $usuario->syncRoles($data['roles']);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         if ($request->ajax()) {

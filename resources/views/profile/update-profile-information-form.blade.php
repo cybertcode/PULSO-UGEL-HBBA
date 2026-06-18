@@ -84,9 +84,9 @@
       </div>
 
       <div class="col-md-6">
-        <label class="form-label" for="rol">Rol</label>
+        <label class="form-label" for="rol">Rol(es)</label>
         <input id="rol" type="text" class="form-control" disabled
-          value="{{ $this->user->roles->first()?->name ?? 'Sin rol asignado' }}" />
+          value="{{ $this->user->roles->pluck('name')->implode(', ') ?: 'Sin rol asignado' }}" />
         <small class="text-muted">Solo puede ser modificado por un administrador.</small>
       </div>
 

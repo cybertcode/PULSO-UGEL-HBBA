@@ -142,17 +142,17 @@
           @endcan
         </div>
         <div class="col-md-3">
-          <label class="form-label fw-medium">Rol</label>
+          <label class="form-label fw-medium">Rol(es)</label>
           @can('usuarios.editar')
-          <select name="rol" class="form-select">
-            <option value="">— Sin rol —</option>
+          @php $rolesActuales = $authUser->roles->pluck('name')->toArray(); @endphp
+          <select name="roles[]" id="perfil-roles" class="form-select" multiple="multiple">
             @foreach(\Spatie\Permission\Models\Role::orderBy('name')->get() as $r)
-              <option value="{{ $r->name }}" {{ $authUser->roles->first()?->name === $r->name ? 'selected' : '' }}>{{ $r->name }}</option>
+              <option value="{{ $r->name }}" {{ in_array($r->name, $rolesActuales) ? 'selected' : '' }}>{{ $r->name }}</option>
             @endforeach
           </select>
           @else
           <input type="text" class="form-control bg-body-secondary" disabled
-                 value="{{ $authUser->roles->first()?->name ?? 'Sin rol asignado' }}">
+                 value="{{ $authUser->roles->pluck('name')->implode(', ') ?: 'Sin rol asignado' }}">
           <div class="form-text">Asignado por el administrador.</div>
           @endcan
         </div>
@@ -267,8 +267,19 @@
 
 @section('page-script')
 <script>
-// Select2 con tags para cargo
+// Select2 para perfil
 $(function() {
+  // Roles múltiples
+  @can('usuarios.editar')
+  $('#perfil-roles').select2({
+    placeholder: 'Seleccionar rol(es)...',
+    allowClear: false,
+    width: '100%',
+    closeOnSelect: false,
+  });
+  @endcan
+
+  // Cargo con tags AJAX
   $('#cargo').select2({
     placeholder: 'Buscar o escribir cargo...',
     allowClear: true,

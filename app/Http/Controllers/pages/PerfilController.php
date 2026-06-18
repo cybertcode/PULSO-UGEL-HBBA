@@ -25,14 +25,15 @@ class PerfilController extends Controller
         $rules = [
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'max:255', "unique:users,email,{$user->id}"],
-            'dni'      => ['nullable', 'string', 'digits:8'],
+            'dni'      => ['nullable', 'string', 'digits:8', "unique:users,dni,{$user->id}"],
             'cargo_id' => ['nullable', 'exists:cargos,id'],
             'foto'     => ['nullable', 'image', 'mimes:' . ImageService::ALLOWED_MIMES, 'max:' . ImageService::MAX_SIZE_KB],
         ];
 
         if ($user->can('usuarios.editar')) {
             $rules['unidad_organica_id'] = ['nullable', 'exists:unidades_organicas,id'];
-            $rules['rol']                = ['nullable', 'exists:roles,name'];
+            $rules['roles']              = ['nullable', 'array'];
+            $rules['roles.*']            = ['exists:roles,name'];
             $rules['estado']             = ['nullable', 'in:activo,inactivo,pendiente'];
         }
 
@@ -60,8 +61,8 @@ class PerfilController extends Controller
             $fill['unidad_organica_id'] = $validated['unidad_organica_id'] ?? $user->unidad_organica_id;
             $fill['estado']            = $validated['estado'] ?? $user->estado;
 
-            if (!empty($validated['rol'])) {
-                $user->syncRoles([$validated['rol']]);
+            if (!empty($validated['roles'])) {
+                $user->syncRoles($validated['roles']);
             }
         }
 

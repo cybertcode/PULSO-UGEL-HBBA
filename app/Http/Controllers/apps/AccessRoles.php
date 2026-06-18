@@ -79,21 +79,36 @@ class AccessRoles extends Controller
     public function cambiarRol(Request $request, User $usuario)
     {
         $data = $request->validate([
-            'rol' => ['required', Rule::exists('roles', 'name')->where('guard_name', 'web')],
+            'rol'    => ['required', Rule::exists('roles', 'name')->where('guard_name', 'web')],
+            'accion' => 'nullable|in:agregar,quitar',
         ]);
 
-        // Proteger: no se puede quitar el rol al propio usuario autenticado
         if ($usuario->id === auth()->id()) {
             return response()->json(['success' => false, 'message' => 'No puedes cambiar tu propio rol.'], 422);
         }
 
-        $usuario->syncRoles([$data['rol']]);
+        $accion = $data['accion'] ?? 'toggle';
+        $tieneRol = $usuario->hasRole($data['rol']);
+
+        if ($accion === 'quitar' || ($accion === 'toggle' && $tieneRol)) {
+            // Evitar quitar el último rol
+            if ($usuario->roles->count() <= 1) {
+                return response()->json(['success' => false, 'message' => 'El usuario debe tener al menos un rol asignado.'], 422);
+            }
+            $usuario->removeRole($data['rol']);
+            $mensaje = "Rol \"{$data['rol']}\" quitado a {$usuario->name}.";
+        } else {
+            $usuario->assignRole($data['rol']);
+            $mensaje = "Rol \"{$data['rol']}\" asignado a {$usuario->name}.";
+        }
+
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $usuario->load('roles');
 
         return response()->json([
             'success' => true,
-            'message' => "Rol de {$usuario->name} cambiado a \"{$data['rol']}\" correctamente.",
-            'rol'     => $data['rol'],
+            'message' => $mensaje,
+            'roles'   => $usuario->roles->pluck('name'),
         ]);
     }
 

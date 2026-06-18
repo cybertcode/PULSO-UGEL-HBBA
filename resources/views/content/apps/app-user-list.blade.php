@@ -222,9 +222,8 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-user-rol">Rol <span class="text-danger">*</span></label>
-          <select id="add-user-rol" name="rol" class="form-select" required>
-            <option value="">Seleccionar rol</option>
+          <label class="form-label" for="add-user-roles">Rol(es) <span class="text-danger">*</span></label>
+          <select id="add-user-roles" name="roles[]" class="select2-roles form-select" multiple="multiple" required>
             @foreach($roles as $r)
             <option value="{{ $r->name }}">{{ $r->name }}</option>
             @endforeach
@@ -288,8 +287,8 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="edit-user-rol">Rol <span class="text-danger">*</span></label>
-          <select id="edit-user-rol" name="rol" class="form-select" required>
+          <label class="form-label" for="edit-user-roles">Rol(es) <span class="text-danger">*</span></label>
+          <select id="edit-user-roles" name="roles[]" class="select2-roles form-select" multiple="multiple" required>
             @foreach($roles as $r)
             <option value="{{ $r->name }}">{{ $r->name }}</option>
             @endforeach
@@ -450,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Usuario (avatar compacto + nombre + email)
         targets: 2, responsivePriority: 1,
         render: (data, type, row) => {
-          const color = colorMap[row.rol] || 'secondary';
+          const color = row.rolColor || 'secondary';
           return `<div class="d-flex align-items-center gap-2 user-name-cell">
               <span class="avatar-initial rounded-circle bg-label-${color} user-avatar-xs flex-shrink-0">${row.initials}</span>
               <div>
@@ -461,17 +460,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       },
       {
-        // Rol con chip compacto
+        // Rol(es) con chips compactos
         targets: 3,
         render: (data, type, row) => {
-          const color = colorMap[row.rol] || 'secondary';
           const icons = {
             'Super Admin': 'tabler-shield-lock', 'Administrador': 'tabler-crown',
+            'Coordinador SCI': 'tabler-clipboard-check',
             'Responsable de Unidad': 'tabler-user-check', 'Operador': 'tabler-user-edit',
             'Visualizador': 'tabler-eye'
           };
-          const icon = icons[row.rol] || 'tabler-user';
-          return `<span class="rol-chip text-${color}"><i class="ti ${icon}" style="font-size:.9rem"></i>${row.rol}</span>`;
+          if (!row.roles || row.roles.length === 0) {
+            return `<span class="rol-chip text-secondary"><i class="ti tabler-user" style="font-size:.9rem"></i>—</span>`;
+          }
+          return row.roles.map(r => {
+            const color = colorMap[r] || 'secondary';
+            const icon  = icons[r] || 'tabler-user';
+            return `<span class="rol-chip text-${color} me-1"><i class="ti ${icon}" style="font-size:.9rem"></i>${r}</span>`;
+          }).join('');
         }
       },
       {
@@ -498,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
               data-id="${row.id}" data-name="${row.name}" data-email="${row.email}"
               data-dni="${row.dni !== '—' ? row.dni : ''}"
               data-cargo-id="${row.cargo_id}" data-cargo-nombre="${row.cargo}"
-              data-unidad-id="${row.unidad_id}" data-rol="${row.rol}" data-estado="${row.estado}"
+              data-unidad-id="${row.unidad_id}" data-roles="${encodeURIComponent(JSON.stringify(row.roles))}" data-estado="${row.estado}"
               data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditUser"
               title="Editar"><i class="ti tabler-edit" style="font-size:1rem"></i></button>`;
             btns += `<button class="btn btn-icon btn-sm btn-text-warning rounded-2 btn-reset-password"
@@ -816,11 +821,26 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // ── Select2: roles múltiples ──
+  function initRolesSelect2(selector, offcanvasEl) {
+    if (!window.$ || !$.fn.select2) return;
+    const $el = $(selector);
+    if ($el.data('select2')) $el.select2('destroy');
+    $el.select2({
+      dropdownParent: $(offcanvasEl),
+      placeholder: 'Seleccionar rol(es)...',
+      allowClear: false,
+      width: '100%',
+      closeOnSelect: false,
+    });
+  }
+
   // Inicializar Select2 cuando se abre el offcanvas Agregar
   document.getElementById('offcanvasAddUser')?.addEventListener('shown.bs.offcanvas', function () {
     if (!window.$ || !$.fn.select2) return;
     $('#add-user-unidad').not('.select2-hidden-accessible').select2({ dropdownParent: $(this), width: '100%', placeholder: 'Sin asignar' });
     initCargosSelect2('#add-user-cargo', this);
+    initRolesSelect2('#add-user-roles', this);
   });
 
   // Inicializar Select2 cuando se abre el offcanvas Editar
@@ -828,12 +848,19 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!window.$ || !$.fn.select2) return;
     $('#edit-user-unidad').not('.select2-hidden-accessible').select2({ dropdownParent: $(this), width: '100%', placeholder: 'Sin asignar' });
     initCargosSelect2('#edit-user-cargo', this);
+    initRolesSelect2('#edit-user-roles', this);
 
     const unidadId  = this.dataset.pendingUnidad;
     const cargoId   = this.dataset.pendingCargoId;
     const cargoNom  = this.dataset.pendingCargoNombre;
+    const roles     = JSON.parse(decodeURIComponent(this.dataset.pendingRoles || '[]'));
 
     if (unidadId) { $('#edit-user-unidad').val(unidadId).trigger('change'); }
+
+    // Preseleccionar roles actuales
+    if (roles.length) {
+      $('#edit-user-roles').val(roles).trigger('change');
+    }
 
     // Preseleccionar cargo actual por ID — crear opción si no existe aún
     if (cargoId && cargoId !== '') {
@@ -859,13 +886,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('edit-user-email').value    = btn.dataset.email;
     document.getElementById('edit-user-dni').value      = btn.dataset.dni || '';
     document.getElementById('edit-user-password').value = '';
-    document.getElementById('edit-user-rol').value      = btn.dataset.rol;
     document.getElementById('edit-user-estado').value   = btn.dataset.estado;
 
     // Guardar para aplicar en shown.bs.offcanvas (Select2 necesita el elemento visible)
     offcanvas.dataset.pendingUnidad       = btn.dataset.unidadId      || '';
     offcanvas.dataset.pendingCargoId      = btn.dataset.cargoId       || '';
     offcanvas.dataset.pendingCargoNombre  = btn.dataset.cargoNombre   || '';
+    offcanvas.dataset.pendingRoles        = btn.dataset.roles         || '[]';
 
     // Valor nativo de unidad (fallback sin Select2)
     const unidadSel = document.getElementById('edit-user-unidad');
