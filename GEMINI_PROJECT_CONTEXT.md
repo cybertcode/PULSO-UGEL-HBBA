@@ -1,6 +1,24 @@
 # Historial de Versiones - Proyecto PULSO (SATA-QR - UGEL Huacaybamba)
 
-## [v2.1.5] - 2026-06-15 (Sesión Actual)
+## [v2.2.0] - 2026-06-17 (Sesión Actual)
+### Seguridad, Multi-Roles y Gestión Estructural de Cargos
+- **Sistema Multi-rol Avanzado**:
+    - Migración de lógica de rol único a múltiple mediante **Select2**, permitiendo a los usuarios poseer diversos perfiles de acceso simultáneos.
+    - Implementación de una interfaz interactiva de "Toggle Rol" en la gestión de acceso para agregar o quitar permisos individuales con un solo clic y confirmación visual.
+    - Actualización de iconografía dinámica para el nuevo rol **"Coordinador SCI"** y visualización de múltiples badges en todas las tablas del sistema.
+- **Soporte Multi-cargo Institucional**:
+    - Reestructuración masiva de la base de datos: eliminación del campo `cargo_id` en `users` y creación de la tabla pivot `cargo_user`.
+    - Esta mejora permite que un funcionario desempeñe múltiples cargos técnicos o administrativos dentro de la UGEL, reflejando fielmente la realidad operativa.
+    - Sincronización automática de cargos existentes durante la migración para garantizar la integridad de los datos históricos.
+- **Validación de Identidad y Seguridad**:
+    - Implementación de restricción de **DNI Único** a nivel de base de datos y validaciones de backend, previniendo la duplicidad de registros de personal.
+    - Refactorización de los controladores de `UserList` y `Perfil` para soportar la sincronización asíncrona de múltiples entidades (roles y cargos).
+- **Mejoras de UI/UX y Correcciones**:
+    - Corrección de la longitud de campo para URLs en Instituciones Vinculadas (cambio a tipo `TEXT`), eliminando errores de truncado en enlaces extensos.
+    - Optimización de las vistas de configuración, cumplimiento y modelo de integridad para consumir la nueva estructura relacional de cargos.
+    - Limpieza profunda de caché de rutas y actualización de seeders maestros.
+
+## [v2.1.5] - 2026-06-15
 ### Infraestructura, Despliegue y Refactorización
 - **Optimización para Hosting Compartido (InMotionHosting)**:
     - Actualización de `DEPLOY_PRODUCCION.md` para forzar el uso de PHP 8.3 mediante rutas absolutas (`/opt/cpanel/ea-php83/root/usr/bin/php`), garantizando la compatibilidad del proyecto en el servidor de producción.
