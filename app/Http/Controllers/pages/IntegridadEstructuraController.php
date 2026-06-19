@@ -17,7 +17,7 @@ class IntegridadEstructuraController extends Controller
         $anio  = $request->input('anio', now()->year);
         $anios = IntegridadEtapa::selectRaw('DISTINCT anio')->orderByDesc('anio')->pluck('anio');
 
-        $etapas = IntegridadEtapa::with(['componentes'])
+        $etapas = IntegridadEtapa::with(['componentes.preguntas'])
             ->where('anio', $anio)
             ->orderBy('orden')
             ->get();
@@ -71,6 +71,16 @@ class IntegridadEstructuraController extends Controller
             return response()->json(['ok' => true, 'message' => 'Etapa actualizada.', 'etapa' => $etapa->fresh()]);
         }
         return back()->with('success', 'Etapa actualizada.');
+    }
+
+    public function toggleEtapa(Request $request, IntegridadEtapa $etapa)
+    {
+        $etapa->update(['activo' => !$etapa->activo]);
+        return response()->json([
+            'ok'     => true,
+            'activo' => $etapa->activo,
+            'message'=> $etapa->activo ? "Etapa «{$etapa->nombre}» activada." : "Etapa «{$etapa->nombre}» desactivada.",
+        ]);
     }
 
     public function destroyEtapa(Request $request, IntegridadEtapa $etapa)
@@ -149,6 +159,24 @@ class IntegridadEstructuraController extends Controller
             ]);
         }
         return back()->with('success', 'Componente actualizado.');
+    }
+
+    public function reorderComponentes(Request $request)
+    {
+        $items = $request->validate(['items' => 'required|array', 'items.*.id' => 'required|exists:integridad_componentes,id', 'items.*.orden' => 'required|integer|min:0'])['items'];
+        foreach ($items as $item) {
+            IntegridadComponente::where('id', $item['id'])->update(['orden' => $item['orden']]);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    public function reorderPreguntas(Request $request)
+    {
+        $items = $request->validate(['items' => 'required|array', 'items.*.id' => 'required|exists:integridad_preguntas,id', 'items.*.orden' => 'required|integer|min:0'])['items'];
+        foreach ($items as $item) {
+            IntegridadPregunta::where('id', $item['id'])->update(['orden' => $item['orden']]);
+        }
+        return response()->json(['ok' => true]);
     }
 
     public function destroyComponente(Request $request, IntegridadComponente $componente)
