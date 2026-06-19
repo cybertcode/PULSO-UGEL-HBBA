@@ -47,6 +47,41 @@ function alertaNavegar(alertaId, destUrl, el) {
     window.location.href = destUrl;
   });
 }
+
+function notifBDNavegar(notifId, destUrl, el) {
+  if (el.dataset.procesando) return;
+  el.dataset.procesando = '1';
+  fetch('/notifications/' + notifId + '/read', {
+    method: 'PATCH',
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      'Accept': 'application/json',
+    }
+  }).finally(function() {
+    window.location.href = destUrl;
+  });
+}
+
+function marcarTodasLeidasBD(btn) {
+  btn.disabled = true;
+  fetch('/notifications/read-all', {
+    method: 'PATCH',
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      'Accept': 'application/json',
+    }
+  }).then(function() {
+    // Remover todos los items de notificaciones de BD del dropdown y el badge
+    document.querySelectorAll('.dropdown-notifications-item').forEach(function(el) {
+      if (el.querySelector('[onclick*="notifBDNavegar"]')) el.remove();
+    });
+    btn.closest('li').remove();
+    var badge = document.querySelector('.badge-notifications');
+    if (badge) badge.remove();
+  }).catch(function() {
+    btn.disabled = false;
+  });
+}
 </script>
 
 <!-- Global Toast Auto-dismiss -->

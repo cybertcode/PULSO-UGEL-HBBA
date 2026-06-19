@@ -145,7 +145,7 @@ class ReportesController extends Controller
             ->sortByDesc('porcentaje')->values();
 
         $unidades = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
-        $anios    = range(now()->year + 1, now()->year - 3);
+        $anios    = range(now()->year, now()->year - 3);
 
         if ($request->ajax()) {
             return response()->json([

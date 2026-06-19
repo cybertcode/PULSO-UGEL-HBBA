@@ -87,6 +87,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::delete('/control-interno/{actividad}',         [ControlInternoController::class, 'destroy'])->name('sci-control-interno.destroy')->middleware('can:control-interno.eliminar');
     Route::patch('/control-interno/{actividad}/avance',   [ControlInternoController::class, 'updateAvance'])->name('sci-control-interno.avance')->middleware('can:control-interno.editar');
     Route::get('/control-interno/{actividad}/historial',  [ControlInternoController::class, 'historial'])->name('sci-control-interno.historial')->middleware('can:control-interno.ver');
+    // Ruta estática ANTES de cualquier wildcard adicional para evitar colisión
+    Route::get('/control-interno/responsable/{user}/seguimiento', [ControlInternoController::class, 'seguimientoResponsable'])->name('sci-control-interno.seguimiento')->middleware('can:control-interno.ver');
 
     Route::get('/modelo-integridad', [ModeloIntegridadController::class, 'index'])->name('sci-modelo-integridad')->middleware('can:integridad.ver');
     Route::post('/modelo-integridad',                        [ModeloIntegridadController::class, 'store'])->name('integridad.store')->middleware('can:integridad.crear');
@@ -105,12 +107,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::patch('/evidencias/{evidencia}/validar',   [EvidenciasController::class, 'validar'])->name('sci-evidencias.validar')->middleware('can:evidencias.validar');
     Route::delete('/evidencias/{evidencia}',          [EvidenciasController::class, 'destroy'])->name('sci-evidencias.destroy')->middleware('can:evidencias.eliminar');
 
-    // Notificaciones
+    // Notificaciones de BD
     Route::patch('/notifications/{id}/read', function (string $id) {
         $notif = auth()->user()->notifications()->findOrFail($id);
         $notif->markAsRead();
-        return back();
+        return request()->wantsJson() ? response()->json(['ok' => true]) : back();
     })->name('notifications.read');
+    Route::patch('/notifications/read-all', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return response()->json(['ok' => true]);
+    })->name('notifications.read-all');
 
     // --- Monitoreo ---
     Route::get('/semaforo/demo',      [SemaforoController::class, 'demo'])->name('sci-semaforo.demo')->middleware('can:semaforo.ver');
@@ -134,6 +140,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::middleware('can:cumplimiento.ver')->group(function () {
         Route::get('/cumplimiento/panel',         [CumplimientoController::class, 'panelSci'])->name('cumplimiento.panel');
         Route::get('/cumplimiento/sin-evidencia', [CumplimientoController::class, 'sinEvidencia'])->name('cumplimiento.sin-evidencia');
+        Route::post('/cumplimiento/recordatorio/{actividad}', [CumplimientoController::class, 'enviarRecordatorio'])->name('cumplimiento.recordatorio');
     });
     // responsables y exportar requieren permiso elevado (Coordinador SCI / Admin)
     Route::get('/cumplimiento/responsables', [CumplimientoController::class, 'responsables'])->name('cumplimiento.responsables')->middleware('can:cumplimiento.exportar');

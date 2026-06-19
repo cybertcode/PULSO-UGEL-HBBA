@@ -56,6 +56,18 @@ $configData = Helper::appClasses();
 .act-actions { display: flex; gap: .4rem; padding: .75rem 1.25rem; border-top: 1px solid rgba(0,0,0,.05); background: rgba(0,0,0,.015); border-radius: 0 0 14px 14px; }
 .btn-act { border-radius: 8px; font-size: .78rem; padding: .38rem .75rem; font-weight: 600; }
 
+/* ── Botón ficha de pregunta ────────────────────────────────── */
+.btn-ficha-link { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 600; color: #7367f0; background: rgba(115,103,240,.08); border: 1px solid rgba(115,103,240,.25); border-radius: 6px; padding: .28em .7em; text-decoration: none; transition: background .15s, border-color .15s; }
+.btn-ficha-link:hover { background: rgba(115,103,240,.16); border-color: rgba(115,103,240,.5); color: #7367f0; }
+.btn-ficha-link .ti { font-size: .85rem; }
+
+/* ── Panel detalle colapsable ───────────────────────────────── */
+.act-detalle-panel { padding: .65rem 1.25rem .5rem; border-top: 1px dashed rgba(0,0,0,.08); background: rgba(0,0,0,.018); font-size: .76rem; display: flex; flex-direction: column; gap: .3rem; }
+.det-row { display: flex; align-items: flex-start; gap: .4rem; line-height: 1.35; }
+.det-icon { font-size: .8rem; color: #a8aaae; flex-shrink: 0; margin-top: .08rem; }
+.det-label { font-weight: 700; color: #6e6b7b; white-space: nowrap; flex-shrink: 0; }
+.det-val { color: #4b4b4b; }
+
 /* ── Filter card ────────────────────────────────────────────── */
 .filter-card { border-radius: 14px; border: 1px solid rgba(0,0,0,.06); }
 .filter-card .form-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6e6b7b; margin-bottom: .3rem; }

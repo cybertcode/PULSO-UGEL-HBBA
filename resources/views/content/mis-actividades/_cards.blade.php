@@ -38,6 +38,18 @@
     $estadoIcon = 'tabler-alert-circle';
   }
   $canEdit = !in_array($act->estado, ['completada', 'vencida']) || $evRechazadas > 0;
+
+  // Datos extra para el panel de detalle
+  $linkFicha = $act->modulo === 'integridad'
+    ? $act->integridadPregunta?->link_ficha
+    : $act->sciPregunta?->link_ficha;
+
+  $actEje = $act->modulo === 'integridad'
+    ? $act->integridadPregunta?->componente?->etapa?->nombre
+    : $act->sciPregunta?->componente?->eje?->nombre;
+
+  $tieneDetalle = $act->descripcion || $act->observaciones || $act->numero_sgd || $act->fecha_inicio || $actEje;
+  $collapseId = 'det-'.$act->id;
 @endphp
 <div class="col-md-6 col-xl-4">
   <div class="card act-card is-{{ $act->estado }} h-100" data-act-id="{{ $act->id }}">
@@ -58,13 +70,22 @@
       <h6 class="mb-0 fw-bold lh-sm" title="{{ $act->nombre }}" style="font-size:.9rem">{{ Str::limit($act->nombre, 65) }}</h6>
     </div>
     <div class="act-body flex-grow-1">
-      <p class="text-muted mb-3 d-flex align-items-center gap-2 flex-wrap" style="font-size:.78rem">
+      <p class="text-muted mb-2 d-flex align-items-center gap-2 flex-wrap" style="font-size:.78rem">
         <span class="badge bg-label-{{ $actModuloBadge }}" style="font-size:.65rem">{{ strtoupper($act->modulo) }}</span>
         <i class="ti tabler-layout-grid" style="font-size:.8rem"></i>
         {{ $actComp ?? '—' }}
         <span class="mx-1">·</span>
         <code class="text-muted" style="font-size:.72rem">{{ $act->codigo }}</code>
       </p>
+      @if($linkFicha)
+      <div class="mb-3">
+        <a href="{{ $linkFicha }}" target="_blank" rel="noopener" class="btn-ficha-link">
+          <i class="ti tabler-file-text"></i>
+          Ver ficha de la pregunta
+          <i class="ti tabler-external-link" style="font-size:.7rem;opacity:.6"></i>
+        </a>
+      </div>
+      @endif
       <div class="mb-3">
         <div class="d-flex justify-content-between align-items-center mb-1">
           <span class="text-muted" style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Avance</span>
@@ -118,6 +139,48 @@
         </div>
       </div>
     </div>
+    {{-- Panel colapsable con detalle extra --}}
+    @if($tieneDetalle || $linkFicha)
+    <div class="collapse" id="{{ $collapseId }}">
+      <div class="act-detalle-panel">
+        @if($actEje)
+          <div class="det-row">
+            <i class="ti tabler-sitemap det-icon"></i>
+            <span class="det-label">{{ $act->modulo === 'integridad' ? 'Etapa' : 'Eje' }}:</span>
+            <span class="det-val">{{ $actEje }}</span>
+          </div>
+        @endif
+        @if($act->descripcion)
+          <div class="det-row">
+            <i class="ti tabler-align-left det-icon"></i>
+            <span class="det-label">Descripción:</span>
+            <span class="det-val">{{ $act->descripcion }}</span>
+          </div>
+        @endif
+        @if($act->numero_sgd)
+          <div class="det-row">
+            <i class="ti tabler-file-description det-icon"></i>
+            <span class="det-label">N° SGD:</span>
+            <span class="det-val">{{ $act->numero_sgd }}</span>
+          </div>
+        @endif
+        @if($act->fecha_inicio)
+          <div class="det-row">
+            <i class="ti tabler-calendar-plus det-icon"></i>
+            <span class="det-label">Inicio:</span>
+            <span class="det-val">{{ $act->fecha_inicio->format('d/m/Y') }}</span>
+          </div>
+        @endif
+        @if($act->observaciones)
+          <div class="det-row det-row-obs">
+            <i class="ti tabler-notes det-icon"></i>
+            <span class="det-label">Observaciones:</span>
+            <span class="det-val">{{ $act->observaciones }}</span>
+          </div>
+        @endif
+      </div>
+    </div>
+    @endif
     <div class="act-actions">
       @if($canEdit)
       <button class="btn btn-sm btn-primary btn-act flex-fill btn-actualizar-avance"
@@ -187,6 +250,16 @@
         data-nombre="{{ Str::limit($act->nombre, 60) }}"
         data-action="{{ route('sci-evidencias.store') }}">
         <i class="ti {{ $evBtnIcon }}"></i>
+      </button>
+      @endif
+      @if($tieneDetalle)
+      <button class="btn btn-sm btn-act btn-outline-secondary"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#{{ $collapseId }}"
+        aria-expanded="false"
+        title="Ver más detalle">
+        <i class="ti tabler-dots"></i>
       </button>
       @endif
       <button class="btn btn-sm btn-act btn-outline-secondary btn-ver-historial"

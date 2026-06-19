@@ -323,17 +323,29 @@
             </td>
             <td><small class="text-muted">{{ $act->created_at->format('d/m/Y') }}</small></td>
             <td class="text-center">
-              @if($act->estado === 'observado')
-                <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id, 'modulo' => $act->modulo, 'estado' => 'rechazado']) }}"
-                   class="btn btn-sm btn-danger" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
-                  <i class="ti tabler-refresh-alert me-1"></i>Corregir
+              @php
+                $urlVer = $act->modulo === 'integridad'
+                  ? route('sci-modelo-integridad', ['buscar' => $act->codigo])
+                  : route('sci-control-interno',   ['buscar' => $act->codigo]);
+                $urlRecordatorio = route('cumplimiento.recordatorio', $act->id);
+                $tienePrincipal  = $act->responsables->where('pivot.tipo', 'principal')->isNotEmpty();
+              @endphp
+              <div class="d-flex align-items-center justify-content-center gap-1">
+                <a href="{{ $urlVer }}"
+                   class="btn btn-icon btn-sm btn-label-secondary"
+                   title="Ver actividad en {{ $act->modulo === 'integridad' ? 'Modelo de Integridad' : 'Control Interno' }}">
+                  <i class="ti tabler-eye icon-14px"></i>
                 </a>
-              @else
-                <a href="{{ route('sci-evidencias', ['actividad_id' => $act->id, 'nueva' => 1]) }}"
-                   class="btn btn-sm btn-primary" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
-                  <i class="ti tabler-upload me-1"></i>Subir
-                </a>
-              @endif
+                @if($tienePrincipal)
+                <button type="button"
+                        class="btn btn-icon btn-sm btn-label-warning btn-recordatorio"
+                        data-url="{{ $urlRecordatorio }}"
+                        data-codigo="{{ $act->codigo }}"
+                        title="Enviar recordatorio interno al responsable">
+                  <i class="ti tabler-bell-ringing icon-14px"></i>
+                </button>
+                @endif
+              </div>
             </td>
           </tr>
           @empty
@@ -367,8 +379,11 @@
 <script>
 window.addEventListener('load', function () {
 (function () {
-  const RUTA    = @json(route('cumplimiento.sin-evidencia'));
-  const RUTA_EV = @json(route('sci-evidencias'));
+  const RUTA           = @json(route('cumplimiento.sin-evidencia'));
+  const RUTA_VER_SCI   = @json(route('sci-control-interno'));
+  const RUTA_VER_INT   = @json(route('sci-modelo-integridad'));
+  const RUTA_RECORD    = @json(url('/cumplimiento/recordatorio'));
+  const CSRF           = @json(csrf_token());
   const POR_PAG = 20;
 
   let estado = {
@@ -532,16 +547,20 @@ window.addEventListener('load', function () {
         <td>${fechaHtml}</td>
         <td><small class="text-muted">${esc(act.created_at ?? '—')}</small></td>
         <td class="text-center">
-          ${act.estado === 'observado'
-            ? `<a href="${RUTA_EV}?actividad_id=${act.id}&modulo=${act.modulo}&estado=rechazado"
-                 class="btn btn-sm btn-danger" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
-                <i class="ti tabler-refresh-alert me-1"></i>Corregir
-               </a>`
-            : `<a href="${RUTA_EV}?actividad_id=${act.id}&nueva=1"
-                 class="btn btn-sm btn-primary" style="border-radius:8px;font-size:.78rem;padding:.3rem .7rem">
-                <i class="ti tabler-upload me-1"></i>Subir
-               </a>`
-          }
+          <div class="d-flex align-items-center justify-content-center gap-1">
+            <a href="${act.modulo === 'integridad' ? RUTA_VER_INT : RUTA_VER_SCI}?buscar=${encodeURIComponent(act.codigo)}"
+               class="btn btn-icon btn-sm btn-label-secondary"
+               title="Ver actividad en ${act.modulo === 'integridad' ? 'Modelo de Integridad' : 'Control Interno'}">
+              <i class="ti tabler-eye icon-14px"></i>
+            </a>
+            <button type="button"
+                    class="btn btn-icon btn-sm btn-label-warning btn-recordatorio"
+                    data-url="${RUTA_RECORD}/${act.id}"
+                    data-codigo="${esc(act.codigo)}"
+                    title="Enviar recordatorio interno al responsable">
+              <i class="ti tabler-bell-ringing icon-14px"></i>
+            </button>
+          </div>
         </td>
       </tr>`;
     }).join('');
@@ -551,7 +570,41 @@ window.addEventListener('load', function () {
     return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
   function ucFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
 })();
+
+  // ── Recordatorio interno (fuera del IIFE para evitar conflictos) ──────────
+  const _CSRF_REC = @json(csrf_token());
+  document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.btn-recordatorio');
+    if (!btn || btn.disabled) return;
+
+    const url = btn.dataset.url;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+      const res  = await fetch(url, {
+        method  : 'POST',
+        headers : { 'X-CSRF-TOKEN': _CSRF_REC, 'Accept': 'application/json' },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        btn.innerHTML = '<i class="ti tabler-bell-check icon-14px"></i>';
+        btn.classList.replace('btn-label-warning', 'btn-label-success');
+        btn.title = data.mensaje ?? 'Recordatorio enviado';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti tabler-bell-ringing icon-14px"></i>';
+        alert(data.error ?? 'No se pudo enviar el recordatorio.');
+      }
+    } catch(err) {
+      console.error('Recordatorio error:', err);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti tabler-bell-ringing icon-14px"></i>';
+    }
+  });
+
 }); // end window.load
 </script>
 @endsection

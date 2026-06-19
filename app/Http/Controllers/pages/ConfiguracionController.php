@@ -27,7 +27,7 @@ class ConfiguracionController extends Controller
         ]);
 
         $usuarios = User::with(['cargos', 'unidadOrganica'])
-            ->where('estado', true)
+            ->where('estado', 'activo')
             ->orderBy('name')
             ->get()
             ->map(fn($u) => [

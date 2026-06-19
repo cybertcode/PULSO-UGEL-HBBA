@@ -10,6 +10,7 @@ use App\Models\SciEje;
 use App\Models\IntegridadEtapa;
 use Illuminate\Http\Request;
 use App\Notifications\EvidenciaRevisada;
+use App\Notifications\EvidenciaEnviada;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -93,8 +94,11 @@ class EvidenciasController extends Controller
                 'validado_por'   => $ev->validadoPor?->name,
                 'estado'         => $ev->estado,
                 'url_documento'  => $ev->url_documento,
-                'url_host'       => $ev->url_documento ? (parse_url($ev->url_documento, PHP_URL_HOST) ?: $ev->url_documento) : null,
-                'fecha'          => $ev->created_at->format('d/m/Y'),
+                'url_host'            => $ev->url_documento ? (parse_url($ev->url_documento, PHP_URL_HOST) ?: $ev->url_documento) : null,
+                'avance'                 => $ev->actividad?->avance ?? 0,
+                'estado_actividad_color' => $ev->actividad?->estado_color ?? 'secondary',
+                'estado_actividad_label' => $ev->actividad?->estado_label ?? '',
+                'fecha'               => $ev->created_at->format('d/m/Y'),
                 'motivo_rechazo' => $ev->motivo_rechazo ?? null,
                 'motivo_corto'   => $ev->motivo_rechazo ? Str::limit($ev->motivo_rechazo, 40) : null,
                 'es_propio'      => $ev->subido_por === Auth::id(),
@@ -164,6 +168,21 @@ class EvidenciasController extends Controller
         return $q->get(['id', 'codigo', 'nombre', 'estado', 'modulo']);
     }
 
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private function notificarValidadores(Evidencia $evidencia, string $accion): void
+    {
+        // Notificar a usuarios con permiso evidencias.validar, excepto quien subió
+        $validadores = \App\Models\User::where('estado', 'activo')
+            ->where('id', '!=', Auth::id())
+            ->get()
+            ->filter(fn($u) => $u->can('evidencias.validar'));
+
+        foreach ($validadores as $validador) {
+            $validador->notify(new EvidenciaEnviada($evidencia, $accion));
+        }
+    }
+
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
     public function store(Request $request)
@@ -208,9 +227,14 @@ class EvidenciasController extends Controller
                 'validado_por'   => null,
                 'validado_at'    => null,
             ]);
-            if ($actividad->estado === 'observado') {
-                $actividad->update(['estado' => 'en_proceso']);
+
+            // Forzar avance a 100% al reenviar evidencia
+            $avanceAntesBefore = $actividad->avance;
+            $actData = ['estado' => 'en_proceso'];
+            if ($actividad->avance < 100) {
+                $actData['avance'] = 100;
             }
+            $actividad->update($actData);
 
             ActividadHistorial::create([
                 'actividad_id'   => $actividad->id,
@@ -220,6 +244,21 @@ class EvidenciasController extends Controller
                 'valor_nuevo'    => 'pendiente',
                 'descripcion'    => 'Evidencia corregida y reenviada: "' . $evRechazada->titulo . '"' . ($evRechazada->numero_sgd ? ' (SGD: ' . $evRechazada->numero_sgd . ')' : ''),
             ]);
+
+            if ($avanceAntesBefore < 100) {
+                ActividadHistorial::create([
+                    'actividad_id'   => $actividad->id,
+                    'usuario_id'     => $user->id,
+                    'campo'          => 'avance',
+                    'valor_anterior' => $avanceAntesBefore . '%',
+                    'valor_nuevo'    => '100%',
+                    'descripcion'    => 'Avance llevado a 100% automáticamente al reenviar evidencia corregida',
+                ]);
+            }
+
+            // Notificar a validadores que hay una evidencia corregida lista para revisar
+            $evRechazada->refresh();
+            $this->notificarValidadores($evRechazada, 'corregida');
 
             return redirect()->route('sci-evidencias', [
                 'modulo'       => $actividad->modulo ?? 'sci',
@@ -247,6 +286,24 @@ class EvidenciasController extends Controller
             'valor_nuevo'    => 'pendiente',
             'descripcion'    => 'Evidencia enviada: "' . $nuevaEv->titulo . '"' . ($nuevaEv->numero_sgd ? ' (SGD: ' . $nuevaEv->numero_sgd . ')' : ''),
         ]);
+
+        // Forzar avance a 100% al enviar evidencia nueva
+        $avanceAntesNew = $actividad->avance;
+        if ($actividad->avance < 100) {
+            $actividad->update(['avance' => 100]);
+            ActividadHistorial::create([
+                'actividad_id'   => $actividad->id,
+                'usuario_id'     => $user->id,
+                'campo'          => 'avance',
+                'valor_anterior' => $avanceAntesNew . '%',
+                'valor_nuevo'    => '100%',
+                'descripcion'    => 'Avance llevado a 100% automáticamente al enviar evidencia',
+            ]);
+        }
+
+        // Notificar a validadores que hay evidencia nueva para revisar
+        $this->notificarValidadores($nuevaEv, 'nueva');
+
         return redirect()->route('sci-evidencias', [
             'modulo'      => $actividad->modulo ?? 'sci',
             'actividad_id'=> $request->actividad_id,
@@ -294,6 +351,8 @@ class EvidenciasController extends Controller
             if ($actividad && $actividad->estado === 'observado') {
                 $actividad->update(['estado' => 'en_proceso']);
             }
+            // Notificar a validadores que la evidencia fue corregida
+            $this->notificarValidadores($evidencia, 'corregida');
         }
 
         $msg = $eraRechazada
@@ -344,9 +403,49 @@ class EvidenciasController extends Controller
             }
         } elseif ($accion === 'rechazado') {
             if ($actividad && !in_array($actividad->estado, ['vencida'])) {
-                $actividad->update(['estado' => 'observado']);
-            }
-            if ($actividad) {
+                // Recuperar el avance que tenía ANTES de subir la evidencia
+                // Buscamos el registro de historial de avance inmediatamente anterior al envío de la evidencia
+                $evidenciaSubidaAt = $evidencia->created_at ?? now();
+                $historialAvancePrevio = ActividadHistorial::where('actividad_id', $actividad->id)
+                    ->where('campo', 'avance')
+                    ->where('created_at', '<', $evidenciaSubidaAt)
+                    ->latest()
+                    ->first();
+
+                // Avance a restaurar: el que tenía antes (máx 90%), o 90% si no hay historial
+                $avanceRestaurar = 90;
+                if ($historialAvancePrevio) {
+                    $valorPrevio = (int) rtrim($historialAvancePrevio->valor_nuevo, '%');
+                    // No restaurar a más de 90% ni a 100% (eso solo lo da la validación)
+                    $avanceRestaurar = min($valorPrevio, 90);
+                }
+
+                $avanceAntesDel = $actividad->avance;
+                $actividad->update([
+                    'estado' => 'observado',
+                    'avance' => $avanceRestaurar,
+                ]);
+
+                ActividadHistorial::create([
+                    'actividad_id'   => $actividad->id,
+                    'usuario_id'     => Auth::id(),
+                    'campo'          => 'evidencia',
+                    'valor_anterior' => 'pendiente',
+                    'valor_nuevo'    => 'rechazado',
+                    'descripcion'    => 'Evidencia rechazada: "' . $evidencia->titulo . '"' . ($evidencia->numero_sgd ? ' (SGD: ' . $evidencia->numero_sgd . ')' : '') . ($motivo ? ' — Motivo: ' . $motivo : ''),
+                ]);
+
+                if ($avanceAntesDel !== $avanceRestaurar) {
+                    ActividadHistorial::create([
+                        'actividad_id'   => $actividad->id,
+                        'usuario_id'     => Auth::id(),
+                        'campo'          => 'avance',
+                        'valor_anterior' => $avanceAntesDel . '%',
+                        'valor_nuevo'    => $avanceRestaurar . '%',
+                        'descripcion'    => 'Avance ajustado a ' . $avanceRestaurar . '% por rechazo de evidencia (requiere corrección)',
+                    ]);
+                }
+            } elseif ($actividad) {
                 ActividadHistorial::create([
                     'actividad_id'   => $actividad->id,
                     'usuario_id'     => Auth::id(),

@@ -487,7 +487,7 @@ $kpisConfig = [
               </td>
             </tr>
             @empty
-            <tr><td colspan="8">
+            <tr><td colspan="9">
               <div class="empty-ev"><div class="empty-icon"><i class="ti tabler-file-off"></i></div>
               <div class="fw-semibold mb-1">No hay evidencias registradas</div>
               <div class="text-body-secondary" style="font-size:13px">Aún no se han registrado evidencias para este módulo.</div></div>
@@ -803,6 +803,15 @@ document.addEventListener('DOMContentLoaded', function () {
           ${modChip}
           <div style="font-size:12px;max-width:160px;margin-top:3px">${esc(ev.actividad)}</div>
           ${ev.codigo ? `<small class="text-muted" style="font-size:10px">${esc(ev.codigo)}</small>` : ''}
+        </td>
+        <td>
+          <div class="d-flex align-items-center gap-1" style="min-width:80px">
+            <div style="flex:1;height:6px;background:#e9ecef;border-radius:3px;overflow:hidden">
+              <div style="width:${ev.avance ?? 0}%;height:100%;background:var(--bs-${esc(ev.estado_actividad_color ?? 'secondary')});border-radius:3px"></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;white-space:nowrap;color:var(--bs-${esc(ev.estado_actividad_color ?? 'secondary')})">${ev.avance ?? 0}%</span>
+          </div>
+          <div style="font-size:10px;font-weight:600;margin-top:2px;color:var(--bs-secondary-color)">${esc(ev.estado_actividad_label ?? '')}</div>
         </td>
         <td><div style="font-size:12px;max-width:160px">${esc(ev.componente ?? '—')}</div></td>
         <td>

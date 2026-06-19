@@ -57,7 +57,12 @@
       @endphp
       <div class="resp-row">
         <span class="resp-tipo {{ $tipoCss }}" title="{{ ucfirst($tipoKey) }}">{{ $tipoLbl }}</span>
-        <span class="resp-name text-body" title="{{ $resp->name }}">{{ $resp->name }}</span>
+        <button type="button"
+          class="resp-name btn-seguimiento-resp text-body"
+          title="Ver seguimiento de {{ $resp->name }}"
+          data-user-id="{{ $resp->id }}"
+          data-user-name="{{ $resp->name }}"
+          data-modulo="{{ $a->modulo }}">{{ $resp->name }}</button>
       </div>
       @endforeach
       @if($a->responsables->count() > 2)

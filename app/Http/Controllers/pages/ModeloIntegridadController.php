@@ -13,6 +13,7 @@ use App\Models\IntegridadPregunta;
 use App\Models\UnidadOrganica;
 use App\Models\User;
 use App\Models\ConfiguracionInstitucional;
+use App\Notifications\ActividadAsignada;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -260,6 +261,13 @@ class ModeloIntegridadController extends Controller
                     ->mapWithKeys(fn($id) => [$id => ['tipo' => $tipos[$id] ?? 'principal']])
                     ->toArray();
                 $actividad->responsables()->sync($sync);
+
+                $creadorId = Auth::id();
+                $actividad->load('responsables');
+                foreach ($actividad->responsables as $resp) {
+                    if ($resp->id === $creadorId) continue;
+                    $resp->notify(new ActividadAsignada($actividad, 'nueva', $resp->pivot->tipo));
+                }
             }
         });
 
@@ -300,6 +308,10 @@ class ModeloIntegridadController extends Controller
             $validated['avance'] = 100;
         }
 
+        $fechaAntes        = $actividad->fecha_limite?->toDateString();
+        $responsablesAntes = $actividad->responsables->pluck('id')->toArray();
+        $creadorId         = Auth::id();
+
         DB::transaction(function () use ($validated, $actividad) {
             $actividad->update(\Arr::except($validated, ['responsables','tipos']));
 
@@ -311,6 +323,23 @@ class ModeloIntegridadController extends Controller
                 $actividad->responsables()->sync($sync);
             }
         });
+
+        $actividad->load('responsables');
+        $responsablesDespues = $actividad->responsables->pluck('id')->toArray();
+        $nuevosIds = array_diff($responsablesDespues, $responsablesAntes);
+
+        foreach ($actividad->responsables->whereIn('id', $nuevosIds) as $resp) {
+            if ($resp->id === $creadorId) continue;
+            $resp->notify(new ActividadAsignada($actividad, 'nueva', $resp->pivot->tipo));
+        }
+
+        $fechaDespues = $actividad->fecha_limite?->toDateString();
+        if ($fechaAntes !== $fechaDespues && $fechaDespues) {
+            foreach ($actividad->responsables->whereNotIn('id', $nuevosIds) as $resp) {
+                if ($resp->id === $creadorId) continue;
+                $resp->notify(new ActividadAsignada($actividad, 'fecha_limite', $resp->pivot->tipo));
+            }
+        }
 
         return back()->with('success', 'Actividad actualizada correctamente.');
     }
@@ -339,11 +368,23 @@ class ModeloIntegridadController extends Controller
             $estado = $actividad->estado;
         }
 
+        $avanceAntes = $actividad->avance;
         $actividad->update([
             'avance'             => $avance,
             'estado'             => $estado,
             'fecha_cumplimiento' => $estado === 'completada' ? now() : $actividad->fecha_cumplimiento,
         ]);
+
+        if ($avance !== $avanceAntes) {
+            $editor = Auth::user();
+            $supervisores = $actividad->responsables()
+                ->where('users.id', '!=', $editor->id)
+                ->wherePivot('tipo', 'supervisor')
+                ->get();
+            foreach ($supervisores as $supervisor) {
+                $supervisor->notify(new \App\Notifications\AvanceActualizado($actividad, $avance, $avanceAntes, $editor->name));
+            }
+        }
 
         return response()->json([
             'ok'          => true,

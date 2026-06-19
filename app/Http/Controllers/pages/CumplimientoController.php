@@ -5,11 +5,13 @@ namespace App\Http\Controllers\pages;
 use App\Exports\CumplimientoExport;
 use App\Http\Controllers\Controller;
 use App\Models\Actividad;
+use App\Models\Alerta;
 use App\Models\SciEje;
 use App\Models\UnidadOrganica;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -206,7 +208,7 @@ class CumplimientoController extends Controller
                     ->when($modulo, fn($q) => $q->where('modulo', $modulo));
 
                 if ($ejeId) {
-                    $base->whereHas('sciPregunta.componente', fn($q) => $q->where('sci_eje_id', $ejeId));
+                    $base->whereHas('sciPregunta.componente', fn($q) => $q->where('eje_id', $ejeId));
                 }
 
                 $total       = (clone $base)->count();
@@ -284,7 +286,7 @@ class CumplimientoController extends Controller
             ->when($modulo,        fn($q) => $q->where('modulo', $modulo))
             ->when($prioridad,     fn($q) => $q->where('prioridad', $prioridad))
             ->when($responsableId, fn($q) => $q->whereHas('responsables', fn($r) => $r->where('users.id', $responsableId)))
-            ->when($ejeId,         fn($q) => $q->whereHas('sciPregunta.componente', fn($r) => $r->where('sci_eje_id', $ejeId)))
+            ->when($ejeId,         fn($q) => $q->whereHas('sciPregunta.componente', fn($r) => $r->where('eje_id', $ejeId)))
             ->orderByDesc('created_at');
 
         // Stats con el mismo scope de visibilidad
@@ -366,6 +368,43 @@ class CumplimientoController extends Controller
             'actividades', 'stats', 'unidades', 'ejes', 'responsables', 'anios',
             'unidadId', 'modulo', 'ejeId', 'responsableId', 'prioridad', 'anio'
         ));
+    }
+
+    // ── Recordatorio interno al responsable principal ─────────────────────────
+
+    public function enviarRecordatorio(Request $request, Actividad $actividad)
+    {
+        Gate::authorize('cumplimiento.ver');
+
+        $responsablePrincipal = $actividad->responsables()
+            ->wherePivot('tipo', 'principal')
+            ->first();
+
+        if (!$responsablePrincipal) {
+            return response()->json(['error' => 'La actividad no tiene responsable principal asignado.'], 422);
+        }
+
+        $modLabel = $actividad->modulo === 'integridad' ? 'Integridad' : 'SCI';
+        $emisor   = Auth::user()->name;
+
+        Alerta::updateOrCreate(
+            [
+                'actividad_id' => $actividad->id,
+                'usuario_id'   => $responsablePrincipal->id,
+                'tipo'         => 'evidencia_falta',
+                'leida'        => false,
+            ],
+            [
+                'unidad_organica_id' => $actividad->unidad_organica_id,
+                'modulo'             => $actividad->modulo,
+                'tipo_destino'       => 'individual',
+                'prioridad'          => $actividad->prioridad === 'alta' ? 'alta' : 'media',
+                'titulo'             => "Recordatorio: evidencia pendiente [{$modLabel}] {$actividad->codigo}",
+                'mensaje'            => "{$emisor} te recuerda que la actividad \"{$actividad->nombre}\" aún no cuenta con evidencia registrada. Por favor adjunta el documento lo antes posible.",
+            ]
+        );
+
+        return response()->json(['ok' => true, 'mensaje' => "Recordatorio enviado a {$responsablePrincipal->name}."]);
     }
 
     // ── Exportar ─────────────────────────────────────────────────────────────
