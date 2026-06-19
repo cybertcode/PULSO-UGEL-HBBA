@@ -40,7 +40,7 @@ class ControlInternoController extends Controller
                 'unidadOrganica',
                 'responsables',
             ])
-            ->where('modulo', 'sci')
+            ->where('actividades.modulo', 'sci')
             ->visiblesParaUsuario($user)
             ->leftJoin('sci_preguntas', 'actividades.sci_pregunta_id', '=', 'sci_preguntas.id')
             ->leftJoin('sci_componentes', 'sci_preguntas.componente_id', '=', 'sci_componentes.id')
@@ -52,7 +52,7 @@ class ControlInternoController extends Controller
             ->select('actividades.*');
 
         if ($request->filled('anio')) {
-            $query->where('anio', $request->anio);
+            $query->where('actividades.anio', $request->anio);
         }
         if ($request->filled('eje_id')) {
             $query->whereHas('sciPregunta.componente', fn($q) => $q->where('eje_id', $request->eje_id));
@@ -61,26 +61,26 @@ class ControlInternoController extends Controller
             $query->whereHas('sciPregunta', fn($q) => $q->where('componente_id', $request->componente_id));
         }
         if ($request->filled('pregunta_id')) {
-            $query->where('sci_pregunta_id', $request->pregunta_id);
+            $query->where('actividades.sci_pregunta_id', $request->pregunta_id);
         }
         if ($request->filled('unidad_id')) {
-            $query->where('unidad_organica_id', $request->unidad_id);
+            $query->where('actividades.unidad_organica_id', $request->unidad_id);
         }
         if ($request->filled('responsable_id')) {
             $query->whereHas('responsables', fn($q) => $q->where('users.id', $request->responsable_id));
         }
         if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+            $query->where('actividades.estado', $request->estado);
         }
         if ($request->filled('prioridad')) {
-            $query->where('prioridad', $request->prioridad);
+            $query->where('actividades.prioridad', $request->prioridad);
         }
         if ($request->filled('buscar')) {
             $b = $request->buscar;
             $query->where(fn($q) => $q
-                ->where('nombre', 'like', "%$b%")
-                ->orWhere('codigo', 'like', "%$b%")
-                ->orWhere('numero_sgd', 'like', "%$b%")
+                ->where('actividades.nombre', 'like', "%$b%")
+                ->orWhere('actividades.codigo', 'like', "%$b%")
+                ->orWhere('actividades.numero_sgd', 'like', "%$b%")
             );
         }
 
