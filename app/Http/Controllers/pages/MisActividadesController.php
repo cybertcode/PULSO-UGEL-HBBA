@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Actividad;
 use App\Models\ActividadHistorial;
 use App\Models\SciEje;
+use App\Notifications\AvanceActualizado;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -204,6 +205,17 @@ class MisActividadesController extends Controller
                 'valor_nuevo'    => (string) $avance . '%',
                 'descripcion'    => $desc,
             ]);
+        }
+
+        // Notificar a supervisores asignados en la actividad
+        if ($avance !== $avanceAntes) {
+            $supervisores = $actividad->responsables()
+                ->where('users.id', '!=', $user->id)
+                ->wherePivot('tipo', 'supervisor')
+                ->get();
+            foreach ($supervisores as $supervisor) {
+                $supervisor->notify(new AvanceActualizado($actividad, $avance, $avanceAntes, $user->name));
+            }
         }
 
         return response()->json([

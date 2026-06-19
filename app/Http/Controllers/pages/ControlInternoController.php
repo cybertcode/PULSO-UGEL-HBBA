@@ -10,6 +10,7 @@ use App\Models\SciComponente;
 use App\Models\SciPregunta;
 use App\Models\UnidadOrganica;
 use App\Models\User;
+use App\Notifications\ActividadAsignada;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -164,6 +165,14 @@ class ControlInternoController extends Controller
                     ->mapWithKeys(fn($id) => [$id => ['tipo' => $tipos[$id] ?? 'principal']])
                     ->toArray();
                 $actividad->responsables()->sync($sync);
+
+                // Notificar a cada responsable asignado (excepto quien crea la actividad)
+                $creadorId = Auth::id();
+                $actividad->load('responsables');
+                foreach ($actividad->responsables as $resp) {
+                    if ($resp->id === $creadorId) continue;
+                    $resp->notify(new ActividadAsignada($actividad, 'nueva', $resp->pivot->tipo));
+                }
             }
         });
 
@@ -204,6 +213,10 @@ class ControlInternoController extends Controller
             $validated['avance'] = 100;
         }
 
+        $fechaAntes       = $actividad->fecha_limite?->toDateString();
+        $responsablesAntes = $actividad->responsables->pluck('id')->toArray();
+        $creadorId        = Auth::id();
+
         DB::transaction(function () use ($validated, $actividad) {
             $actividad->update(\Arr::except($validated, ['responsables', 'tipos']));
 
@@ -215,6 +228,25 @@ class ControlInternoController extends Controller
                 $actividad->responsables()->sync($sync);
             }
         });
+
+        $actividad->load('responsables');
+
+        // Notificar a responsables nuevos
+        $responsablesDespues = $actividad->responsables->pluck('id')->toArray();
+        $nuevosIds = array_diff($responsablesDespues, $responsablesAntes);
+        foreach ($actividad->responsables->whereIn('id', $nuevosIds) as $resp) {
+            if ($resp->id === $creadorId) continue;
+            $resp->notify(new ActividadAsignada($actividad, 'nueva', $resp->pivot->tipo));
+        }
+
+        // Notificar a todos los responsables existentes si cambió la fecha límite
+        $fechaDespues = $actividad->fecha_limite?->toDateString();
+        if ($fechaAntes !== $fechaDespues && $fechaDespues) {
+            foreach ($actividad->responsables->whereNotIn('id', $nuevosIds) as $resp) {
+                if ($resp->id === $creadorId) continue;
+                $resp->notify(new ActividadAsignada($actividad, 'fecha_limite', $resp->pivot->tipo));
+            }
+        }
 
         return back()->with('success', 'Actividad actualizada correctamente.');
     }
@@ -278,5 +310,95 @@ class ControlInternoController extends Controller
             ]);
 
         return response()->json($historial);
+    }
+
+    public function seguimientoResponsable(Request $request, User $user)
+    {
+        abort_unless(
+            Auth::user()->can('actividades.ver-todas') || Auth::user()->can('actividades.ver-unidad'),
+            403
+        );
+
+        $modulo = $request->input('modulo', 'sci');
+
+        $actividades = Actividad::with([
+                'sciPregunta.componente.eje',
+                'integridadPregunta.componente.etapa',
+                'evidencias',
+            ])
+            ->where('modulo', $modulo)
+            ->whereHas('responsables', fn($q) => $q->where('users.id', $user->id))
+            ->orderByRaw("FIELD(estado,'vencida','observado','en_proceso','pendiente','completada')")
+            ->orderBy('fecha_limite')
+            ->get();
+
+        // Para cada actividad, obtener el último movimiento del responsable en historial
+        $actividadIds = $actividades->pluck('id');
+        $ultimosMovimientos = ActividadHistorial::whereIn('actividad_id', $actividadIds)
+            ->where('usuario_id', $user->id)
+            ->select('actividad_id', 'campo', 'descripcion', 'valor_nuevo', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('actividad_id')
+            ->map(fn($items) => $items->first());
+
+        $items = $actividades->map(function ($act) use ($ultimosMovimientos, $user) {
+            $ult = $ultimosMovimientos->get($act->id);
+            $diasRestantes = $act->fecha_limite
+                ? (int) round(now()->diffInDays($act->fecha_limite, false))
+                : null;
+
+            $componente = $act->modulo === 'integridad'
+                ? $act->integridadPregunta?->componente?->nombre
+                : $act->sciPregunta?->componente?->nombre;
+
+            $evTotal     = $act->evidencias->count();
+            $evValidadas = $act->evidencias->where('estado', 'validado')->count();
+            $evPendientes= $act->evidencias->where('estado', 'pendiente')->count();
+            $evRechazadas= $act->evidencias->where('estado', 'rechazado')->count();
+
+            return [
+                'id'               => $act->id,
+                'codigo'           => $act->codigo,
+                'nombre'           => $act->nombre,
+                'estado'           => $act->estado,
+                'avance'           => $act->avance,
+                'prioridad'        => $act->prioridad,
+                'fecha_limite'     => $act->fecha_limite?->format('d/m/Y'),
+                'dias_restantes'   => $diasRestantes,
+                'componente'       => $componente,
+                'ev_total'         => $evTotal,
+                'ev_validadas'     => $evValidadas,
+                'ev_pendientes'    => $evPendientes,
+                'ev_rechazadas'    => $evRechazadas,
+                'ultimo_movimiento'=> $ult ? [
+                    'campo'       => $ult->campo,
+                    'descripcion' => $ult->descripcion,
+                    'valor_nuevo' => $ult->valor_nuevo,
+                    'fecha'       => $ult->created_at->diffForHumans(),
+                    'fecha_exact' => $ult->created_at->format('d/m/Y H:i'),
+                ] : null,
+            ];
+        });
+
+        $stats = [
+            'total'       => $actividades->count(),
+            'completadas' => $actividades->where('estado', 'completada')->count(),
+            'en_proceso'  => $actividades->whereIn('estado', ['en_proceso', 'pendiente'])->count(),
+            'vencidas'    => $actividades->where('estado', 'vencida')->count(),
+            'observadas'  => $actividades->where('estado', 'observado')->count(),
+            'sin_movimiento' => $items->filter(fn($i) => $i['ultimo_movimiento'] === null)->count(),
+        ];
+
+        return response()->json([
+            'usuario' => [
+                'id'     => $user->id,
+                'name'   => $user->name,
+                'cargo'  => $user->cargo ?? null,
+                'unidad' => $user->unidadOrganica?->nombre ?? null,
+            ],
+            'stats'  => $stats,
+            'items'  => $items->values(),
+        ]);
     }
 }

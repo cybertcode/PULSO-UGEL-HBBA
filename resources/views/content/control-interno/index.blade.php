@@ -163,6 +163,27 @@ $hayFiltros = request()->hasAny(['eje_id','componente_id','pregunta_id','unidad_
   flex: 1 1 auto !important;
   min-height: 0 !important;
 }
+
+/* ── Seguimiento por responsable ──────────────────────────────────── */
+.btn-seguimiento-resp { background:none;border:none;padding:0;cursor:pointer;text-align:left;font-size:inherit;line-height:inherit;transition:color .15s; }
+.btn-seguimiento-resp:hover { color: #7367f0 !important; text-decoration: underline; }
+.seg-kpis { gap:.4rem; }
+.seg-kpi-chip { display:inline-flex;align-items:center;font-size:.72rem;font-weight:700;padding:.25em .6em;border-radius:20px; }
+.seg-item { border-bottom:1px solid rgba(0,0,0,.05);padding:.85rem 1.25rem; }
+.seg-item:last-child { border-bottom:none; }
+.seg-item-header { display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.35rem; }
+.seg-estado-pill { font-size:.65rem;font-weight:700;padding:.2em .55em;border-radius:20px;white-space:nowrap; }
+.seg-nombre { font-size:.82rem;font-weight:600;line-height:1.3;color:#4b4b4b; }
+.seg-meta { font-size:.72rem;color:#a8aaae;margin-bottom:.3rem; }
+.seg-avance-row { display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem; }
+.seg-avance-bar { flex:1;height:5px;border-radius:3px;background:rgba(0,0,0,.08);overflow:hidden; }
+.seg-avance-fill { height:100%;border-radius:3px;transition:width .3s; }
+.seg-avance-pct { font-size:.75rem;font-weight:700;min-width:2.5rem;text-align:right; }
+.seg-ult-mov { font-size:.71rem;background:rgba(115,103,240,.06);border-left:3px solid #7367f0;padding:.3rem .55rem;border-radius:0 6px 6px 0;color:#5e5873; }
+.seg-sin-mov { font-size:.71rem;background:rgba(0,0,0,.03);border-left:3px solid #d0d2d6;padding:.3rem .55rem;border-radius:0 6px 6px 0;color:#a8aaae;font-style:italic; }
+.seg-dias-chip { font-size:.68rem;font-weight:700;padding:.15em .45em;border-radius:20px; }
+.seg-ev-row { display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.3rem; }
+.seg-ev-chip { font-size:.68rem;font-weight:600;padding:.15em .45em;border-radius:20px; }
 </style>
 @endsection
 
@@ -833,6 +854,38 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
   </div>
 </div>
 
+{{-- ── Offcanvas Seguimiento por Responsable ──────────────────────────── --}}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasSeguimiento" style="width:480px" aria-labelledby="offcanvasSeguimientoLabel">
+  <div class="offcanvas-header border-bottom" style="padding:.9rem 1.25rem">
+    <div>
+      <h5 class="offcanvas-title mb-0 fw-bold" id="offcanvasSeguimientoLabel">
+        <i class="ti tabler-user-search me-2 text-primary"></i>
+        Seguimiento de <span id="segNombreResp" class="text-primary">—</span>
+      </h5>
+      <small class="text-muted" id="segCargoResp"></small>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+
+  {{-- KPIs del responsable --}}
+  <div class="seg-kpis px-3 py-2 border-bottom d-flex gap-2 flex-wrap" id="segKpis" style="background:rgba(0,0,0,.018)">
+    <span class="seg-kpi-chip bg-label-secondary text-secondary" id="skTotal"><i class="ti tabler-clipboard-list me-1"></i><span>—</span> Total</span>
+    <span class="seg-kpi-chip bg-label-success text-success" id="skComp"><i class="ti tabler-circle-check me-1"></i><span>—</span> Comp.</span>
+    <span class="seg-kpi-chip bg-label-warning text-warning" id="skProc"><i class="ti tabler-loader-2 me-1"></i><span>—</span> En proceso</span>
+    <span class="seg-kpi-chip bg-label-danger text-danger" id="skVenc"><i class="ti tabler-clock-x me-1"></i><span>—</span> Vencidas</span>
+    <span class="seg-kpi-chip bg-label-info text-info" id="skObs"><i class="ti tabler-eye me-1"></i><span>—</span> Observadas</span>
+    <span class="seg-kpi-chip bg-label-secondary text-muted" id="skSinMov" title="Actividades sin ningún registro de actividad del responsable"><i class="ti tabler-zzz me-1"></i><span>—</span> Sin actividad</span>
+  </div>
+
+  <div class="offcanvas-body p-0" id="segBody">
+    <div class="text-center py-5 text-muted seg-loading" id="segLoading">
+      <div class="spinner-border spinner-border-sm mb-2"></div>
+      <div style="font-size:.82rem">Cargando actividades...</div>
+    </div>
+    <div id="segLista" class="d-none"></div>
+  </div>
+</div>
+
 @endsection
 
 @section('page-script')
@@ -1338,6 +1391,114 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Tras guardar en modal (nueva / editar): el form hace POST y recarga — OK
   // Los modales de nueva actividad y edición usan submit normal (back()->with('success'))
+
+  // ── Seguimiento por responsable ─────────────────────────────────────────
+  const offcanvasSeg   = new bootstrap.Offcanvas(document.getElementById('offcanvasSeguimiento'));
+  const segNombre      = document.getElementById('segNombreResp');
+  const segCargo       = document.getElementById('segCargoResp');
+  const segLoading     = document.getElementById('segLoading');
+  const segLista       = document.getElementById('segLista');
+
+  function colorEstado(estado) {
+    return { completada:'success', vencida:'danger', observado:'info', en_proceso:'warning', pendiente:'secondary' }[estado] ?? 'secondary';
+  }
+  function iconEstado(estado) {
+    return { completada:'tabler-circle-check', vencida:'tabler-clock-x', observado:'tabler-eye', en_proceso:'tabler-loader-2', pendiente:'tabler-clock-pause' }[estado] ?? 'tabler-clock-pause';
+  }
+  function colorAvance(pct) {
+    if (pct >= 100) return '#28c76f';
+    if (pct >= 60)  return '#ff9f43';
+    return '#ea5455';
+  }
+
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-seguimiento-resp');
+    if (!btn) return;
+
+    const userId   = btn.dataset.userId;
+    const userName = btn.dataset.userName;
+    const modulo   = btn.dataset.modulo || 'sci';
+
+    segNombre.textContent = userName;
+    segCargo.textContent  = '';
+    segLoading.classList.remove('d-none');
+    segLista.classList.add('d-none');
+    segLista.innerHTML = '';
+    // Reset KPIs
+    ['skTotal','skComp','skProc','skVenc','skObs','skSinMov'].forEach(id => document.getElementById(id).querySelector('span').textContent = '—');
+
+    offcanvasSeg.show();
+
+    fetch(`/control-interno/responsable/${userId}/seguimiento?modulo=${modulo}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      segLoading.classList.add('d-none');
+
+      // Info usuario
+      if (data.usuario?.cargo)  segCargo.textContent = data.usuario.cargo;
+      if (data.usuario?.unidad) segCargo.textContent += (segCargo.textContent ? ' · ' : '') + data.usuario.unidad;
+
+      // KPIs
+      document.getElementById('skTotal').querySelector('span').textContent  = data.stats.total;
+      document.getElementById('skComp').querySelector('span').textContent   = data.stats.completadas;
+      document.getElementById('skProc').querySelector('span').textContent   = data.stats.en_proceso;
+      document.getElementById('skVenc').querySelector('span').textContent   = data.stats.vencidas;
+      document.getElementById('skObs').querySelector('span').textContent    = data.stats.observadas;
+      document.getElementById('skSinMov').querySelector('span').textContent = data.stats.sin_movimiento;
+
+      if (!data.items.length) {
+        segLista.innerHTML = '<div class="text-center py-5 text-muted" style="font-size:.82rem"><i class="ti tabler-clipboard-off d-block mb-2" style="font-size:2rem"></i>Sin actividades asignadas en este módulo</div>';
+        segLista.classList.remove('d-none');
+        return;
+      }
+
+      const html = data.items.map(item => {
+        const ec        = colorEstado(item.estado);
+        const ei        = iconEstado(item.estado);
+        const avColor   = colorAvance(item.avance);
+        const diasHtml  = item.dias_restantes !== null && item.estado !== 'completada'
+          ? `<span class="seg-dias-chip ms-1 ${item.dias_restantes < 0 ? 'bg-label-danger text-danger' : item.dias_restantes <= 7 ? 'bg-label-warning text-warning' : 'bg-label-secondary text-secondary'}">${item.dias_restantes < 0 ? Math.abs(item.dias_restantes)+'d tarde' : item.dias_restantes+'d'}</span>`
+          : item.estado === 'completada' ? '<span class="seg-dias-chip bg-label-success text-success ms-1"><i class="ti tabler-check" style="font-size:.65rem"></i>OK</span>' : '';
+
+        const evHtml = [
+          item.ev_validadas  > 0 ? `<span class="seg-ev-chip bg-label-success text-success"><i class="ti tabler-file-check"></i> ${item.ev_validadas} valid.</span>` : '',
+          item.ev_pendientes > 0 ? `<span class="seg-ev-chip bg-label-warning text-warning"><i class="ti tabler-file-time"></i> ${item.ev_pendientes} en rev.</span>` : '',
+          item.ev_rechazadas > 0 ? `<span class="seg-ev-chip bg-label-danger text-danger"><i class="ti tabler-file-x"></i> ${item.ev_rechazadas} rechazo</span>` : '',
+          item.ev_total === 0    ? `<span class="seg-ev-chip bg-label-secondary text-muted"><i class="ti tabler-file-off"></i> Sin evidencia</span>` : '',
+        ].join('');
+
+        const movHtml = item.ultimo_movimiento
+          ? `<div class="seg-ult-mov mt-2"><i class="ti tabler-history me-1" style="font-size:.75rem"></i><strong title="${item.ultimo_movimiento.fecha_exact}">${item.ultimo_movimiento.fecha}</strong> — ${item.ultimo_movimiento.descripcion}</div>`
+          : `<div class="seg-sin-mov mt-2"><i class="ti tabler-zzz me-1" style="font-size:.75rem"></i>Sin actividad registrada por este responsable</div>`;
+
+        return `<div class="seg-item">
+          <div class="seg-item-header">
+            <div class="flex-grow-1">
+              <div class="seg-nombre">${item.nombre}</div>
+              <div class="seg-meta"><span class="badge bg-label-secondary me-1" style="font-size:.6rem">${item.componente ?? '—'}</span><code style="font-size:.68rem">${item.codigo}</code>${item.fecha_limite ? ` · <i class="ti tabler-calendar" style="font-size:.72rem"></i> ${item.fecha_limite}${diasHtml}` : ''}</div>
+            </div>
+            <span class="seg-estado-pill bg-label-${ec} text-${ec}"><i class="ti ${ei} me-1"></i>${item.estado.replace('_',' ')}</span>
+          </div>
+          <div class="seg-avance-row">
+            <div class="seg-avance-bar"><div class="seg-avance-fill" style="width:${item.avance}%;background:${avColor}"></div></div>
+            <span class="seg-avance-pct" style="color:${avColor}">${item.avance}%</span>
+          </div>
+          ${evHtml ? `<div class="seg-ev-row">${evHtml}</div>` : ''}
+          ${movHtml}
+        </div>`;
+      }).join('');
+
+      segLista.innerHTML = html;
+      segLista.classList.remove('d-none');
+    })
+    .catch(() => {
+      segLoading.classList.add('d-none');
+      segLista.innerHTML = '<div class="text-center py-4 text-danger" style="font-size:.82rem"><i class="ti tabler-alert-circle d-block mb-2" style="font-size:2rem"></i>Error al cargar el seguimiento</div>';
+      segLista.classList.remove('d-none');
+    });
+  });
 
 });
 </script>

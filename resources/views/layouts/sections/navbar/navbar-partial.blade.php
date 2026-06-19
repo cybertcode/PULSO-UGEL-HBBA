@@ -38,6 +38,14 @@ if ($authUser && $authUser->can('alertas.ver')) {
     $alertasDropdown = collect();
 }
 $totalAlertas = $alertasDropdown->count();
+
+// Notificaciones de BD (actividad asignada, evidencia enviada/corregida, etc.)
+$notifsBD = $authUser
+    ? $authUser->unreadNotifications()->latest()->take(5)->get()
+    : collect();
+$totalNotifsBD = $authUser ? $authUser->unreadNotifications()->count() : 0;
+
+$totalCampana = $totalAlertas + $totalNotifsBD;
 @endphp
 
 <!--  Brand demo (display only for navbar-full and hide on below xl) -->
@@ -219,34 +227,70 @@ $totalAlertas = $alertasDropdown->count();
       </div>
     </li>
 
-    <!-- Notificaciones — alertas reales del sistema -->
-    @can('alertas.ver')
+    <!-- Notificaciones — alertas + notificaciones de BD -->
+    @if($authUser && ($authUser->can('alertas.ver') || $totalNotifsBD > 0))
     <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
       <a class="nav-link dropdown-toggle hide-arrow btn btn-icon btn-text-secondary rounded-pill"
         href="javascript:void(0);" data-bs-toggle="dropdown" data-bs-auto-close="outside">
         <span class="position-relative">
           <i class="icon-base ti tabler-bell icon-22px text-heading"></i>
-          @if($totalAlertas > 0)
+          @if($totalCampana > 0)
           <span class="badge rounded-pill bg-danger badge-dot badge-notifications border"></span>
           @endif
         </span>
       </a>
-      <ul class="dropdown-menu dropdown-menu-end p-0">
+      <ul class="dropdown-menu dropdown-menu-end p-0" style="min-width:360px">
         <li class="dropdown-menu-header border-bottom">
           <div class="dropdown-header d-flex align-items-center py-3">
-            <h6 class="mb-0 me-auto">Alertas del Sistema</h6>
-            @if($totalAlertas > 0)
-            <span class="badge bg-label-danger rounded-pill me-2">{{ $totalAlertas }} nuevas</span>
+            <h6 class="mb-0 me-auto">Notificaciones</h6>
+            @if($totalCampana > 0)
+            <span class="badge bg-label-danger rounded-pill me-2">{{ $totalCampana }} nuevas</span>
             @endif
+            @can('alertas.ver')
             <a href="{{ route('mon-alertas') }}" class="dropdown-notifications-all p-2 btn btn-icon"
-               data-bs-toggle="tooltip" title="Ver todas">
+               data-bs-toggle="tooltip" title="Ver todas las alertas">
               <i class="icon-base ti tabler-external-link text-heading icon-18px"></i>
             </a>
+            @endcan
           </div>
         </li>
         <li class="dropdown-notifications-list scrollable-container">
           <ul class="list-group list-group-flush">
-            @forelse($alertasDropdown as $alerta)
+
+            {{-- Notificaciones de BD (actividad asignada, evidencia pendiente, etc.) --}}
+            @foreach($notifsBD as $notif)
+            @php
+              $nd     = $notif->data;
+              $nColor = $nd['color'] ?? 'primary';
+              $nIcon  = $nd['icono'] ?? 'tabler-bell';
+              $nUrl   = $nd['url'] ?? '#';
+            @endphp
+            <li class="list-group-item list-group-item-action dropdown-notifications-item"
+                style="cursor:pointer"
+                onclick="notifBDNavegar('{{ $notif->id }}', '{{ addslashes($nUrl) }}', this)">
+              <div class="d-flex align-items-start">
+                <div class="flex-shrink-0 me-3">
+                  <div class="avatar">
+                    <span class="avatar-initial rounded-circle bg-label-{{ $nColor }}">
+                      <i class="icon-base ti {{ $nIcon }}"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                  <h6 class="small mb-1 fw-semibold">{{ $nd['titulo'] ?? 'Notificación' }}</h6>
+                  <small class="mb-1 d-block text-body" style="white-space:normal;font-size:.72rem">{{ \Illuminate\Support\Str::limit($nd['mensaje'] ?? '', 80) }}</small>
+                  <small class="text-body-secondary">{{ $notif->created_at->diffForHumans() }}</small>
+                </div>
+                <div class="flex-shrink-0 ms-2 align-self-center">
+                  <span class="badge badge-dot bg-{{ $nColor }}" title="Sin leer"></span>
+                </div>
+              </div>
+            </li>
+            @endforeach
+
+            {{-- Alertas del sistema (tabla alertas) --}}
+            @can('alertas.ver')
+            @foreach($alertasDropdown as $alerta)
             @php
               $aIcon  = match($alerta->tipo) {
                 'vencimiento'     => 'tabler-calendar-x',
@@ -286,24 +330,34 @@ $totalAlertas = $alertasDropdown->count();
                 </div>
               </div>
             </li>
-            @empty
+            @endforeach
+            @endcan
+
+            @if($totalCampana === 0)
             <li class="list-group-item text-center py-4 text-body-secondary">
               <i class="ti tabler-bell-off icon-28px d-block mb-2 text-success"></i>
-              <small>Sin alertas pendientes</small>
+              <small>Sin notificaciones pendientes</small>
             </li>
-            @endforelse
+            @endif
           </ul>
         </li>
         <li class="border-top">
-          <div class="d-grid p-3">
+          <div class="d-grid p-3 gap-2">
+            @can('alertas.ver')
             <a class="btn btn-primary btn-sm" href="{{ route('mon-alertas') }}">
               <i class="ti tabler-bell me-1 icon-14px"></i>Ver todas las alertas
             </a>
+            @endcan
+            @if($totalNotifsBD > 0)
+            <button type="button" class="btn btn-label-secondary btn-sm" onclick="marcarTodasLeidasBD(this)">
+              <i class="ti tabler-checks me-1 icon-14px"></i>Marcar todas como leídas
+            </button>
+            @endif
           </div>
         </li>
       </ul>
     </li>
-    @endcan
+    @endif
     <!--/ Notificaciones -->
 
     <!-- Usuario autenticado -->
