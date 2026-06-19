@@ -82,7 +82,8 @@ class ModeloIntegridadController extends Controller
         // ── Componentes con métricas ──────────────────────────────────────────
         $componentesBase = IntegridadComponente::with(['etapa', 'preguntas'])
             ->where('activo', true)
-            ->whereHas('etapa', fn($q) => $q->where('anio', $anio))
+            ->whereHas('etapa', fn($q) => $q->where('anio', $anio)->where('activo', true))
+            ->orderByRaw('(SELECT orden FROM integridad_etapas WHERE id = etapa_id LIMIT 1)')
             ->orderBy('orden')
             ->get();
 
@@ -102,7 +103,10 @@ class ModeloIntegridadController extends Controller
                 'numero'           => $comp->orden,
                 'nombre'           => $comp->nombre,
                 'icono'            => $comp->icono ?? 'tabler-circle',
+                'etapa_id'         => $comp->etapa_id,
                 'etapa'            => $comp->etapa?->nombre ?? '—',
+                'etapa_orden'      => $comp->etapa?->orden ?? 0,
+                'etapa_activo'     => $comp->etapa?->activo ?? false,
                 'porcentaje'       => $porcentaje,
                 'color'            => $color,
                 'total'            => $total,
@@ -114,6 +118,70 @@ class ModeloIntegridadController extends Controller
                 'con_ev'           => $acts->filter(fn($a) => $a->evidencias->count() > 0)->count(),
             ];
         });
+
+        // Agrupar componentes por etapa (ya vienen ordenados por etapa_orden, luego orden)
+        $componentesPorEtapa = $componentes->groupBy('etapa_id');
+
+        // Si el usuario tiene visión global, también cargar etapas inactivas con sus componentes
+        $puedeVerInactivas = $user->can('actividades.ver-todas');
+
+        // Métricas por etapa (activas + inactivas si tiene permiso)
+        $todasEtapasQuery = IntegridadEtapa::where('anio', $anio)->orderBy('orden');
+        $todasEtapas = $puedeVerInactivas ? $todasEtapasQuery->get() : $todasEtapasQuery->where('activo', true)->get();
+
+        // Componentes de etapas inactivas (para usuarios con permiso)
+        if ($puedeVerInactivas) {
+            $etapasInactivasIds = $todasEtapas->where('activo', false)->pluck('id');
+            if ($etapasInactivasIds->isNotEmpty()) {
+                $compsInactivos = IntegridadComponente::with(['etapa'])
+                    ->whereIn('etapa_id', $etapasInactivasIds)
+                    ->orderBy('orden')
+                    ->get()
+                    ->map(function ($comp) use ($umbral_verde, $umbral_amarillo) {
+                        return (object) [
+                            'id'               => $comp->id,
+                            'numero'           => $comp->orden,
+                            'nombre'           => $comp->nombre,
+                            'icono'            => $comp->icono ?? 'tabler-circle',
+                            'etapa_id'         => $comp->etapa_id,
+                            'etapa'            => $comp->etapa?->nombre ?? '—',
+                            'etapa_orden'      => $comp->etapa?->orden ?? 0,
+                            'etapa_activo'     => false,
+                            'porcentaje'       => 0,
+                            'color'            => 'secondary',
+                            'total'            => 0,
+                            'completadas'      => 0,
+                            'completadas_count'=> 0,
+                            'en_proceso_count' => 0,
+                            'vencidas'         => 0,
+                            'evidencias_count' => 0,
+                            'con_ev'           => 0,
+                        ];
+                    });
+                // Merge en el mapa por etapa
+                foreach ($compsInactivos->groupBy('etapa_id') as $etId => $comps) {
+                    $componentesPorEtapa->put($etId, $comps);
+                }
+            }
+        }
+
+        $mapEtapaConMetricas = fn($etapa) => (function () use ($etapa, $componentesPorEtapa, $umbral_verde, $umbral_amarillo) {
+            $compsEtapa = $componentesPorEtapa->get($etapa->id, collect());
+            $prom       = $compsEtapa->count() > 0 && $etapa->activo ? (int) round($compsEtapa->avg('porcentaje')) : 0;
+            return (object) [
+                'id'          => $etapa->id,
+                'nombre'      => $etapa->nombre,
+                'orden'       => $etapa->orden,
+                'activo'      => $etapa->activo,
+                'porcentaje'  => $prom,
+                'color'       => $etapa->activo
+                    ? ($prom >= $umbral_verde ? 'success' : ($prom >= $umbral_amarillo ? 'warning' : 'danger'))
+                    : 'secondary',
+                'total_comps' => $compsEtapa->count(),
+            ];
+        })();
+
+        $etapasConMetricas = $todasEtapas->map($mapEtapaConMetricas);
 
         $en_avance         = $componentes->where('color', 'success')->count();
         $en_riesgo         = $componentes->where('color', 'warning')->count();
@@ -183,7 +251,8 @@ class ModeloIntegridadController extends Controller
 
         return view('content.modelo-integridad.index', compact(
             'avance_global', 'umbral_verde', 'umbral_amarillo',
-            'componentes', 'en_avance', 'en_riesgo', 'criticos',
+            'componentes', 'componentesPorEtapa', 'etapasConMetricas', 'puedeVerInactivas',
+            'en_avance', 'en_riesgo', 'criticos',
             'observadas_count', 'ev_rechazadas_count',
             'evidencias_recientes', 'alertas_activas', 'proximas_acciones',
             'actividades', 'etapas', 'unidades', 'usuarios', 'anio', 'anios_opt'

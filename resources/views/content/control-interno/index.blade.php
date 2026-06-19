@@ -164,6 +164,12 @@ $hayFiltros = request()->hasAny(['eje_id','componente_id','pregunta_id','unidad_
   min-height: 0 !important;
 }
 
+/* ── Vista por Eje ───────────────────────────────────────────────── */
+.eje-comp-card { transition: transform .15s, box-shadow .15s; }
+.eje-comp-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1) !important; }
+.eje-inactivo { opacity: .72; }
+.opacity-60 { opacity: .6; }
+
 /* ── Seguimiento por responsable ──────────────────────────────────── */
 .btn-seguimiento-resp { background:none;border:none;padding:0;cursor:pointer;text-align:left;font-size:inherit;line-height:inherit;transition:color .15s; }
 .btn-seguimiento-resp:hover { color: #7367f0 !important; text-decoration: underline; }
@@ -262,16 +268,6 @@ $porcentaje = round(($stats['completadas'] / $totalBase) * 100);
 </div>
 
 {{-- ── Banner vencidas próximas ──────────────────────────────────────────── --}}
-@php
-$proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observado'])
-  ->where('modulo', 'sci')
-  ->whereDate('fecha_limite', '>=', now())
-  ->whereDate('fecha_limite', '<=', now()->addDays(7))
-  ->orderBy('fecha_limite')
-  ->with('sciPregunta.componente')
-  ->limit(5)
-  ->get();
-@endphp
 @if($proxVencer->isNotEmpty())
 <div class="vencidas-banner mb-4 d-flex align-items-start gap-3 flex-wrap">
   <div class="flex-shrink-0 mt-1">
@@ -322,7 +318,7 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
           <select name="anio" id="filtroAnio" class="form-select">
             <option value="">Todos</option>
             @foreach($anios as $a)
-            <option value="{{ $a }}" {{ request('anio') == $a ? 'selected' : '' }}>{{ $a }}</option>
+            <option value="{{ $a }}" {{ $anio == $a ? 'selected' : '' }}>{{ $a }}</option>
             @endforeach
           </select>
         </div>
@@ -332,10 +328,14 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
           <label class="form-label form-label-sm mb-1">Eje</label>
           <select name="eje_id" id="filtroEje" class="form-select select2-filtro">
             <option value="">Todos los ejes</option>
-            @foreach($ejes as $e)
-            <option value="{{ $e->id }}" {{ request('eje_id') == $e->id ? 'selected' : '' }}>
-              {{ Str::limit($e->nombre, 28) }} ({{ $e->anio }})
-            </option>
+            @foreach($ejes->groupBy('anio') as $agAnio => $ejGroup)
+            <optgroup label="Año {{ $agAnio }}">
+              @foreach($ejGroup as $e)
+              <option value="{{ $e->id }}" {{ request('eje_id') == $e->id ? 'selected' : '' }}>
+                {{ Str::limit($e->nombre, 30) }}
+              </option>
+              @endforeach
+            </optgroup>
             @endforeach
           </select>
         </div>
@@ -464,53 +464,178 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
   </div>
 </div>
 
-{{-- ── Tabla de actividades ─────────────────────────────────────────────── --}}
+{{-- ── Tabs: Tabla / Vista por Eje ─────────────────────────────────────── --}}
 <div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center py-3">
+  <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <ul class="nav nav-tabs card-header-tabs" id="tabsCI" role="tablist" style="border-bottom:none;margin-bottom:-1rem">
+      <li class="nav-item">
+        <button class="nav-link active" id="tab-tabla-btn" data-bs-toggle="tab" data-bs-target="#tab-tabla" type="button" role="tab">
+          <i class="ti tabler-table me-1"></i>Actividades
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="tab-ejes-btn" data-bs-toggle="tab" data-bs-target="#tab-ejes" type="button" role="tab">
+          <i class="ti tabler-layout-board me-1"></i>Vista por Eje
+        </button>
+      </li>
+    </ul>
     <div class="d-flex align-items-center gap-2">
-      <i class="ti tabler-table text-primary icon-18px"></i>
-      <h5 class="mb-0">Actividades de Control Interno</h5>
-    </div>
-    <div class="d-flex align-items-center gap-3">
       <span class="badge bg-label-primary rounded-pill" id="badgeTotal">{{ $actividades->total() }} registros</span>
       <span class="badge bg-label-warning rounded-pill {{ $hayFiltros ? '' : 'd-none' }}" id="badgeFiltroActivo"><i class="ti tabler-filter me-1"></i>Filtro activo</span>
     </div>
   </div>
 
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0 align-middle sci-table" style="min-width:960px">
-        <thead>
-          <tr>
-            <th style="width:115px">Código</th>
-            <th style="min-width:200px">Actividad</th>
-            <th style="min-width:140px">Componente</th>
-            <th style="width:72px;text-align:center">Unidad</th>
-            <th style="min-width:165px">Responsables</th>
-            <th style="width:80px">Prioridad</th>
-            <th style="width:105px">Vencimiento</th>
-            <th style="width:130px">Avance</th>
-            <th style="width:95px">Estado</th>
-            <th style="width:105px">Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tablaBody">
-          @include('content.control-interno._tabla')
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <div class="tab-content">
 
-  <div id="tablaFooter">
-    @if($actividades->hasPages())
-    <div class="card-footer d-flex align-items-center justify-content-between py-3">
-      <span class="text-muted" style="font-size:13px" id="tablaContador">
-        Mostrando {{ $actividades->firstItem() }}–{{ $actividades->lastItem() }} de {{ $actividades->total() }} registros
-      </span>
-      <div id="tablaPages">{{ $actividades->links() }}</div>
+    {{-- ── Tab 1: Tabla ──────────────────────────────────────────────────── --}}
+    <div class="tab-pane fade show active" id="tab-tabla" role="tabpanel">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle sci-table" style="min-width:960px">
+            <thead>
+              <tr>
+                <th style="width:115px">Código</th>
+                <th style="min-width:200px">Actividad</th>
+                <th style="min-width:140px">Componente</th>
+                <th style="width:72px;text-align:center">Unidad</th>
+                <th style="min-width:165px">Responsables</th>
+                <th style="width:80px">Prioridad</th>
+                <th style="width:105px">Vencimiento</th>
+                <th style="width:130px">Avance</th>
+                <th style="width:95px">Estado</th>
+                <th style="width:105px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaBody">
+              @include('content.control-interno._tabla')
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="tablaFooter">
+        @if($actividades->hasPages())
+        <div class="card-footer d-flex align-items-center justify-content-between py-3">
+          <span class="text-muted" style="font-size:13px" id="tablaContador">
+            Mostrando {{ $actividades->firstItem() }}–{{ $actividades->lastItem() }} de {{ $actividades->total() }} registros
+          </span>
+          <div id="tablaPages">{{ $actividades->links() }}</div>
+        </div>
+        @endif
+      </div>
     </div>
-    @endif
-  </div>
+
+    {{-- ── Tab 2: Vista por Eje ──────────────────────────────────────────── --}}
+    <div class="tab-pane fade" id="tab-ejes" role="tabpanel">
+      <div class="card-body">
+        {{-- Header con toggle ejes inactivos --}}
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+          <div>
+            <span class="text-muted small">
+              {{ $ejesConMetricas->count() }} ejes · Año <strong>{{ $anio }}</strong>
+            </span>
+          </div>
+          @if($puedeVerInactivos && $hayInactivos)
+          <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+            <input class="form-check-input" type="checkbox" id="toggleEjesInactivos" role="switch">
+            <label class="form-check-label small fw-semibold" for="toggleEjesInactivos">Ver ejes inactivos</label>
+          </div>
+          @endif
+        </div>
+
+        @forelse($ejesConMetricas as $eje)
+        <div class="eje-bloque mb-5 {{ !$eje['activo'] ? 'eje-inactivo d-none' : '' }}">
+          {{-- Eje header --}}
+          <div class="d-flex align-items-center gap-3 mb-3 {{ !$eje['activo'] ? 'opacity-60' : '' }}">
+            <div class="eje-num-badge bg-label-{{ $eje['color'] }}" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0">
+              {{ $eje['orden'] }}
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-bold" style="font-size:.95rem">{{ $eje['nombre'] }}</div>
+              <div class="d-flex align-items-center gap-2 mt-1">
+                <div class="progress flex-grow-1" style="height:5px;max-width:160px;background:rgba(var(--bs-{{ $eje['color'] }}-rgb),.12)">
+                  <div class="progress-bar bg-{{ $eje['color'] }}" style="width:{{ $eje['porcentaje'] }}%"></div>
+                </div>
+                <span class="badge bg-label-{{ $eje['color'] }} rounded-pill" style="font-size:.7rem">{{ $eje['porcentaje'] }}%</span>
+                <span class="text-muted" style="font-size:.72rem">{{ $eje['completadas'] }}/{{ $eje['total'] }} completadas</span>
+                @if(!$eje['activo'])
+                <span class="badge bg-label-secondary rounded-pill" style="font-size:.68rem"><i class="ti tabler-eye-off me-1"></i>Inactivo</span>
+                @endif
+                @if($eje['vencidas'] > 0 && $eje['activo'])
+                <span class="badge bg-label-danger rounded-pill" style="font-size:.68rem"><i class="ti tabler-alarm-off me-1"></i>{{ $eje['vencidas'] }} vencida(s)</span>
+                @endif
+              </div>
+            </div>
+            @can('actividades.ver-todas')
+            <a href="{{ route('sci-control-interno', ['eje_id' => $eje['id'], 'anio' => $anio]) }}"
+               class="btn btn-sm btn-label-{{ $eje['color'] }} text-nowrap">
+              <i class="ti tabler-filter me-1"></i>Filtrar
+            </a>
+            @endcan
+          </div>
+          <div style="height:2px;background:linear-gradient(to right,rgba(var(--bs-{{ $eje['color'] }}-rgb),.5),transparent);border-radius:1px;margin-bottom:1rem"></div>
+
+          {{-- Componentes del eje --}}
+          @if($eje['componentes']->isEmpty())
+          <p class="text-muted small fst-italic ps-2">Sin componentes activos para este eje.</p>
+          @else
+          <div class="row g-3 {{ !$eje['activo'] ? 'opacity-50' : '' }}">
+            @foreach($eje['componentes'] as $comp)
+            @php
+              $cColor = $comp['color'];
+            @endphp
+            <div class="col-sm-6 col-lg-4 col-xl-3">
+              <div class="card h-100 border-0 shadow-sm eje-comp-card" style="border-radius:12px;border-left:4px solid rgba(var(--bs-{{ $cColor }}-rgb),.6) !important">
+                <div class="card-body p-3">
+                  <div class="d-flex align-items-start gap-2 mb-2">
+                    <div class="rounded-2 p-1" style="background:rgba(var(--bs-{{ $cColor }}-rgb),.1);flex-shrink:0">
+                      <i class="ti {{ $comp['icono'] }} text-{{ $cColor }}" style="font-size:1rem"></i>
+                    </div>
+                    <div class="fw-semibold" style="font-size:.8rem;line-height:1.3">{{ $comp['nombre'] }}</div>
+                  </div>
+                  @if(!$eje['activo'])
+                  <p class="text-muted small fst-italic mb-0" style="font-size:.72rem">Eje inactivo — sin métricas</p>
+                  @else
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <div class="progress flex-grow-1" style="height:4px">
+                      <div class="progress-bar bg-{{ $cColor }}" style="width:{{ $comp['porcentaje'] }}%"></div>
+                    </div>
+                    <span class="fw-bold text-{{ $cColor }}" style="font-size:.75rem;min-width:2.2rem;text-align:right">{{ $comp['porcentaje'] }}%</span>
+                  </div>
+                  <div class="d-flex gap-1 flex-wrap mt-1">
+                    <span class="badge bg-label-secondary rounded-pill" style="font-size:.65rem" title="Total"><i class="ti tabler-clipboard-list me-1"></i>{{ $comp['total'] }}</span>
+                    <span class="badge bg-label-success rounded-pill" style="font-size:.65rem" title="Completadas"><i class="ti tabler-check me-1"></i>{{ $comp['completadas'] }}</span>
+                    @if($comp['en_proceso'] > 0)
+                    <span class="badge bg-label-warning rounded-pill" style="font-size:.65rem"><i class="ti tabler-loader-2 me-1"></i>{{ $comp['en_proceso'] }}</span>
+                    @endif
+                    @if($comp['vencidas'] > 0)
+                    <span class="badge bg-label-danger rounded-pill" style="font-size:.65rem"><i class="ti tabler-alarm-off me-1"></i>{{ $comp['vencidas'] }}</span>
+                    @endif
+                  </div>
+                  <div class="mt-2">
+                    <a href="{{ route('sci-control-interno', ['componente_id' => $comp['id'], 'anio' => $anio]) }}"
+                       class="btn btn-xs btn-label-{{ $cColor }}" style="font-size:.7rem;padding:.2rem .55rem;border-radius:6px">
+                      <i class="ti tabler-arrow-right me-1"></i>Ver actividades
+                    </a>
+                  </div>
+                  @endif
+                </div>
+              </div>
+            </div>
+            @endforeach
+          </div>
+          @endif
+        </div>
+        @empty
+        <div class="empty-sci py-5">
+          <div class="empty-icon"><i class="ti tabler-layout-board"></i></div>
+          <div class="fw-semibold">Sin ejes para el año {{ $anio }}</div>
+          <div class="text-body-secondary small">Registra ejes en la configuración de estructura SCI.</div>
+        </div>
+        @endforelse
+      </div>
+    </div>
+
+  </div>{{-- /tab-content --}}
 </div>
 
 {{-- ════════════════════════════════════════════════════════════════════════ --}}
@@ -547,8 +672,12 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
               <label class="form-label">Eje SCI <span class="text-danger">*</span></label>
               <select name="_eje_id" id="nuevo_eje" class="form-select select2-modal">
                 <option value="">— Seleccionar eje —</option>
-                @foreach($ejes as $e)
-                <option value="{{ $e->id }}">{{ $e->nombre }} ({{ $e->anio }})</option>
+                @foreach($ejes->groupBy('anio') as $agAnio => $ejGroup)
+                <optgroup label="Año {{ $agAnio }}">
+                  @foreach($ejGroup as $e)
+                  <option value="{{ $e->id }}">{{ $e->nombre }}</option>
+                  @endforeach
+                </optgroup>
                 @endforeach
               </select>
             </div>
@@ -695,8 +824,12 @@ $proxVencer = \App\Models\Actividad::whereNotIn('estado', ['completada','observa
               <label class="form-label">Eje SCI <span class="text-danger">*</span></label>
               <select name="_edit_eje_id" id="edit_eje" class="form-select select2-modal-edit">
                 <option value="">— Seleccionar eje —</option>
-                @foreach($ejes as $e)
-                <option value="{{ $e->id }}">{{ $e->nombre }} ({{ $e->anio }})</option>
+                @foreach($ejes->groupBy('anio') as $agAnio => $ejGroup)
+                <optgroup label="Año {{ $agAnio }}">
+                  @foreach($ejGroup as $e)
+                  <option value="{{ $e->id }}">{{ $e->nombre }}</option>
+                  @endforeach
+                </optgroup>
                 @endforeach
               </select>
             </div>
@@ -1385,6 +1518,13 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(() => Swal.fire({ icon:'error', title:'Error', text:'No se pudo eliminar la actividad.' }));
     });
   }
+
+  // ── Toggle ejes inactivos (Vista por Eje) ────────────────────────────────
+  document.getElementById('toggleEjesInactivos')?.addEventListener('change', function () {
+    document.querySelectorAll('.eje-inactivo').forEach(el => {
+      el.classList.toggle('d-none', !this.checked);
+    });
+  });
 
   // ── Enlazar tabla inicial ─────────────────────────────────────────────────
   bindTableEvents();

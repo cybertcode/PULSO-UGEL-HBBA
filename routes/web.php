@@ -191,15 +191,18 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     // --- Administración: Estructura SCI (Ejes → Componentes → Preguntas) ---
     Route::get('/administracion/sci', [SciEstructuraController::class, 'index'])->name('adm-sci-estructura')->middleware('can:componentes.ver');
-    Route::post('/administracion/sci/eje',          [SciEstructuraController::class, 'storeEje'])->name('adm-sci.eje.store')->middleware('can:componentes.crear');
-    Route::put('/administracion/sci/eje/{eje}',     [SciEstructuraController::class, 'updateEje'])->name('adm-sci.eje.update')->middleware('can:componentes.editar');
-    Route::delete('/administracion/sci/eje/{eje}',  [SciEstructuraController::class, 'destroyEje'])->name('adm-sci.eje.destroy')->middleware('can:componentes.eliminar');
-    Route::post('/administracion/sci/componente',               [SciEstructuraController::class, 'storeComponente'])->name('adm-sci.componente.store')->middleware('can:componentes.crear');
-    Route::put('/administracion/sci/componente/{componente}',   [SciEstructuraController::class, 'updateComponente'])->name('adm-sci.componente.update')->middleware('can:componentes.editar');
-    Route::delete('/administracion/sci/componente/{componente}',[SciEstructuraController::class, 'destroyComponente'])->name('adm-sci.componente.destroy')->middleware('can:componentes.eliminar');
-    Route::post('/administracion/sci/pregunta',             [SciEstructuraController::class, 'storePregunta'])->name('adm-sci.pregunta.store')->middleware('can:componentes.crear');
-    Route::put('/administracion/sci/pregunta/{pregunta}',   [SciEstructuraController::class, 'updatePregunta'])->name('adm-sci.pregunta.update')->middleware('can:componentes.editar');
-    Route::delete('/administracion/sci/pregunta/{pregunta}',[SciEstructuraController::class, 'destroyPregunta'])->name('adm-sci.pregunta.destroy')->middleware('can:componentes.eliminar');
+    Route::post('/administracion/sci/eje',               [SciEstructuraController::class, 'storeEje'])->name('adm-sci.eje.store')->middleware('can:componentes.crear');
+    Route::put('/administracion/sci/eje/{eje}',          [SciEstructuraController::class, 'updateEje'])->name('adm-sci.eje.update')->middleware('can:componentes.editar');
+    Route::patch('/administracion/sci/eje/{eje}/toggle', [SciEstructuraController::class, 'toggleEje'])->name('adm-sci.eje.toggle')->middleware('can:componentes.editar');
+    Route::delete('/administracion/sci/eje/{eje}',       [SciEstructuraController::class, 'destroyEje'])->name('adm-sci.eje.destroy')->middleware('can:componentes.eliminar');
+    Route::post('/administracion/sci/componente',                [SciEstructuraController::class, 'storeComponente'])->name('adm-sci.componente.store')->middleware('can:componentes.crear');
+    Route::put('/administracion/sci/componente/{componente}',    [SciEstructuraController::class, 'updateComponente'])->name('adm-sci.componente.update')->middleware('can:componentes.editar');
+    Route::post('/administracion/sci/componente/reorder',        [SciEstructuraController::class, 'reorderComponentes'])->name('adm-sci.componente.reorder')->middleware('can:componentes.editar');
+    Route::delete('/administracion/sci/componente/{componente}', [SciEstructuraController::class, 'destroyComponente'])->name('adm-sci.componente.destroy')->middleware('can:componentes.eliminar');
+    Route::post('/administracion/sci/pregunta',              [SciEstructuraController::class, 'storePregunta'])->name('adm-sci.pregunta.store')->middleware('can:componentes.crear');
+    Route::put('/administracion/sci/pregunta/{pregunta}',    [SciEstructuraController::class, 'updatePregunta'])->name('adm-sci.pregunta.update')->middleware('can:componentes.editar');
+    Route::post('/administracion/sci/pregunta/reorder',      [SciEstructuraController::class, 'reorderPreguntas'])->name('adm-sci.pregunta.reorder')->middleware('can:componentes.editar');
+    Route::delete('/administracion/sci/pregunta/{pregunta}', [SciEstructuraController::class, 'destroyPregunta'])->name('adm-sci.pregunta.destroy')->middleware('can:componentes.eliminar');
     // API cascada SCI
     Route::middleware('can:componentes.ver')->group(function () {
         Route::get('/api/sci/ejes',        [SciEstructuraController::class, 'apiEjes'])->name('api.sci.ejes');
@@ -212,13 +215,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // --- Administración: Estructura Integridad (Etapas → Componentes → Preguntas) ---
     Route::get('/administracion/integridad', [IntegridadEstructuraController::class, 'index'])->name('adm-integridad-estructura')->middleware('can:integridad.ver');
     Route::post('/administracion/integridad/etapa',           [IntegridadEstructuraController::class, 'storeEtapa'])->name('adm-integridad.etapa.store')->middleware('can:integridad.crear');
-    Route::put('/administracion/integridad/etapa/{etapa}',    [IntegridadEstructuraController::class, 'updateEtapa'])->name('adm-integridad.etapa.update')->middleware('can:integridad.editar');
-    Route::delete('/administracion/integridad/etapa/{etapa}', [IntegridadEstructuraController::class, 'destroyEtapa'])->name('adm-integridad.etapa.destroy')->middleware('can:integridad.eliminar');
+    Route::put('/administracion/integridad/etapa/{etapa}',       [IntegridadEstructuraController::class, 'updateEtapa'])->name('adm-integridad.etapa.update')->middleware('can:integridad.editar');
+    Route::patch('/administracion/integridad/etapa/{etapa}/toggle', [IntegridadEstructuraController::class, 'toggleEtapa'])->name('adm-integridad.etapa.toggle')->middleware('can:integridad.editar');
+    Route::delete('/administracion/integridad/etapa/{etapa}',    [IntegridadEstructuraController::class, 'destroyEtapa'])->name('adm-integridad.etapa.destroy')->middleware('can:integridad.eliminar');
     Route::post('/administracion/integridad/componente',                  [IntegridadEstructuraController::class, 'storeComponente'])->name('adm-integridad.componente.store')->middleware('can:integridad.crear');
     Route::put('/administracion/integridad/componente/{componente}',      [IntegridadEstructuraController::class, 'updateComponente'])->name('adm-integridad.componente.update')->middleware('can:integridad.editar');
+    Route::post('/administracion/integridad/componente/reorder',          [IntegridadEstructuraController::class, 'reorderComponentes'])->name('adm-integridad.componente.reorder')->middleware('can:integridad.editar');
     Route::delete('/administracion/integridad/componente/{componente}',   [IntegridadEstructuraController::class, 'destroyComponente'])->name('adm-integridad.componente.destroy')->middleware('can:integridad.eliminar');
     Route::post('/administracion/integridad/pregunta',              [IntegridadEstructuraController::class, 'storePregunta'])->name('adm-integridad.pregunta.store')->middleware('can:integridad.crear');
     Route::put('/administracion/integridad/pregunta/{pregunta}',    [IntegridadEstructuraController::class, 'updatePregunta'])->name('adm-integridad.pregunta.update')->middleware('can:integridad.editar');
+    Route::post('/administracion/integridad/pregunta/reorder',      [IntegridadEstructuraController::class, 'reorderPreguntas'])->name('adm-integridad.pregunta.reorder')->middleware('can:integridad.editar');
     Route::delete('/administracion/integridad/pregunta/{pregunta}', [IntegridadEstructuraController::class, 'destroyPregunta'])->name('adm-integridad.pregunta.destroy')->middleware('can:integridad.eliminar');
     // API cascada Integridad
     Route::middleware('can:integridad.ver')->group(function () {

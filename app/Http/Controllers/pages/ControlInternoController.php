@@ -23,7 +23,7 @@ class ControlInternoController extends Controller
         $anio = $request->input('anio', now()->year);
         $user = Auth::user();
 
-        $baseStats = Actividad::where('modulo', 'sci')->visiblesParaUsuario($user);
+        $baseStats = Actividad::where('modulo', 'sci')->where('anio', $anio)->visiblesParaUsuario($user);
         $stats = [
             'total'          => (clone $baseStats)->count(),
             'completadas'    => (clone $baseStats)->where('estado', 'completada')->count(),
@@ -42,7 +42,14 @@ class ControlInternoController extends Controller
             ])
             ->where('modulo', 'sci')
             ->visiblesParaUsuario($user)
-            ->orderBy('fecha_limite');
+            ->leftJoin('sci_preguntas', 'actividades.sci_pregunta_id', '=', 'sci_preguntas.id')
+            ->leftJoin('sci_componentes', 'sci_preguntas.componente_id', '=', 'sci_componentes.id')
+            ->leftJoin('sci_ejes', 'sci_componentes.eje_id', '=', 'sci_ejes.id')
+            ->orderBy('sci_ejes.orden')
+            ->orderBy('sci_componentes.orden')
+            ->orderBy('sci_preguntas.orden')
+            ->orderBy('actividades.fecha_limite')
+            ->select('actividades.*');
 
         if ($request->filled('anio')) {
             $query->where('anio', $request->anio);
@@ -78,11 +85,95 @@ class ControlInternoController extends Controller
         }
 
         $actividades  = $query->paginate(15)->withQueryString();
-        $ejes         = SciEje::where('activo', true)->orderBy('anio', 'desc')->orderBy('orden')->get();
-        $componentes  = $request->filled('eje_id')
+        $anios        = Actividad::where('modulo', 'sci')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
+
+        $todosEjes = SciEje::orderBy('anio', 'desc')->orderBy('orden')->get();
+        $ejes      = $todosEjes->where('activo', true);
+
+        $puedeVerInactivos = $user->can('actividades.ver-todas');
+        $hayInactivos      = $todosEjes->where('activo', false)->isNotEmpty();
+
+        $componentes = $request->filled('eje_id')
                         ? SciComponente::where('eje_id', $request->eje_id)->where('activo', true)->orderBy('orden')->get()
                         : collect();
-        $anios        = Actividad::where('modulo', 'sci')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
+
+        // Métricas por eje (Vista por Eje)
+        $ejesParaVista = $puedeVerInactivos ? $todosEjes->where('anio', $anio) : $todosEjes->where('anio', $anio)->where('activo', true);
+
+        $ejesConMetricas = $ejesParaVista->map(function ($eje) use ($user, $anio) {
+            $baseEje = Actividad::where('modulo', 'sci')
+                ->where('anio', $anio)
+                ->whereHas('sciPregunta.componente', fn($q) => $q->where('eje_id', $eje->id))
+                ->visiblesParaUsuario($user);
+
+            $total       = (clone $baseEje)->count();
+            $completadas = (clone $baseEje)->where('estado', 'completada')->count();
+            $en_proceso  = (clone $baseEje)->where('estado', 'en_proceso')->count();
+            $vencidas    = (clone $baseEje)->whereNotIn('estado', ['completada','observado'])
+                ->whereDate('fecha_limite', '<', now())->count();
+
+            $porcentaje = $total > 0 ? round(($completadas / $total) * 100) : 0;
+            $color = !$eje->activo ? 'secondary'
+                : ($porcentaje >= 100 ? 'success'
+                : ($vencidas > 0 ? 'danger'
+                : ($porcentaje >= 50 ? 'warning' : 'primary')));
+
+            $componentes = SciComponente::where('eje_id', $eje->id)
+                ->where('activo', true)
+                ->orderBy('orden')
+                ->get()
+                ->map(function ($comp) use ($user, $anio, $eje) {
+                    $baseComp = Actividad::where('modulo', 'sci')
+                        ->where('anio', $anio)
+                        ->whereHas('sciPregunta', fn($q) => $q->where('componente_id', $comp->id))
+                        ->visiblesParaUsuario($user);
+
+                    $t = (clone $baseComp)->count();
+                    $c = (clone $baseComp)->where('estado', 'completada')->count();
+                    $v = (clone $baseComp)->whereNotIn('estado', ['completada','observado'])->whereDate('fecha_limite', '<', now())->count();
+                    $p = $t > 0 ? round(($c / $t) * 100) : 0;
+                    $col = !$eje->activo ? 'secondary'
+                        : ($p >= 100 ? 'success' : ($v > 0 ? 'danger' : ($p >= 50 ? 'warning' : 'primary')));
+
+                    return [
+                        'id'          => $comp->id,
+                        'nombre'      => $comp->nombre,
+                        'icono'       => $comp->icono ?? 'tabler-circle',
+                        'total'       => $t,
+                        'completadas' => $c,
+                        'en_proceso'  => (clone $baseComp)->where('estado', 'en_proceso')->count(),
+                        'vencidas'    => $v,
+                        'porcentaje'  => $p,
+                        'color'       => $col,
+                    ];
+                });
+
+            return [
+                'id'          => $eje->id,
+                'nombre'      => $eje->nombre,
+                'orden'       => $eje->orden,
+                'activo'      => $eje->activo,
+                'total'       => $total,
+                'completadas' => $completadas,
+                'en_proceso'  => $en_proceso,
+                'vencidas'    => $vencidas,
+                'porcentaje'  => $porcentaje,
+                'color'       => $color,
+                'componentes' => $componentes,
+            ];
+        })->sortBy('orden')->values();
+
+        // Próximos a vencer (movido desde Blade)
+        $proxVencer = Actividad::where('modulo', 'sci')
+            ->where('anio', $anio)
+            ->whereNotIn('estado', ['completada', 'observado'])
+            ->whereDate('fecha_limite', '>=', now())
+            ->whereDate('fecha_limite', '<=', now()->addDays(7))
+            ->visiblesParaUsuario($user)
+            ->orderBy('fecha_limite')
+            ->with('sciPregunta.componente')
+            ->limit(5)
+            ->get();
 
         // Filtros de unidad y responsable solo disponibles para quien tiene visión amplia
         if ($user->can('actividades.ver-todas')) {
@@ -110,7 +201,9 @@ class ControlInternoController extends Controller
         }
 
         return view('content.control-interno.index', compact(
-            'stats', 'actividades', 'ejes', 'componentes', 'unidades', 'responsables', 'anio', 'anios'
+            'stats', 'actividades', 'ejes', 'todosEjes', 'componentes',
+            'unidades', 'responsables', 'anio', 'anios',
+            'ejesConMetricas', 'proxVencer', 'puedeVerInactivos', 'hayInactivos'
         ));
     }
 

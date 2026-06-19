@@ -64,9 +64,9 @@ $configData = Helper::appClasses();
     </nav>
     <h4 class="mb-0 d-flex align-items-center gap-2">
       <i class="ti tabler-shield-check text-warning"></i> Modelo de Integridad
-      <span class="badge bg-label-warning rounded-pill" style="font-size:11px">PCM — {{ $componentes->count() }} componentes</span>
+      <span class="badge bg-label-warning rounded-pill" style="font-size:11px">PCM — {{ $etapasConMetricas->count() }} etapas · {{ $componentes->count() }} componentes</span>
     </h4>
-    <p class="mb-0 text-muted small mt-1">Monitoreo del cumplimiento de los {{ $componentes->count() ?: 'nueve' }} componentes del Modelo de Integridad de la PCM — {{ $anio }}.</p>
+    <p class="mb-0 text-muted small mt-1">Monitoreo del Modelo de Integridad PCM — {{ $anio }}. Agrupado por etapas activas.</p>
   </div>
   <div class="d-flex gap-2 align-self-start flex-wrap">
     @can('integridad.crear')
@@ -197,53 +197,125 @@ $configData = Helper::appClasses();
 {{-- ══ TAB VISTA GENERAL ═══════════════════════════════════ --}}
 <div class="tab-pane fade show active" id="tab-vista-general">
 
-  {{-- ── Fila 1: Componentes del Modelo ──────────────────── --}}
-  <div class="d-flex align-items-center justify-content-between mb-2">
+  {{-- ── Componentes agrupados por Etapa ─────────────────── --}}
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <span class="fw-semibold text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">
-      <i class="ti tabler-components me-1"></i>9 Componentes del Modelo
+      <i class="ti tabler-components me-1"></i>{{ $componentes->count() }} Componentes · {{ $etapasConMetricas->where('activo', true)->count() }} Etapas activas
     </span>
-    <small class="text-muted" style="font-size:11px">Última act.: {{ now()->translatedFormat('d \d\e F, H:i') }}</small>
+    <div class="d-flex align-items-center gap-3">
+      @can('actividades.ver-todas')
+      @php $hayInactivas = $etapasConMetricas->where('activo', false)->count() > 0; @endphp
+      @if($hayInactivas)
+      <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+        <input class="form-check-input" type="checkbox" id="toggleEtapasInactivas" style="cursor:pointer">
+        <label class="form-check-label text-muted" for="toggleEtapasInactivas" style="font-size:12px;cursor:pointer">
+          <i class="ti tabler-eye-off me-1 opacity-60"></i>Ver etapas inactivas
+          <span class="badge bg-label-secondary ms-1" style="font-size:10px">{{ $etapasConMetricas->where('activo', false)->count() }}</span>
+        </label>
+      </div>
+      @endif
+      @endcan
+      <small class="text-muted" style="font-size:11px">Última act.: {{ now()->translatedFormat('d \d\e F, H:i') }}</small>
+    </div>
   </div>
 
-  <div class="row g-2 mb-4">
-    @forelse($componentes as $c)
-    @php $nivelLabel = match($c->color) { 'success'=>'Cumplido','warning'=>'En proceso',default=>'En riesgo' }; @endphp
-    <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
-      <div class="card comp-card h-100 mb-0">
-        <div style="height:3px;background:var(--bs-{{ $c->color }});border-radius:10px 10px 0 0"></div>
-        <div class="card-body p-3">
-          <div class="d-flex align-items-start justify-content-between mb-2">
-            <span class="text-muted fw-bold" style="font-size:10px;text-transform:uppercase;letter-spacing:.05em">Comp. {{ $c->numero }}</span>
-            <span class="badge bg-label-{{ $c->color }}" style="font-size:10px">{{ $nivelLabel }}</span>
-          </div>
-          <div class="fw-semibold mb-2 text-body" style="font-size:12.5px;line-height:1.35;min-height:2.6em">{{ $c->nombre }}</div>
-          <div class="d-flex align-items-end gap-1 mb-1">
-            <span class="fw-bold text-{{ $c->color }}" style="font-size:1.6rem;line-height:1">{{ $c->porcentaje }}</span>
-            <span class="text-muted fw-semibold" style="font-size:12px;margin-bottom:2px">%</span>
-          </div>
-          <div class="progress mb-2" style="height:4px;border-radius:2px">
-            <div class="progress-bar bg-{{ $c->color }}" style="width:{{ $c->porcentaje }}%"></div>
-          </div>
-          <div class="d-flex gap-3 mt-2" style="font-size:11px">
-            <span class="text-success"><i class="ti tabler-check"></i> {{ $c->completadas_count }}</span>
-            <span class="text-warning"><i class="ti tabler-clock"></i> {{ $c->en_proceso_count }}</span>
-            <span class="text-info ms-auto"><i class="ti tabler-paperclip"></i> {{ $c->evidencias_count }}</span>
-          </div>
+  @if($etapasConMetricas->isEmpty())
+  <div class="card mb-4">
+    <div class="card-body text-center text-muted py-5">Sin etapas activas configuradas para {{ $anio }}.</div>
+  </div>
+  @else
+  @php $etapaActivaIdx = 0; @endphp
+  @foreach($etapasConMetricas as $etapa)
+  @php
+    $compsEtapa   = $componentesPorEtapa->get($etapa->id, collect());
+    $esInactiva   = !$etapa->activo;
+    $etNivelLabel = $esInactiva ? 'Inactiva' : match($etapa->color) { 'success'=>'Cumplida','warning'=>'En proceso',default=>'En riesgo' };
+    if (!$esInactiva) $etapaActivaIdx++;
+  @endphp
+  <div class="mb-4 etapa-bloque {{ $esInactiva ? 'etapa-inactiva d-none' : '' }}"
+       data-etapa-activo="{{ $etapa->activo ? '1' : '0' }}">
+
+    {{-- ── Cabecera de etapa ── --}}
+    <div class="d-flex align-items-center gap-3 mb-2 px-1 {{ $esInactiva ? 'opacity-60' : '' }}">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--bs-{{ $etapa->color }});display:flex;align-items:center;justify-content:center;flex-shrink:0;{{ $esInactiva ? 'filter:grayscale(.6)' : '' }}">
+        <span class="text-white fw-bold" style="font-size:.7rem">{{ $etapa->orden }}</span>
+      </div>
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fw-bold" style="font-size:14px;line-height:1.2">{{ $etapa->nombre }}</span>
+          @if($esInactiva)
+            <span class="badge bg-label-secondary" style="font-size:10px"><i class="ti tabler-eye-off me-1" style="font-size:9px"></i>Inactiva</span>
+          @endif
         </div>
-        <div class="card-footer py-2 px-3 bg-transparent border-top" style="border-color:rgba(var(--bs-secondary-rgb),.1)!important">
-          <a href="{{ route('sci-evidencias', ['componente_id' => $c->id]) }}"
-             class="btn btn-xs btn-label-{{ $c->color }} w-100">
-            <i class="ti tabler-upload me-1" style="font-size:10px"></i>Evidencia
-          </a>
+        <div class="text-muted" style="font-size:11px">{{ $compsEtapa->count() }} componente(s){{ $esInactiva ? ' · No se cuentan actividades' : '' }}</div>
+      </div>
+      {{-- Mini barra de etapa --}}
+      <div class="d-flex align-items-center gap-2" style="min-width:140px">
+        @if(!$esInactiva)
+        <div style="flex:1;height:6px;border-radius:3px;background:rgba(var(--bs-secondary-rgb),.15);overflow:hidden">
+          <div style="width:{{ $etapa->porcentaje }}%;height:100%;background:var(--bs-{{ $etapa->color }});border-radius:3px;transition:width .4s"></div>
         </div>
+        <span class="fw-bold text-{{ $etapa->color }}" style="font-size:12px;min-width:36px;text-align:right">{{ $etapa->porcentaje }}%</span>
+        @endif
+        <span class="badge bg-label-{{ $etapa->color }}" style="font-size:10px">{{ $etNivelLabel }}</span>
       </div>
     </div>
-    @empty
-    <div class="col-12">
-      <div class="card"><div class="card-body text-center text-muted py-5">Sin componentes configurados.</div></div>
+    <div style="height:2px;background:linear-gradient(to right,var(--bs-{{ $etapa->color }}),transparent);border-radius:2px;margin-bottom:.75rem;opacity:{{ $esInactiva ? '.15' : '.35' }}"></div>
+
+    @if($compsEtapa->isEmpty())
+    <div class="text-muted text-center py-3" style="font-size:12px;border:1px dashed rgba(var(--bs-secondary-rgb),.2);border-radius:8px">
+      <i class="ti tabler-puzzle d-block mb-1 opacity-30" style="font-size:1.5rem"></i>Sin componentes en esta etapa.
     </div>
-    @endforelse
+    @else
+    <div class="row g-2 {{ $esInactiva ? 'opacity-50' : '' }}">
+      @foreach($compsEtapa as $c)
+      @php $nivelLabel = $esInactiva ? 'Inactivo' : match($c->color) { 'success'=>'Cumplido','warning'=>'En proceso',default=>'En riesgo' }; @endphp
+      <div class="col-6 col-md-4 col-xl-3">
+        <div class="card comp-card h-100 mb-0 {{ $esInactiva ? '' : '' }}" style="{{ $esInactiva ? 'filter:grayscale(.5)' : '' }}">
+          <div style="height:3px;background:var(--bs-{{ $c->color }});border-radius:10px 10px 0 0"></div>
+          <div class="card-body p-3">
+            <div class="d-flex align-items-start justify-content-between mb-2">
+              @if($c->icono && $c->icono !== 'tabler-circle')
+                <i class="ti {{ $c->icono }} text-{{ $c->color }}" style="font-size:1.1rem;margin-top:1px"></i>
+              @else
+                <span class="text-muted fw-bold" style="font-size:10px;text-transform:uppercase;letter-spacing:.05em">Comp. {{ $c->numero }}</span>
+              @endif
+              <span class="badge bg-label-{{ $c->color }}" style="font-size:10px">{{ $nivelLabel }}</span>
+            </div>
+            <div class="fw-semibold mb-2 text-body" style="font-size:12.5px;line-height:1.35;min-height:2.6em">{{ $c->nombre }}</div>
+            @if(!$esInactiva)
+            <div class="d-flex align-items-end gap-1 mb-1">
+              <span class="fw-bold text-{{ $c->color }}" style="font-size:1.6rem;line-height:1">{{ $c->porcentaje }}</span>
+              <span class="text-muted fw-semibold" style="font-size:12px;margin-bottom:2px">%</span>
+            </div>
+            <div class="progress mb-2" style="height:4px;border-radius:2px">
+              <div class="progress-bar bg-{{ $c->color }}" style="width:{{ $c->porcentaje }}%"></div>
+            </div>
+            <div class="d-flex gap-3 mt-2" style="font-size:11px">
+              <span class="text-success"><i class="ti tabler-check"></i> {{ $c->completadas_count }}</span>
+              <span class="text-warning"><i class="ti tabler-clock"></i> {{ $c->en_proceso_count }}</span>
+              <span class="text-info ms-auto"><i class="ti tabler-paperclip"></i> {{ $c->evidencias_count }}</span>
+            </div>
+            @else
+            <div class="text-muted" style="font-size:11px"><i class="ti tabler-info-circle me-1 opacity-50"></i>Etapa inactiva — sin métricas</div>
+            @endif
+          </div>
+          @if(!$esInactiva)
+          <div class="card-footer py-2 px-3 bg-transparent border-top" style="border-color:rgba(var(--bs-secondary-rgb),.1)!important">
+            <a href="{{ route('sci-evidencias', ['modulo' => 'integridad', 'componente_id' => $c->id]) }}"
+               class="btn btn-xs btn-label-{{ $c->color }} w-100">
+              <i class="ti tabler-upload me-1" style="font-size:10px"></i>Evidencia
+            </a>
+          </div>
+          @endif
+        </div>
+      </div>
+      @endforeach
+    </div>
+    @endif
   </div>
+  @endforeach
+  @endif
 
   {{-- ── Fila 2: Alertas + Próximas Acciones ─────────────── --}}
   <div class="row g-3 mb-4">
@@ -1605,6 +1677,22 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('act-f-buscar').value   = '';
     fetchActividades();
   });
+
+  // ── Toggle etapas inactivas ───────────────────────────────────────────────
+  const toggleInactivas = document.getElementById('toggleEtapasInactivas');
+  if (toggleInactivas) {
+    toggleInactivas.addEventListener('change', function () {
+      document.querySelectorAll('.etapa-inactiva').forEach(el => {
+        el.classList.toggle('d-none', !this.checked);
+      });
+      // Actualizar label del icono
+      const label = toggleInactivas.closest('.form-check')?.querySelector('.form-check-label');
+      if (label) {
+        const ico = label.querySelector('i');
+        if (ico) ico.className = this.checked ? 'ti tabler-eye me-1 text-warning' : 'ti tabler-eye-off me-1 opacity-60';
+      }
+    });
+  }
 
 });
 </script>

@@ -48,8 +48,11 @@ class SciEstructuraController extends Controller
         $data['activo'] = $request->boolean('activo', true);
         $data['orden']  = (SciEje::where('anio', $data['anio'])->max('orden') ?? 0) + 1;
 
-        SciEje::create($data);
-        return back()->with('success', "Eje «{$data['nombre']}» creado.");
+        $eje = SciEje::create($data);
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => "Eje «{$eje->nombre}» creado.", 'eje' => $eje]);
+        }
+        return back()->with('success', "Eje «{$eje->nombre}» creado.");
     }
 
     public function updateEje(Request $request, SciEje $eje)
@@ -62,15 +65,20 @@ class SciEstructuraController extends Controller
         ]);
         $data['activo'] = $request->boolean('activo', $eje->activo);
         $eje->update($data);
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => 'Eje actualizado.', 'eje' => $eje->fresh()]);
+        }
         return back()->with('success', 'Eje actualizado.');
     }
 
-    public function destroyEje(SciEje $eje)
+    public function destroyEje(Request $request, SciEje $eje)
     {
         if ($eje->componentes()->exists()) {
+            if ($request->expectsJson()) return response()->json(['ok' => false, 'message' => 'No se puede eliminar: el eje tiene componentes asociados.'], 422);
             return back()->with('error', 'No se puede eliminar: el eje tiene componentes asociados.');
         }
         $eje->delete();
+        if ($request->expectsJson()) return response()->json(['ok' => true, 'message' => 'Eje eliminado.']);
         return back()->with('success', 'Eje eliminado.');
     }
 
@@ -88,8 +96,11 @@ class SciEstructuraController extends Controller
         $data['activo'] = $request->boolean('activo', true);
         $data['orden']  = (SciComponente::where('eje_id', $data['eje_id'])->max('orden') ?? 0) + 1;
 
-        SciComponente::create($data);
-        return back()->with('success', "Componente «{$data['nombre']}» creado.");
+        $comp = SciComponente::create($data);
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => "Componente «{$comp->nombre}» creado.", 'componente' => array_merge($comp->toArray(), ['preguntas_count' => 0, 'url_destroy' => route('adm-sci.componente.destroy', $comp)])]);
+        }
+        return back()->with('success', "Componente «{$comp->nombre}» creado.");
     }
 
     public function updateComponente(Request $request, SciComponente $componente)
@@ -102,15 +113,48 @@ class SciEstructuraController extends Controller
         ]);
         $data['activo'] = $request->boolean('activo', $componente->activo);
         $componente->update($data);
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => 'Componente actualizado.', 'componente' => $componente->fresh()]);
+        }
         return back()->with('success', 'Componente actualizado.');
     }
 
-    public function destroyComponente(SciComponente $componente)
+    public function reorderComponentes(Request $request)
+    {
+        $items = $request->validate(['items' => 'required|array', 'items.*.id' => 'required|exists:sci_componentes,id', 'items.*.orden' => 'required|integer|min:0'])['items'];
+        foreach ($items as $item) {
+            SciComponente::where('id', $item['id'])->update(['orden' => $item['orden']]);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    public function reorderPreguntas(Request $request)
+    {
+        $items = $request->validate(['items' => 'required|array', 'items.*.id' => 'required|exists:sci_preguntas,id', 'items.*.orden' => 'required|integer|min:0'])['items'];
+        foreach ($items as $item) {
+            SciPregunta::where('id', $item['id'])->update(['orden' => $item['orden']]);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    public function toggleEje(SciEje $eje)
+    {
+        $eje->update(['activo' => !$eje->activo]);
+        return response()->json([
+            'ok'     => true,
+            'activo' => $eje->activo,
+            'message'=> $eje->activo ? "Eje «{$eje->nombre}» activado." : "Eje «{$eje->nombre}» desactivado.",
+        ]);
+    }
+
+    public function destroyComponente(Request $request, SciComponente $componente)
     {
         if ($componente->preguntas()->exists()) {
+            if ($request->expectsJson()) return response()->json(['ok' => false, 'message' => 'No se puede eliminar: el componente tiene preguntas asociadas.'], 422);
             return back()->with('error', 'No se puede eliminar: el componente tiene preguntas asociadas.');
         }
         $componente->delete();
+        if ($request->expectsJson()) return response()->json(['ok' => true, 'message' => 'Componente eliminado.']);
         return back()->with('success', 'Componente eliminado.');
     }
 
@@ -127,7 +171,10 @@ class SciEstructuraController extends Controller
         $data['activo'] = $request->boolean('activo', true);
         $data['orden']  = (SciPregunta::where('componente_id', $data['componente_id'])->max('orden') ?? 0) + 1;
 
-        SciPregunta::create($data);
+        $preg = SciPregunta::create($data);
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => 'Pregunta registrada.', 'pregunta' => array_merge($preg->toArray(), ['url_destroy' => route('adm-sci.pregunta.destroy', $preg)])]);
+        }
         return back()->with('success', 'Pregunta registrada.');
     }
 
@@ -140,15 +187,20 @@ class SciEstructuraController extends Controller
         ]);
         $data['activo'] = $request->boolean('activo', $pregunta->activo);
         $pregunta->update($data);
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => 'Pregunta actualizada.', 'pregunta' => $pregunta->fresh()]);
+        }
         return back()->with('success', 'Pregunta actualizada.');
     }
 
-    public function destroyPregunta(SciPregunta $pregunta)
+    public function destroyPregunta(Request $request, SciPregunta $pregunta)
     {
         if ($pregunta->actividades()->exists()) {
+            if ($request->expectsJson()) return response()->json(['ok' => false, 'message' => 'No se puede eliminar: la pregunta tiene actividades asociadas.'], 422);
             return back()->with('error', 'No se puede eliminar: la pregunta tiene actividades asociadas.');
         }
         $pregunta->delete();
+        if ($request->expectsJson()) return response()->json(['ok' => true, 'message' => 'Pregunta eliminada.']);
         return back()->with('success', 'Pregunta eliminada.');
     }
 

@@ -204,22 +204,46 @@ $kpisConfig = [
     <div class="row g-3 align-items-end" id="filtros-row">
 
       {{-- Eje / Etapa dinámico --}}
-      <div class="col-md-3" id="col-eje-sci">
-        <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">Eje SCI</label>
+      <div class="col-md-2" id="col-eje-sci">
+        <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">
+          <i class="ti tabler-list me-1 text-primary opacity-75"></i>Eje SCI
+        </label>
         <select id="filtroEje" class="form-select">
           <option value="">Todos los ejes</option>
-          @foreach($sciEjes as $eje)
-          <option value="{{ $eje->id }}">{{ $eje->anio }} · {{ $eje->nombre }}</option>
+          @php $sciEjesPorAnio = $sciEjes->groupBy('anio') @endphp
+          @foreach($sciEjesPorAnio as $anioGrp => $ejesGrp)
+          <optgroup label="Año {{ $anioGrp }}">
+            @foreach($ejesGrp as $eje)
+            <option value="{{ $eje->id }}">{{ $eje->nombre }}</option>
+            @endforeach
+          </optgroup>
           @endforeach
         </select>
       </div>
-      <div class="col-md-3 d-none" id="col-etapa-int">
-        <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">Etapa Integridad</label>
+      <div class="col-md-2 d-none" id="col-etapa-int">
+        <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">
+          <i class="ti tabler-list me-1 text-warning opacity-75"></i>Etapa
+        </label>
         <select id="filtroEtapa" class="form-select">
           <option value="">Todas las etapas</option>
-          @foreach($integridadEtapas as $etapa)
-          <option value="{{ $etapa->id }}">{{ $etapa->anio }} · {{ $etapa->nombre }}</option>
+          @php $integridadEtapasPorAnio = $integridadEtapas->groupBy('anio') @endphp
+          @foreach($integridadEtapasPorAnio as $anioGrp => $etapasGrp)
+          <optgroup label="Año {{ $anioGrp }}">
+            @foreach($etapasGrp as $etapa)
+            <option value="{{ $etapa->id }}">{{ $etapa->nombre }}</option>
+            @endforeach
+          </optgroup>
           @endforeach
+        </select>
+      </div>
+
+      {{-- Componente en cascada --}}
+      <div class="col-md-2" id="col-componente">
+        <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">
+          <i class="ti tabler-puzzle me-1 text-info opacity-75"></i>Componente
+        </label>
+        <select id="filtroComponente" class="form-select" disabled>
+          <option value="">Selecciona un eje/etapa</option>
         </select>
       </div>
 
@@ -249,18 +273,18 @@ $kpisConfig = [
       </div>
 
       {{-- Buscar --}}
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label fw-semibold mb-1 text-uppercase" style="font-size:11px;letter-spacing:.04em">Buscar</label>
         <div class="input-group">
           <span class="input-group-text"><i class="ti tabler-search icon-16px"></i></span>
-          <input type="text" id="filtroBuscar" class="form-control" placeholder="N° SGD o título…">
+          <input type="text" id="filtroBuscar" class="form-control" placeholder="SGD o título…">
         </div>
       </div>
 
       {{-- Limpiar --}}
-      <div class="col-md-1 d-flex align-items-end">
-        <button id="btnLimpiar" class="btn btn-label-secondary w-100" title="Limpiar filtros">
-          <i class="ti tabler-filter-off"></i>
+      <div class="col-md-auto d-flex align-items-end">
+        <button id="btnLimpiar" class="btn btn-label-secondary" title="Limpiar filtros">
+          <i class="ti tabler-filter-off me-1"></i>Limpiar
         </button>
       </div>
 
@@ -670,8 +694,10 @@ $actividadesJs = [
 document.addEventListener('DOMContentLoaded', function () {
 
   // ── Config ────────────────────────────────────────────────────────────────
-  const RUTA        = '{{ route('sci-evidencias') }}';
-  const STATS_INIT  = @json($stats);
+  const RUTA              = '{{ route('sci-evidencias') }}';
+  const API_SCI_COMP      = '{{ route('api.sci.componentes') }}';
+  const API_INT_COMP      = '{{ route('api.integridad.componentes') }}';
+  const STATS_INIT        = @json($stats);
   const AUTH_ID     = {{ auth()->id() }};
   const CAN_CREAR   = {{ auth()->user()->can('evidencias.crear')   ? 'true' : 'false' }};
   const CAN_EDITAR  = {{ auth()->user()->can('evidencias.editar')  ? 'true' : 'false' }};
@@ -850,13 +876,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const params = new URLSearchParams();
       params.set('modulo', moduloActivo);
-      const ejeId   = document.getElementById('filtroEje')?.value;
-      const etapaId = document.getElementById('filtroEtapa')?.value;
-      const actId   = document.getElementById('filtroActividad')?.value;
-      const estado  = document.getElementById('filtroEstado')?.value;
-      const buscar  = document.getElementById('filtroBuscar')?.value;
+      const ejeId      = document.getElementById('filtroEje')?.value;
+      const etapaId    = document.getElementById('filtroEtapa')?.value;
+      const compId     = document.getElementById('filtroComponente')?.value;
+      const actId      = document.getElementById('filtroActividad')?.value;
+      const estado     = document.getElementById('filtroEstado')?.value;
+      const buscar     = document.getElementById('filtroBuscar')?.value;
       if (ejeId)   params.set('eje_id', ejeId);
       if (etapaId) params.set('etapa_id', etapaId);
+      if (compId)  params.set('componente_id', compId);
       if (actId)   params.set('actividad_id', actId);
       if (estado)  params.set('estado', estado);
       if (buscar)  params.set('buscar', buscar);
@@ -894,6 +922,8 @@ document.addEventListener('DOMContentLoaded', function () {
       // Reset selectores de estructura
       document.getElementById('filtroEje').value   = '';
       document.getElementById('filtroEtapa').value = '';
+      filtroComp.innerHTML = '<option value="">Selecciona un eje/etapa</option>';
+      filtroComp.disabled  = true;
 
       // Ocultar actividades del otro módulo en el filtro
       const filtroAct = document.getElementById('filtroActividad');
@@ -916,8 +946,49 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // ── Cascada Eje/Etapa → Componente ───────────────────────────────────────
+  const filtroComp = document.getElementById('filtroComponente');
+
+  async function cargarComponentes(tipo, padreId) {
+    filtroComp.disabled  = true;
+    filtroComp.innerHTML = '<option value="">Cargando…</option>';
+    if (!padreId) {
+      filtroComp.innerHTML = '<option value="">Selecciona un eje/etapa</option>';
+      filtroComp.disabled  = true;
+      fetchDatos();
+      return;
+    }
+    try {
+      const url    = tipo === 'sci'
+        ? `${API_SCI_COMP}?eje_id=${padreId}`
+        : `${API_INT_COMP}?etapa_id=${padreId}`;
+      const res    = await fetch(url, { headers: { Accept: 'application/json' } });
+      const items  = await res.json();
+      filtroComp.innerHTML = `<option value="">Todos los componentes (${items.length})</option>`;
+      items.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value       = c.id;
+        opt.textContent = c.nombre;
+        filtroComp.appendChild(opt);
+      });
+      filtroComp.disabled = items.length === 0;
+    } catch {
+      filtroComp.innerHTML = '<option value="">Error al cargar</option>';
+      filtroComp.disabled  = true;
+    }
+    fetchDatos();
+  }
+
+  document.getElementById('filtroEje')?.addEventListener('change', function () {
+    cargarComponentes('sci', this.value);
+  });
+  document.getElementById('filtroEtapa')?.addEventListener('change', function () {
+    cargarComponentes('integridad', this.value);
+  });
+  filtroComp?.addEventListener('change', fetchDatos);
+
   // ── Filtros cambio ────────────────────────────────────────────────────────
-  ['filtroEje','filtroEtapa','filtroEstado'].forEach(id => {
+  ['filtroEstado'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', fetchDatos);
   });
 
@@ -934,6 +1005,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('filtroEtapa').value     = '';
     document.getElementById('filtroEstado').value    = '';
     document.getElementById('filtroBuscar').value    = '';
+    // Reset componente cascade
+    filtroComp.innerHTML = '<option value="">Selecciona un eje/etapa</option>';
+    filtroComp.disabled  = true;
     if (document.getElementById('filtroActividad')) {
       $(document.getElementById('filtroActividad')).val(null).trigger('change');
     }
