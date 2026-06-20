@@ -34,6 +34,7 @@ class FortifyServiceProvider extends ServiceProvider
             return view('content.authentications.auth-login-cover', [
                 'pageConfigs'         => ['myLayout' => 'blank'],
                 'configInstitucional' => ConfiguracionInstitucional::first(),
+                'instituciones'       => \App\Models\InstitucionVinculada::activas()->get(),
             ]);
         });
 

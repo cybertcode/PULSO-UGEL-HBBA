@@ -35,7 +35,7 @@ class Actividad extends Model
 
         if ($user->can('actividades.ver-unidad') && !empty($user->unidad_organica_id)) {
             return $query->where(function (Builder $q) use ($user) {
-                $q->where('unidad_organica_id', $user->unidad_organica_id)
+                $q->where('actividades.unidad_organica_id', $user->unidad_organica_id)
                   ->orWhereHas('responsables', fn(Builder $r) => $r->where('users.id', $user->id));
             });
         }

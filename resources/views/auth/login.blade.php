@@ -24,7 +24,7 @@
         <a href="{{ url('/') }}" class="app-brand auth-cover-brand">
             @if (!empty($ci?->logo_ruta))
                 <span class="app-brand-logo demo">
-                    <img src="{{ Storage::url($ci->logo_ruta) }}" height="28" alt="logo" class="rounded">
+                    <img src="{{ Storage::url($ci->logo_ruta) }}" height="64" alt="logo" class="rounded">
                 </span>
             @endif
             <span class="app-brand-text demo text-heading fw-bold">

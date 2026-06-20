@@ -421,9 +421,9 @@ $porcentaje = round(($stats['completadas'] / $totalBase) * 100);
               @endif
             </button>
             <button type="button"
-               class="btn btn-label-secondary px-2 {{ $hayFiltros ? '' : 'invisible' }}"
-               id="btnLimpiar" title="Limpiar filtros">
-              <i class="ti tabler-x icon-14px"></i>
+               class="btn btn-label-danger px-2"
+               id="btnLimpiar" title="Limpiar todos los filtros">
+              <i class="ti tabler-filter-off icon-14px"></i>
             </button>
           </div>
         </div>
@@ -1108,10 +1108,8 @@ document.addEventListener('DOMContentLoaded', function () {
       // Badge filtro activo
       if (hayFiltros(params)) {
         badgeFiltro.classList.remove('d-none');
-        btnLimpiar.classList.remove('invisible');
       } else {
         badgeFiltro.classList.add('d-none');
-        btnLimpiar.classList.add('invisible');
       }
 
       // Footer paginación
@@ -1256,10 +1254,13 @@ document.addEventListener('DOMContentLoaded', function () {
     form.reset();
     desdeVal.value = '';
     hastaVal.value = '';
-    // Limpiar Select2
     document.querySelectorAll('.select2-filtro').forEach(el => {
       $(el).val('').trigger('change.select2');
     });
+    const compEl = document.getElementById('filtroComponente');
+    if (compEl) {
+      $(compEl).empty().append('<option value="">Todos</option>').trigger('change.select2');
+    }
     cargarTabla(new URLSearchParams());
   }
 

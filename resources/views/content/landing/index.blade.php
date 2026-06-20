@@ -416,6 +416,14 @@
                     </li>
                 </ul>
 
+                {{-- Centro mobile: estado + año --}}
+                <div class="ugel-nav__mobile-center" style="display:none">
+                    <span class="ugel-nav__mobile-badge">
+                        <span class="ugel-nav__mobile-dot"></span>
+                        En línea · {{ $config?->anio_gestion ?? date('Y') }}
+                    </span>
+                </div>
+
                 {{-- End --}}
                 <div class="ugel-nav__end">
                     <button class="ugel-burger" id="ugelBurger">
@@ -586,7 +594,7 @@
 
                 <div class="ugel-about__text">
                     <span class="ugel-label">¿Qué es PULSO?</span>
-                    <h2 class="ugel-section__title">Sistema de Control Interno para la <span
+                    <h2 class="ugel-section__title">Sistema de Control Interno · <span
                             class="ugel-text-accent">{{ $config?->sigla ?? 'UGEL Huacaybamba' }}</span></h2>
                     <p class="ugel-section__sub">PULSO es la plataforma digital oficial de la
                         {{ $config?->nombre_institucion ?? 'Unidad de Gestión Educativa Local de Huacaybamba' }} para la
@@ -825,7 +833,7 @@
                             <rect x="3" y="14" width="7" height="7" />
                         </svg>
                     </div>
-                    <p>Los módulos serán configurados desde el panel administrativo.</p>
+                    <p>Los módulos del sistema estarán disponibles próximamente.</p>
                 </div>
             </div>
         @endif

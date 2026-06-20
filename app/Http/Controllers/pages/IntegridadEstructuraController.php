@@ -7,6 +7,7 @@ use App\Models\IntegridadEtapa;
 use App\Models\IntegridadComponente;
 use App\Models\IntegridadPregunta;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class IntegridadEstructuraController extends Controller
 {
@@ -14,6 +15,7 @@ class IntegridadEstructuraController extends Controller
 
     public function index(Request $request)
     {
+        Gate::authorize('componentes.ver');
         $anio  = $request->input('anio', now()->year);
         $anios = IntegridadEtapa::selectRaw('DISTINCT anio')->orderByDesc('anio')->pluck('anio');
 
@@ -29,6 +31,7 @@ class IntegridadEstructuraController extends Controller
 
     public function storeEtapa(Request $request)
     {
+        Gate::authorize('componentes.crear');
         $data = $request->validate([
             'nombre'      => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
@@ -58,6 +61,7 @@ class IntegridadEstructuraController extends Controller
 
     public function updateEtapa(Request $request, IntegridadEtapa $etapa)
     {
+        Gate::authorize('componentes.editar');
         $data = $request->validate([
             'nombre'      => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
@@ -75,6 +79,7 @@ class IntegridadEstructuraController extends Controller
 
     public function toggleEtapa(Request $request, IntegridadEtapa $etapa)
     {
+        Gate::authorize('componentes.editar');
         $etapa->update(['activo' => !$etapa->activo]);
         return response()->json([
             'ok'     => true,
@@ -85,6 +90,7 @@ class IntegridadEstructuraController extends Controller
 
     public function destroyEtapa(Request $request, IntegridadEtapa $etapa)
     {
+        Gate::authorize('componentes.eliminar');
         if ($etapa->componentes()->exists()) {
             if ($request->expectsJson()) {
                 return response()->json(['ok' => false, 'message' => 'No se puede eliminar: la etapa tiene componentes asociados.'], 422);
@@ -103,6 +109,7 @@ class IntegridadEstructuraController extends Controller
 
     public function storeComponente(Request $request)
     {
+        Gate::authorize('componentes.crear');
         $data = $request->validate([
             'etapa_id'    => 'required|exists:integridad_etapas,id',
             'nombre'      => 'required|string|max:255',
@@ -135,6 +142,7 @@ class IntegridadEstructuraController extends Controller
 
     public function updateComponente(Request $request, IntegridadComponente $componente)
     {
+        Gate::authorize('componentes.editar');
         $data = $request->validate([
             'nombre'      => 'required|string|max:255',
             'icono'       => 'nullable|string|max:80',
@@ -163,6 +171,7 @@ class IntegridadEstructuraController extends Controller
 
     public function reorderComponentes(Request $request)
     {
+        Gate::authorize('componentes.editar');
         $items = $request->validate(['items' => 'required|array', 'items.*.id' => 'required|exists:integridad_componentes,id', 'items.*.orden' => 'required|integer|min:0'])['items'];
         foreach ($items as $item) {
             IntegridadComponente::where('id', $item['id'])->update(['orden' => $item['orden']]);
@@ -172,6 +181,7 @@ class IntegridadEstructuraController extends Controller
 
     public function reorderPreguntas(Request $request)
     {
+        Gate::authorize('componentes.editar');
         $items = $request->validate(['items' => 'required|array', 'items.*.id' => 'required|exists:integridad_preguntas,id', 'items.*.orden' => 'required|integer|min:0'])['items'];
         foreach ($items as $item) {
             IntegridadPregunta::where('id', $item['id'])->update(['orden' => $item['orden']]);
@@ -181,6 +191,7 @@ class IntegridadEstructuraController extends Controller
 
     public function destroyComponente(Request $request, IntegridadComponente $componente)
     {
+        Gate::authorize('componentes.eliminar');
         if ($componente->preguntas()->exists()) {
             if ($request->expectsJson()) {
                 return response()->json(['ok' => false, 'message' => 'No se puede eliminar: el componente tiene preguntas asociadas.'], 422);
@@ -199,6 +210,7 @@ class IntegridadEstructuraController extends Controller
 
     public function storePregunta(Request $request)
     {
+        Gate::authorize('componentes.crear');
         $data = $request->validate([
             'componente_id' => 'required|exists:integridad_componentes,id',
             'nombre'        => 'required|string|min:1|max:1000',
@@ -228,6 +240,7 @@ class IntegridadEstructuraController extends Controller
 
     public function updatePregunta(Request $request, IntegridadPregunta $pregunta)
     {
+        Gate::authorize('componentes.editar');
         $data = $request->validate([
             'nombre'     => 'required|string|min:1|max:1000',
             'link_ficha' => 'nullable|url|max:1000',
@@ -254,6 +267,7 @@ class IntegridadEstructuraController extends Controller
 
     public function destroyPregunta(Request $request, IntegridadPregunta $pregunta)
     {
+        Gate::authorize('componentes.eliminar');
         if ($pregunta->actividades()->exists()) {
             if ($request->expectsJson()) {
                 return response()->json(['ok' => false, 'message' => 'No se puede eliminar: la pregunta tiene actividades asociadas.'], 422);
@@ -272,6 +286,7 @@ class IntegridadEstructuraController extends Controller
 
     public function apiComponentesAdmin(Request $request)
     {
+        Gate::authorize('componentes.ver');
         $request->validate(['etapa_id' => 'required|exists:integridad_etapas,id']);
         $componentes = IntegridadComponente::withCount('preguntas')
             ->where('etapa_id', $request->input('etapa_id'))
@@ -291,6 +306,7 @@ class IntegridadEstructuraController extends Controller
 
     public function apiPreguntasAdmin(Request $request)
     {
+        Gate::authorize('componentes.ver');
         $request->validate(['componente_id' => 'required|exists:integridad_componentes,id']);
         $preguntas = IntegridadPregunta::where('componente_id', $request->input('componente_id'))
             ->orderBy('orden')
@@ -309,6 +325,7 @@ class IntegridadEstructuraController extends Controller
 
     public function apiEtapas(Request $request)
     {
+        Gate::authorize('componentes.ver');
         $anio = $request->input('anio', now()->year);
         return response()->json(
             IntegridadEtapa::where('anio', $anio)->where('activo', true)->orderBy('orden')->get(['id', 'nombre'])
@@ -317,6 +334,7 @@ class IntegridadEstructuraController extends Controller
 
     public function apiComponentes(Request $request)
     {
+        Gate::authorize('componentes.ver');
         $request->validate(['etapa_id' => 'required|exists:integridad_etapas,id']);
         return response()->json(
             IntegridadComponente::where('etapa_id', $request->input('etapa_id'))->where('activo', true)->orderBy('orden')->get(['id', 'nombre'])
@@ -325,6 +343,7 @@ class IntegridadEstructuraController extends Controller
 
     public function apiPreguntas(Request $request)
     {
+        Gate::authorize('componentes.ver');
         $request->validate(['componente_id' => 'required|exists:integridad_componentes,id']);
         return response()->json(
             IntegridadPregunta::where('componente_id', $request->input('componente_id'))->where('activo', true)->orderBy('orden')->get(['id', 'nombre', 'link_ficha'])

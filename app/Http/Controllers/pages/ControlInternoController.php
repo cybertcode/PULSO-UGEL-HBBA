@@ -40,7 +40,7 @@ class ControlInternoController extends Controller
                 'unidadOrganica',
                 'responsables',
             ])
-            ->where('modulo', 'sci')
+            ->where('actividades.modulo', 'sci')
             ->visiblesParaUsuario($user)
             ->leftJoin('sci_preguntas', 'actividades.sci_pregunta_id', '=', 'sci_preguntas.id')
             ->leftJoin('sci_componentes', 'sci_preguntas.componente_id', '=', 'sci_componentes.id')
@@ -52,7 +52,7 @@ class ControlInternoController extends Controller
             ->select('actividades.*');
 
         if ($request->filled('anio')) {
-            $query->where('anio', $request->anio);
+            $query->where('actividades.anio', $request->anio);
         }
         if ($request->filled('eje_id')) {
             $query->whereHas('sciPregunta.componente', fn($q) => $q->where('eje_id', $request->eje_id));
@@ -61,32 +61,46 @@ class ControlInternoController extends Controller
             $query->whereHas('sciPregunta', fn($q) => $q->where('componente_id', $request->componente_id));
         }
         if ($request->filled('pregunta_id')) {
-            $query->where('sci_pregunta_id', $request->pregunta_id);
+            $query->where('actividades.sci_pregunta_id', $request->pregunta_id);
         }
         if ($request->filled('unidad_id')) {
-            $query->where('unidad_organica_id', $request->unidad_id);
+            $query->where('actividades.unidad_organica_id', $request->unidad_id);
         }
         if ($request->filled('responsable_id')) {
             $query->whereHas('responsables', fn($q) => $q->where('users.id', $request->responsable_id));
         }
         if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+            $query->where('actividades.estado', $request->estado);
         }
         if ($request->filled('prioridad')) {
-            $query->where('prioridad', $request->prioridad);
+            $query->where('actividades.prioridad', $request->prioridad);
         }
         if ($request->filled('buscar')) {
             $b = $request->buscar;
             $query->where(fn($q) => $q
-                ->where('nombre', 'like', "%$b%")
-                ->orWhere('codigo', 'like', "%$b%")
-                ->orWhere('numero_sgd', 'like', "%$b%")
+                ->where('actividades.nombre', 'like', "%$b%")
+                ->orWhere('actividades.codigo', 'like', "%$b%")
+                ->orWhere('actividades.numero_sgd', 'like', "%$b%")
             );
         }
 
-        $actividades  = $query->paginate(15)->withQueryString();
-        $anios        = Actividad::where('modulo', 'sci')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
+        $actividades = $query->paginate(15)->withQueryString();
 
+        // Respuesta AJAX: solo tabla + stats, sin calcular ejes/métricas
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'html'  => view('content.control-interno._tabla', compact('actividades'))->render(),
+                'stats' => $stats,
+                'total' => $actividades->total(),
+                'from'  => $actividades->firstItem() ?? 0,
+                'to'    => $actividades->lastItem() ?? 0,
+                'pages' => $actividades->hasPages()
+                    ? $actividades->links()->toHtml()
+                    : '',
+            ]);
+        }
+
+        $anios     = Actividad::where('modulo', 'sci')->selectRaw('DISTINCT anio')->whereNotNull('anio')->orderByDesc('anio')->pluck('anio');
         $todosEjes = SciEje::orderBy('anio', 'desc')->orderBy('orden')->get();
         $ejes      = $todosEjes->where('activo', true);
 
@@ -97,8 +111,10 @@ class ControlInternoController extends Controller
                         ? SciComponente::where('eje_id', $request->eje_id)->where('activo', true)->orderBy('orden')->get()
                         : collect();
 
-        // Métricas por eje (Vista por Eje)
-        $ejesParaVista = $puedeVerInactivos ? $todosEjes->where('anio', $anio) : $todosEjes->where('anio', $anio)->where('activo', true);
+        // Métricas por eje (Vista por Eje) — solo en carga de página completa
+        $ejesParaVista = $puedeVerInactivos
+            ? $todosEjes->where('anio', $anio)
+            : $todosEjes->where('anio', $anio)->where('activo', true);
 
         $ejesConMetricas = $ejesParaVista->map(function ($eje) use ($user, $anio) {
             $baseEje = Actividad::where('modulo', 'sci')
@@ -163,7 +179,7 @@ class ControlInternoController extends Controller
             ];
         })->sortBy('orden')->values();
 
-        // Próximos a vencer (movido desde Blade)
+        // Próximos a vencer
         $proxVencer = Actividad::where('modulo', 'sci')
             ->where('anio', $anio)
             ->whereNotIn('estado', ['completada', 'observado'])
@@ -175,7 +191,7 @@ class ControlInternoController extends Controller
             ->limit(5)
             ->get();
 
-        // Filtros de unidad y responsable solo disponibles para quien tiene visión amplia
+        // Filtros de unidad y responsable
         if ($user->can('actividades.ver-todas')) {
             $unidades     = UnidadOrganica::where('activo', true)->orderBy('nombre')->get();
             $responsables = User::where('estado', 'activo')->orderBy('name')->get();
@@ -185,19 +201,6 @@ class ControlInternoController extends Controller
         } else {
             $unidades     = collect();
             $responsables = collect();
-        }
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'html'  => view('content.control-interno._tabla', compact('actividades'))->render(),
-                'stats' => $stats,
-                'total' => $actividades->total(),
-                'from'  => $actividades->firstItem() ?? 0,
-                'to'    => $actividades->lastItem() ?? 0,
-                'pages' => $actividades->hasPages()
-                    ? $actividades->links()->toHtml()
-                    : '',
-            ]);
         }
 
         return view('content.control-interno.index', compact(
