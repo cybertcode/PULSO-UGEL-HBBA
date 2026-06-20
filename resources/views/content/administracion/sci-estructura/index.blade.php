@@ -275,7 +275,6 @@
             @endcanany
           </div>
         </div>
-        @endcanany
       </div>
       @empty
       <div class="p-3 text-center text-muted" style="font-size:.82rem">
