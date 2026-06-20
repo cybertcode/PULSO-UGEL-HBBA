@@ -60,10 +60,10 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
     background: var(--gov-navy);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     overflow: hidden;
-    padding: 3rem;
+    padding: 3rem 3rem 0 3rem;
   }
 
   /* Fondo con patrón geométrico andino */
@@ -166,7 +166,7 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
 
   /* Escudo institucional SVG animado */
   .escudo-wrapper {
-    margin: 0 auto 2.5rem;
+    margin: 0 auto 1rem;
     width: 130px;
     height: 130px;
     position: relative;
@@ -212,16 +212,16 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
     letter-spacing: 0.35em;
     text-transform: uppercase;
     color: var(--gold-light);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     opacity: 0.9;
   }
 
   .left-title {
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
     font-weight: 900;
     line-height: 1.1;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.4rem;
     letter-spacing: -0.02em;
     color: var(--white);
   }
@@ -232,10 +232,10 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
   }
 
   .left-subtitle {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     color: rgba(255,255,255,0.55);
-    line-height: 1.7;
-    margin-bottom: 3rem;
+    line-height: 1.5;
+    margin-bottom: 1.2rem;
     font-weight: 300;
     max-width: 380px;
     margin-left: auto;
@@ -247,7 +247,7 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.2rem;
   }
   .left-divider-line {
     flex: 1;
@@ -310,16 +310,18 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
 
   /* Footer izquierdo */
   .left-footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: relative;
+    width: 100%;
+    left: auto;
+    right: auto;
+    bottom: auto;
     text-align: center;
     z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 0;
+    margin-top: auto;
   }
 
   .left-footer-text {
@@ -331,16 +333,13 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
     padding: 0.5rem 1rem;
   }
 
-  /* Tira de logos de unidades */
+  /* Tira de logos de instituciones */
   .unidades-strip {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1.5rem;
-    background: rgba(0,0,0,0.25);
-    backdrop-filter: blur(6px);
-    border-top: 1px solid rgba(201,162,39,0.15);
+    gap: 1rem;
+    padding: 0.5rem 1.5rem 0.75rem;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -351,14 +350,15 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.2rem;
-    opacity: 0.6;
+    gap: 0.25rem;
+    opacity: 0.5;
     transition: opacity 0.25s, transform 0.25s;
-    cursor: default;
+    text-decoration: none;
+    cursor: pointer;
   }
   .unidad-logo-item:hover {
     opacity: 1;
-    transform: translateY(-3px);
+    transform: translateY(-4px);
   }
   .unidad-logo-item img {
     width: 32px;
@@ -1010,14 +1010,16 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
       @if(!empty($instituciones) && $instituciones->count() > 0)
       <div class="unidades-strip">
         @foreach($instituciones as $inst)
-          <div class="unidad-logo-item" title="{{ $inst->nombre }}">
+          <a class="unidad-logo-item"
+             title="{{ $inst->nombre }}"
+             @if($inst->url_sitio) href="{{ $inst->url_sitio }}" target="_blank" rel="noopener noreferrer" @endif>
             @if($inst->logo_src)
               <img src="{{ $inst->logo_src }}" alt="{{ $inst->sigla ?? $inst->nombre }}">
             @else
               <div class="unidad-logo-initials">{{ strtoupper(substr($inst->sigla ?? $inst->nombre, 0, 2)) }}</div>
             @endif
             <span class="unidad-logo-label">{{ $inst->sigla ?? \Illuminate\Support\Str::limit($inst->nombre, 5, '') }}</span>
-          </div>
+          </a>
         @endforeach
       </div>
       @endif

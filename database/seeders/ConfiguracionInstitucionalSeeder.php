@@ -20,7 +20,7 @@ class ConfiguracionInstitucionalSeeder extends Seeder
                 'departamento'            => 'Huánuco',
                 'distrito'                => 'Huacaybamba',
                 'ubigeo'                  => '100401',
-                'direccion'               => 'Av. 28 de Julio N° 502-504, Huacaybamba',
+                'direccion'               => 'Av. 28 de Julio N° 502, Huacaybamba',
                 'sitio_web'               => 'https://www.ugelhuacaybamba.edu.pe',
                 'timezone'                => 'America/Lima',
                 'director'                => 'Mg. Julio Luis Lozano Yllatopa',

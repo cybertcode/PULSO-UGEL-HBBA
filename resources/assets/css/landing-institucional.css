@@ -142,7 +142,7 @@ body {
 .ugel-nav__link.active .ugel-nav__link-ico svg { stroke: #fff; }
 .ugel-nav__link.active::after { transform: scaleX(1); }
 
-.ugel-nav__end { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; }
+.ugel-nav__end { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; margin-left: auto; }
 
 .ugel-burger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: .4rem; }
 .ugel-burger span { display: block; width: 22px; height: 2px; background: var(--dark); border-radius: 2px; transition: all .25s; }
@@ -153,7 +153,40 @@ body {
 .ugel-overlay.active { display: block; }
 .ugel-nav__close-item { display: none; }
 
+/* Centro mobile — oculto en desktop */
+.ugel-nav__mobile-center {
+  display: none !important;
+}
+
 @media (max-width: 991px) {
+  .ugel-nav__inner { justify-content: space-between; }
+  .ugel-nav__mobile-center {
+    display: flex !important;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+  }
+  .ugel-nav__mobile-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: .25rem .7rem;
+    letter-spacing: .01em;
+  }
+  .ugel-nav__mobile-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34,197,94,.6);
+    flex-shrink: 0;
+  }
   .ugel-nav__links {
     position: fixed; top: 0; right: 0; width: 290px; height: 100vh;
     background: var(--white); flex-direction: column; justify-content: flex-start; align-items: stretch;
@@ -369,23 +402,39 @@ body {
 @media (max-width: 991px) {
   .ugel-hero__grid { flex-direction: column; height: auto; width: calc(100% - 2rem); border-radius: 14px; margin-top: 1rem; }
   .ugel-hero__left { width: 100% !important; border-right: none; border-bottom: 1px solid var(--border); padding: 2.25rem 1.5rem; }
-  .ugel-hero__right { min-height: 280px; width: 100%; }
-  .ugel-carousel { min-height: 280px; }
-  .ugel-slide { min-height: 280px; }
+  .ugel-hero__right { min-height: 260px; width: 100%; }
+  .ugel-carousel { min-height: 260px; }
+  .ugel-slide { min-height: 260px; }
   .ugel-stat { flex: 0 0 33.333%; }
+  .ugel-slide__title { font-size: .95rem; }
+  .ugel-slide__desc  { display: none; }
+  .ugel-slide__content { padding: .85rem 1rem .85rem 1.3rem; }
+  .ugel-slide__tipo { margin-bottom: .4rem; font-size: .65rem; padding: .18rem .55rem; }
+  .ugel-slide__link { font-size: .72rem; }
+  .ugel-slide__overlay { background: linear-gradient(to top, rgba(2,6,23,.92) 0%, rgba(2,6,23,.35) 55%, rgba(2,6,23,.05) 100%); }
 }
 @media (max-width: 575px) {
-  .ugel-hero__title { font-size: 1.85rem; }
+  .ugel-hero__title { font-size: 1.45rem; letter-spacing: -.02em; }
   .ugel-topbar__left { display: none; }
   .ugel-stat { flex: 0 0 50%; border-right: none; border-bottom: 1px solid rgba(255,255,255,.05); }
-  .ugel-hero__left { padding: 1.75rem 1.25rem; }
-  .ugel-hero__desc { font-size: .92rem; margin-bottom: 1.25rem; }
-  .ugel-hero__actions { flex-direction: column; }
-  .ugel-btn--lg { width: 100%; justify-content: center; }
+  .ugel-hero__left { padding: 1.5rem 1.1rem 1.25rem; }
+  .ugel-hero__desc { font-size: .82rem; margin-bottom: 1rem; line-height: 1.55; }
+  .ugel-hero__actions { flex-direction: column; gap: .55rem; }
+  .ugel-btn--lg { width: 100%; justify-content: center; font-size: .88rem; padding: .75rem 1.4rem; }
+  .ugel-hero__avales-label { font-size: .72rem; }
+  .ugel-aval { font-size: .68rem; padding: .18rem .55rem; }
+  .ugel-hero__stats { margin-bottom: 1.1rem; }
+  .ugel-stat__v { font-size: 1.1rem; }
+  .ugel-stat__l { font-size: .65rem; }
+  .ugel-section__title { font-size: 1.3rem !important; }
+  .ugel-section__sub { font-size: .88rem; }
+  .ugel-slide__title { font-size: .85rem; }
+  .ugel-slide__content { padding: .7rem .9rem .7rem 1.1rem; }
 }
 @media (max-width: 400px) {
   .ugel-stat { flex: 0 0 100%; }
-  .ugel-hero__title { font-size: 1.65rem; }
+  .ugel-hero__title { font-size: 1.28rem; }
+  .ugel-hero__desc { font-size: .78rem; }
 }
 
 /* ─── SECCIONES ─── */
