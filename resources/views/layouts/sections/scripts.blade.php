@@ -84,22 +84,7 @@ function marcarTodasLeidasBD(btn) {
 }
 </script>
 
-<!-- Global Flash → pulsoToast -->
-<script>
-(function () {
-  var success = @json(session('success'));
-  var error   = @json(session('error'));
-  var warning = @json(session('warning'));
-  function fire() {
-    if (typeof pulsoToast !== 'function') return;
-    if (success) pulsoToast(success, 'success', 'Operación exitosa', 6000);
-    if (error)   pulsoToast(error,   'error',   'Error',             8000);
-    if (warning) pulsoToast(warning, 'warning', 'Atención',          6000);
-  }
-  // pulsoToast se define en este mismo archivo justo después — esperamos al final del load
-  window.addEventListener('load', fire);
-})();
-</script>
+<!-- Flash PHP → sessionStorage → toast-flash-js (ver contentNavbarLayout.blade.php) -->
 
 <!-- pulsoToast: toast global reutilizable en todos los módulos -->
 <script>

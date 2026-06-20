@@ -134,6 +134,16 @@
         </div>
         <!-- / Toast Container Global -->
 
+        @if(session('success'))
+        <script>sessionStorage.setItem('flash_success', @json(session('success')));</script>
+        @endif
+        @if(session('error'))
+        <script>sessionStorage.setItem('flash_success', @json(session('error'))); sessionStorage.setItem('flash_title', 'Error');</script>
+        @endif
+        @if(session('warning'))
+        <script>sessionStorage.setItem('flash_success', @json(session('warning'))); sessionStorage.setItem('flash_title', 'Atención');</script>
+        @endif
+
         <script>
         (function () {
           const msg = sessionStorage.getItem('flash_success');

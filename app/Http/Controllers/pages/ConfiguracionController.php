@@ -203,16 +203,20 @@ class ConfiguracionController extends Controller
         return back()->with('success', 'Configuración guardada correctamente.');
     }
 
-    public function clearCache()
+    public function clearCache(\Illuminate\Http\Request $request)
     {
-
         Artisan::call('route:clear');
         Artisan::call('view:clear');
-        Artisan::call('cache:clear');
         Artisan::call('config:clear');
+        Artisan::call('cache:clear');
         Artisan::call('optimize');
 
-        return back()->with('success', 'Caché del sistema limpiada correctamente. Rutas, vistas y configuración regeneradas.');
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Caché del sistema limpiada correctamente.']);
+        }
+
+        return redirect()->route('adm-configuracion')
+            ->with('success', 'Caché del sistema limpiada correctamente. Rutas, vistas y configuración regeneradas.');
     }
 
 }

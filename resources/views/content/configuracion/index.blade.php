@@ -1279,12 +1279,35 @@ function toggleField(id, show) {
   if (el) el.classList.toggle('d-none', !show);
 }
 
-// Confirmar limpieza de caché
+// Confirmar limpieza de caché via AJAX
 document.getElementById('btnConfirmCache')?.addEventListener('click', function () {
   const btn = this;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Limpiando...';
-  document.getElementById('formClearCache').submit();
+
+  const form = document.getElementById('formClearCache');
+  const token = form.querySelector('[name="_token"]').value;
+
+  fetch(form.action, {
+    method: 'POST',
+    headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+  })
+  .then(r => r.json())
+  .then(data => {
+    bootstrap.Modal.getInstance(document.getElementById('modalClearCache'))?.hide();
+    if (typeof pulsoToast === 'function') {
+      pulsoToast(data.message || 'Caché limpiada correctamente.', 'success', 'Sistema', 6000);
+    }
+  })
+  .catch(() => {
+    if (typeof pulsoToast === 'function') {
+      pulsoToast('Ocurrió un error al limpiar la caché.', 'error', 'Error', 6000);
+    }
+  })
+  .finally(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti tabler-refresh me-1"></i>Sí, limpiar ahora';
+  });
 });
 </script>
 @endsection
