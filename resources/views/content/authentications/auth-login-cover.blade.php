@@ -167,8 +167,8 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
   /* Escudo institucional SVG animado */
   .escudo-wrapper {
     margin: 0 auto 2.5rem;
-    width: 90px;
-    height: 90px;
+    width: 130px;
+    height: 130px;
     position: relative;
     animation: escudo-float 6s ease-in-out infinite;
   }
@@ -193,8 +193,8 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
   }
 
   .escudo-icon {
-    width: 90px;
-    height: 90px;
+    width: 130px;
+    height: 130px;
     background: linear-gradient(135deg, rgba(201,162,39,0.2), rgba(201,162,39,0.05));
     border-radius: 50%;
     border: 2px solid rgba(201,162,39,0.5);
@@ -311,11 +311,12 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
   /* Footer izquierdo */
   .left-footer {
     position: absolute;
-    bottom: 2rem;
+    bottom: 0;
     left: 0;
     right: 0;
     text-align: center;
     z-index: 2;
+    padding-bottom: 1rem;
   }
 
   .left-footer-text {
@@ -323,6 +324,73 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
     color: rgba(255,255,255,0.2);
     letter-spacing: 0.15em;
     text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Tira de logos de unidades */
+  .unidades-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.5rem;
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(6px);
+    border-top: 1px solid rgba(201,162,39,0.15);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .unidades-strip::-webkit-scrollbar { display: none; }
+
+  .unidad-logo-item {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    opacity: 0.6;
+    transition: opacity 0.25s, transform 0.25s;
+    cursor: default;
+  }
+  .unidad-logo-item:hover {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+  .unidad-logo-item img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 50%;
+    border: 1px solid rgba(201,162,39,0.3);
+    background: rgba(255,255,255,0.08);
+  }
+  .unidad-logo-initials {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(201,162,39,0.3), rgba(0,48,135,0.4));
+    border: 1px solid rgba(201,162,39,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0.03em;
+  }
+  .unidad-logo-label {
+    font-size: 0.48rem;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    max-width: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1200px) {
+    .unidad-logo-item img { width: 26px; height: 26px; }
   }
 
   /* ═══════════════════════════════════════
@@ -805,6 +873,9 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
   @media (max-width: 1200px) {
     .pulso-left { flex: 0 0 50%; max-width: 50%; }
     .pulso-right { flex: 0 0 50%; max-width: 50%; }
+    .escudo-wrapper { width: 110px; height: 110px; }
+    .escudo-icon { width: 110px; height: 110px; }
+    .escudo-icon img { width: 90px !important; height: 90px !important; }
   }
 
   @media (max-width: 900px) {
@@ -864,7 +935,7 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
         <div class="escudo-icon">
           @if(!empty($ci?->logo_ruta))
             <img src="{{ Storage::url($ci->logo_ruta) }}" alt="logo"
-                 style="width:56px;height:56px;object-fit:contain;border-radius:50%;">
+                 style="width:108px;height:108px;object-fit:contain;border-radius:50%;">
           @else
             <span style="color:var(--gold-light);font-family:'Playfair Display',serif;font-weight:900;">
               {{ strtoupper(substr($ci?->sigla ?? $ci?->nombre_institucion ?? 'P', 0, 2)) }}
@@ -931,6 +1002,21 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
         @endif
         {{ date('Y') }}
       </p>
+
+      @if(!empty($unidades) && $unidades->count() > 0)
+      <div class="unidades-strip">
+        @foreach($unidades as $u)
+          <div class="unidad-logo-item" title="{{ $u->nombre }}">
+            @if($u->foto_ruta)
+              <img src="{{ \Illuminate\Support\Facades\Storage::url($u->foto_ruta) }}" alt="{{ $u->sigla ?? $u->nombre }}">
+            @else
+              <div class="unidad-logo-initials">{{ strtoupper(substr($u->sigla ?? $u->nombre, 0, 2)) }}</div>
+            @endif
+            <span class="unidad-logo-label">{{ $u->sigla ?? \Illuminate\Support\Str::limit($u->nombre, 6, '') }}</span>
+          </div>
+        @endforeach
+      </div>
+      @endif
     </div>
   </div>
 
