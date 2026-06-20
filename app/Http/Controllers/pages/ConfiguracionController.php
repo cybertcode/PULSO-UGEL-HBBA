@@ -212,7 +212,7 @@ class ConfiguracionController extends Controller
         Artisan::call('config:clear');
         Artisan::call('optimize');
 
-        return back()->with('success', '✓ Caché del sistema limpiada correctamente (rutas, vistas, config y aplicación).');
+        return back()->with('success', 'Caché del sistema limpiada correctamente. Rutas, vistas y configuración regeneradas.');
     }
 
 }
