@@ -1003,16 +1003,16 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
         {{ date('Y') }}
       </p>
 
-      @if(!empty($unidades) && $unidades->count() > 0)
+      @if(!empty($instituciones) && $instituciones->count() > 0)
       <div class="unidades-strip">
-        @foreach($unidades as $u)
-          <div class="unidad-logo-item" title="{{ $u->nombre }}">
-            @if($u->foto_ruta)
-              <img src="{{ \Illuminate\Support\Facades\Storage::url($u->foto_ruta) }}" alt="{{ $u->sigla ?? $u->nombre }}">
+        @foreach($instituciones as $inst)
+          <div class="unidad-logo-item" title="{{ $inst->nombre }}">
+            @if($inst->logo_src)
+              <img src="{{ $inst->logo_src }}" alt="{{ $inst->sigla ?? $inst->nombre }}">
             @else
-              <div class="unidad-logo-initials">{{ strtoupper(substr($u->sigla ?? $u->nombre, 0, 2)) }}</div>
+              <div class="unidad-logo-initials">{{ strtoupper(substr($inst->sigla ?? $inst->nombre, 0, 2)) }}</div>
             @endif
-            <span class="unidad-logo-label">{{ $u->sigla ?? \Illuminate\Support\Str::limit($u->nombre, 6, '') }}</span>
+            <span class="unidad-logo-label">{{ $inst->sigla ?? \Illuminate\Support\Str::limit($inst->nombre, 5, '') }}</span>
           </div>
         @endforeach
       </div>
