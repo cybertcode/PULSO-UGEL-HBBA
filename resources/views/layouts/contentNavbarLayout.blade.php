@@ -79,7 +79,7 @@
         <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;min-width:320px;max-width:420px">
 
           @if(session('success'))
-          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="5000"
+          <div class="toast border-0 shadow" role="alert" id="toastSuccess"
                style="background:#fff;border-left:4px solid #28a745 !important;border-radius:8px">
             <div class="toast-header border-0 pb-0" style="background:transparent">
               <span class="me-2" style="color:#28a745"><i class="ti tabler-circle-check" style="font-size:18px"></i></span>
@@ -88,10 +88,11 @@
             </div>
             <div class="toast-body pt-1" style="color:#333">{{ session('success') }}</div>
           </div>
+          <script>window.addEventListener('load',function(){var t=document.getElementById('toastSuccess');if(t&&window.bootstrap)new bootstrap.Toast(t,{autohide:true,delay:6000}).show();});</script>
           @endif
 
           @if(session('error'))
-          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="8000"
+          <div class="toast border-0 shadow" role="alert" id="toastError"
                style="background:#fff;border-left:4px solid #dc3545 !important;border-radius:8px">
             <div class="toast-header border-0 pb-0" style="background:transparent">
               <span class="me-2" style="color:#dc3545"><i class="ti tabler-circle-x" style="font-size:18px"></i></span>
@@ -100,6 +101,7 @@
             </div>
             <div class="toast-body pt-1" style="color:#333">{{ session('error') }}</div>
           </div>
+          <script>window.addEventListener('load',function(){var t=document.getElementById('toastError');if(t&&window.bootstrap)new bootstrap.Toast(t,{autohide:true,delay:8000}).show();});</script>
           @endif
 
           @if(session('warning'))
