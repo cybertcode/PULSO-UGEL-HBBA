@@ -84,15 +84,21 @@ function marcarTodasLeidasBD(btn) {
 }
 </script>
 
-<!-- Global Toast Auto-dismiss -->
+<!-- Global Flash → pulsoToast -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.toast-container .toast').forEach(function (toastEl) {
-    const autohide = toastEl.dataset.bsAutohide !== 'false';
-    const delay    = parseInt(toastEl.dataset.bsDelay) || 5000;
-    new bootstrap.Toast(toastEl, { autohide: autohide, delay: delay }).show();
-  });
-});
+(function () {
+  var success = @json(session('success'));
+  var error   = @json(session('error'));
+  var warning = @json(session('warning'));
+  function fire() {
+    if (typeof pulsoToast !== 'function') return;
+    if (success) pulsoToast(success, 'success', 'Operación exitosa', 6000);
+    if (error)   pulsoToast(error,   'error',   'Error',             8000);
+    if (warning) pulsoToast(warning, 'warning', 'Atención',          6000);
+  }
+  // pulsoToast se define en este mismo archivo justo después — esperamos al final del load
+  window.addEventListener('load', fire);
+})();
 </script>
 
 <!-- pulsoToast: toast global reutilizable en todos los módulos -->
