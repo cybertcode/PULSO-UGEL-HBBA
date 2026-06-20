@@ -44,7 +44,7 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
 
   .pulso-login-wrapper {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
     width: 100%;
     overflow: hidden;
     position: relative;
@@ -316,7 +316,10 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
     right: 0;
     text-align: center;
     z-index: 2;
-    padding-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
   }
 
   .left-footer-text {
@@ -324,7 +327,8 @@ $ci = \App\Models\ConfiguracionInstitucional::cached();
     color: rgba(255,255,255,0.2);
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    margin-bottom: 0.75rem;
+    margin: 0;
+    padding: 0.5rem 1rem;
   }
 
   /* Tira de logos de unidades */
