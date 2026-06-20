@@ -1003,6 +1003,38 @@ use Illuminate\Support\Facades\Storage;
     @endforeach
   </div>
 
+  {{-- Mantenimiento --}}
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="badge bg-label-danger p-2"><i class="ti tabler-tool icon-16px"></i></span>
+    <h6 class="mb-0 text-danger">Mantenimiento del Sistema</h6>
+    <hr class="flex-grow-1 my-0 ms-2">
+  </div>
+  <div class="card border border-danger-subtle mb-5">
+    <div class="card-body">
+      <div class="row align-items-center g-3">
+        <div class="col-md-8">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="avatar avatar-md bg-label-danger rounded flex-shrink-0">
+              <i class="ti tabler-refresh icon-24px"></i>
+            </div>
+            <div>
+              <h6 class="mb-1">Limpiar Caché del Sistema</h6>
+              <p class="text-muted small mb-0">Limpia la caché de rutas, vistas, configuración y aplicación. Úsalo cuando el sistema muestre errores de rutas o cambios que no se reflejan correctamente.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <form method="POST" action="{{ route('adm-configuracion.cache') }}" id="formClearCache">
+            @csrf
+          </form>
+          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalClearCache">
+            <i class="ti tabler-refresh me-1"></i>Limpiar Caché
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   {{-- Administración --}}
   <div class="d-flex align-items-center gap-2 mb-3">
     <span class="badge bg-label-secondary p-2"><i class="ti tabler-settings icon-16px"></i></span>
@@ -1037,6 +1069,32 @@ use Illuminate\Support\Facades\Storage;
 
 </div>
 
+
+{{-- Modal: Confirmar limpieza de caché --}}
+<div class="modal fade" id="modalClearCache" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-body text-center p-4">
+        <div class="avatar avatar-lg bg-label-danger rounded-circle mx-auto mb-3">
+          <i class="ti tabler-refresh icon-32px text-danger"></i>
+        </div>
+        <h5 class="mb-1">¿Limpiar caché del sistema?</h5>
+        <p class="text-muted small mb-4">
+          Se borrarán y regenerarán las cachés de <strong>rutas, vistas, configuración y aplicación</strong>.<br>
+          Úsalo cuando el sistema muestre errores de rutas o cambios que no se reflejan.
+        </p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">
+            <i class="ti tabler-x me-1"></i>Cancelar
+          </button>
+          <button type="button" class="btn btn-danger" id="btnConfirmCache">
+            <i class="ti tabler-refresh me-1"></i>Sí, limpiar ahora
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 @endsection
 
@@ -1220,5 +1278,36 @@ function toggleField(id, show) {
   const el = document.getElementById(id);
   if (el) el.classList.toggle('d-none', !show);
 }
+
+// Confirmar limpieza de caché via AJAX
+document.getElementById('btnConfirmCache')?.addEventListener('click', function () {
+  const btn = this;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Limpiando...';
+
+  const form = document.getElementById('formClearCache');
+  const token = form.querySelector('[name="_token"]').value;
+
+  fetch(form.action, {
+    method: 'POST',
+    headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+  })
+  .then(r => r.json())
+  .then(data => {
+    bootstrap.Modal.getInstance(document.getElementById('modalClearCache'))?.hide();
+    if (typeof pulsoToast === 'function') {
+      pulsoToast(data.message || 'Caché limpiada correctamente.', 'success', 'Sistema', 6000);
+    }
+  })
+  .catch(() => {
+    if (typeof pulsoToast === 'function') {
+      pulsoToast('Ocurrió un error al limpiar la caché.', 'error', 'Error', 6000);
+    }
+  })
+  .finally(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti tabler-refresh me-1"></i>Sí, limpiar ahora';
+  });
+});
 </script>
 @endsection

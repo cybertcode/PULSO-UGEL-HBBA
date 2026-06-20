@@ -78,29 +78,7 @@
         <!-- Toast Container Global -->
         <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;min-width:320px;max-width:420px">
 
-          @if(session('success'))
-          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="5000"
-               style="background:#fff;border-left:4px solid #28a745 !important;border-radius:8px">
-            <div class="toast-header border-0 pb-0" style="background:transparent">
-              <span class="me-2" style="color:#28a745"><i class="ti tabler-circle-check" style="font-size:18px"></i></span>
-              <strong class="me-auto" style="color:#28a745">Operación exitosa</strong>
-              <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body pt-1" style="color:#333">{{ session('success') }}</div>
-          </div>
-          @endif
-
-          @if(session('error'))
-          <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="8000"
-               style="background:#fff;border-left:4px solid #dc3545 !important;border-radius:8px">
-            <div class="toast-header border-0 pb-0" style="background:transparent">
-              <span class="me-2" style="color:#dc3545"><i class="ti tabler-circle-x" style="font-size:18px"></i></span>
-              <strong class="me-auto" style="color:#dc3545">Error</strong>
-              <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body pt-1" style="color:#333">{{ session('error') }}</div>
-          </div>
-          @endif
+          {{-- Los flash success/error/warning los maneja pulsoToast en scripts.blade.php --}}
 
           @if(session('warning'))
           <div class="toast show border-0 shadow" role="alert" data-bs-autohide="true" data-bs-delay="7000"
@@ -155,6 +133,16 @@
 
         </div>
         <!-- / Toast Container Global -->
+
+        @if(session('success'))
+        <script>sessionStorage.setItem('flash_success', @json(session('success')));</script>
+        @endif
+        @if(session('error'))
+        <script>sessionStorage.setItem('flash_success', @json(session('error'))); sessionStorage.setItem('flash_title', 'Error');</script>
+        @endif
+        @if(session('warning'))
+        <script>sessionStorage.setItem('flash_success', @json(session('warning'))); sessionStorage.setItem('flash_title', 'Atención');</script>
+        @endif
 
         <script>
         (function () {

@@ -84,16 +84,7 @@ function marcarTodasLeidasBD(btn) {
 }
 </script>
 
-<!-- Global Toast Auto-dismiss -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.toast-container .toast').forEach(function (toastEl) {
-    const autohide = toastEl.dataset.bsAutohide !== 'false';
-    const delay    = parseInt(toastEl.dataset.bsDelay) || 5000;
-    new bootstrap.Toast(toastEl, { autohide: autohide, delay: delay }).show();
-  });
-});
-</script>
+<!-- Flash PHP → sessionStorage → toast-flash-js (ver contentNavbarLayout.blade.php) -->
 
 <!-- pulsoToast: toast global reutilizable en todos los módulos -->
 <script>

@@ -1,3 +1,5 @@
+/bootstrap/cache/*
+/produccion/
 /.phpunit.cache
 /node_modules
 # /public/build  -- se sube al repo para producción (hosting sin Node.js)

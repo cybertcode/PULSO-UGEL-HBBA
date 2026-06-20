@@ -39,8 +39,8 @@
   color: var(--bs-primary);
 }
 .sci2-eje-item {
-  display: flex; align-items: center; gap: .6rem;
-  padding: .6rem 1rem;
+  display: flex; align-items: flex-start; gap: .55rem;
+  padding: .6rem .75rem;
   border-bottom: 1px solid var(--bs-border-color);
   cursor: pointer;
   transition: background .15s;
@@ -56,9 +56,11 @@
   flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
   background: var(--bs-primary); color: #fff;
   display: flex; align-items: center; justify-content: center;
-  font-size: .65rem; font-weight: 700;
+  font-size: .65rem; font-weight: 700; margin-top: 2px;
 }
-.sci2-eje-nombre { flex: 1; font-size: .84rem; min-width: 0; line-height: 1.25; }
+.sci2-eje-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .3rem; }
+.sci2-eje-nombre { font-size: .8rem; font-weight: 600; line-height: 1.25; word-break: break-word; }
+.sci2-eje-controls { display: flex; align-items: center; gap: .35rem; }
 .sci2-eje-off { opacity: .5; }
 .sci2-eje-actions { display: flex; gap: .2rem; flex-shrink: 0; }
 .sci2-ejes-footer { padding: .5rem .75rem; border-top: 1px solid var(--bs-border-color); }
@@ -236,39 +238,42 @@
            onclick="seleccionarEje({{ $eje->id }})">
 
         <span class="sci2-eje-num">{{ $idx + 1 }}</span>
-        <span class="sci2-eje-nombre">
-          {{ $eje->nombre }}
-          @if(!$eje->activo)
-            <span class="badge bg-label-danger badge-off d-block mt-1" style="width:fit-content">Inactivo</span>
-          @endif
-        </span>
-
-        @can('componentes.editar')
-        <div onclick="event.stopPropagation()" title="{{ $eje->activo ? 'Desactivar' : 'Activar' }} eje">
-          <div class="form-check form-switch mb-0">
-            <input class="form-check-input toggle-eje" type="checkbox"
-                   {{ $eje->activo ? 'checked' : '' }}
-                   data-eje-id="{{ $eje->id }}"
-                   data-url="{{ route('adm-sci.eje.toggle', $eje) }}">
+        <div class="sci2-eje-body">
+          <span class="sci2-eje-nombre">
+            {{ $eje->nombre }}
+            @if(!$eje->activo)
+              <span class="badge bg-label-danger badge-off ms-1" style="font-size:.6rem">Inactivo</span>
+            @endif
+          </span>
+          <div class="sci2-eje-controls" onclick="event.stopPropagation()">
+            @can('componentes.editar')
+            <div title="{{ $eje->activo ? 'Desactivar' : 'Activar' }} eje">
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input toggle-eje" type="checkbox"
+                       {{ $eje->activo ? 'checked' : '' }}
+                       data-eje-id="{{ $eje->id }}"
+                       data-url="{{ route('adm-sci.eje.toggle', $eje) }}">
+              </div>
+            </div>
+            @endcan
+            @canany(['componentes.editar','componentes.eliminar'])
+            <div class="sci2-eje-actions">
+              @can('componentes.editar')
+              <button class="btn btn-icon btn-xs btn-primary btn-editar-eje" title="Editar" style="width:24px;height:24px">
+                <i class="ti tabler-edit" style="font-size:.75rem"></i>
+              </button>
+              @endcan
+              @can('componentes.eliminar')
+              <button class="btn btn-icon btn-xs btn-danger btn-eliminar-eje" title="Eliminar"
+                data-url="{{ route('adm-sci.eje.destroy', $eje) }}"
+                data-nombre="{{ e($eje->nombre) }}"
+                style="width:24px;height:24px">
+                <i class="ti tabler-trash" style="font-size:.75rem"></i>
+              </button>
+              @endcan
+            </div>
+            @endcanany
           </div>
-        </div>
-        @endcan
-
-        @canany(['componentes.editar','componentes.eliminar'])
-        <div class="sci2-eje-actions" onclick="event.stopPropagation()">
-          @can('componentes.editar')
-          <button class="btn btn-icon btn-xs btn-primary btn-editar-eje" title="Editar" style="width:24px;height:24px">
-            <i class="ti tabler-edit" style="font-size:.75rem"></i>
-          </button>
-          @endcan
-          @can('componentes.eliminar')
-          <button class="btn btn-icon btn-xs btn-danger btn-eliminar-eje" title="Eliminar"
-            data-url="{{ route('adm-sci.eje.destroy', $eje) }}"
-            data-nombre="{{ e($eje->nombre) }}"
-            style="width:24px;height:24px">
-            <i class="ti tabler-trash" style="font-size:.75rem"></i>
-          </button>
-          @endcan
         </div>
         @endcanany
       </div>

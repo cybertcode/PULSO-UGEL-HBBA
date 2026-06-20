@@ -7,6 +7,7 @@ use App\Models\ConfiguracionInstitucional;
 use App\Models\User;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 
 class ConfiguracionController extends Controller
@@ -200,6 +201,22 @@ class ConfiguracionController extends Controller
         \Illuminate\Support\Facades\Cache::forget('config_institucional');
 
         return back()->with('success', 'Configuración guardada correctamente.');
+    }
+
+    public function clearCache(\Illuminate\Http\Request $request)
+    {
+        Artisan::call('route:clear');
+        Artisan::call('view:clear');
+        Artisan::call('config:clear');
+        Artisan::call('cache:clear');
+        Artisan::call('optimize');
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Caché del sistema limpiada correctamente.']);
+        }
+
+        return redirect()->route('adm-configuracion')
+            ->with('success', 'Caché del sistema limpiada correctamente. Rutas, vistas y configuración regeneradas.');
     }
 
 }

@@ -41,8 +41,8 @@
   color: var(--bs-warning);
 }
 .int-etapa-item {
-  display: flex; align-items: center; gap: .6rem;
-  padding: .6rem 1rem;
+  display: flex; align-items: flex-start; gap: .55rem;
+  padding: .6rem .75rem;
   border-bottom: 1px solid var(--bs-border-color);
   cursor: pointer;
   transition: background .15s;
@@ -59,11 +59,12 @@
   flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
   background: var(--bs-warning); color: #000;
   display: flex; align-items: center; justify-content: center;
-  font-size: .65rem; font-weight: 700;
+  font-size: .65rem; font-weight: 700; margin-top: 2px;
 }
-.int-etapa-nombre { flex: 1; font-size: .84rem; min-width: 0; line-height: 1.25; }
+.int-etapa-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .3rem; }
+.int-etapa-nombre { font-size: .8rem; font-weight: 600; line-height: 1.25; word-break: break-word; }
+.int-etapa-controls { display: flex; align-items: center; gap: .35rem; }
 .int-etapa-off { opacity: .5; }
-.int-etapa-toggle { flex-shrink: 0; }
 .int-etapa-actions { display: flex; gap: .2rem; flex-shrink: 0; }
 
 .int-etapas-footer {
@@ -249,41 +250,43 @@
            onclick="seleccionarEtapa({{ $etapa->id }})">
 
         <span class="int-etapa-num">{{ $idx + 1 }}</span>
-        <span class="int-etapa-nombre">
-          {{ $etapa->nombre }}
-          @if(!$etapa->activo)
-            <span class="badge bg-label-danger badge-off d-block mt-1" style="width:fit-content">Inactiva</span>
-          @endif
-        </span>
-
-        @can('integridad.editar')
-        <div class="int-etapa-toggle" onclick="event.stopPropagation()" title="{{ $etapa->activo ? 'Desactivar' : 'Activar' }} etapa">
-          <div class="form-check form-switch mb-0">
-            <input class="form-check-input toggle-etapa" type="checkbox"
-                   {{ $etapa->activo ? 'checked' : '' }}
-                   data-etapa-id="{{ $etapa->id }}"
-                   data-url="{{ route('adm-integridad.etapa.toggle', $etapa) }}">
+        <div class="int-etapa-body">
+          <span class="int-etapa-nombre">
+            {{ $etapa->nombre }}
+            @if(!$etapa->activo)
+              <span class="badge bg-label-danger badge-off ms-1" style="font-size:.6rem">Inactiva</span>
+            @endif
+          </span>
+          <div class="int-etapa-controls" onclick="event.stopPropagation()">
+            @can('integridad.editar')
+            <div title="{{ $etapa->activo ? 'Desactivar' : 'Activar' }} etapa">
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input toggle-etapa" type="checkbox"
+                       {{ $etapa->activo ? 'checked' : '' }}
+                       data-etapa-id="{{ $etapa->id }}"
+                       data-url="{{ route('adm-integridad.etapa.toggle', $etapa) }}">
+              </div>
+            </div>
+            @endcan
+            @canany(['integridad.editar','integridad.eliminar'])
+            <div class="int-etapa-actions">
+              @can('integridad.editar')
+              <button class="btn btn-icon btn-xs btn-warning btn-editar-etapa" title="Editar" style="width:24px;height:24px">
+                <i class="ti tabler-edit" style="font-size:.75rem"></i>
+              </button>
+              @endcan
+              @can('integridad.eliminar')
+              <button class="btn btn-icon btn-xs btn-danger btn-eliminar-etapa" title="Eliminar"
+                data-url="{{ route('adm-integridad.etapa.destroy', $etapa) }}"
+                data-nombre="{{ e($etapa->nombre) }}"
+                style="width:24px;height:24px">
+                <i class="ti tabler-trash" style="font-size:.75rem"></i>
+              </button>
+              @endcan
+            </div>
+            @endcanany
           </div>
         </div>
-        @endcan
-
-        @canany(['integridad.editar','integridad.eliminar'])
-        <div class="int-etapa-actions" onclick="event.stopPropagation()">
-          @can('integridad.editar')
-          <button class="btn btn-icon btn-xs btn-warning btn-editar-etapa" title="Editar" style="width:24px;height:24px">
-            <i class="ti tabler-edit" style="font-size:.75rem"></i>
-          </button>
-          @endcan
-          @can('integridad.eliminar')
-          <button class="btn btn-icon btn-xs btn-danger btn-eliminar-etapa" title="Eliminar"
-            data-url="{{ route('adm-integridad.etapa.destroy', $etapa) }}"
-            data-nombre="{{ e($etapa->nombre) }}"
-            style="width:24px;height:24px">
-            <i class="ti tabler-trash" style="font-size:.75rem"></i>
-          </button>
-          @endcan
-        </div>
-        @endcanany
       </div>
       @empty
       <div class="p-3 text-center text-muted" style="font-size:.82rem">
