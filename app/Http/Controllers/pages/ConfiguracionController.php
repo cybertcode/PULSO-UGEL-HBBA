@@ -205,7 +205,6 @@ class ConfiguracionController extends Controller
 
     public function clearCache()
     {
-        Gate::authorize('configuracion.ver');
 
         Artisan::call('route:clear');
         Artisan::call('view:clear');
