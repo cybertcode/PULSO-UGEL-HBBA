@@ -1,11 +1,14 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
-  "name": "laravel/laravel",
+  "name": "cybertcode/pulso-ugel",
+  "version": "1.0.0",
   "type": "project",
-  "description": "The skeleton application for the Laravel framework.",
+  "description": "PULSO UGEL — Sistema de Control Interno Institucional para UGEL Huacaybamba",
   "keywords": [
-    "laravel",
-    "framework"
+    "pulso",
+    "ugel",
+    "control-interno",
+    "peru"
   ],
   "license": "MIT",
   "require": {
