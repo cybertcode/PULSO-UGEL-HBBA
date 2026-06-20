@@ -239,8 +239,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
 
     // --- Configuración Institucional ---
-    Route::get('/configuracion',  [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
-    Route::put('/configuracion',  [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
+    Route::get('/configuracion',        [ConfiguracionController::class, 'index'])->name('adm-configuracion')->middleware('can:configuracion.ver');
+    Route::put('/configuracion',        [ConfiguracionController::class, 'update'])->name('adm-configuracion.update')->middleware('can:configuracion.editar');
+    Route::post('/configuracion/cache', [ConfiguracionController::class, 'clearCache'])->name('adm-configuracion.cache')->middleware('can:configuracion.ver');
 
     // --- Buenas Prácticas / Concurso ---
     Route::get('/buenas-practicas',         [BuenasPracticasController::class, 'index'])->name('buenas-practicas')->middleware('can:buenas-practicas.ver');

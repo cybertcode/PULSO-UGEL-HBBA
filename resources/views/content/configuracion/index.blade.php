@@ -1003,6 +1003,39 @@ use Illuminate\Support\Facades\Storage;
     @endforeach
   </div>
 
+  {{-- Mantenimiento --}}
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="badge bg-label-danger p-2"><i class="ti tabler-tool icon-16px"></i></span>
+    <h6 class="mb-0 text-danger">Mantenimiento del Sistema</h6>
+    <hr class="flex-grow-1 my-0 ms-2">
+  </div>
+  <div class="card border border-danger-subtle mb-5">
+    <div class="card-body">
+      <div class="row align-items-center g-3">
+        <div class="col-md-8">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="avatar avatar-md bg-label-danger rounded flex-shrink-0">
+              <i class="ti tabler-refresh icon-24px"></i>
+            </div>
+            <div>
+              <h6 class="mb-1">Limpiar Caché del Sistema</h6>
+              <p class="text-muted small mb-0">Limpia la caché de rutas, vistas, configuración y aplicación. Úsalo cuando el sistema muestre errores de rutas o cambios que no se reflejan correctamente.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <form method="POST" action="{{ route('adm-configuracion.cache') }}" id="formClearCache">
+            @csrf
+            <button type="submit" class="btn btn-danger"
+              onclick="return confirm('¿Limpiar toda la caché del sistema? El sistema tardará un momento en regenerarla.')">
+              <i class="ti tabler-refresh me-1"></i>Limpiar Caché
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   {{-- Administración --}}
   <div class="d-flex align-items-center gap-2 mb-3">
     <span class="badge bg-label-secondary p-2"><i class="ti tabler-settings icon-16px"></i></span>
