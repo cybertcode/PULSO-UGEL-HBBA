@@ -7,6 +7,7 @@ use App\Models\SciEje;
 use App\Models\SciComponente;
 use App\Models\SciPregunta;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class SciEstructuraController extends Controller
 {
@@ -24,6 +25,7 @@ class SciEstructuraController extends Controller
 
     public function index(Request $request)
     {
+        Gate::authorize('componentes.ver');
         $anio  = $request->input('anio', now()->year);
         $anios = SciEje::selectRaw('DISTINCT anio')->orderByDesc('anio')->pluck('anio');
 
@@ -39,6 +41,7 @@ class SciEstructuraController extends Controller
 
     public function storeEje(Request $request)
     {
+        Gate::authorize('componentes.crear');
         $data = $request->validate([
             'nombre'      => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
@@ -57,6 +60,7 @@ class SciEstructuraController extends Controller
 
     public function updateEje(Request $request, SciEje $eje)
     {
+        Gate::authorize('componentes.editar');
         $data = $request->validate([
             'nombre'      => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
@@ -73,6 +77,7 @@ class SciEstructuraController extends Controller
 
     public function destroyEje(Request $request, SciEje $eje)
     {
+        Gate::authorize('componentes.eliminar');
         if ($eje->componentes()->exists()) {
             if ($request->expectsJson()) return response()->json(['ok' => false, 'message' => 'No se puede eliminar: el eje tiene componentes asociados.'], 422);
             return back()->with('error', 'No se puede eliminar: el eje tiene componentes asociados.');
@@ -86,6 +91,7 @@ class SciEstructuraController extends Controller
 
     public function storeComponente(Request $request)
     {
+        Gate::authorize('componentes.crear');
         $data = $request->validate([
             'eje_id'      => 'required|exists:sci_ejes,id',
             'nombre'      => 'required|string|max:255',
@@ -105,6 +111,7 @@ class SciEstructuraController extends Controller
 
     public function updateComponente(Request $request, SciComponente $componente)
     {
+        Gate::authorize('componentes.editar');
         $data = $request->validate([
             'nombre'      => 'required|string|max:255',
             'icono'       => 'nullable|string|max:80',
@@ -121,6 +128,7 @@ class SciEstructuraController extends Controller
 
     public function reorderComponentes(Request $request)
     {
+        Gate::authorize('componentes.editar');
         $items = $request->validate(['items' => 'required|array', 'items.*.id' => 'required|exists:sci_componentes,id', 'items.*.orden' => 'required|integer|min:0'])['items'];
         foreach ($items as $item) {
             SciComponente::where('id', $item['id'])->update(['orden' => $item['orden']]);
@@ -130,6 +138,7 @@ class SciEstructuraController extends Controller
 
     public function reorderPreguntas(Request $request)
     {
+        Gate::authorize('componentes.editar');
         $items = $request->validate(['items' => 'required|array', 'items.*.id' => 'required|exists:sci_preguntas,id', 'items.*.orden' => 'required|integer|min:0'])['items'];
         foreach ($items as $item) {
             SciPregunta::where('id', $item['id'])->update(['orden' => $item['orden']]);
@@ -139,6 +148,7 @@ class SciEstructuraController extends Controller
 
     public function toggleEje(SciEje $eje)
     {
+        Gate::authorize('componentes.editar');
         $eje->update(['activo' => !$eje->activo]);
         return response()->json([
             'ok'     => true,
@@ -149,6 +159,7 @@ class SciEstructuraController extends Controller
 
     public function destroyComponente(Request $request, SciComponente $componente)
     {
+        Gate::authorize('componentes.eliminar');
         if ($componente->preguntas()->exists()) {
             if ($request->expectsJson()) return response()->json(['ok' => false, 'message' => 'No se puede eliminar: el componente tiene preguntas asociadas.'], 422);
             return back()->with('error', 'No se puede eliminar: el componente tiene preguntas asociadas.');
@@ -162,6 +173,7 @@ class SciEstructuraController extends Controller
 
     public function storePregunta(Request $request)
     {
+        Gate::authorize('componentes.crear');
         $data = $request->validate([
             'componente_id' => 'required|exists:sci_componentes,id',
             'nombre'        => 'required|string|min:1|max:1000',
@@ -180,6 +192,7 @@ class SciEstructuraController extends Controller
 
     public function updatePregunta(Request $request, SciPregunta $pregunta)
     {
+        Gate::authorize('componentes.editar');
         $data = $request->validate([
             'nombre'     => 'required|string|min:1|max:1000',
             'link_ficha' => 'nullable|url|max:1000',
@@ -195,6 +208,7 @@ class SciEstructuraController extends Controller
 
     public function destroyPregunta(Request $request, SciPregunta $pregunta)
     {
+        Gate::authorize('componentes.eliminar');
         if ($pregunta->actividades()->exists()) {
             if ($request->expectsJson()) return response()->json(['ok' => false, 'message' => 'No se puede eliminar: la pregunta tiene actividades asociadas.'], 422);
             return back()->with('error', 'No se puede eliminar: la pregunta tiene actividades asociadas.');
